@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Lyra V2 RAG</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        h1 {
+            text-align: center;
+            color: #4ecdc4;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+        .subtitle {
+            text-align: center;
+            color: #95e1d3;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        .mermaid {
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .info-box {
+            background: rgba(78, 205, 196, 0.1);
+            border-left: 4px solid #4ecdc4;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .info-box h2 {
+            color: #4ecdc4;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        th {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #888;
+        }
+        .flow-hint {
+            text-align: center;
+            color: #4ecdc4;
+            font-size: 1.1em;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Architecture Lyra V2 RAG</h1>
+        <div class="subtitle">Assistant Vocal DevOps Local - 100% Offline</div>
+        <div class="flow-hint">↓ Flux de haut en bas : Entrée utilisateur → Traitement → Sortie utilisateur ↓</div>
+
+        <div class="mermaid">
+graph TB
+    %% Entrée utilisateur
+    USER_IN["👤 UTILISATEUR<br/>INPUT"]
+
+    %% Modes d'entrée
+    VOCAL_IN["🎤 Vocal"]
+    TEXT_IN["⌨️ Texte"]
+
+    %% STT
+    WHISPER["🔊 Whisper STT<br/>faster-whisper CUDA<br/>~1.5 GB"]
+
+    %% Classification
+    INTENT["🧠 IntentClassifier<br/>LYRA Llama 3B<br/>demande/info/discussion"]
+
+    %% Branches selon intention
+    BRANCH_DEMANDE{"📌 demande?"}
+    BRANCH_INFO{"💬 info/discussion?"}
+
+    %% Pipeline RAG
+    RAG_QUERY["🔍 Query Processing<br/>Pre-filtrage catégorie"]
+    RAG_SEMANTIC["📚 ChromaDB<br/>Semantic Search<br/>multilingual-MiniLM<br/>~0.5 GB"]
+    RAG_KEYWORD["🔤 BM25<br/>Keyword Search<br/>rank-bm25"]
+    RAG_FUSION["⚡ RRF Fusion<br/>k=60, top_k=5"]
+    TOON["📦 TOON Encoder<br/>~40% compression<br/>specs compactes"]
+
+    %% Backend
+    EPHAISTOS["🔧 EPHAISTOS<br/>Qwen 2.5 Coder 7B<br/>~5 GB VRAM<br/>Analyse specs MCP"]
+
+    %% Exécution
+    HESTIA["⚙️ HESTIA Executor<br/>Gestion erreurs"]
+    CONFIRM{"🤚 Mode<br/>Performance?"}
+
+    %% MCP Servers
+    MCP_SERVERS["🔌 MCP SERVERS<br/>80 outils<br/>━━━━━━━━━<br/>FEDORA 17<br/>HUE 24<br/>TV 14<br/>CATT 15<br/>DENON 10"]
+
+    %% Async
+    ASYNC{"⏱️ Opération<br/>async?"}
+    N8N["🌐 n8n Webhooks"]
+    SUBPROCESS["⚡ subprocess<br/>fallback"]
+
+    %% Résultats
+    RESULTS["✅ Résultats MCP"]
+
+    %% Session Memory
+    SESSION["💾 Session Memory<br/>Contexte multi-tour<br/>PendingChoice"]
+
+    %% Frontend
+    LYRA_VOICE["🗣️ LYRA Frontend<br/>Llama 3.2 3B<br/>~2.5 GB VRAM<br/>Dialogue + Formatage"]
+
+    %% TTS
+    TTS_CHOICE{"🔊 Mode<br/>vocal?"}
+    PIPER["🔉 Piper TTS<br/>fr_FR-upmc-medium"]
+
+    %% Sortie utilisateur
+    USER_OUT["👤 UTILISATEUR<br/>OUTPUT"]
+
+    %% === FLUX PRINCIPAL ===
+
+    %% Entrée
+    USER_IN -->|Vocal| VOCAL_IN
+    USER_IN -->|Texte| TEXT_IN
+
+    VOCAL_IN --> WHISPER
+    TEXT_IN --> INTENT
+    WHISPER --> INTENT
+
+    %% Classification
+    INTENT --> BRANCH_DEMANDE
+    INTENT --> BRANCH_INFO
+
+    %% Branche INFO (directe)
+    BRANCH_INFO -->|Oui| LYRA_VOICE
+
+    %% Branche DEMANDE (RAG)
+    BRANCH_DEMANDE -->|Oui| RAG_QUERY
+
+    RAG_QUERY --> RAG_SEMANTIC
+    RAG_QUERY --> RAG_KEYWORD
+
+    RAG_SEMANTIC --> RAG_FUSION
+    RAG_KEYWORD --> RAG_FUSION
+
+    RAG_FUSION --> TOON
+    TOON --> EPHAISTOS
+
+    %% Exécution MCP
+    EPHAISTOS --> HESTIA
+    HESTIA --> CONFIRM
+
+    CONFIRM -->|Oui, skip| MCP_SERVERS
+    CONFIRM -->|Non, confirm| MCP_SERVERS
+
+    %% Async ou Sync
+    MCP_SERVERS --> ASYNC
+
+    ASYNC -->|Sync| RESULTS
+    ASYNC -->|Async| N8N
+    N8N -->|OK| RESULTS
+    N8N -.->|Échec| SUBPROCESS
+    SUBPROCESS --> RESULTS
+
+    %% Session + Frontend
+    RESULTS --> SESSION
+    SESSION --> LYRA_VOICE
+
+    %% Sortie
+    LYRA_VOICE --> TTS_CHOICE
+
+    TTS_CHOICE -->|Oui| PIPER
+    TTS_CHOICE -->|Non| USER_OUT
+    PIPER --> USER_OUT
+
+    %% === STYLES ===
+
+    classDef userClass fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef inputClass fill:#a29bfe,stroke:#6c5ce7,color:#fff
+    classDef intentClass fill:#fdcb6e,stroke:#e17055,color:#000
+    classDef ragClass fill:#aa96da,stroke:#6c5ce7,color:#fff
+    classDef backendClass fill:#4ecdc4,stroke:#45b7d1,color:#fff
+    classDef executionClass fill:#f38181,stroke:#aa5042,color:#fff
+    classDef mcpClass fill:#feca57,stroke:#ee5a24,color:#000
+    classDef frontendClass fill:#95e1d3,stroke:#38ada9,color:#000
+    classDef memoryClass fill:#74b9ff,stroke:#0984e3,color:#fff
+    classDef audioClass fill:#fab1a0,stroke:#e17055,color:#000
+
+    class USER_IN,USER_OUT userClass
+    class VOCAL_IN,TEXT_IN inputClass
+    class WHISPER,PIPER audioClass
+    class INTENT,BRANCH_DEMANDE,BRANCH_INFO intentClass
+    class RAG_QUERY,RAG_SEMANTIC,RAG_KEYWORD,RAG_FUSION,TOON ragClass
+    class EPHAISTOS backendClass
+    class HESTIA,CONFIRM,ASYNC executionClass
+    class MCP_SERVERS mcpClass
+    class LYRA_VOICE,TTS_CHOICE frontendClass
+    class SESSION memoryClass
+    class N8N,SUBPROCESS,RESULTS memoryClass
+        </div>
+
+        <div class="info-box">
+            <h2>🎨 Légende des Couleurs</h2>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff6b6b;"></div>
+                    <div>
+                        <strong>Utilisateur</strong><br>
+                        <small>Entrée/Sortie (INPUT/OUTPUT)</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #a29bfe;"></div>
+                    <div>
+                        <strong>Interface</strong><br>
+                        <small>Modes Vocal/Texte</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fab1a0;"></div>
+                    <div>
+                        <strong>Audio</strong><br>
+                        <small>Whisper STT + Piper TTS</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fdcb6e;"></div>
+                    <div>
+                        <strong>Classification</strong><br>
+                        <small>IntentClassifier (demande/info)</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #aa96da;"></div>
+                    <div>
+                        <strong>RAG Pipeline</strong><br>
+                        <small>ChromaDB + BM25 + TOON</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4ecdc4;"></div>
+                    <div>
+                        <strong>Backend</strong><br>
+                        <small>EPHAISTOS (Qwen 7B)</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f38181;"></div>
+                    <div>
+                        <strong>Exécution</strong><br>
+                        <small>HESTIA + Confirmation</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #feca57;"></div>
+                    <div>
+                        <strong>MCP Servers</strong><br>
+                        <small>80 outils (5 serveurs)</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #95e1d3;"></div>
+                    <div>
+                        <strong>Frontend</strong><br>
+                        <small>LYRA (Llama 3B)</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #74b9ff;"></div>
+                    <div>
+                        <strong>Session/Résultats</strong><br>
+                        <small>Memory + Async</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h2>🎯 Flux de Traitement</h2>
+            <h3>1️⃣ Entrée Utilisateur (haut)</h3>
+            <p><strong>USER INPUT</strong> → Mode Vocal/Texte → Whisper STT (si vocal) → IntentClassifier</p>
+
+            <h3>2️⃣ Classification & Routage</h3>
+            <ul>
+                <li><strong>🔴 demande</strong> (action MCP) → Pipeline RAG → EPHAISTOS → MCP</li>
+                <li><strong>🟢 info/discussion</strong> → LYRA directement (pas de RAG)</li>
+            </ul>
+
+            <h3>3️⃣ Pipeline RAG (si demande)</h3>
+            <p>Query Processing → ChromaDB + BM25 → RRF Fusion → TOON Encoder → EPHAISTOS</p>
+
+            <h3>4️⃣ Exécution MCP</h3>
+            <p>EPHAISTOS → HESTIA → Confirmation (si mode default) → MCP Servers → Résultats</p>
+
+            <h3>5️⃣ Formatage & Sortie (bas)</h3>
+            <p>Résultats → Session Memory → LYRA Frontend → Piper TTS (si vocal) → <strong>USER OUTPUT</strong></p>
+        </div>
+
+        <div class="info-box">
+            <h2>💾 VRAM Allocation (RTX 3080 Ti 12GB)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Composant</th>
+                        <th>Modèle</th>
+                        <th>VRAM</th>
+                        <th>Rôle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>EPHAISTOS</strong></td>
+                        <td>Qwen 2.5 Coder 7B</td>
+                        <td>~5 GB</td>
+                        <td>Analyse specs MCP, extraction args</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LYRA</strong></td>
+                        <td>Llama 3.2 3B</td>
+                        <td>~2.5 GB</td>
+                        <td>Dialogue, classification, personnalité</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Embeddings</strong></td>
+                        <td>paraphrase-multilingual-MiniLM-L12-v2</td>
+                        <td>~0.5 GB</td>
+                        <td>Recherche sémantique RAG</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Whisper</strong></td>
+                        <td>faster-whisper base (CUDA)</td>
+                        <td>~1.5 GB</td>
+                        <td>Speech-to-Text (mode vocal)</td>
+                    </tr>
+                    <tr style="font-weight: bold; background: rgba(78, 205, 196, 0.1);">
+                        <td colspan="2"><strong>TOTAL</strong></td>
+                        <td>~10.5 GB</td>
+                        <td>87.5% de 12 GB</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box">
+            <h2>🔌 MCP Servers (80 outils)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Serveur</th>
+                        <th>Outils</th>
+                        <th>Description</th>
+                        <th>Technologie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>FEDORA</strong></td>
+                        <td>17</td>
+                        <td>VM KVM + Backups (vm_start, vm_clone, backup_create...)</td>
+                        <td>Node.js</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HUE</strong></td>
+                        <td>24</td>
+                        <td>Lumières Philips Hue (turn_on/off, set_brightness...)</td>
+                        <td>Python (hue-mcp)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TV</strong></td>
+                        <td>14</td>
+                        <td>TV Philips 55OLED705 (power, volume, ambilight...)</td>
+                        <td>Python (pylips-mcp)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CATT</strong></td>
+                        <td>15</td>
+                        <td>Cast YouTube/Video (cast_youtube, cast_pause...)</td>
+                        <td>Python (catt-mcp)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DENON</strong></td>
+                        <td>10</td>
+                        <td>Home Cinema Denon AVR-X1700H (volume, mute, input...)</td>
+                        <td>Python (denon-mcp)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box">
+            <h2>⚡ Optimisations Clés</h2>
+            <ul>
+                <li><strong>TOON Encoder</strong>: Compression ~40% des specs MCP avant EPHAISTOS</li>
+                <li><strong>BM25 Keyword</strong>: Recherche par mots-clés français (meilleure que semantic seul)</li>
+                <li><strong>RRF Fusion</strong>: Combine semantic + keyword (k=60, top_k=5)</li>
+                <li><strong>Pre-filtrage catégorie</strong>: Boost résultats par mots-clés (lumière→hue, vm→fedora...)</li>
+                <li><strong>Mode Performance</strong>: Skip confirmation pour domotique (TV, Hue, Denon, CATT)</li>
+                <li><strong>Session Memory</strong>: Contexte multi-tour (max_turns=10) + PendingChoice</li>
+                <li><strong>Async Operations</strong>: n8n webhooks + fallback subprocess (vm_clone, backup_*)</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Généré le 2026-02-06 | Lyra V2 RAG | 100% Local/Offline</p>
+            <p style="font-size: 0.9em;">RTX 3080 Ti 12GB VRAM | Python 3.12 | Fedora Linux</p>
+            <p style="font-size: 0.8em; margin-top: 10px;">Architecture verticale (Top-to-Bottom) : Utilisateur (haut) → Traitement → Utilisateur (bas)</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                fontSize: '13px'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            }
+        });
+    </script>
+</body>
+</html>

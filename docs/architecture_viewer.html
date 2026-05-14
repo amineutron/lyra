@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Lyra RAG V2</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark'
+        });
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4ecdc4;
+            margin-bottom: 30px;
+        }
+        .diagram-container {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            border-left: 4px solid #4ecdc4;
+        }
+        .info h2 {
+            color: #4ecdc4;
+            margin-top: 0;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .legend-item {
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .legend-item .color-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Architecture Lyra RAG V2</h1>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#ff6b6b', 'primaryTextColor':'#fff', 'primaryBorderColor':'#c92a2a', 'lineColor':'#4ecdc4', 'secondaryColor':'#45b7d1', 'tertiaryColor':'#96ceb4'}}}%%
+graph LR
+    %% INPUT
+    User["👤 User<br/>Input"]
+    Whisper["🎙️ Whisper<br/>STT"]
+
+    %% INTENT
+    Intent["🎯 Intent<br/>Classifier<br/>(Llama 3B)"]
+
+    %% PATHS
+    subgraph PATH1["📚 PATH: Info/Discussion"]
+        Lyra1["💬 LYRA<br/>(Llama 3B)<br/>Dialogue"]
+    end
+
+    subgraph PATH2["⚡ PATH: Action MCP"]
+        direction TB
+        RAG["🔍 RAG<br/>ChromaDB+BM25"]
+        TOON["📦 TOON<br/>Compress"]
+        Ephaistos["🔧 EPHAISTOS<br/>(Qwen 7B)"]
+        Hestia["⚙️ HESTIA<br/>Executor"]
+
+        RAG --> TOON --> Ephaistos --> Hestia
+    end
+
+    %% MCP SERVERS
+    subgraph MCP["🌐 MCP SERVERS"]
+        direction TB
+        Fedora["🖥️ FEDORA<br/>VM/Backup"]
+        Catt["📺 CATT<br/>Cast"]
+        Hue["💡 HUE<br/>Lights"]
+        TV["📺 TV<br/>Control"]
+    end
+
+    %% OUTPUT
+    Lyra2["💬 LYRA<br/>Format"]
+    Output["💭 Response"]
+    Piper["🗣️ Piper<br/>TTS"]
+
+    %% FLUX PRINCIPAL
+    User -->|Texte| Intent
+    User -->|Vocal| Whisper --> Intent
+
+    Intent -->|"info<br/>discussion"| Lyra1 --> Output
+    Intent -->|"demande"| PATH2
+
+    Hestia --> Fedora & Catt & Hue & TV
+    Fedora & Catt & Hue & TV --> Lyra2
+
+    Lyra2 --> Output
+    Output -->|Vocal| Piper
+
+    %% Styles
+    classDef inputStyle fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef intentStyle fill:#4ecdc4,stroke:#45b7d1,stroke-width:3px,color:#fff
+    classDef pathStyle fill:#95e1d3,stroke:#38ada9,stroke-width:2px,color:#000
+    classDef actionStyle fill:#feca57,stroke:#ee5a24,stroke-width:2px,color:#000
+    classDef mcpStyle fill:#a29bfe,stroke:#6c5ce7,stroke-width:2px,color:#fff
+    classDef outputStyle fill:#fd79a8,stroke:#e84393,stroke-width:3px,color:#fff
+
+    class User,Whisper inputStyle
+    class Intent intentStyle
+    class Lyra1,Lyra2 pathStyle
+    class RAG,TOON,Ephaistos,Hestia actionStyle
+    class Fedora,Catt,Hue,TV mcpStyle
+    class Output,Piper outputStyle
+            </pre>
+        </div>
+
+        <div class="info">
+            <h2>📊 Légende des composants</h2>
+            <div class="legend">
+                <div class="legend-item" style="background: #ff6b6b33;">
+                    <div class="color-box" style="background: #ff6b6b;"></div>
+                    <div><strong>Input</strong><br/>User, Whisper STT</div>
+                </div>
+                <div class="legend-item" style="background: #4ecdc433;">
+                    <div class="color-box" style="background: #4ecdc4;"></div>
+                    <div><strong>Intent</strong><br/>Classifier (Llama 3B)</div>
+                </div>
+                <div class="legend-item" style="background: #95e1d333;">
+                    <div class="color-box" style="background: #95e1d3;"></div>
+                    <div><strong>Knowledge</strong><br/>LYRA Voice</div>
+                </div>
+                <div class="legend-item" style="background: #feca5733;">
+                    <div class="color-box" style="background: #feca57;"></div>
+                    <div><strong>Action</strong><br/>RAG, TOON, EPHAISTOS, HESTIA</div>
+                </div>
+                <div class="legend-item" style="background: #a29bfe33;">
+                    <div class="color-box" style="background: #a29bfe;"></div>
+                    <div><strong>MCP</strong><br/>FEDORA, CATT, HUE, TV</div>
+                </div>
+                <div class="legend-item" style="background: #fd79a833;">
+                    <div class="color-box" style="background: #fd79a8;"></div>
+                    <div><strong>Output</strong><br/>Response, Piper TTS</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info">
+            <h2>💾 Ressources VRAM (~10.5 GB)</h2>
+            <ul>
+                <li><strong>EPHAISTOS</strong> (Qwen 7B): ~5 GB</li>
+                <li><strong>LYRA</strong> (Llama 3B): ~2.5 GB</li>
+                <li><strong>Embeddings</strong>: ~0.5 GB</li>
+                <li><strong>Whisper</strong>: ~1.5 GB</li>
+            </ul>
+        </div>
+
+        <div class="info">
+            <h2>🔄 Flux de données</h2>
+            <ul>
+                <li><strong>Ligne pleine</strong> → Flux principal de données</li>
+                <li><strong>Ligne pointillée</strong> → Contexte et mémoire</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

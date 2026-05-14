@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Complète Lyra</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .version {
+            font-size: 1.1rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+        }
+
+        .diagram-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .export-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-svg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-png {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .mermaid {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+
+        .legend {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 2.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            border-left: 5px solid #667eea;
+        }
+
+        .legend h3 {
+            color: #2C3E50;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-left: 4px solid;
+        }
+
+        .arrow-solid { background: #D6EAF8; color: #2471A3; border-color: #3498DB; }
+        .arrow-dashed { background: #FCF3CF; color: #D68910; border-color: #F39C12; }
+        .arrow-thick { background: #D5F4E6; color: #27AE60; border-color: #2ECC71; }
+        .arrow-dotted { background: #FADBD8; color: #C0392B; border-color: #E74C3C; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 2rem;
+            margin-top: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .diagram-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 LYRA - Architecture Complète</h1>
+            <div class="subtitle">Assistant Vocal DevOps Local - RAG V2</div>
+            <div class="version">Version 2.0 | Pipeline RAG Hybrid | 100% Local/Offline</div>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">80</div>
+                <div class="stat-label">Outils MCP</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Serveurs MCP</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">2</div>
+                <div class="stat-label">LLM (7B + 3B)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">10.5GB</div>
+                <div class="stat-label">VRAM Utilisée</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Modes RAG</div>
+            </div>
+        </div>
+
+        <div class="diagram-section">
+            <div class="export-buttons">
+                <button class="export-btn btn-svg" onclick="exportAsSVG()">
+                    📄 Exporter en SVG
+                </button>
+                <button class="export-btn btn-png" onclick="exportAsPNG()">
+                    🖼️ Exporter en PNG
+                </button>
+            </div>
+            <div class="mermaid" id="mermaid-diagram">
+graph LR
+    %% Styles
+    classDef userStyle fill:#4A90E2,stroke:#2E5C8A,color:#fff,stroke-width:3px
+    classDef entryStyle fill:#9B59B6,stroke:#6C3483,color:#fff,stroke-width:2px
+    classDef intentStyle fill:#E67E22,stroke:#CA6F1E,color:#fff,stroke-width:2px
+    classDef ragStyle fill:#3498DB,stroke:#2471A3,color:#fff,stroke-width:2px
+    classDef ephStyle fill:#E74C3C,stroke:#C0392B,color:#fff,stroke-width:2px
+    classDef lyraStyle fill:#1ABC9C,stroke:#17A589,color:#fff,stroke-width:2px
+    classDef hestiaStyle fill:#F39C12,stroke:#D68910,color:#fff,stroke-width:2px
+    classDef mcpStyle fill:#2ECC71,stroke:#27AE60,color:#fff,stroke-width:2px
+    classDef moduleStyle fill:#95A5A6,stroke:#7F8C8D,color:#fff,stroke-width:2px
+    classDef sceneStyle fill:#E91E63,stroke:#C2185B,color:#fff,stroke-width:2px
+    classDef configStyle fill:#607D8B,stroke:#455A64,color:#fff,stroke-width:2px
+
+    %% INPUT
+    USER_IN["👤 UTILISATEUR<br/>INPUT<br/>━━━━━━━━━<br/>Texte / Vocal<br/>Whisper STT"]:::userStyle
+
+    %% ENTRY POINTS
+    ENTRY["📍 POINTS ENTRÉE<br/>━━━━━━━━━<br/>run.sh<br/>main_rag.py V2<br/>main.py V1"]:::entryStyle
+
+    %% CONFIG
+    CONFIG["⚙️ CONFIG<br/>━━━━━━━━━<br/>config.yaml<br/>CLAUDE.md<br/>prompts/"]:::configStyle
+
+    %% PHASE 1 - Intent Classification
+    INTENT["🧠 INTENT CLASSIFIER<br/>━━━━━━━━━<br/>LYRA Llama 3B<br/>3 classes"]:::intentStyle
+    INTENT_OUT{"Intent?<br/>━━━━━<br/>demande<br/>info<br/>discussion"}:::intentStyle
+
+    %% PHASE 2 - RAG Hybrid (si demande)
+    subgraph RAG["🔍 RAG HYBRID RETRIEVAL"]
+        RAG_SEM["📊 Semantic<br/>ChromaDB<br/>all-MiniLM-L6-v2"]:::ragStyle
+        RAG_KEY["📝 Keyword<br/>BM25<br/>rank-bm25"]:::ragStyle
+        RAG_FUSION["⚡ RRF Fusion<br/>Top 5 specs<br/>rrf_k=60"]:::ragStyle
+
+        RAG_SEM --> RAG_FUSION
+        RAG_KEY --> RAG_FUSION
+    end
+
+    %% PHASE 3 - TOON Encoding
+    TOON["🗜️ TOON ENCODER<br/>━━━━━━━━━<br/>Compact 40%<br/>Token economy"]:::ragStyle
+
+    %% PHASE 4 - EPHAISTOS Analysis
+    EPHAISTOS["⚙️ EPHAISTOS<br/>━━━━━━━━━<br/>Qwen 2.5 Coder 7B<br/>Analyse specs MCP<br/>Extract args JSON"]:::ephStyle
+
+    %% PHASE 5 - Args Complete?
+    ARGS_CHECK{"Args<br/>Complete?"}:::ephStyle
+
+    %% PHASE 6 - LYRA Voice
+    LYRA["🗣️ LYRA VOICE<br/>━━━━━━━━━<br/>Llama 3.2 3B<br/>Clarification<br/>Formatage réponse"]:::lyraStyle
+
+    %% PHASE 7 - Confirmation
+    CONFIRM{"🔒 Confirmation<br/>━━━━━<br/>User approve<br/>Mode perf"}:::hestiaStyle
+
+    %% PHASE 8 - HESTIA Execution
+    HESTIA["🎯 HESTIA<br/>━━━━━━━━━<br/>Executor MCP<br/>Metrics<br/>Notion logging"]:::hestiaStyle
+
+    %% MCP SERVERS
+    subgraph MCP["🔧 MCP SERVERS - 80 outils"]
+        MCP_FEDORA["💻 FEDORA<br/>17 outils<br/>VM + Backup"]:::mcpStyle
+        MCP_TV["📺 TV Philips<br/>14 outils<br/>pylips-mcp"]:::mcpStyle
+        MCP_HUE["💡 HUE<br/>24 outils<br/>Lumieres"]:::mcpStyle
+        MCP_CATT["📹 CATT<br/>15 outils<br/>Cast video"]:::mcpStyle
+        MCP_DENON["🔊 DENON<br/>10 outils<br/>Home Cinema"]:::mcpStyle
+        MCP_MERMAID["📊 MERMAID<br/>5 outils<br/>Diagrammes"]:::mcpStyle
+    end
+
+    %% MODULES V1 (Compatibility)
+    subgraph MODULES["📦 MODULES V1 - Compatibility"]
+        MOD_LLM["llm.py<br/>Ollama client"]:::moduleStyle
+        MOD_MCP["mcp.py<br/>MCPManager"]:::moduleStyle
+        MOD_UI["ui.py<br/>Interface UI"]:::moduleStyle
+        MOD_AUDIO["audio.py<br/>Whisper + Piper"]:::moduleStyle
+        MOD_N8N["n8n.py<br/>Webhooks<br/>Discord"]:::moduleStyle
+    end
+
+    %% SESSION MEMORY
+    MEMORY["💾 SESSION MEMORY<br/>━━━━━━━━━<br/>Historique 10 tours<br/>PendingAction<br/>PendingChoice"]:::ragStyle
+
+    %% ASYNC OPERATIONS
+    ASYNC["⏱️ ASYNC OPS<br/>━━━━━━━━━<br/>n8n webhook<br/>subprocess fallback<br/>Discord notify"]:::hestiaStyle
+
+    %% SCENE IRON MAN
+    SCENE["🎬 SCENE IRON MAN<br/>━━━━━━━━━<br/>7 phases 33s<br/>TV + Hue sync<br/>State machine"]:::sceneStyle
+
+    %% OUTPUT
+    TTS["🔊 TTS OUTPUT<br/>━━━━━━━━━<br/>Piper fr_FR<br/>upmc-medium"]:::lyraStyle
+    USER_OUT["👤 UTILISATEUR<br/>OUTPUT<br/>━━━━━━━━━<br/>Réponse formatée<br/>Vocale / Texte"]:::userStyle
+
+    %% MAIN FLOW
+    USER_IN ==>|"Input"| ENTRY
+    ENTRY ==>|"Load config"| CONFIG
+    CONFIG -.->|"Configure"| ENTRY
+    ENTRY ==>|"V2 Pipeline"| INTENT
+
+    INTENT ==>|"Classify"| INTENT_OUT
+
+    INTENT_OUT ==>|"demande 80%"| RAG
+    INTENT_OUT -.->|"info 15%"| LYRA
+    INTENT_OUT -.->|"discussion 5%"| LYRA
+
+    RAG_FUSION ==>|"Specs MCP"| TOON
+    TOON ==>|"Compact specs"| EPHAISTOS
+
+    EPHAISTOS ==>|"Tool call JSON"| ARGS_CHECK
+    ARGS_CHECK ==>|"OUI"| CONFIRM
+    ARGS_CHECK -.->|"NON"| LYRA
+
+    LYRA -.->|"Clarification"| USER_OUT
+    LYRA ==>|"Format result"| USER_OUT
+
+    CONFIRM ==>|"✅ Approved"| HESTIA
+    CONFIRM -.->|"❌ Refused"| LYRA
+
+    HESTIA ==>|"Execute MCP"| MCP
+
+    MCP_FEDORA --> ASYNC
+    ASYNC -.->|"Callback"| USER_OUT
+
+    MCP ==>|"Result"| LYRA
+
+    %% SCENE
+    HESTIA -.->|"Trigger vocal"| SCENE
+    SCENE -.->|"TV + Hue control"| MCP_TV
+    SCENE -.->|"Lights sync"| MCP_HUE
+
+    %% TTS
+    LYRA ==>|"Text"| TTS
+    TTS ==>|"Audio"| USER_OUT
+
+    %% MEMORY
+    INTENT <-.->|"Context"| MEMORY
+    EPHAISTOS <-.->|"Pending"| MEMORY
+    LYRA <-.->|"History"| MEMORY
+
+    %% MODULES V1
+    ENTRY -.->|"V1 Legacy"| MODULES
+    MODULES -.->|"Compatibility"| MCP
+            </div>
+
+            <div class="legend">
+                <h3>📌 Légende des Flèches</h3>
+                <div class="legend-grid">
+                    <div class="legend-item arrow-solid">
+                        <strong>=></strong> Flow principal obligatoire (données critiques)
+                    </div>
+                    <div class="legend-item arrow-dashed">
+                        <strong>-.-> </strong> Flow conditionnel ou optionnel
+                    </div>
+                    <div class="legend-item arrow-thick">
+                        <strong><==></strong> Communication bidirectionnelle (contexte partagé)
+                    </div>
+                    <div class="legend-item arrow-dotted">
+                        <strong>~~~</strong> Configuration ou initialisation
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 2rem; background: white; border-radius: 8px;">
+                    <h4 style="color: #2C3E50; margin-bottom: 1.5rem; font-size: 1.3rem;">🎯 Composants Clés</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #9B59B6;">
+                            <strong>🧠 IntentClassifier</strong><br/>
+                            <small>LYRA Llama 3B - Classification 3 classes (demande/info/discussion)</small>
+                        </div>
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #3498DB;">
+                            <strong>🔍 RAG Hybrid</strong><br/>
+                            <small>ChromaDB (semantic) + BM25 (keyword) + RRF Fusion</small>
+                        </div>
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #E74C3C;">
+                            <strong>⚙️ EPHAISTOS</strong><br/>
+                            <small>Qwen 2.5 Coder 7B - Analyse specs MCP + Extract args JSON</small>
+                        </div>
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #1ABC9C;">
+                            <strong>🗣️ LYRA Voice</strong><br/>
+                            <small>Llama 3.2 3B - Clarification + Formatage réponses</small>
+                        </div>
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #F39C12;">
+                            <strong>🎯 HESTIA</strong><br/>
+                            <small>Executor MCP + Metrics + Notion logging optionnel</small>
+                        </div>
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #2ECC71;">
+                            <strong>🔧 MCP Servers</strong><br/>
+                            <small>6 serveurs: FEDORA, TV, HUE, CATT, DENON, MERMAID (80 outils)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 2rem; background: #FEF9E7; border-radius: 8px; border-left: 4px solid #F39C12;">
+                    <h4 style="color: #D68910; margin-bottom: 1rem; font-size: 1.2rem;">⚡ Flux Typique: "démarre preprod-09"</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 2; color: #7D6608;">
+                        <li><strong>Input:</strong> User dit "démarre preprod-09" (vocal Whisper ou texte)</li>
+                        <li><strong>Intent:</strong> IntentClassifier → "demande" (action MCP)</li>
+                        <li><strong>RAG:</strong> Semantic + BM25 → Top 5 specs → TOON encode</li>
+                        <li><strong>EPHAISTOS:</strong> Analyse specs → {"name": "vm_start", "arguments": {"vm_name": "preprod-09"}}</li>
+                        <li><strong>Confirmation:</strong> User approve [O/n/d]</li>
+                        <li><strong>HESTIA:</strong> Execute MCP fedora.vm_start</li>
+                        <li><strong>MCP:</strong> Bash script → virsh start preprod-09 → IP 192.168.122.146</li>
+                        <li><strong>LYRA:</strong> Format: "✅ preprod-09 est démarrée (IP: 192.168.122.146)"</li>
+                        <li><strong>Output:</strong> Texte + optionnel TTS Piper</li>
+                    </ol>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 2rem; background: #E8F8F5; border-radius: 8px; border-left: 4px solid #1ABC9C;">
+                    <h4 style="color: #117A65; margin-bottom: 1rem; font-size: 1.2rem;">🎬 Fonctionnalités Spéciales</h4>
+                    <ul style="margin-left: 1.5rem; line-height: 2; color: #0E6655;">
+                        <li><strong>Session Memory:</strong> Contexte 10 tours + PendingAction pour clarifications multi-tour</li>
+                        <li><strong>TOON Encoding:</strong> Compact specs MCP ~40% tokens avant EPHAISTOS</li>
+                        <li><strong>Async Operations:</strong> vm_clone, backup_create → n8n webhook → subprocess fallback</li>
+                        <li><strong>Discord Notifications:</strong> Callbacks async + erreurs critiques</li>
+                        <li><strong>Scene Iron Man:</strong> 7 phases 33s synchronisant TV + Hue (state machine IDLE→STABLE)</li>
+                        <li><strong>Mode Performance:</strong> Skip confirmation pour domotique (jamais VM/backup dangereux)</li>
+                        <li><strong>HDMI ARC Redirect:</strong> tv.volume_* → denon.* automatique si home cinema actif</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 2rem; background: #EBDEF0; border-radius: 8px; border-left: 4px solid #9B59B6;">
+                    <h4 style="color: #6C3483; margin-bottom: 1rem; font-size: 1.2rem;">💻 Stack Technique</h4>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.8; color: #512E5F;">
+                        <strong>🧠 LLM Backend:</strong> Qwen 2.5 Coder 7B (EPHAISTOS) ~5 GB VRAM<br/>
+                        <strong>🗣️ LLM Frontend:</strong> Llama 3.2 3B (LYRA) ~2.5 GB VRAM<br/>
+                        <strong>🔍 RAG:</strong> ChromaDB + BM25 (rank-bm25) ~0.5 GB<br/>
+                        <strong>📊 Embeddings:</strong> all-MiniLM-L6-v2 (sentence-transformers)<br/>
+                        <strong>🎤 STT:</strong> faster-whisper base CUDA ~1.5 GB<br/>
+                        <strong>🔊 TTS:</strong> Piper fr_FR-upmc-medium<br/>
+                        <strong>🔧 MCP:</strong> stdio protocol multi-serveurs<br/>
+                        <strong>📡 Async:</strong> n8n webhooks + subprocess.Popen<br/>
+                        <strong>🔔 Notifications:</strong> Discord webhooks<br/>
+                        <strong>💾 Database:</strong> ChromaDB (vector store) + session state<br/>
+                        <strong>⚙️ Config:</strong> YAML + Python dataclasses<br/>
+                        <strong>🐍 Python:</strong> 3.12 (venv) asyncio + rich console
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>LYRA RAG V2</strong> - Assistant Vocal DevOps Local</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">Architecture Production Ready | 100% Local/Offline</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">Documentation générée le 7 février 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                fontSize: '14px',
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            }
+        });
+
+        // Fonction pour exporter en SVG
+        function exportAsSVG() {
+            const mermaidDiv = document.getElementById('mermaid-diagram');
+            const svg = mermaidDiv.querySelector('svg');
+
+            if (!svg) {
+                alert('❌ Veuillez attendre que le diagramme soit chargé');
+                return;
+            }
+
+            // Clone le SVG pour ne pas modifier l'original
+            const svgClone = svg.cloneNode(true);
+
+            // Ajouter le namespace XML si absent
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+            // Convertir en string
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+
+            // Télécharger
+            const downloadLink = document.createElement('a');
+            downloadLink.href = svgUrl;
+            downloadLink.download = 'lyra-architecture-complete.svg';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(svgUrl);
+
+            console.log('✅ SVG exporté avec succès');
+        }
+
+        // Fonction pour exporter en PNG
+        function exportAsPNG() {
+            const mermaidDiv = document.getElementById('mermaid-diagram');
+            const svg = mermaidDiv.querySelector('svg');
+
+            if (!svg) {
+                alert('❌ Veuillez attendre que le diagramme soit chargé');
+                return;
+            }
+
+            // Récupérer les dimensions du SVG
+            const bbox = svg.getBoundingClientRect();
+            const width = bbox.width;
+            const height = bbox.height;
+
+            // Créer un canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = width * 2; // 2x pour meilleure qualité
+            canvas.height = height * 2;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(2, 2);
+
+            // Convertir SVG en image
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+            img.onload = function() {
+                // Fond blanc
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, width, height);
+
+                // Dessiner l'image
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Télécharger
+                canvas.toBlob(function(blob) {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = pngUrl;
+                    downloadLink.download = 'lyra-architecture-complete.png';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    URL.revokeObjectURL(pngUrl);
+                    URL.revokeObjectURL(url);
+                    console.log('✅ PNG exporté avec succès');
+                });
+            };
+            img.src = url;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+{
+  "_comment_general": "Dictionnaire de synonymes pour LYRA RAG Enhanced",
+  "_comment_limit": "Max 80 keywords, max 6 synonymes par mot-clé (limite TOPO)",
+  "_comment_strategy": "Expansion pour améliorer recall RAG",
+  "_section_vm_fedora": "VM et Backups (FEDORA MCP - 17 outils)",
+  "vm": [
+    "machine",
+    "serveur",
+    "instance",
+    "virtuelle"
+  ],
+  "backup": [
+    "sauvegarde",
+    "copie",
+    "archive"
+  ],
+  "snapshot": [
+    "instantané",
+    "image",
+    "capture"
+  ],
+  "clone": [
+    "duplique",
+    "copie",
+    "reproduit"
+  ],
+  "démarre": [
+    "lance",
+    "boot",
+    "active"
+  ],
+  "arrête": [
+    "stop",
+    "coupe",
+    "ferme"
+  ],
+  "liste": [
+    "affiche",
+    "montre",
+    "énumère"
+  ],
+  "vérifie": [
+    "check",
+    "contrôle",
+    "valide"
+  ],
+  "supprime": [
+    "efface",
+    "détruit",
+    "retire"
+  ],
+  "restaure": [
+    "récupère",
+    "rétablit",
+    "recharge"
+  ],
+  "_section_hue": "Philips Hue (HUE MCP - 24 outils)",
+  "lumière": [
+    "éclairage",
+    "lampe",
+    "ampoule"
+  ],
+  "lumières": [
+    "éclairages",
+    "lampes",
+    "ampoules"
+  ],
+  "allume": [
+    "active",
+    "démarre",
+    "éclaire"
+  ],
+  "éteins": [
+    "coupe",
+    "désactive",
+    "ferme"
+  ],
+  "luminosité": [
+    "brightness",
+    "intensité",
+    "éclairage"
+  ],
+  "couleur": [
+    "teinte",
+    "ambiance",
+    "nuance"
+  ],
+  "scène": [
+    "ambiance",
+    "preset",
+    "mode"
+  ],
+  "tamise": [
+    "baisse",
+    "diminue",
+    "réduit"
+  ],
+  "_section_tv": "TV Philips (TV MCP - 14 outils)",
+  "télé": [
+    "tv",
+    "télévision",
+    "écran"
+  ],
+  "volume": [
+    "son",
+    "audio"
+  ],
+  "lance": [
+    "ouvre",
+    "démarre",
+    "affiche"
+  ],
+  "chaîne": [
+    "canal",
+    "channel"
+  ],
+  "_section_cast": "CATT Cast (CATT MCP - 15 outils)",
+  "diffuse": [
+    "cast",
+    "stream",
+    "envoie",
+    "joue"
+  ],
+  "vidéo": [
+    "film",
+    "contenu"
+  ],
+  "pause": [
+    "met en pause",
+    "arrête temporairement"
+  ],
+  "_section_denon": "Denon Home Cinema (DENON MCP - 10 outils)",
+  "ampli": [
+    "amplificateur",
+    "receiver",
+    "home cinema"
+  ],
+  "source": [
+    "entrée",
+    "input",
+    "canal"
+  ],
+  "_section_common_verbs": "Verbes d'action",
+  "crée": [
+    "fait",
+    "génère",
+    "construit"
+  ],
+  "affiche": [
+    "montre",
+    "présente",
+    "liste"
+  ],
+  "change": [
+    "modifie",
+    "ajuste",
+    "règle"
+  ],
+  "configure": [
+    "paramètre",
+    "ajuste",
+    "règle"
+  ],
+  "_section_common_nouns": "Noms communs",
+  "état": [
+    "statut",
+    "status",
+    "situation"
+  ],
+  "configuration": [
+    "config",
+    "paramétrage",
+    "réglage"
+  ],
+  "fichier": [
+    "file",
+    "document"
+  ],
+  "système": [
+    "serveur",
+    "machine",
+    "infrastructure"
+  ],
+  "_section_adjectives": "Adjectifs",
+  "tout": [
+    "tous",
+    "toutes",
+    "entier"
+  ],
+  "rapide": [
+    "vite",
+    "quick",
+    "fast"
+  ],
+  "lent": [
+    "slow",
+    "doucement"
+  ]
+}

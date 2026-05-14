@@ -1,0 +1,50 @@
+{
+  "actions": {
+    "allume": ["active", "démarre", "éclaire", "lance", "enclenche", "met en marche"],
+    "éteins": ["coupe", "désactive", "ferme", "arrête", "stoppe", "met hors tension"],
+    "démarre": ["lance", "boot", "initialise", "active", "start", "met en route"],
+    "arrête": ["stoppe", "coupe", "kill", "termine", "stop", "suspend"],
+    "monte": ["augmente", "hausse", "up", "élève", "incrémente"],
+    "baisse": ["diminue", "réduit", "down", "abaisse", "décrémente"],
+    "change": ["modifie", "ajuste", "règle", "configure", "set"],
+    "liste": ["affiche", "montre", "énumère", "donne", "présente"],
+    "clone": ["duplique", "copie", "reproduit", "réplique"],
+    "caste": ["diffuse", "stream", "envoie", "projette", "transmet"],
+    "restaure": ["récupère", "rétablit", "recharge", "restore"],
+    "vérifie": ["check", "contrôle", "valide", "teste"],
+    "crée": ["génère", "fabrique", "produit", "construit"],
+    "supprime": ["détruit", "efface", "enlève", "retire"],
+    "active": ["allume", "enclenche", "démarre", "lance"],
+    "lance": ["démarre", "ouvre", "exécute", "start"],
+    "fais": ["crée", "génère", "effectue", "réalise"]
+  },
+  "entities": {
+    "lumières": ["éclairages", "lampes", "ampoules", "lights", "éclairage", "lampe"],
+    "télé": ["tv", "télévision", "écran", "television", "téléviseur"],
+    "vm": ["machine", "serveur", "instance", "virtuelle", "machine virtuelle"],
+    "ampli": ["amplificateur", "receiver", "home cinema", "denon", "AVR"],
+    "volume": ["son", "audio", "niveau sonore", "intensité sonore"],
+    "snapshot": ["instantané", "image", "capture", "sauvegarde instantanée"],
+    "backup": ["sauvegarde", "copie", "archive", "sauvegarde de sécurité"],
+    "scène": ["preset", "ambiance", "mode", "configuration"],
+    "couleur": ["teinte", "nuance", "coloris", "color"],
+    "luminosité": ["brightness", "intensité", "éclairage", "clarté"],
+    "cast": ["diffusion", "streaming", "projection", "transmission"],
+    "source": ["entrée", "input", "canal", "voie"],
+    "ambilight": ["LEDs", "rétroéclairage", "éclairage d'ambiance", "backlight"],
+    "mute": ["sourdine", "silence", "coupure son", "muet"],
+    "app": ["application", "appli", "programme", "logiciel"],
+    "groupe": ["pièce", "zone", "ensemble", "salle"],
+    "chambre": ["bedroom", "chambre à coucher", "pièce"],
+    "salon": ["living", "séjour", "salle de séjour"]
+  },
+  "verbs_by_category": {
+    "power": ["allume", "éteins", "démarre", "arrête", "active", "désactive"],
+    "volume": ["monte", "baisse", "augmente", "diminue", "règle", "ajuste"],
+    "color": ["change", "mets", "règle", "ajuste", "passe", "configure"],
+    "list": ["liste", "affiche", "montre", "donne", "énumère"],
+    "create": ["crée", "fais", "génère", "lance", "démarre"],
+    "delete": ["supprime", "détruit", "efface", "retire"],
+    "cast": ["caste", "diffuse", "envoie", "projette", "stream"]
+  }
+}

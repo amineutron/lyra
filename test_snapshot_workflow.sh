@@ -1,0 +1,28 @@
+#!/bin/bash
+# Test automatique du workflow snapshot
+# Date: 2026-02-08
+
+echo "=== Test Workflow Snapshot (Problèmes 1-4) ==="
+echo ""
+echo "Test 1: 'fais un snapshot de preprod-01'"
+echo "  - Attendu: Proposition nom par défaut"
+echo "  - Acceptation entrée vide"
+echo "  - Validation snapshot_name ≠ vm_name"
+echo ""
+echo "Commande:"
+echo "  cd /home/amineutron/dev/lyra && ./run.sh"
+echo ""
+echo "Entrées à tester:"
+echo "  >>> fais un snapshot de preprod-01"
+echo "  >>> [Entrée vide]  # Accepte nom par défaut"
+echo "  >>> O              # Confirme l'action"
+echo ""
+echo "Test 2: Liste des snapshots"
+echo "  >>> liste les snapshots de preprod-01"
+echo ""
+echo "Test 3: Validation confusion vm_name"
+echo "  >>> fais un snapshot de preprod-01"
+echo "  >>> preprod-01     # Devrait auto-suffixer"
+echo ""
+echo "=== Lancer Lyra pour tester ==="
+echo "cd /home/amineutron/dev/lyra && ./run.sh"

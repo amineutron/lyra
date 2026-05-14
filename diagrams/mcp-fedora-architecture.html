@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture MCP Fedora & Lyra</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .diagram-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .diagram-title {
+            font-size: 1.8rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .diagram-description {
+            color: #666;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .mermaid {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+        }
+
+        .legend h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .legend-item {
+            display: inline-block;
+            margin: 0.5rem 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .legend-green { background: #50C878; color: white; }
+        .legend-orange { background: #F39C12; color: white; }
+        .legend-red { background: #E74C3C; color: white; }
+        .legend-yellow { background: #FFD700; color: black; }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 2rem;
+            margin-top: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .diagram-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 Architecture MCP Fedora & Lyra</h1>
+            <div class="subtitle">De la commande vocale à l'exécution KVM</div>
+        </header>
+
+        <!-- Diagramme 1 : Architecture MCP Fedora -->
+        <div class="diagram-section">
+            <h2 class="diagram-title">📊 Diagramme 1 : Architecture MCP Fedora</h2>
+            <p class="diagram-description">
+                Vue d'ensemble du MCP Fedora avec ses 17 outils organisés en 2 catégories : VM Controller (10 outils) et Backup Manager (7 outils).
+                Le diagramme montre le flux de confirmation Human-in-the-Loop et la distinction entre opérations synchrones et asynchrones.
+            </p>
+            <div class="mermaid">
+graph LR
+    %% Styles
+    classDef userStyle fill:#4A90E2,stroke:#2E5C8A,color:#fff,stroke-width:2px
+    classDef vmStyle fill:#50C878,stroke:#2E7D4E,color:#fff,stroke-width:2px
+    classDef backupStyle fill:#9B59B6,stroke:#6C3483,color:#fff,stroke-width:2px
+    classDef dangerStyle fill:#E74C3C,stroke:#C0392B,color:#fff,stroke-width:3px
+    classDef asyncStyle fill:#F39C12,stroke:#D68910,color:#fff,stroke-width:2px
+    classDef confirmStyle fill:#FFD700,stroke:#DAA520,color:#000,stroke-width:2px
+    classDef mcpStyle fill:#3498DB,stroke:#2471A3,color:#fff,stroke-width:2px
+
+    %% INPUT
+    USER_IN["👤 Utilisateur<br/>INPUT"]:::userStyle
+
+    %% MCP Fedora
+    MCP["🔧 MCP FEDORA<br/>17 outils"]:::mcpStyle
+
+    %% Confirmation
+    CONFIRM{"🔒 Confirmation"}:::confirmStyle
+
+    %% Execution
+    EXEC["⚡ Exécution<br/>SYNC / ASYNC"]:::vmStyle
+
+    %% Results
+    RESULT["📊 Résultat"]:::vmStyle
+
+    %% OUTPUT
+    USER_OUT["👤 Utilisateur<br/>OUTPUT"]:::userStyle
+
+    %% Main Flow
+    USER_IN -->|"demarre preprod-09"| MCP
+    MCP -->|"vm_start detecté"| CONFIRM
+    CONFIRM -->|"✅ Approuvé"| EXEC
+    CONFIRM -->|"❌ Refusé"| USER_OUT
+    EXEC -->|"VM démarrée"| RESULT
+    RESULT -->|"Formatage réponse"| USER_OUT
+
+    %% Details MCP
+    subgraph TOOLS["Outils disponibles"]
+        direction TB
+        VM_TOOLS["🖥️ VM CONTROLLER<br/>vm_start, vm_stop, vm_clone..."]:::vmStyle
+        BKP_TOOLS["💾 BACKUP MANAGER<br/>backup_create, backup_list..."]:::backupStyle
+    end
+
+    MCP -.-> TOOLS
+            </div>
+            <div class="legend">
+                <h3>📌 Légende</h3>
+                <span class="legend-item legend-green">🟢 Opération sûre</span>
+                <span class="legend-item legend-orange">🟡 Opération longue (async)</span>
+                <span class="legend-item legend-red">🔴 Opération DANGEREUSE</span>
+                <span class="legend-item legend-yellow">⚙️ Confirmation obligatoire</span>
+            </div>
+        </div>
+
+        <!-- Diagramme 2 : Flux complet Lyra → MCP Fedora -->
+        <div class="diagram-section">
+            <h2 class="diagram-title">🚀 Diagramme 2 : Pipeline complet Lyra RAG V2 → MCP Fedora</h2>
+            <p class="diagram-description">
+                Workflow complet de bout en bout : depuis la commande vocale "démarre preprod-09" jusqu'à l'exécution MCP et la réponse formatée.
+                Le pipeline RAG V2 utilise 7 phases : Classification d'intention → Recherche RAG Hybrid → Encodage TOON → Analyse EPHAISTOS →
+                Confirmation → Exécution HESTIA → Formatage LYRA Voice.
+            </p>
+            <div class="mermaid">
+graph TB
+    %% Styles
+    classDef userStyle fill:#4A90E2,stroke:#2E5C8A,color:#fff,stroke-width:2px
+    classDef intentStyle fill:#9B59B6,stroke:#6C3483,color:#fff,stroke-width:2px
+    classDef ragStyle fill:#3498DB,stroke:#2471A3,color:#fff,stroke-width:2px
+    classDef ephStyle fill:#E67E22,stroke:#CA6F1E,color:#fff,stroke-width:2px
+    classDef lyraStyle fill:#1ABC9C,stroke:#17A589,color:#fff,stroke-width:2px
+    classDef hestiaStyle fill:#E74C3C,stroke:#C0392B,color:#fff,stroke-width:2px
+    classDef mcpStyle fill:#2ECC71,stroke:#27AE60,color:#fff,stroke-width:2px
+    classDef toonStyle fill:#F39C12,stroke:#D68910,color:#fff,stroke-width:2px
+
+    %% INPUT
+    USER_IN["👤 UTILISATEUR INPUT<br/>demarre preprod-09"]:::userStyle
+
+    %% PHASE 1
+    WHISPER["🎤 Whisper STT<br/>mode vocal"]:::userStyle
+    INTENT["📍 PHASE 1<br/>🧠 IntentClassifier<br/>LYRA Llama 3B"]:::intentStyle
+    INTENT_OUT{"demande /<br/>info /<br/>discussion"}:::intentStyle
+
+    %% PHASE 2
+    PHASE2_TITLE["🔍 PHASE 2 - RAG Hybrid"]:::ragStyle
+    PREFILTER["🎯 Pre-filtrage<br/>vm → FEDORA boost"]:::ragStyle
+    RAG_SEM["📊 Semantic<br/>ChromaDB"]:::ragStyle
+    RAG_KEY["📝 BM25<br/>Keywords"]:::ragStyle
+    FUSION["⚡ RRF Fusion<br/>Top 5 specs MCP"]:::ragStyle
+
+    %% PHASE 3
+    TOON["🗜️ PHASE 3<br/>TOON Encoder<br/>Compact 40%"]:::toonStyle
+
+    %% PHASE 4
+    EPHAISTOS["🔧 PHASE 4<br/>⚙️ EPHAISTOS<br/>Qwen 2.5 Coder 7B"]:::ephStyle
+    TOOL_CALL["📋 Tool Call JSON<br/>vm_start preprod-09"]:::ephStyle
+
+    %% PHASE 5
+    CONFIRM{"✋ PHASE 5<br/>🔒 Confirmation<br/>Utilisateur"}:::hestiaStyle
+
+    %% PHASE 6
+    HESTIA["⚡ PHASE 6<br/>🎯 HESTIA Executor"]:::hestiaStyle
+    ASYNC_CHECK{"Async?"}:::hestiaStyle
+    N8N["📡 n8n webhook"]:::mcpStyle
+    SUBPROCESS["🔄 subprocess fallback"]:::mcpStyle
+    MCP["🔧 fedora-agents MCP"]:::mcpStyle
+    BASH["📜 kvm-start.sh"]:::mcpStyle
+    KVM["💻 virsh KVM"]:::mcpStyle
+    DISCORD["🔔 Discord Webhook<br/>Notification async"]:::hestiaStyle
+
+    %% PHASE 7
+    RESULT["📊 Résultat MCP<br/>status: running<br/>IP: 192.168.122.146"]:::mcpStyle
+    LYRA_VOICE["💬 PHASE 7<br/>🗣️ LYRA Voice<br/>Llama 3.2 3B"]:::lyraStyle
+    PIPER["🔊 Piper TTS<br/>fr_FR"]:::lyraStyle
+
+    %% OUTPUT
+    USER_OUT["👤 UTILISATEUR OUTPUT<br/>✅ preprod-09 démarrée"]:::userStyle
+
+    %% MAIN FLOW
+    USER_IN --> WHISPER
+    WHISPER --> INTENT
+    INTENT --> INTENT_OUT
+
+    INTENT_OUT -->|"demande"| PHASE2_TITLE
+    INTENT_OUT -.->|"info/discussion"| LYRA_VOICE
+
+    PHASE2_TITLE --> PREFILTER
+    PREFILTER --> RAG_SEM
+    PREFILTER --> RAG_KEY
+    RAG_SEM --> FUSION
+    RAG_KEY --> FUSION
+
+    FUSION --> TOON
+    TOON --> EPHAISTOS
+    EPHAISTOS --> TOOL_CALL
+    TOOL_CALL --> CONFIRM
+
+    CONFIRM -->|"✅ Approuvé"| HESTIA
+    CONFIRM -.->|"❌ Refusé"| USER_OUT
+
+    HESTIA --> ASYNC_CHECK
+    ASYNC_CHECK -->|"Non: SYNC"| MCP
+    ASYNC_CHECK -->|"Oui: ASYNC"| N8N
+    N8N -->|"Échec"| SUBPROCESS
+    N8N -->|"Succès"| MCP
+    SUBPROCESS --> MCP
+
+    MCP --> BASH
+    BASH --> KVM
+    KVM --> RESULT
+
+    %% Discord notification pour opérations async
+    KVM -.->|"Si async: notification"| DISCORD
+    DISCORD -.->|"✅ vm_clone terminé"| USER_OUT
+
+    RESULT --> LYRA_VOICE
+    LYRA_VOICE --> PIPER
+    PIPER --> USER_OUT
+            </div>
+            <div class="legend">
+                <h3>📌 Composants clés</h3>
+                <div style="margin-top: 1rem; line-height: 2;">
+                    <div><strong>🧠 LYRA (Llama 3B):</strong> Classification d'intention + Dialogue personnalisé</div>
+                    <div><strong>⚙️ EPHAISTOS (Qwen 7B):</strong> Analyse specs MCP + Extraction arguments</div>
+                    <div><strong>🔍 RAG Hybrid:</strong> ChromaDB (semantic) + BM25 (keywords)</div>
+                    <div><strong>🗜️ TOON:</strong> Encodage compact des specs (~40% économie tokens)</div>
+                    <div><strong>🎯 HESTIA:</strong> Executor MCP avec gestion async</div>
+                    <div><strong>🖥️ MCP Fedora:</strong> 17 outils VM/Backup</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>Lyra RAG V2</strong> - Architecture Production Ready</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">Généré le 7 février 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                fontSize: '16px',
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

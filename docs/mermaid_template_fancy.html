@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}}</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: '{{THEME}}',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            }
+        });
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        h1 {
+            text-align: center;
+            color: #4ecdc4;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #95e1d3;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .flow-hint {
+            text-align: center;
+            color: #4ecdc4;
+            font-size: 1.1em;
+            margin: 10px 0 20px 0;
+            font-weight: bold;
+        }
+
+        /* Conteneur du diagramme */
+        .diagram-container {
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .diagram-container pre.mermaid {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Info boxes */
+        .info {
+            background: rgba(78, 205, 196, 0.1);
+            border-left: 4px solid #4ecdc4;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info h2 {
+            color: #4ecdc4;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+
+        .info h3 {
+            color: #95e1d3;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info p {
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+
+        .info ul {
+            line-height: 1.8;
+        }
+
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Légende */
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Actions */
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 5px;
+            background: #4ecdc4;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #45b7d1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn-secondary {
+            background: #aa96da;
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #9b87c9;
+        }
+
+        .btn-tertiary {
+            background: #f38181;
+            color: #fff;
+        }
+
+        .btn-tertiary:hover {
+            background: #e06d6d;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #888;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .legend {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+
+        /* Animation au chargement */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeIn 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{TITLE}}</h1>
+        <div class="subtitle">{{SUBTITLE}}</div>
+        <div class="flow-hint">← Flux de gauche à droite : Entrée → Traitement → Sortie →</div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+{{MERMAID_CODE}}
+            </pre>
+        </div>
+
+        {{EXTRA_CONTENT}}
+
+        <div class="actions">
+            <button class="btn" onclick="downloadSVG()">📥 Télécharger SVG</button>
+            <button class="btn btn-secondary" onclick="downloadPNG()">📸 Télécharger PNG</button>
+            <button class="btn btn-tertiary" onclick="copyCode()">📋 Copier le code</button>
+        </div>
+
+        <div class="footer">
+            <p>Généré avec MermaidViewer Fancy Template</p>
+            <p style="font-size: 0.9em;">Lyra V2 | 100% Local/Offline</p>
+        </div>
+    </div>
+
+    <script>
+        function downloadSVG() {
+            const svg = document.querySelector('svg');
+            if (!svg) return alert('❌ Diagramme non trouvé');
+
+            const svgClone = svg.cloneNode(true);
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgClone);
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '{{FILENAME}}.svg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showFeedback(event.target, '✅ SVG téléchargé !');
+        }
+
+        function downloadPNG() {
+            const svg = document.querySelector('svg');
+            if (!svg) return alert('❌ Diagramme non trouvé');
+
+            const bbox = svg.getBoundingClientRect();
+            const width = bbox.width;
+            const height = bbox.height;
+
+            const canvas = document.createElement('canvas');
+            const scale = 2;
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(scale, scale);
+
+            const svgClone = svg.cloneNode(true);
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('width', width);
+            svgClone.setAttribute('height', height);
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgClone);
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+
+            img.onload = function() {
+                // Fond dark pour les SVG transparents
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(function(blob) {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = '{{FILENAME}}.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(pngUrl);
+                    URL.revokeObjectURL(url);
+
+                    showFeedback(event.target, '✅ PNG téléchargé !');
+                }, 'image/png');
+            };
+
+            img.onerror = function() {
+                alert('❌ Erreur lors de la conversion PNG. Essayez le SVG.');
+                URL.revokeObjectURL(url);
+            };
+
+            img.src = url;
+        }
+
+        function copyCode() {
+            const code = `{{MERMAID_CODE}}`;
+
+            navigator.clipboard.writeText(code).then(() => {
+                showFeedback(event.target, '✅ Code copié !');
+            }).catch(() => {
+                // Fallback pour les navigateurs sans clipboard API
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+
+                try {
+                    document.execCommand('copy');
+                    showFeedback(event.target, '✅ Code copié !');
+                } catch (err) {
+                    alert('❌ Erreur lors de la copie. Copiez manuellement depuis le diagramme.');
+                }
+
+                document.body.removeChild(textarea);
+            });
+        }
+
+        function showFeedback(btn, message) {
+            if (!btn) return;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = message;
+            btn.style.pointerEvents = 'none';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.pointerEvents = 'auto';
+            }, 2000);
+        }
+
+        // Scroll horizontal hint pour les diagrammes larges
+        window.addEventListener('load', function() {
+            const diagramContainer = document.querySelector('.diagram-container');
+            if (diagramContainer.scrollWidth > diagramContainer.clientWidth) {
+                const hint = document.createElement('div');
+                hint.style.cssText = 'text-align:center;color:#4ecdc4;font-size:0.9em;margin-top:10px;';
+                hint.innerHTML = '💡 Scrollez horizontalement pour voir le diagramme complet';
+                diagramContainer.parentNode.insertBefore(hint, diagramContainer.nextSibling);
+
+                // Masquer le hint après scroll
+                diagramContainer.addEventListener('scroll', function() {
+                    hint.style.opacity = '0';
+                    setTimeout(() => hint.remove(), 300);
+                }, { once: true });
+            }
+        });
+    </script>
+</body>
+</html>

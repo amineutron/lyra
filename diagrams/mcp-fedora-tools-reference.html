@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Fedora - Référence Complète</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .version {
+            font-size: 1rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+        }
+
+        .diagram-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .mermaid {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+
+        .legend {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            border-left: 5px solid #2ECC71;
+        }
+
+        .legend h3 {
+            color: #2C3E50;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-safe { background: #D5F4E6; color: #27AE60; border-left: 4px solid #27AE60; }
+        .legend-moderate { background: #FCF3CF; color: #F39C12; border-left: 4px solid #F39C12; }
+        .legend-critical { background: #FADBD8; color: #E74C3C; border-left: 4px solid #E74C3C; }
+        .legend-async { background: #D6EAF8; color: #3498DB; border-left: 4px solid #3498DB; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 2rem;
+            margin-top: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .diagram-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 MCP Fedora - Référence Complète</h1>
+            <div class="subtitle">Contrôle VM KVM & Gestion de Backups</div>
+            <div class="version">Version 1.0 | fedora-agents MCP Server</div>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">17</div>
+                <div class="stat-label">Outils Totaux</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">10</div>
+                <div class="stat-label">VM Controller</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Backup Manager</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Opérations Async</div>
+            </div>
+        </div>
+
+        <div class="diagram-section">
+            <div class="mermaid">
+graph TB
+    %% Styles
+    classDef headerStyle fill:#2C3E50,stroke:#34495E,color:#fff,stroke-width:3px,font-size:18px
+    classDef safeStyle fill:#D5F4E6,stroke:#27AE60,color:#27AE60,stroke-width:2px
+    classDef moderateStyle fill:#FCF3CF,stroke:#F39C12,color:#D68910,stroke-width:2px
+    classDef criticalStyle fill:#FADBD8,stroke:#E74C3C,color:#C0392B,stroke-width:3px
+    classDef asyncStyle fill:#D6EAF8,stroke:#3498DB,color:#2471A3,stroke-width:2px
+
+    %% Main Header
+    FEDORA["🔧 MCP FEDORA<br/>17 outils KVM & Backup"]:::headerStyle
+
+    %% VM Controller Section
+    subgraph VM_CONTROLLER["🖥️ VM CONTROLLER - 10 outils"]
+
+        subgraph POWER["⚡ Gestion d'alimentation"]
+            VM_START["vm_start<br/>━━━━━━━━━━━━━━━<br/>📝 Démarre une VM KVM<br/>📋 Args: vm_name"]:::safeStyle
+            VM_STOP["vm_stop<br/>━━━━━━━━━━━━━━━<br/>📝 Arrête une VM KVM<br/>📋 Args: vm_name, force?<br/>⚠️ force=true → Critique"]:::moderateStyle
+            VM_DESTROY["vm_destroy<br/>━━━━━━━━━━━━━━━<br/>📝 Supprime définitivement une VM<br/>📋 Args: vm_name<br/>🔴 OPÉRATION DESTRUCTIVE"]:::criticalStyle
+        end
+
+        subgraph STATUS["📊 Monitoring & Vérification"]
+            VM_STATUS["vm_status<br/>━━━━━━━━━━━━━━━<br/>📝 Affiche le statut des VMs<br/>📋 Args: vm_name? (optionnel)<br/>💡 Sans arg: toutes les VMs"]:::safeStyle
+            VM_VERIFY["vm_verify<br/>━━━━━━━━━━━━━━━<br/>📝 Vérifie l'intégrité d'une VM<br/>📋 Args: vm_name<br/>🔍 Contrôle disque virtuel"]:::safeStyle
+        end
+
+        subgraph OPERATIONS["🔧 Opérations & Transferts"]
+            VM_EXEC["vm_exec<br/>━━━━━━━━━━━━━━━<br/>📝 Exécute une commande SSH<br/>📋 Args: vm_name, command<br/>🔐 Nécessite SSH actif"]:::safeStyle
+            VM_COPY["vm_copy<br/>━━━━━━━━━━━━━━━<br/>📝 Copie fichiers local ↔ VM<br/>📋 Args: vm_name, local_path,<br/>     remote_path"]:::safeStyle
+            VM_SNAPSHOT["vm_snapshot<br/>━━━━━━━━━━━━━━━<br/>📝 Crée un snapshot<br/>📋 Args: vm_name, snapshot_name<br/>💾 Point de restauration"]:::safeStyle
+        end
+
+        subgraph CLONING["🔄 Clonage"]
+            VM_CLONE["vm_clone<br/>━━━━━━━━━━━━━━━<br/>📝 Clone une VM<br/>📋 Args: source_vm, new_vm_name,<br/>     start? (optionnel)<br/>⏱️ ASYNC ~60s"]:::asyncStyle
+            VM_CLONE_SYS["vm_clone_system<br/>━━━━━━━━━━━━━━━<br/>📝 Clone système complet<br/>📋 Args: source_vm, new_vm_name<br/>⏱️ ASYNC 10-30 min<br/>⚠️ Opération lourde"]:::asyncStyle
+        end
+    end
+
+    %% Backup Manager Section
+    subgraph BACKUP_MANAGER["💾 BACKUP MANAGER - 7 outils"]
+
+        subgraph BACKUP_CREATE["📦 Création & Listing"]
+            BKP_CREATE["backup_create<br/>━━━━━━━━━━━━━━━<br/>📝 Crée un backup d'une VM<br/>📋 Args: vm_name<br/>⏱️ ASYNC ~2 min<br/>🗜️ Compression automatique"]:::asyncStyle
+            BKP_LIST["backup_list<br/>━━━━━━━━━━━━━━━<br/>📝 Liste les backups disponibles<br/>📋 Args: vm_name? (optionnel)<br/>📊 Filtre par VM si spécifié"]:::safeStyle
+            BKP_STATUS["backup_status<br/>━━━━━━━━━━━━━━━<br/>📝 Dashboard global des backups<br/>📋 Args: aucun<br/>📈 Vue d'ensemble système"]:::safeStyle
+        end
+
+        subgraph BACKUP_RESTORE["🔄 Restauration & Nettoyage"]
+            BKP_RESTORE["backup_restore<br/>━━━━━━━━━━━━━━━<br/>📝 Restaure un backup<br/>📋 Args: vm_name, backup_name<br/>⏱️ ASYNC ~2 min<br/>🔴 ÉCRASE LA VM ACTUELLE"]:::criticalStyle
+            BKP_VERIFY["backup_verify<br/>━━━━━━━━━━━━━━━<br/>📝 Vérifie l'intégrité d'un backup<br/>📋 Args: backup_name<br/>🔍 Contrôle archives"]:::safeStyle
+            BKP_CLEAN["backup_clean<br/>━━━━━━━━━━━━━━━<br/>📝 Nettoie les anciens backups<br/>📋 Args: vm_name, keep (int)<br/>🔴 SUPPRIME BACKUPS ANCIENS<br/>💡 keep=3 → garde les 3 derniers"]:::criticalStyle
+        end
+    end
+
+    %% Connections
+    FEDORA --> VM_CONTROLLER
+    FEDORA --> BACKUP_MANAGER
+            </div>
+
+            <div class="legend">
+                <h3>📌 Légende & Conventions</h3>
+                <div class="legend-grid">
+                    <div class="legend-item legend-safe">
+                        <strong>🟢 SÛRE</strong> - Opération en lecture ou sans risque
+                    </div>
+                    <div class="legend-item legend-moderate">
+                        <strong>🟡 MODÉRÉE</strong> - Attention requise selon paramètres
+                    </div>
+                    <div class="legend-item legend-critical">
+                        <strong>🔴 CRITIQUE</strong> - Opération destructive irréversible
+                    </div>
+                    <div class="legend-item legend-async">
+                        <strong>⏱️ ASYNC</strong> - Exécution asynchrone (n8n/subprocess)
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: white; border-radius: 8px;">
+                    <h4 style="color: #2C3E50; margin-bottom: 1rem;">📍 Backend Technique</h4>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.8; color: #34495E;">
+                        <strong>📂 Scripts Bash:</strong> /home/amineutron/dev/fedora-setup/scripts/agents/<br/>
+                        <strong>🔧 Stack:</strong> KVM/libvirt, virsh, virt-clone, qemu-img<br/>
+                        <strong>🔐 Sudoers:</strong> /etc/sudoers.d/lyra (passwordless sudo)<br/>
+                        <strong>⏱️ Timeout MCP:</strong> 120 secondes<br/>
+                        <strong>📡 Async:</strong> n8n webhook → fallback subprocess.Popen<br/>
+                        <strong>🔔 Notifications:</strong> Discord webhook (async_complete, errors)
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 1.5rem; background: #FEF9E7; border-radius: 8px; border-left: 4px solid #F39C12;">
+                    <h4 style="color: #D68910; margin-bottom: 0.5rem;">⚠️ Sécurité & Confirmations</h4>
+                    <ul style="margin-left: 1.5rem; line-height: 1.8; color: #7D6608;">
+                        <li><strong>Confirmation obligatoire</strong> pour toutes les actions MCP</li>
+                        <li><strong>Mode Performance:</strong> Skip pour domotique uniquement (jamais pour VM/Backup critiques)</li>
+                        <li><strong>Read-First:</strong> Vérification état VM avant action</li>
+                        <li><strong>Règle Double Clé:</strong> Snapshot requis < 5 min avant vm_destroy</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>MCP Fedora</strong> - fedora-agents Server v1.0</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">Documentation technique générée le 7 février 2026</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">Lyra RAG V2 - Architecture Production Ready</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                fontSize: '14px',
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            }
+        });
+    </script>
+</body>
+</html>

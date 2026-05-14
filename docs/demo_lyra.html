@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Lyra - Flux de commande simplifié</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark'
+        });
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4ecdc4;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        .diagram-container {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 20px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            border-left: 4px solid #4ecdc4;
+        }
+        .info h2 {
+            color: #4ecdc4;
+            margin-top: 0;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d2d2d;
+            border-radius: 8px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4ecdc4;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #45b7d1;
+        }
+        .btn-secondary {
+            background: #6c5ce7;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background: #a29bfe;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Lyra - Flux de commande simplifié</h1>
+        <div class="subtitle">Assistant DevOps vocal avec contrôle domotique</div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#ff6b6b', 'secondaryColor':'#4ecdc4', 'tertiaryColor':'#a29bfe'}}}%%
+graph LR
+    User["👤 Utilisateur<br/>Commande vocale"]
+    Whisper["🎙️ Whisper STT<br/>Transcription"]
+    Lyra["🤖 LYRA<br/>Assistant IA"]
+    MCP["🔌 MCP Servers"]
+    VM["💻 VMs KVM"]
+    Hue["💡 Philips Hue"]
+    TV["📺 TV Philips"]
+
+    User -->|Audio| Whisper
+    Whisper -->|Texte| Lyra
+    Lyra -->|Commandes| MCP
+
+    MCP --> VM
+    MCP --> Hue
+    MCP --> TV
+
+    VM -->|Résultats| Lyra
+    Hue -->|Status| Lyra
+    TV -->|Status| Lyra
+
+    Lyra -->|Réponse| User
+
+    classDef userStyle fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef sttStyle fill:#feca57,stroke:#ee5a24,stroke-width:2px,color:#000
+    classDef lyraStyle fill:#4ecdc4,stroke:#45b7d1,stroke-width:3px,color:#fff
+    classDef mcpStyle fill:#a29bfe,stroke:#6c5ce7,stroke-width:3px,color:#fff
+    classDef deviceStyle fill:#95e1d3,stroke:#38ada9,stroke-width:2px,color:#000
+
+    class User userStyle
+    class Whisper sttStyle
+    class Lyra lyraStyle
+    class MCP mcpStyle
+    class VM,Hue,TV deviceStyle
+
+            </pre>
+        </div>
+
+        
+        <div class="info">
+            <h2>📊 Légende des composants</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+        
+                <div style="padding: 10px; border-radius: 5px; background: #ff6b6b33; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #ff6b6b; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>Utilisateur</strong><br/>
+                        <span style="font-size: 0.9em;">Commandes vocales ou texte</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #feca5733; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #feca57; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>STT</strong><br/>
+                        <span style="font-size: 0.9em;">Whisper - Transcription audio</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #4ecdc433; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #4ecdc4; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>LYRA</strong><br/>
+                        <span style="font-size: 0.9em;">Assistant IA principal</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #a29bfe33; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #a29bfe; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>MCP</strong><br/>
+                        <span style="font-size: 0.9em;">Serveurs de contrôle</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #95e1d333; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #95e1d3; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>Devices</strong><br/>
+                        <span style="font-size: 0.9em;">VMs, Lumières, TV</span>
+                    </div>
+                </div>
+            
+            </div>
+        </div>
+        
+        <div class="info">
+            <h2>🔄 🔄 Flux de données</h2>
+            
+    <ol>
+        <li><strong>Input</strong>: L'utilisateur émet une commande vocale</li>
+        <li><strong>Transcription</strong>: Whisper convertit l'audio en texte</li>
+        <li><strong>Analyse</strong>: LYRA comprend l'intention et génère les commandes MCP</li>
+        <li><strong>Exécution</strong>: Les serveurs MCP exécutent les actions</li>
+        <li><strong>Response</strong>: LYRA formate et renvoie le résultat</li>
+    </ol>
+    
+        </div>
+        
+        <div class="info">
+            <h2>💬 💬 Exemples de commandes</h2>
+            
+    <ul>
+        <li>"Démarre la VM preprod-09"</li>
+        <li>"Allume les lumières de la chambre"</li>
+        <li>"Monte le volume de la TV"</li>
+        <li>"Crée un backup de la VM prod-01"</li>
+        <li>"Caste cette vidéo YouTube sur la TV"</li>
+    </ul>
+    
+        </div>
+        
+
+        <div class="actions">
+            <button class="btn" onclick="downloadSVG()">📥 Télécharger SVG</button>
+            <button class="btn btn-secondary" onclick="downloadPNG()">📸 Télécharger PNG</button>
+            <button class="btn" onclick="copyCode()">📋 Copier le code</button>
+        </div>
+    </div>
+
+    <script>
+        function downloadSVG() {
+            const svg = document.querySelector('svg');
+            if (!svg) return alert('Diagramme non trouvé');
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svg);
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lyra_demo.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPNG() {
+            const svg = document.querySelector('svg');
+            if (!svg) return alert('Diagramme non trouvé');
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const img = new Image();
+
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'lyra_demo.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            };
+
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        }
+
+        function copyCode() {
+            const code = `%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#ff6b6b', 'secondaryColor':'#4ecdc4', 'tertiaryColor':'#a29bfe'}}}%%
+graph LR
+    User["👤 Utilisateur<br/>Commande vocale"]
+    Whisper["🎙️ Whisper STT<br/>Transcription"]
+    Lyra["🤖 LYRA<br/>Assistant IA"]
+    MCP["🔌 MCP Servers"]
+    VM["💻 VMs KVM"]
+    Hue["💡 Philips Hue"]
+    TV["📺 TV Philips"]
+
+    User -->|Audio| Whisper
+    Whisper -->|Texte| Lyra
+    Lyra -->|Commandes| MCP
+
+    MCP --> VM
+    MCP --> Hue
+    MCP --> TV
+
+    VM -->|Résultats| Lyra
+    Hue -->|Status| Lyra
+    TV -->|Status| Lyra
+
+    Lyra -->|Réponse| User
+
+    classDef userStyle fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef sttStyle fill:#feca57,stroke:#ee5a24,stroke-width:2px,color:#000
+    classDef lyraStyle fill:#4ecdc4,stroke:#45b7d1,stroke-width:3px,color:#fff
+    classDef mcpStyle fill:#a29bfe,stroke:#6c5ce7,stroke-width:3px,color:#fff
+    classDef deviceStyle fill:#95e1d3,stroke:#38ada9,stroke-width:2px,color:#000
+
+    class User userStyle
+    class Whisper sttStyle
+    class Lyra lyraStyle
+    class MCP mcpStyle
+    class VM,Hue,TV deviceStyle
+`;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ Code copié dans le presse-papiers !');
+            }).catch(() => {
+                alert('❌ Erreur lors de la copie');
+            });
+        }
+    </script>
+</body>
+</html>

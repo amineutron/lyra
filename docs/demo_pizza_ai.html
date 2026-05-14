@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍕 PizzaBot AI - Architecture Complète</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark'
+        });
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4ecdc4;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        .diagram-container {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 20px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            border-left: 4px solid #4ecdc4;
+        }
+        .info h2 {
+            color: #4ecdc4;
+            margin-top: 0;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d2d2d;
+            border-radius: 8px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4ecdc4;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #45b7d1;
+        }
+        .btn-secondary {
+            background: #6c5ce7;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background: #a29bfe;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍕 PizzaBot AI - Architecture Complète</h1>
+        <div class="subtitle">Pizzeria autonome avec IA, robots et livraison par drone</div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+
+%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#ff6b6b', 'secondaryColor':'#feca57', 'tertiaryColor':'#a29bfe'}}}%%
+graph LR
+    subgraph FRONTEND["🛒 FRONTEND"]
+        client["👤 Client"]
+        app["📱 App Mobile<br/>(React Native)"]
+        web["🌐 Web App<br/>(Next.js)"]
+    end
+
+    subgraph AI["🤖 AI LAYER"]
+        vision["👁️ Vision AI<br/>(YOLOv8)"]
+        nlp["💬 NLP Bot<br/>(GPT-4)"]
+        recommender["🎯 Recommender<br/>(ML Model)"]
+    end
+
+    subgraph BACKEND["⚙️ BACKEND"]
+        api["🔌 API Gateway<br/>(FastAPI)"]
+        order["📝 Order Manager"]
+        payment["💳 Payment<br/>(Stripe API)"]
+    end
+
+    subgraph KITCHEN["👨‍🍳 KITCHEN"]
+        robot["🤖 Pizza Robot<br/>(Arduino + Servo)"]
+        oven["🔥 Smart Oven<br/>(IoT)"]
+        quality["✅ Quality Check<br/>(Computer Vision)"]
+    end
+
+    subgraph DELIVERY["🚗 DELIVERY"]
+        dispatch["📍 Dispatch AI<br/>(Route Optimizer)"]
+        drone["🚁 Drone<br/>(GPS + Sensors)"]
+        tracker["📡 Live Tracking"]
+    end
+
+    %% FLUX PRINCIPAL
+    client -->|Commande| app
+    client -->|Commande| web
+    app --> api
+    web --> api
+
+    api --> nlp
+    nlp -->|"Suggestions"| recommender
+    recommender --> client
+
+    api --> order
+    order --> payment
+    payment -->|"Confirmé"| robot
+
+    robot --> oven
+    oven --> quality
+    quality --> dispatch
+
+    dispatch --> drone
+    drone --> tracker
+    tracker -.->|"Suivi temps réel"| client
+
+    robot --> vision
+    quality --> vision
+
+    %% STYLES
+    classDef frontendStyle fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef aiStyle fill:#4ecdc4,stroke:#45b7d1,stroke-width:3px,color:#fff
+    classDef backendStyle fill:#feca57,stroke:#ee5a24,stroke-width:2px,color:#000
+    classDef kitchenStyle fill:#a29bfe,stroke:#6c5ce7,stroke-width:2px,color:#fff
+    classDef deliveryStyle fill:#95e1d3,stroke:#38ada9,stroke-width:2px,color:#000
+
+    class client,app,web frontendStyle
+    class vision,nlp,recommender aiStyle
+    class api,order,payment backendStyle
+    class robot,oven,quality kitchenStyle
+    class dispatch,drone,tracker deliveryStyle
+
+            </pre>
+        </div>
+
+        
+        <div class="info">
+            <h2>📊 Légende des composants</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+        
+                <div style="padding: 10px; border-radius: 5px; background: #ff6b6b33; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #ff6b6b; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>Frontend</strong><br/>
+                        <span style="font-size: 0.9em;">Interfaces utilisateur (Mobile, Web)</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #4ecdc433; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #4ecdc4; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>AI Layer</strong><br/>
+                        <span style="font-size: 0.9em;">Intelligence artificielle (Vision, NLP, ML)</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #feca5733; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #feca57; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>Backend</strong><br/>
+                        <span style="font-size: 0.9em;">API et gestion des commandes</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #a29bfe33; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #a29bfe; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>Kitchen</strong><br/>
+                        <span style="font-size: 0.9em;">Robots de préparation et contrôle qualité</span>
+                    </div>
+                </div>
+            
+                <div style="padding: 10px; border-radius: 5px; background: #95e1d333; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border-radius: 4px; background: #95e1d3; border: 2px solid #fff;"></div>
+                    <div>
+                        <strong>Delivery</strong><br/>
+                        <span style="font-size: 0.9em;">Livraison autonome par drone</span>
+                    </div>
+                </div>
+            
+            </div>
+        </div>
+        
+        <div class="info">
+            <h2>🔧 Stack Technique</h2>
+            
+    <ul>
+        <li><strong>Frontend</strong>: React Native (mobile) + Next.js (web)</li>
+        <li><strong>Vision AI</strong>: YOLOv8 (détection ingrédients + qualité)</li>
+        <li><strong>NLP Bot</strong>: GPT-4 (suggestions et support client)</li>
+        <li><strong>Recommender</strong>: TensorFlow (ML personnalisé)</li>
+        <li><strong>API</strong>: FastAPI (Python asyncio)</li>
+        <li><strong>Payment</strong>: Stripe API v2023</li>
+        <li><strong>Robot</strong>: Arduino Mega + Servos industriels</li>
+        <li><strong>Oven</strong>: IoT (MQTT + Raspberry Pi)</li>
+        <li><strong>Dispatch</strong>: Route optimization (OR-Tools)</li>
+        <li><strong>Drone</strong>: DJI SDK + GPS RTK</li>
+    </ul>
+    
+        </div>
+        
+        <div class="info">
+            <h2>✨ Features Principales</h2>
+            
+    <ul>
+        <li>🤖 <strong>Préparation 100% automatisée</strong> : Robot pizzaïolo + four intelligent</li>
+        <li>👁️ <strong>Contrôle qualité IA</strong> : Vision pour vérifier chaque pizza</li>
+        <li>💬 <strong>Chatbot intelligent</strong> : Suggestions personnalisées via GPT-4</li>
+        <li>🚁 <strong>Livraison par drone</strong> : Autonome avec suivi temps réel</li>
+        <li>📊 <strong>Recommandations ML</strong> : Apprend vos préférences</li>
+        <li>⚡ <strong>Temps de préparation</strong> : 8 minutes de la commande au four</li>
+    </ul>
+    
+        </div>
+        
+        <div class="info">
+            <h2>⚡ Performance</h2>
+            
+    <ul>
+        <li><strong>Commande → Préparation</strong>: ~30 secondes (API + paiement)</li>
+        <li><strong>Préparation → Four</strong>: ~8 minutes (robot)</li>
+        <li><strong>Cuisson</strong>: ~12 minutes (four intelligent)</li>
+        <li><strong>Dispatch → Livraison</strong>: ~15 minutes (drone)</li>
+        <li><strong>TOTAL</strong>: ~35 minutes commande → livraison 🚀</li>
+    </ul>
+    
+        </div>
+        
+
+        <div class="actions">
+            <button class="btn" onclick="downloadSVG()">📥 Télécharger SVG</button>
+            <button class="btn btn-secondary" onclick="downloadPNG()">📸 Télécharger PNG</button>
+            <button class="btn" onclick="copyCode()">📋 Copier le code</button>
+        </div>
+    </div>
+
+    <script>
+        function downloadSVG() {
+            const svg = document.querySelector('svg');
+            if (!svg) return alert('❌ Diagramme non trouvé');
+
+            // Cloner le SVG pour ne pas modifier l'original
+            const svgClone = svg.cloneNode(true);
+
+            // Ajouter les styles inline pour préserver l'apparence
+            const svgStyles = window.getComputedStyle(svg);
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgClone);
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pizzabot_architecture.svg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Feedback visuel
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✅ Téléchargé !';
+            setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+        }
+
+        function downloadPNG() {
+            const svg = document.querySelector('svg');
+            if (!svg) return alert('❌ Diagramme non trouvé');
+
+            // Obtenir les dimensions du SVG
+            const bbox = svg.getBoundingClientRect();
+            const width = bbox.width;
+            const height = bbox.height;
+
+            // Créer un canvas avec les bonnes dimensions
+            const canvas = document.createElement('canvas');
+            const scale = 2; // Pour une meilleure qualité
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(scale, scale);
+
+            // Cloner et préparer le SVG
+            const svgClone = svg.cloneNode(true);
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('width', width);
+            svgClone.setAttribute('height', height);
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgClone);
+
+            // Créer un blob et une URL pour l'image
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+
+            img.onload = function() {
+                // Dessiner sur le canvas avec fond (pour les SVG transparents)
+                ctx.fillStyle = '#1e1e1e'; // Fond dark
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convertir en PNG et télécharger
+                canvas.toBlob(function(blob) {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = 'pizzabot_architecture.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(pngUrl);
+                    URL.revokeObjectURL(url);
+
+                    // Feedback visuel
+                    const btn = event.target;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Téléchargé !';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                }, 'image/png');
+            };
+
+            img.onerror = function() {
+                alert('❌ Erreur lors de la conversion PNG. Essayez le SVG.');
+                URL.revokeObjectURL(url);
+            };
+
+            img.src = url;
+        }
+
+        function copyCode() {
+            const code = `
+%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#ff6b6b', 'secondaryColor':'#feca57', 'tertiaryColor':'#a29bfe'}}}%%
+graph LR
+    subgraph FRONTEND["🛒 FRONTEND"]
+        client["👤 Client"]
+        app["📱 App Mobile<br/>(React Native)"]
+        web["🌐 Web App<br/>(Next.js)"]
+    end
+
+    subgraph AI["🤖 AI LAYER"]
+        vision["👁️ Vision AI<br/>(YOLOv8)"]
+        nlp["💬 NLP Bot<br/>(GPT-4)"]
+        recommender["🎯 Recommender<br/>(ML Model)"]
+    end
+
+    subgraph BACKEND["⚙️ BACKEND"]
+        api["🔌 API Gateway<br/>(FastAPI)"]
+        order["📝 Order Manager"]
+        payment["💳 Payment<br/>(Stripe API)"]
+    end
+
+    subgraph KITCHEN["👨‍🍳 KITCHEN"]
+        robot["🤖 Pizza Robot<br/>(Arduino + Servo)"]
+        oven["🔥 Smart Oven<br/>(IoT)"]
+        quality["✅ Quality Check<br/>(Computer Vision)"]
+    end
+
+    subgraph DELIVERY["🚗 DELIVERY"]
+        dispatch["📍 Dispatch AI<br/>(Route Optimizer)"]
+        drone["🚁 Drone<br/>(GPS + Sensors)"]
+        tracker["📡 Live Tracking"]
+    end
+
+    %% FLUX PRINCIPAL
+    client -->|Commande| app
+    client -->|Commande| web
+    app --> api
+    web --> api
+
+    api --> nlp
+    nlp -->|"Suggestions"| recommender
+    recommender --> client
+
+    api --> order
+    order --> payment
+    payment -->|"Confirmé"| robot
+
+    robot --> oven
+    oven --> quality
+    quality --> dispatch
+
+    dispatch --> drone
+    drone --> tracker
+    tracker -.->|"Suivi temps réel"| client
+
+    robot --> vision
+    quality --> vision
+
+    %% STYLES
+    classDef frontendStyle fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef aiStyle fill:#4ecdc4,stroke:#45b7d1,stroke-width:3px,color:#fff
+    classDef backendStyle fill:#feca57,stroke:#ee5a24,stroke-width:2px,color:#000
+    classDef kitchenStyle fill:#a29bfe,stroke:#6c5ce7,stroke-width:2px,color:#fff
+    classDef deliveryStyle fill:#95e1d3,stroke:#38ada9,stroke-width:2px,color:#000
+
+    class client,app,web frontendStyle
+    class vision,nlp,recommender aiStyle
+    class api,order,payment backendStyle
+    class robot,oven,quality kitchenStyle
+    class dispatch,drone,tracker deliveryStyle
+`;
+
+            navigator.clipboard.writeText(code).then(() => {
+                // Feedback visuel
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Copié !';
+                setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+            }).catch(() => {
+                // Fallback pour les navigateurs qui ne supportent pas l'API clipboard
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+
+                try {
+                    document.execCommand('copy');
+                    const btn = event.target;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Copié !';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                } catch (err) {
+                    alert('❌ Erreur lors de la copie. Copiez manuellement depuis le diagramme.');
+                }
+
+                document.body.removeChild(textarea);
+            });
+        }
+    </script>
+</body>
+</html>

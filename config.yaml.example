@@ -1,0 +1,296 @@
+# Lyra V1 - Configuration Example
+# Copier vers config.yaml et remplir vos valeurs
+# Les secrets (mots de passe, tokens, cles API) vont dans secrets.yaml
+
+# =============================================================================
+# MODES DE FONCTIONNEMENT
+# =============================================================================
+modes:
+  default:
+    confirmation: true
+    read_first: true
+    tts_response: true
+    verbose: true
+
+  performance:
+    confirmation: false
+    read_first: false
+    tts_response: false
+    verbose: false
+    preload_connections: true
+    timeout: 5
+
+active_mode: default
+
+# =============================================================================
+# LLM Configuration (Ollama)
+# =============================================================================
+llm:
+  provider: ollama
+  model: qwen2.5-coder:14b
+  base_url: http://localhost:11434
+  timeout: 120
+  temperature: 0.3
+  max_tokens: 2048
+
+# =============================================================================
+# Speech-to-Text (faster-whisper)
+# =============================================================================
+stt:
+  engine: faster-whisper
+  model: base
+  language: fr
+  device: cuda
+  compute_type: float16
+  beam_size: 5
+  vad_filter: true
+
+# =============================================================================
+# Text-to-Speech (Piper)
+# =============================================================================
+tts:
+  engine: piper
+  model: fr_FR-upmc-medium
+  speaker_id: 0
+  length_scale: 1.0
+
+# =============================================================================
+# MCP Servers
+# =============================================================================
+mcp:
+  server_path: /chemin/vers/mcp-server/dist/index.js
+  timeout: 60
+
+  servers:
+    fedora:
+      enabled: true
+      command: node
+      args:
+        - /chemin/vers/fedora-setup/scripts/agents/mcp-server/dist/index.js
+      timeout: 120
+
+    tv:
+      enabled: true
+      command: python
+      args:
+        - /chemin/vers/lyra/mcp-servers/pylips-mcp/server.py
+      timeout: 10
+      keep_alive: true
+
+    hue:
+      enabled: true
+      command: python3
+      args:
+        - /chemin/vers/hue-mcp/hue_server.py
+      env:
+        HUE_BRIDGE_IP: "192.168.X.X"
+      timeout: 10
+      keep_alive: true
+
+    denon:
+      enabled: true
+      command: python3
+      args:
+        - /chemin/vers/lyra/mcp-servers/denon-mcp/server.py
+      timeout: 10
+      keep_alive: true
+
+# =============================================================================
+# TV Philips
+# =============================================================================
+tv:
+  host: "192.168.X.X"
+  user: null          # voir secrets.yaml -> tv.user
+  pass: null          # voir secrets.yaml -> tv.pass
+  mac: "XX:XX:XX:XX:XX:XX"   # pour Wake-on-LAN
+
+# =============================================================================
+# Denon AVR
+# =============================================================================
+denon:
+  host: "192.168.X.X"
+  port: 23
+  mac: "XXXXXXXXXXXX"
+
+# =============================================================================
+# Philips Hue
+# =============================================================================
+hue:
+  bridge_ip: "192.168.X.X"
+  username: null      # voir secrets.yaml -> hue.username
+
+# Cles pour hue_beat (Entertainment API DTLS) — a placer dans secrets.yaml:
+#   hue:
+#     clientkey: "VOTRE_CLIENTKEY_32_CHARS_HEX"      # Creee lors du pairing Entertainment
+#     area_id: "VOTRE_AREA_UUID"                      # UUID de l'Entertainment Area Hue
+#
+# Pour obtenir ces valeurs:
+#   1. Activer l'API Entertainment dans l'app Hue
+#   2. Creer une Entertainment Area (regroupement de lumieres)
+#   3. Appuyer sur le bouton du bridge puis POST /api avec devicetype et generateclientkey=true
+
+# =============================================================================
+# Home Assistant
+# =============================================================================
+homeassistant:
+  url: "http://localhost:8123"
+  token: null         # voir secrets.yaml -> homeassistant.token
+  enabled: true
+
+# =============================================================================
+# n8n Webhooks
+# =============================================================================
+n8n:
+  base_url: http://localhost:5678
+  api_key: null       # voir secrets.yaml -> n8n.api_key
+  webhooks:
+    clone-vm: /webhook/lyra-clone-vm
+    backup-create: /webhook/lyra-backup-create
+    backup-restore: /webhook/lyra-backup-restore
+  enabled: true
+
+# =============================================================================
+# Discord Notifications
+# =============================================================================
+discord:
+  webhook_url: null   # voir secrets.yaml -> discord.webhook_url
+  enabled: true
+  notify_on:
+    - async_complete
+    - errors
+
+# =============================================================================
+# Securite
+# =============================================================================
+security:
+  require_snapshot_before_delete: true
+  snapshot_max_age_minutes: 5
+  read_first_enabled: true
+  destructive_tools:
+    - vm_destroy
+    - vm_delete
+    - backup_restore
+    - backup_clean
+
+# =============================================================================
+# Audio
+# =============================================================================
+audio:
+  sample_rate: 48000
+  channels: 1
+  silence_threshold: 0.005
+  silence_duration: 1.0
+  input_device: null
+  output_device: null
+
+# =============================================================================
+# Logging
+# =============================================================================
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: null
+  rich_console: true
+
+# =============================================================================
+# Paths
+# =============================================================================
+paths:
+  prompts: prompts/
+  logs: logs/
+  cache: .cache/
+
+# =============================================================================
+# RAG Configuration
+# =============================================================================
+rag:
+  enabled: true
+  chromadb:
+    persist_directory: ".chromadb"
+    collection_name: "lyra_mcp_specs_v2"
+    embedding_model: "paraphrase-multilingual-MiniLM-L12-v2"
+  retrieval:
+    semantic_top_k: 10
+    keyword_top_k: 10
+    fusion_top_k: 5
+    rrf_k: 60
+
+# =============================================================================
+# Dual Models
+# =============================================================================
+models:
+  ephaistos:
+    name: "qwen2.5-coder:0.5b"   # experimental 3GB
+    # name: "qwen2.5-coder:7b"   # production 5GB
+    temperature: 0.1
+  lyra:
+    name: "llama3.2:1b"           # experimental 1GB
+    # name: "llama3.2:3b"         # production 2.5GB
+    temperature: 0.5
+
+# =============================================================================
+# Session
+# =============================================================================
+session:
+  max_turns: 10
+
+# =============================================================================
+# Notion Logging
+# =============================================================================
+notion:
+  enabled: false
+  database_id: null
+  token: null
+
+# =============================================================================
+# RAG Enhanced
+# =============================================================================
+rag_enhanced:
+  enabled: true
+
+  slang_normalizer:
+    enabled: true
+    dict_path: "data/slang_dict.json"
+    max_patterns: 200
+    log_normalizations: true
+
+  synonym_expander:
+    enabled: false
+    dict_path: "data/synonym_dict.json"
+    max_synonyms: 6
+    max_tokens_added: 15
+
+  context_injector:
+    enabled: true
+    db_path: "data/session_history.db"
+    default_window: 5
+    max_window: 15
+    fifo_limit: 15
+    cache_ttl: 3600
+
+  rag_3tier:
+    enabled: true
+    collections:
+      - "lyra_mcp_registry_v3"
+      - "lyra_mcp_capabilities_v3"
+      - "lyra_mcp_parameters_v3"
+    cascade_strategy: "early_stop"
+
+  feedback_loop:
+    enabled: true
+    confidence_high: 0.85
+    confidence_low: 0.60
+    suggestion_threshold: 3
+    auto_threshold: 5
+
+  metrics:
+    enabled: true
+    log_path: "logs/rag_enhanced_metrics.jsonl"
+
+# =============================================================================
+# Tracking MCP
+# =============================================================================
+tracking:
+  api_url: "http://127.0.0.1:8765"
+  server_script: "/chemin/vers/MCP/tracking/server.py"
+  venv_python: "/chemin/vers/MCP/tracking/.venv/bin/python"

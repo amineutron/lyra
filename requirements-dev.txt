@@ -1,0 +1,19 @@
+# Lyra - Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Tests
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-benchmark>=4.0.0  # Performance benchmarks (SESSION 2, 3, 5, 7, 8)
+pytest-asyncio>=0.21.0
+
+# Code Quality
+ruff>=0.1.0  # Linter rapide (remplace flake8/black/isort)
+mypy>=1.0.0  # Type checking
+
+# Coverage
+coverage>=7.0.0
+
+# Utilitaires
+ipython>=8.0.0  # REPL amélioré
+ipdb>=0.13.0    # Debugger

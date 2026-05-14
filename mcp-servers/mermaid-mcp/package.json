@@ -1,0 +1,25 @@
+{
+  "name": "mermaid-mcp",
+  "version": "1.0.1",
+  "description": "MCP Server pour génération et affichage de diagrammes Mermaid avec validation des bonnes pratiques",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py"
+  },
+  "keywords": [
+    "mcp",
+    "mermaid",
+    "diagram",
+    "visualization",
+    "lyra"
+  ],
+  "author": "Lyra Team",
+  "license": "MIT",
+  "mcp": {
+    "type": "stdio",
+    "command": "python",
+    "args": [
+      "server.py"
+    ]
+  }
+}
