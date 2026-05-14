@@ -20,20 +20,21 @@ _AMBI_COLOR_MAP = {
 def detect(query: str):
     q = normalize(query)
 
+    # tv.sound_only: "son seul", "mode musique/audio" — pas besoin de "tv" dans la phrase
+    if re.search(r'\b(?:son\s+seul|mode\s+(?:musique|audio|son|radio)|musique\s+seul(?:ement)?)\b', q):
+        return make("tv.sound_only", {}, "rule: tv sound_only", 0.97)
+
+    # tv.screen_off: "coupe/eteins l'ecran/la dalle" — "dalle" et "ecran" suffisent
+    if re.search(r'\b(?:etein[ts]?|coupes?|desactiv[ea]?[rz]?|mets?\s+en\s+veille)\b', q) and \
+            re.search(r'\b(?:ecran|affichage|dalle|image)\b', q):
+        return make("tv.screen_off", {}, "rule: tv screen_off", 0.95)
+
+    # tv.screen_on: "rallume/reactive l'ecran/la dalle"
+    if re.search(r'\b(?:rallume[rz]?|reactiv[ea]?[rz]?|remet[sz]?|remonte[rz]?|affiche[rz]?)\b', q) and \
+            re.search(r'\b(?:ecran|affichage|dalle|image)\b', q):
+        return make("tv.screen_on", {}, "rule: tv screen_on", 0.95)
+
     if re.search(_TV_KW, q):
-        # tv.screen_off: "eteins l'ecran/l'affichage", "mode musique"
-        if re.search(r'\b(?:etein[ts]?|coupes?|desactiv[ea]?[rz]?|mets?\s+en\s+veille)\b', q) and \
-                re.search(r'\b(?:ecran|affichage|dalle|image)\b', q):
-            return make("tv.screen_off", {}, "rule: tv screen_off", 0.95)
-        if re.search(r'\bmode\s+(?:musique|audio|son|radio)\b', q) and \
-                re.search(r'\b(?:tv|tele|television|ecran)\b', q):
-            return make("tv.screen_off", {}, "rule: tv screen_off (mode musique)", 0.93)
-
-        # tv.screen_on: "rallume/reactive l'ecran"
-        if re.search(r'\b(?:rallume[rz]?|reactiv[ea]?[rz]?|remet[sz]?|remonte[rz]?|affiche[rz]?)\b', q) and \
-                re.search(r'\b(?:ecran|affichage|dalle|image)\b', q):
-            return make("tv.screen_on", {}, "rule: tv screen_on", 0.95)
-
         # tv.power_off: "eteins/veille la tv" - excl. volume/ambilight/denon/ecran
         if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|arrete[rz]?|ferme[rz]?|veille|standby)\b', q) and \
                 not re.search(r'\b(?:volume|son|ambilight|denon|ecran|affichage)\b', q):

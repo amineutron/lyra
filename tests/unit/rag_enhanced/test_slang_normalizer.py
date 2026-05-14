@@ -142,12 +142,11 @@ class TestSlangNormalizer:
         """Ne normalise que les mots complets (pas des sous-chaînes)"""
         normalizer = SlangNormalizer()
 
-        # "cast" devrait être remplacé
+        # "cast" n'est plus dans le dict (retiré pour éviter la collision avec cast_scan)
         result1 = normalizer.normalize("cast video")
-        assert result1 == "diffuse vidéo"
+        assert "cast" in result1.lower()  # cast reste intact
 
-        # "broadcast" ne devrait PAS être affecté par "cast"
-        # (car "cast" doit matcher seulement en tant que mot complet)
+        # "broadcast" ne doit pas être affecté par un éventuel pattern "cast"
         result2 = normalizer.normalize("broadcast")
         assert result2 == "broadcast"  # Inchangé
 
@@ -196,7 +195,7 @@ class TestSlangNormalizerIntegration:
             ("stop all vms", "arrête all vms"),
             ("backup my server", "sauvegarde my serveur"),
             ("turn on the lights", "allume the lumières"),
-            ("cast youtube video", "diffuse youtube vidéo"),
+            ("stream youtube video", "diffuse youtube vidéo"),
         ]
 
         for original, expected in queries:
