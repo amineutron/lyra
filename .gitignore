@@ -97,3 +97,9 @@ models/
 
 # Piper TTS voices (download separately)
 voices/
+
+# Planning / WIP personnel (ne pas versionner)
+lyra-v1-CDC
+readme
+to-synthese/
+demandes/
