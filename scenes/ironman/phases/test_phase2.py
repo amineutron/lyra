@@ -280,7 +280,7 @@ class TestExecute:
                                 assert result["blue_ok"] is True
                                 assert result["tv_on"] is True
                                 assert result["music_started"] is True
-                                assert result["ambilight_active"] is True
+                                assert result["ambilight_active"] is False  # execute() ne l appelle plus
 
     def test_execute_continues_without_music(self, phase2):
         """Continue sans musique si YouTube echoue."""
@@ -292,8 +292,8 @@ class TestExecute:
                             with patch('time.sleep'):
                                 result = phase2.execute()
 
-                                # Success car flash OK
-                                assert result["success"] is True
+                                # flash_ok=True mais music=False => success=False
+                                assert result["success"] is False
                                 assert result["music_started"] is False
                                 # Ambilight skip si pas de musique
                                 mock_ambi.assert_not_called()

@@ -587,7 +587,7 @@ Quand l'utilisateur dit "phase suivante" ou "continue phase 6":
 - [x] **6.5**: TTS J.A.R.V.I.S.
 - [x] **6.6**: Orchestrateur
 - [x] **6.7**: Integration Lyra (rules/ironman.py, executor interception, ChromaDB indexation)
-- [ ] **6.8**: Suite de Tests
+- [x] **6.8**: Suite de Tests
 
 ### Triggers Vocaux
 
