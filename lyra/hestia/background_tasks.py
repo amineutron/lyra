@@ -519,7 +519,7 @@ class BackgroundTaskManager:
             with open(progress_file) as f:
                 data = json.load(f)
                 return data
-        except:
+        except (OSError, json.JSONDecodeError, ValueError):
             return None
 
     def get_completed_notifications(self) -> List[dict]:

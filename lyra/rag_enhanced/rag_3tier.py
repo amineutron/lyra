@@ -445,13 +445,10 @@ class RAG3Tier:
                 "candidates": [r['metadata'].get('server_name', '') for r in registry_results[:2]]
             })
 
-        # Early stop si score élevé
-        if strategy == "early_stop" and registry_results:
-            if registry_results[0]['score'] > 0.80:
-                logger.debug(f"Early stop: registry score {registry_results[0]['score']:.2f} > 0.80")
-                return registry_results[:top_k]
-
         # Filtre par serveur si confiance suffisante (évite pollution inter-serveurs)
+        # Note: l'early_stop sur registry a ete supprime car la collection registry
+        # contient des descriptions de serveurs (pas des specs d'outils) - retourner
+        # ces chunks a EPHAISTOS produisait des extractions d'arguments trop vagues.
         server_filter = None
         if registry_results and registry_results[0]['score'] >= 0.50:
             server_name = registry_results[0]['metadata'].get('server_name', '')

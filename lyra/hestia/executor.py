@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Import du MCPManager existant
-sys.path.insert(0, str(__file__).replace("/lyra/hestia/executor.py", ""))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from modules.mcp import MCPManager, MCPResult
 
 from .metrics import MetricsCollector

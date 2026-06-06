@@ -547,18 +547,20 @@ class PhilipsTVController:
             # Fallback: essayer catt si ADB non disponible
             return self._youtube_video_catt(video)
 
-        # Extraire l'ID de la video
-        video_id = video
+        # Extraire et valider l'ID de la video (obligatoire pour eviter l'injection ADB)
+        video_id = None
         patterns = [
             r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([a-zA-Z0-9_-]{11})',
             r'^([a-zA-Z0-9_-]{11})$'
         ]
-
         for pattern in patterns:
             match = re.search(pattern, video)
             if match:
                 video_id = match.group(1)
                 break
+
+        if not video_id:
+            return f"URL YouTube invalide: {video[:80]!r}"
 
         url = f"https://www.youtube.com/watch?v={video_id}"
 
@@ -641,8 +643,19 @@ class PhilipsTVController:
         except Exception as e:
             return f"Erreur: {e}"
 
+    _VALID_KEYS: frozenset = frozenset({
+        "Home", "Back", "Play", "Pause", "Stop", "FastForward", "Rewind",
+        "VolumeUp", "VolumeDown", "Mute", "Standby",
+        "CursorUp", "CursorDown", "CursorLeft", "CursorRight",
+        "Confirm", "Exit", "Info", "Options", "Record",
+        "ChannelStepUp", "ChannelStepDown", "Source", "AmbilightOnOff",
+    })
+
     def send_key(self, key: str) -> str:
         """Envoie une touche de telecommande."""
+        if key not in self._VALID_KEYS:
+            valid = ", ".join(sorted(self._VALID_KEYS))
+            return f"Touche invalide: {key!r}. Touches valides: {valid}"
         self._init_pylips()
         result = self._api_call("input/key", "POST", {"key": key})
         if "error" not in result:

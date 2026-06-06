@@ -257,8 +257,10 @@ class DenonAVRController:
             "mediaplayer": "MPLAY",
         }
 
-        source_upper = source.upper()
-        source_cmd = source_map.get(source.lower(), source_upper)
+        source_cmd = source_map.get(source.lower())
+        if source_cmd is None:
+            valid = ", ".join(sorted(source_map.keys()))
+            return f"Source inconnue: {source!r}. Sources valides: {valid}"
 
         response = self._send_command(f"SI{source_cmd}")
         if "ERROR" not in response:

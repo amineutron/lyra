@@ -9,6 +9,7 @@ utilise un fallback subprocess pour executer en arriere-plan.
 """
 
 import os
+import re
 import json
 import subprocess
 import threading
@@ -314,18 +315,52 @@ def get_async_workflow(tool_name: str) -> Optional[str]:
     return mapping.get(tool_name)
 
 
-# Scripts de fallback pour execution directe sans n8n
-# Inclut les variantes avec point et underscore
-FALLBACK_COMMANDS = {
-    "vm_clone": "/home/amineutron/dev/fedora-setup/scripts/kvm/kvm-clone.sh {source_vm} {new_vm_name} --start",
-    "vm.clone": "/home/amineutron/dev/fedora-setup/scripts/kvm/kvm-clone.sh {source_vm} {new_vm_name} --start",
-    "vm_clone_system": "/home/amineutron/dev/fedora-setup/scripts/agents/vm-controller/vm-clone-system.sh {name} --memory {memory} --cpus {cpus}",
-    "vm.clone_system": "/home/amineutron/dev/fedora-setup/scripts/agents/vm-controller/vm-clone-system.sh {name} --memory {memory} --cpus {cpus}",
-    "backup_create": "/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh create --type {type}",
-    "backup.create": "/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh create --type {type}",
-    "backup_restore": "/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh restore --type {type} --identifier {identifier}",
-    "backup.restore": "/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh restore --type {type} --identifier {identifier}",
-}
+_VM_NAME_RE = re.compile(r'^[a-zA-Z0-9_\-]{1,64}$')
+_BACKUP_TYPE_RE = re.compile(r'^(timeshift|borg|rsync)$')
+_BACKUP_ID_RE = re.compile(r'^[a-zA-Z0-9_\-\.]{1,128}$')
+_INT_RE = re.compile(r'^\d{1,6}$')
+
+_FALLBACK_BASE_KVM = "/home/amineutron/dev/fedora-setup/scripts/kvm"
+_FALLBACK_BASE_VM = "/home/amineutron/dev/fedora-setup/scripts/agents/vm-controller"
+_FALLBACK_BASE_BK = "/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager"
+
+
+def _build_fallback_cmd(tool_name: str, arguments: dict) -> Optional[list]:
+    """Construit la commande fallback sous forme de liste (sans shell=True).
+
+    Retourne None si les arguments sont invalides.
+    """
+    src = arguments.get("source_vm") or arguments.get("source_vm_name", "")
+    dst = arguments.get("new_vm_name") or arguments.get("target_vm_name", "")
+    name = arguments.get("name", "")
+    memory = str(arguments.get("memory", 4096))
+    cpus = str(arguments.get("cpus", 2))
+    btype = arguments.get("type", "timeshift")
+    identifier = arguments.get("identifier", "")
+
+    if tool_name in ("vm_clone", "vm.clone"):
+        if not (_VM_NAME_RE.match(src) and _VM_NAME_RE.match(dst)):
+            return None
+        return [f"{_FALLBACK_BASE_KVM}/kvm-clone.sh", src, dst, "--start"]
+
+    if tool_name in ("vm_clone_system", "vm.clone_system"):
+        if not (_VM_NAME_RE.match(name) and _INT_RE.match(memory) and _INT_RE.match(cpus)):
+            return None
+        return [f"{_FALLBACK_BASE_VM}/vm-clone-system.sh", name,
+                "--memory", memory, "--cpus", cpus]
+
+    if tool_name in ("backup_create", "backup.create"):
+        if not _BACKUP_TYPE_RE.match(btype):
+            return None
+        return [f"{_FALLBACK_BASE_BK}/backup-manager.sh", "create", "--type", btype]
+
+    if tool_name in ("backup_restore", "backup.restore"):
+        if not (_BACKUP_TYPE_RE.match(btype) and _BACKUP_ID_RE.match(identifier)):
+            return None
+        return [f"{_FALLBACK_BASE_BK}/backup-manager.sh", "restore",
+                "--type", btype, "--identifier", identifier]
+
+    return None
 
 
 class AsyncExecutor:
@@ -345,33 +380,20 @@ class AsyncExecutor:
         Returns:
             N8nResult indiquant que la tache a ete lancee
         """
-        cmd_template = FALLBACK_COMMANDS.get(tool_name)
-        if not cmd_template:
+        cmd = _build_fallback_cmd(tool_name, arguments)
+        if cmd is None:
+            known_tools = ("vm_clone", "vm.clone", "vm_clone_system", "vm.clone_system",
+                           "backup_create", "backup.create", "backup_restore", "backup.restore")
+            if tool_name not in known_tools:
+                return N8nResult(
+                    success=False,
+                    message=f"Pas de commande fallback pour {tool_name}",
+                    error="NO_FALLBACK"
+                )
             return N8nResult(
                 success=False,
-                message=f"Pas de commande fallback pour {tool_name}",
-                error="NO_FALLBACK"
-            )
-
-        # Substituer les arguments dans la commande
-        try:
-            # Remplir avec des valeurs par defaut si manquantes
-            # Support des variantes de noms (MCP peut envoyer source_vm_name ou source_vm)
-            safe_args = {
-                "source_vm": arguments.get("source_vm") or arguments.get("source_vm_name", ""),
-                "new_vm_name": arguments.get("new_vm_name") or arguments.get("target_vm_name", ""),
-                "name": arguments.get("name", ""),
-                "memory": arguments.get("memory", 4096),
-                "cpus": arguments.get("cpus", 2),
-                "type": arguments.get("type", "timeshift"),
-                "identifier": arguments.get("identifier", ""),
-            }
-            cmd = cmd_template.format(**safe_args)
-        except KeyError as e:
-            return N8nResult(
-                success=False,
-                message=f"Parametre manquant: {e}",
-                error="MISSING_PARAM"
+                message=f"Arguments invalides pour {tool_name} - verifier les noms et types",
+                error="INVALID_ARGS"
             )
 
         # Lancer en arriere-plan
@@ -379,7 +401,6 @@ class AsyncExecutor:
             try:
                 result = subprocess.run(
                     cmd,
-                    shell=True,
                     capture_output=True,
                     text=True,
                     timeout=600  # 10 minutes max

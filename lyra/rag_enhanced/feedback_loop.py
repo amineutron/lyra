@@ -9,6 +9,7 @@ SESSION 6 (P5)
 import logging
 import json
 import time
+import threading
 from typing import Optional
 from pathlib import Path
 from collections import defaultdict, Counter
@@ -92,7 +93,7 @@ class FeedbackLoop:
                 logger.error(f"Erreur chargement feedback: {e}")
 
     def _save(self):
-        """Sauvegarde le feedback dans fichier JSON."""
+        """Sauvegarde le feedback dans fichier JSON (appel direct, synchrone)."""
         try:
             self.feedback_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.feedback_file, 'w', encoding='utf-8') as f:
@@ -105,6 +106,14 @@ class FeedbackLoop:
                 }, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"Erreur sauvegarde feedback: {e}")
+
+    def _schedule_save(self):
+        """Planifie une sauvegarde differee (5s) pour eviter les ecritures I/O a chaque requete."""
+        if hasattr(self, '_save_timer') and self._save_timer is not None:
+            self._save_timer.cancel()
+        self._save_timer = threading.Timer(5.0, self._save)
+        self._save_timer.daemon = True
+        self._save_timer.start()
 
     def record_interaction(
         self,
@@ -136,7 +145,7 @@ class FeedbackLoop:
         if len(self._interactions) > self.window_size:
             self._interactions = self._interactions[-self.window_size:]
 
-        self._save()
+        self._save()  # Sauvegarde immediate : donnee critique (une fois par requete utilisateur)
 
         logger.debug(
             f"Feedback: query='{query[:20]}...' tool={tool_name} "
@@ -151,7 +160,7 @@ class FeedbackLoop:
             pattern: Pattern (mot slang, synonyme, etc.)
         """
         self._hits[pattern] += 1
-        self._save()
+        self._schedule_save()
 
     def mark_enrichment(self, pattern: str, dict_type: str):
         """
@@ -166,7 +175,7 @@ class FeedbackLoop:
             'timestamp': int(time.time()),
             'baseline_rate': self.get_success_rate(None)  # Taux global avant
         }
-        self._save()
+        self._schedule_save()
 
     def get_stats(self, tool_name: str) -> dict:
         """

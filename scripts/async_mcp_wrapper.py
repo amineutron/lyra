@@ -298,7 +298,30 @@ def run_direct(tool_short: str, arguments: dict, progress_file: str,
     t_out.start()
     t_err.start()
 
-    process.wait()
+    # Timeouts par outil (secondes) : eviter un wait() indefini si le script se bloque
+    _TOOL_TIMEOUTS = {
+        "vm_export":       7200,   # 2h max
+        "vm_import":       7200,   # 2h max
+        "vm_clone":         300,   # 5 min max
+        "vm_clone_system": 2700,   # 45 min max
+        "backup_create":   3600,   # 1h max
+        "backup_restore":  3600,   # 1h max
+    }
+    proc_timeout = _TOOL_TIMEOUTS.get(tool_short, 1800)
+
+    try:
+        process.wait(timeout=proc_timeout)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+        stop_event.set()
+        if done_file:
+            try:
+                Path(done_file).write_text("1")
+            except Exception:
+                pass
+        return False, f"Timeout: {tool_short} a depasse {proc_timeout}s"
+
     t_out.join(timeout=5)
     t_err.join(timeout=5)
 

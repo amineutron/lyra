@@ -12,6 +12,7 @@ Usage:
 
 import sys
 import os
+import re
 
 # Configurer LD_LIBRARY_PATH pour les libs CUDA (faster-whisper)
 # Doit etre fait AVANT l'import de faster_whisper
@@ -45,6 +46,20 @@ from modules.mcp import MCPClient, MCPManager, get_default_tools, get_all_defaul
 from modules.n8n import N8nClient, N8nConfig, should_use_async, get_async_workflow, get_async_executor, send_discord_notification
 from modules import ui
 from modules.ui import setup_readline
+
+
+_VM_NAME_RE = re.compile(r'^[a-zA-Z0-9_\-]{1,64}$')
+_BACKUP_TYPE_RE = re.compile(r'^(timeshift|borg|rsync)$')
+
+
+def _validate_vm_name(name: str) -> bool:
+    """Valide un nom de VM pour eviter les injections shell."""
+    return bool(name and _VM_NAME_RE.match(name))
+
+
+def _validate_backup_type(btype: str) -> bool:
+    """Valide un type de backup pour eviter les injections shell."""
+    return bool(btype and _BACKUP_TYPE_RE.match(btype))
 
 
 # =============================================================================
@@ -810,6 +825,9 @@ class Lyra:
                         if not new_vm:
                             verify_output = f"Erreur: new_vm_name/target_vm_name non trouve dans args: {args}"
                             verify_success = False
+                        elif not _validate_vm_name(new_vm):
+                            verify_output = f"Nom de VM invalide: {new_vm!r}"
+                            verify_success = False
                         else:
                             try:
                                 # 1. Attendre que la VM ait une IP (max 120s)
@@ -820,11 +838,10 @@ class Lyra:
                                     time.sleep(3)
                                     # Utiliser virsh domifaddr pour obtenir l'IP
                                     ip_check = subprocess.run(
-                                        f"virsh domifaddr {new_vm} 2>/dev/null",
-                                        shell=True, capture_output=True, text=True
+                                        ["virsh", "domifaddr", new_vm],
+                                        capture_output=True, text=True
                                     )
                                     # Chercher une IP dans la sortie (format: vnet0 52:54:00:xx:xx:xx ipv4 192.168.122.xxx/24)
-                                    import re
                                     ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', ip_check.stdout)
                                     if ip_match:
                                         vm_ip = ip_match.group(1)
@@ -836,8 +853,10 @@ class Lyra:
                                     ssh_ready = False
                                     for ssh_attempt in range(20):  # 60s max
                                         ssh_check = subprocess.run(
-                                            f"ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=3 amineutron@{vm_ip} 'echo OK' 2>/dev/null",
-                                            shell=True, capture_output=True, text=True, timeout=10
+                                            ["ssh", "-o", "StrictHostKeyChecking=accept-new",
+                                             "-o", "ConnectTimeout=3",
+                                             f"amineutron@{vm_ip}", "echo OK"],
+                                            capture_output=True, text=True, timeout=10
                                         )
                                         if "OK" in ssh_check.stdout:
                                             ssh_ready = True
@@ -847,14 +866,14 @@ class Lyra:
                                     if ssh_ready:
                                         # 3. Lancer verify-vm-clone.sh --verbose
                                         verify_result = subprocess.run(
-                                            f"/home/amineutron/dev/fedora-setup/scripts/kvm/verify-vm-clone.sh --vm {new_vm} --verbose",
-                                            shell=True, capture_output=True, text=True, timeout=180
+                                            ["/home/amineutron/dev/fedora-setup/scripts/kvm/verify-vm-clone.sh",
+                                             "--vm", new_vm, "--verbose"],
+                                            capture_output=True, text=True, timeout=180
                                         )
                                         verify_output = verify_result.stdout
                                         if verify_result.stderr:
                                             verify_output += f"\n{verify_result.stderr}"
                                         # Nettoyer codes ANSI pour verifier le status
-                                        import re
                                         clean_check = re.sub(r'\x1b\[[0-9;]*m', '', verify_output)
                                         # Le script retourne 1 pour warnings, on considere OK si output contient "PRET"
                                         verify_success = "PRET" in clean_check or "PRÊT" in clean_check or verify_result.returncode == 0
@@ -863,46 +882,56 @@ class Lyra:
                                         verify_success = False
                                 else:
                                     # Verifier l'etat de la VM pour debug
-                                    vm_state = subprocess.run(f"virsh domstate {new_vm}", shell=True, capture_output=True, text=True)
+                                    vm_state = subprocess.run(["virsh", "domstate", new_vm], capture_output=True, text=True)
                                     verify_output = f"Timeout: la VM {new_vm} n'a pas obtenu d'IP apres 120s\nEtat VM: {vm_state.stdout.strip()}"
                                     verify_success = False
 
                                 # 3. Eteindre la VM
-                                subprocess.run(f"virsh shutdown {new_vm}", shell=True, capture_output=True, timeout=30)
+                                subprocess.run(["virsh", "shutdown", new_vm], capture_output=True, timeout=30)
 
                             except Exception as e:
                                 verify_output = f"Erreur verification: {e}"
                                 verify_success = False
                                 # Tenter d'eteindre la VM en cas d'erreur
-                                subprocess.run(f"virsh destroy {new_vm} 2>/dev/null", shell=True, capture_output=True)
+                                subprocess.run(["virsh", "destroy", new_vm], capture_output=True)
 
                     elif name in ("backup_create", "backup.create") and success:
                         # Lancer backup verify --deep
                         backup_type = args.get("type", "timeshift")
-                        try:
-                            verify_result = subprocess.run(
-                                f"/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh verify --type {backup_type} --deep",
-                                shell=True, capture_output=True, text=True, timeout=300
-                            )
-                            verify_output = verify_result.stdout
-                            verify_success = verify_result.returncode == 0
-                        except Exception as e:
-                            verify_output = f"Erreur verification: {e}"
+                        if not _validate_backup_type(backup_type):
+                            verify_output = f"Type de backup invalide: {backup_type!r}"
                             verify_success = False
+                        else:
+                            try:
+                                verify_result = subprocess.run(
+                                    ["/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh",
+                                     "verify", "--type", backup_type, "--deep"],
+                                    capture_output=True, text=True, timeout=300
+                                )
+                                verify_output = verify_result.stdout
+                                verify_success = verify_result.returncode == 0
+                            except Exception as e:
+                                verify_output = f"Erreur verification: {e}"
+                                verify_success = False
 
                     elif name in ("backup_restore", "backup.restore") and success:
                         # Lancer backup verify --deep apres restauration
                         backup_type = args.get("type", "timeshift")
-                        try:
-                            verify_result = subprocess.run(
-                                f"/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh verify --type {backup_type} --deep",
-                                shell=True, capture_output=True, text=True, timeout=300
-                            )
-                            verify_output = verify_result.stdout
-                            verify_success = verify_result.returncode == 0
-                        except Exception as e:
-                            verify_output = f"Erreur verification: {e}"
+                        if not _validate_backup_type(backup_type):
+                            verify_output = f"Type de backup invalide: {backup_type!r}"
                             verify_success = False
+                        else:
+                            try:
+                                verify_result = subprocess.run(
+                                    ["/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh",
+                                     "verify", "--type", backup_type, "--deep"],
+                                    capture_output=True, text=True, timeout=300
+                                )
+                                verify_output = verify_result.stdout
+                                verify_success = verify_result.returncode == 0
+                            except Exception as e:
+                                verify_output = f"Erreur verification: {e}"
+                                verify_success = False
 
                     # Couleur finale basee sur operation + verification
                     final_success = success and (verify_success if verify_output else True)

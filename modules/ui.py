@@ -13,6 +13,7 @@ import time
 from datetime import datetime
 from typing import Optional
 from dataclasses import dataclass
+from pathlib import Path
 
 
 # Etat du bandeau : None = auto (collapsed si >2 taches), True/False = force
@@ -200,16 +201,14 @@ def confirm_action(tool_name: str, arguments: dict, vocal_mode: bool = False, vo
         False si l'utilisateur annule
         "modify" si l'utilisateur veut modifier les arguments
     """
-    # Liste des outils dangereux necessitant une confirmation explicite
-    dangerous_tools = [
-        "vm_destroy",
-        "vm_stop",
-        "backup_restore",
-        "backup_clean",
-        "vm_clone_system"
-    ]
+    # Importer depuis la source unique de verite
+    try:
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from lyra.core.constants import DANGEROUS_TOOLS as _DANGEROUS_TOOLS
+    except ImportError:
+        _DANGEROUS_TOOLS = frozenset({"vm_destroy", "vm_stop", "backup_restore", "backup_clean", "vm_clone_system"})
 
-    is_dangerous = tool_name in dangerous_tools
+    is_dangerous = tool_name in _DANGEROUS_TOOLS
 
     if is_dangerous:
         print(colored("\n  ⚠️  ACTION POTENTIELLEMENT DESTRUCTIVE", Colors.BG_RED + Colors.WHITE + Colors.BOLD))

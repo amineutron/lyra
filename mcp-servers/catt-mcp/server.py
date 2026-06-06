@@ -127,12 +127,14 @@ class CattController:
         if not os.path.exists(self.adb_path):
             return False, "ADB non disponible"
 
-        # Extraire l'ID de la video
+        # Valider et extraire l'ID - toujours obligatoire pour eviter l'injection ADB
         video_id = self._extract_video_id(url)
-        if video_id:
-            url = f"https://www.youtube.com/watch?v={video_id}"
-            if start_time > 0:
-                url += f"&t={int(start_time)}"
+        if not video_id:
+            return False, f"URL YouTube invalide ou non reconnue: {url[:80]!r}"
+
+        safe_url = f"https://www.youtube.com/watch?v={video_id}"
+        if start_time > 0:
+            safe_url += f"&t={int(start_time)}"
 
         try:
             # Connecter a la TV via ADB
@@ -142,10 +144,11 @@ class CattController:
                 timeout=10
             )
 
-            # Lancer YouTube avec l'intent VIEW (utilise le compte connecte!)
+            # Lancer YouTube avec des arguments separes (pas de shell=True)
             result = subprocess.run(
                 [self.adb_path, "-s", f"{self.tv_host}:5555", "shell",
-                 f"am start -a android.intent.action.VIEW -d '{url}' com.google.android.youtube.tv"],
+                 "am", "start", "-a", "android.intent.action.VIEW",
+                 "-d", safe_url, "com.google.android.youtube.tv"],
                 capture_output=True,
                 text=True,
                 timeout=15
@@ -191,8 +194,30 @@ class CattController:
         else:
             return f"Erreur: {output}"
 
+    _ALLOWED_SCHEMES = ("https://", "http://")
+    _BLOCKED_HOSTS = ("localhost", "127.", "0.", "::1", "192.168.", "10.", "172.16.", "172.17.",
+                      "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+                      "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.",
+                      "169.254.", "metadata.", "metadata.google")
+
+    def _validate_cast_url(self, url: str) -> Optional[str]:
+        """Valide une URL de cast. Retourne un message d'erreur ou None si OK."""
+        from urllib.parse import urlparse
+        if not any(url.startswith(s) for s in self._ALLOWED_SCHEMES):
+            return f"Scheme non autorise. Utiliser http:// ou https://"
+        try:
+            host = urlparse(url).hostname or ""
+        except Exception:
+            return "URL malformee"
+        if any(host.startswith(b) for b in self._BLOCKED_HOSTS):
+            return f"Host bloque: {host}"
+        return None
+
     def cast_url(self, url: str) -> str:
         """Caste une URL (video, audio, etc.) sur la TV."""
+        err = self._validate_cast_url(url)
+        if err:
+            return f"URL refusee: {err}"
         success, output = self._run_catt("cast", url, timeout=60)
 
         if success:

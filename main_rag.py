@@ -29,6 +29,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent))
 
 from lyra.core.config import RAGConfig
+from lyra.core.constants import DANGEROUS_TOOLS, PERFORMANCE_TOOLS, VALID_TRACKING_FILTERS
 # QueryType et PipelineResult importes depuis types.py (pas de torch/sentence_transformers)
 # Pipeline importe dans main() apres le banner pour ne pas bloquer le demarrage
 from lyra.core.types import QueryType, PipelineResult
@@ -164,8 +165,11 @@ def _try_fast_path_rules(query: str):
         try:
             from lyra.rag_enhanced.slang_normalizer import get_default_normalizer
             normalized = get_default_normalizer().normalize(query)
-        except Exception:
-            pass
+        except ImportError:
+            pass  # Module optionnel absent, continuer avec la query originale
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("slang_normalizer failed: %s", e)
 
         # Tester query normalisee d'abord, puis originale si differente
         candidates = [normalized, query] if normalized != query else [query]
@@ -174,27 +178,15 @@ def _try_fast_path_rules(query: str):
             if analysis is not None:
                 return enrich_optional_args(q, analysis)
         return None
-    except Exception:
-        return None
+    except ImportError:
+        pass  # Module rules absent, fallback sur le pipeline complet
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("fast_path_rules failed: %s", e)
+    return None
 
 
-# Outils dangereux necessitant confirmation explicite
-DANGEROUS_TOOLS = [
-    "vm_destroy", "vm_stop", "backup_restore",
-    "backup_clean", "vm_clone_system"
-]
-
-# Outils domotique executes sans confirmation en mode performance
-PERFORMANCE_TOOLS = [
-    "tv.power_on", "tv.power_off", "tv.volume_up", "tv.volume_down",
-    "tv.volume_set", "tv.mute", "tv.ambilight_on", "tv.ambilight_off",
-    "tv.ambilight_mode", "tv.launch_app", "tv.youtube_video",
-    "hue.turn_on_light", "hue.turn_off_light", "hue.set_brightness",
-    "hue.set_color_rgb", "hue.set_group_brightness", "hue.set_group_color",
-    "hue.turn_on_group", "hue.turn_off_group", "hue.activate_scene_by_name",
-    "cast_youtube", "cast_url", "cast_stop", "cast_pause",
-    "cast_resume", "cast_volume", "cast_seek", "cast_browser"
-]
+# DANGEROUS_TOOLS et PERFORMANCE_TOOLS importes depuis lyra.core.constants
 
 # Outils avec operations async (longues) qui necessitent notification Discord
 ASYNC_TOOLS = [

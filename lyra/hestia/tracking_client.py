@@ -158,7 +158,13 @@ class TrackingClient:
             "--ui",
         ]
         if filter_template:
-            cmd.extend(["--filter", filter_template])
+            try:
+                from lyra.core.constants import VALID_TRACKING_FILTERS
+                _valid = VALID_TRACKING_FILTERS
+            except ImportError:
+                _valid = frozenset({"lyra_task", "errors", "download", "machine", "movie", "free"})
+            if filter_template in _valid:
+                cmd.extend(["--filter", filter_template])
         try:
             subprocess.Popen(cmd, start_new_session=True)
         except FileNotFoundError:

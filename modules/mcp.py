@@ -13,6 +13,7 @@ import os
 import sys
 import threading
 import queue
+import time
 from typing import Optional
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -489,17 +490,23 @@ class MCPSessionClient:
         return {"status": "initialized"}
 
     def _read_response(self, expected_id: int) -> dict:
-        """Lit une reponse JSON-RPC avec timeout."""
+        """Lit une reponse JSON-RPC avec timeout global."""
         import select
 
-        # Utiliser select pour timeout (Unix only)
-        if hasattr(select, 'select'):
-            ready, _, _ = select.select([self._process.stdout], [], [], self.timeout)
-            if not ready:
+        deadline = time.monotonic() + self.timeout
+
+        # Lire les lignes jusqu'a trouver la reponse, avec deadline globale
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
                 return {"error": f"Timeout apres {self.timeout}s"}
 
-        # Lire les lignes jusqu'a trouver la reponse
-        while True:
+            # Utiliser select pour un timeout par lecture (Unix only)
+            if hasattr(select, 'select'):
+                ready, _, _ = select.select([self._process.stdout], [], [], min(remaining, 2.0))
+                if not ready:
+                    continue  # Verifier la deadline et recommencer
+
             line = self._process.stdout.readline()
             if not line:
                 # Process termine
@@ -516,10 +523,9 @@ class MCPSessionClient:
 
             try:
                 response = json.loads(line)
-                # Verifier que c'est la bonne reponse
-                if response.get("id") == expected_id or "result" in response:
+                if response.get("id") == expected_id:
                     return response
-                # Sinon continuer a lire (notification ou autre)
+                # Notification ou reponse hors-sequence : continuer jusqu'a la deadline
             except json.JSONDecodeError:
                 continue
 
