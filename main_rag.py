@@ -32,6 +32,9 @@ from lyra.core.constants import DANGEROUS_TOOLS, PERFORMANCE_TOOLS, VALID_TRACKI
 # QueryType et PipelineResult importes depuis types.py (pas de torch/sentence_transformers)
 # Pipeline importe dans main() apres le banner pour ne pas bloquer le demarrage
 from lyra.core.types import QueryType, PipelineResult
+from lyra.core.workflows.context import UIContext, ExecContext
+from lyra.core.workflows.vm_clone_exec import handle_vm_clone_with_stop
+from lyra.core.workflows.vm_snapshot_exec import handle_snapshot_restore_with_safety
 from lyra.models.model_manager import ModelManager
 from lyra.rag.session_memory import SessionMemory
 from lyra.hestia.background_tasks import BackgroundTaskManager
@@ -69,6 +72,25 @@ def _handle_error_log(tool_name: str, arguments: dict, exec_result, vocal: bool 
 def get_actual_pipeline(pipeline):
     """Retourne le pipeline V2 sous-jacent si EnhancedPipeline, sinon le pipeline lui-même."""
     return pipeline._pipeline_v2 if hasattr(pipeline, '_pipeline_v2') else pipeline
+
+
+# Mapping nom symbolique -> code ANSI pour UIContext.colored
+_COLOR_MAP: dict[str, str] = {
+    "yellow": ui.Colors.YELLOW,
+    "cyan": ui.Colors.CYAN,
+    "green": ui.Colors.GREEN,
+    "red": ui.Colors.RED,
+    "magenta": ui.Colors.MAGENTA,
+    "blue": ui.Colors.BLUE,
+    "bold": ui.Colors.BOLD,
+    "dim": ui.Colors.DIM,
+    "white": ui.Colors.WHITE,
+}
+
+
+def _colored_by_name(text: str, color: str) -> str:
+    """Wrapper ui.colored acceptant les noms symboliques ('yellow') ou les codes ANSI directs."""
+    return ui.colored(text, _COLOR_MAP.get(color.lower(), color))
 
 
 def _try_fast_path_rules(query: str):
@@ -483,13 +505,32 @@ def handle_action(
     tool_name = result.tool_call["name"]
     arguments = result.tool_call["arguments"]
 
-    # Cas special: clone avec arret de VM
-    if tool_name == "vm_clone_with_stop":
-        return _handle_vm_clone_with_stop(pipeline, arguments, vocal, voice)
-
-    # Cas special: restauration de snapshot avec securite
-    if "vm_snapshot" in tool_name and arguments.get("action") == "revert":
-        return _handle_snapshot_restore_with_safety(pipeline, arguments, vocal, voice)
+    # Cas special: clone avec arret de VM / restauration de snapshot
+    if tool_name == "vm_clone_with_stop" or (
+        "vm_snapshot" in tool_name and arguments.get("action") == "revert"
+    ):
+        actual = get_actual_pipeline(pipeline)
+        exec_ctx = ExecContext(
+            ui=UIContext(
+                print_info=ui.print_info,
+                print_success=ui.print_success,
+                print_error=ui.print_error,
+                print_warning=ui.print_warning,
+                print_tool_result=ui.print_tool_result,
+                colored=_colored_by_name,
+                confirm_action=ui.confirm_action,
+                ask_input=input,
+                println=print,
+            ),
+            execute_action=actual.execute_action,
+            hestia_execute=actual._hestia.execute,
+            vocal=vocal,
+            voice=voice,
+            notify_discord=_send_discord_if_async,
+        )
+        if tool_name == "vm_clone_with_stop":
+            return handle_vm_clone_with_stop(arguments, exec_ctx)
+        return handle_snapshot_restore_with_safety(arguments, exec_ctx)
 
     # Context Injector: Confirmation explicite si contexte injecte (ambiguite detectee)
     context_injected = hasattr(result, 'context_injected') and result.context_injected
@@ -706,496 +747,6 @@ def handle_action(
     _send_discord_if_async(tool_name, arguments, exec_result)
 
     return exec_result.response
-
-
-def _handle_vm_clone_with_stop(
-    pipeline: Pipeline,
-    arguments: dict,
-    vocal: bool = False,
-    voice=None
-) -> str:
-    """Gere le clone avec arret de VM avec validations multiples.
-
-    Sequence avec validations:
-    1. Afficher le plan complet
-    2. Demander confirmation avant arrêt
-    3. Arreter la VM source
-    4. Demander confirmation avant clone
-    5. Cloner la VM
-    6. Optionnellement redemarrer la VM source
-
-    Args:
-        pipeline: Pipeline RAG
-        arguments: Arguments (source_vm, new_vm_name, restart_after)
-        vocal: Mode vocal
-        voice: VoiceInterface
-
-    Returns:
-        Message final
-    """
-    source_vm = arguments.get("source_vm")
-    new_vm_name = arguments.get("new_vm_name")
-    restart_after = arguments.get("restart_after", False)
-
-    messages = []
-
-    # Afficher le plan d'action complet
-    print()
-    ui.print_info("📋 Plan d'action:")
-    print(f"  1. {ui.colored('Arrêter', ui.Colors.YELLOW)} {source_vm}")
-    print(f"  2. {ui.colored('Cloner', ui.Colors.CYAN)} {source_vm} → {new_vm_name}")
-    if restart_after:
-        print(f"  3. {ui.colored('Redémarrer', ui.Colors.GREEN)} {source_vm}")
-    else:
-        print(f"  3. {ui.colored('Laisser arrêtée', ui.Colors.DIM)} {source_vm}")
-    print()
-
-    # Confirmation du plan complet
-    plan_confirm = input(ui.colored("  Confirmer ce plan ? [O/n] ", ui.Colors.YELLOW)).strip().lower()
-    if plan_confirm in ("n", "non", "no"):
-        ui.print_warning("Plan annulé.")
-        return "Plan annulé."
-
-    # === ETAPE 1: Arrêter la VM source ===
-    print()
-    ui.print_info(f"Etape 1/{3 if restart_after else 2}: Arrêt de {source_vm}")
-
-    # Afficher l'état actuel
-    # EnhancedPipeline wrappe Pipeline V2
-    hestia = pipeline._pipeline_v2._hestia if hasattr(pipeline, '_pipeline_v2') else pipeline._hestia
-    vm_state = hestia.execute("fedora.vm_status", {"vm_name": source_vm})
-    if vm_state.success:
-        print(f"\n{ui.colored('État actuel:', ui.Colors.CYAN)}")
-        # Afficher un extrait du status
-        for line in vm_state.content.split("\n")[:5]:
-            if line.strip():
-                print(f"  {line}")
-        print()
-
-    # Demander confirmation avant d'arrêter
-    stop_confirm = ui.confirm_action(
-        tool_name="vm_stop",
-        arguments={"vm_name": source_vm},
-        vocal_mode=vocal,
-        voice=voice
-    )
-
-    if stop_confirm == "modify":
-        ui.print_warning("Modification non disponible pour cette étape.")
-        stop_confirm = False
-
-    if not stop_confirm:
-        ui.print_warning(f"Arrêt de {source_vm} annulé. Clone annulé.")
-        return f"Clone annulé (arrêt de {source_vm} refusé)."
-
-    # Exécuter l'arrêt
-    ui.print_info(f"Arrêt de {source_vm} en cours...")
-    stop_result = get_actual_pipeline(pipeline).execute_action("vm_stop", {"vm_name": source_vm})
-
-    if stop_result.error or not (stop_result.execution_result and stop_result.execution_result.success):
-        ui.print_error(f"Echec de l'arret de {source_vm}")
-        return f"Impossible d'arrêter {source_vm}: {stop_result.error}"
-
-    ui.print_success(f"✅ {source_vm} arrêtée")
-    messages.append(f"✅ {source_vm} arrêtée")
-
-    # === ETAPE 2: Cloner la VM ===
-    print()
-    ui.print_info(f"Etape 2/{3 if restart_after else 2}: Clonage")
-
-    # Afficher le récapitulatif du clone
-    print(f"\n{ui.colored('📋 Récapitulatif du clonage:', ui.Colors.CYAN)}")
-    print(f"  🔹 VM source     : {ui.colored(source_vm, ui.Colors.BOLD)} ({ui.colored('arrêtée ✓', ui.Colors.GREEN)})")
-    print(f"  🔸 VM destination: {ui.colored(new_vm_name, ui.Colors.BOLD)}")
-    print()
-
-    # Demander confirmation avant de cloner
-    clone_confirm = ui.confirm_action(
-        tool_name="vm_clone",
-        arguments={"source_vm": source_vm, "new_vm_name": new_vm_name},
-        vocal_mode=vocal,
-        voice=voice
-    )
-
-    # Gérer modification des arguments
-    if clone_confirm == "modify":
-        ui.print_info("Modification des parametres du clone...")
-        print()
-        new_new_vm_name = input(f"  new_vm_name [{new_vm_name}]: ").strip()
-        if new_new_vm_name:
-            new_vm_name = new_new_vm_name
-
-        # Re-demander confirmation
-        clone_confirm = ui.confirm_action(
-            tool_name="vm_clone",
-            arguments={"source_vm": source_vm, "new_vm_name": new_vm_name},
-            vocal_mode=vocal,
-            voice=voice
-        )
-
-    if not clone_confirm or clone_confirm == "modify":
-        ui.print_warning("Clone annulé.")
-        messages.append("❌ Clone annulé par l'utilisateur")
-
-        # Proposer de redémarrer la source
-        if restart_after:
-            restart_confirm = input(ui.colored(f"\n  Redémarrer {source_vm} quand même ? [O/n] ", ui.Colors.YELLOW)).strip().lower()
-            if restart_confirm not in ("n", "non", "no"):
-                ui.print_info(f"Redémarrage de {source_vm}...")
-                restart_result = get_actual_pipeline(pipeline).execute_action("vm_start", {"vm_name": source_vm})
-                if restart_result.execution_result and restart_result.execution_result.success:
-                    messages.append(f"✅ {source_vm} redémarrée")
-
-        return "\n".join(messages)
-
-    # Exécuter le clone
-    ui.print_info(f"Clonage de {source_vm} vers {new_vm_name} en cours...")
-    clone_result = get_actual_pipeline(pipeline).execute_action(
-        "vm_clone",
-        {"source_vm": source_vm, "new_vm_name": new_vm_name}
-    )
-
-    if clone_result.error or not (clone_result.execution_result and clone_result.execution_result.success):
-        ui.print_error(f"Echec du clonage")
-        messages.append(f"❌ Echec du clonage: {clone_result.error}")
-
-        # Redémarrer la source même en cas d'échec si demandé
-        if restart_after:
-            ui.print_info(f"Redémarrage de {source_vm}...")
-            restart_result = get_actual_pipeline(pipeline).execute_action("vm_start", {"vm_name": source_vm})
-            if restart_result.execution_result and restart_result.execution_result.success:
-                messages.append(f"✅ {source_vm} redémarrée")
-
-        final_message = "\n".join(messages)
-        ui.print_tool_result(final_message, success=False)
-        return final_message
-
-    ui.print_success(f"✅ Clone {new_vm_name} créé avec succès")
-    messages.append(f"✅ Clone {new_vm_name} créé")
-
-    # Envoyer notification Discord
-    _send_discord_if_async("vm_clone", {"source_vm": source_vm, "new_vm_name": new_vm_name}, clone_result)
-
-    # === ETAPE 3: Redémarrer la VM source si demandé ===
-    if restart_after:
-        print()
-        ui.print_info(f"Etape 3/3: Redémarrage de {source_vm}")
-
-        # Demander confirmation avant de redémarrer
-        restart_confirm = input(ui.colored(f"\n  Redémarrer {source_vm} maintenant ? [O/n] ", ui.Colors.YELLOW)).strip().lower()
-
-        if restart_confirm not in ("n", "non", "no"):
-            ui.print_info(f"Redémarrage de {source_vm} en cours...")
-            restart_result = get_actual_pipeline(pipeline).execute_action("vm_start", {"vm_name": source_vm})
-
-            if restart_result.execution_result and restart_result.execution_result.success:
-                ui.print_success(f"✅ {source_vm} redémarrée")
-                messages.append(f"✅ {source_vm} redémarrée")
-            else:
-                ui.print_warning(f"Echec du redémarrage de {source_vm}")
-                messages.append(f"⚠️  Echec redémarrage de {source_vm}")
-        else:
-            ui.print_info(f"{source_vm} reste arrêtée")
-            messages.append(f"ℹ️  {source_vm} reste arrêtée")
-    else:
-        messages.append(f"ℹ️  {source_vm} reste arrêtée")
-
-    final_message = "\n".join(messages)
-    print()
-    ui.print_tool_result(final_message, success=True)
-
-    return final_message
-
-
-def _handle_snapshot_restore_with_safety(
-    pipeline,
-    arguments: dict,
-    vocal: bool = False,
-    voice=None
-) -> str:
-    """Gère la restauration de snapshot avec snapshot de sécurité et validations multiples.
-
-    Workflow:
-    1. Lister les snapshots disponibles
-    2. Proposer création snapshot de sécurité (recommandé)
-    3. Afficher le plan complet
-    4. Si VM running: arrêter
-    5. Créer snapshot de sécurité (si choisi)
-    6. Restaurer le snapshot
-    7. Redémarrer la VM (si demandé)
-    8. Notification Discord
-
-    Args:
-        pipeline: Pipeline RAG
-        arguments: Arguments (vm_name, snapshot_name, create_safety_snapshot, restart_after)
-        vocal: Mode vocal
-        voice: VoiceInterface
-
-    Returns:
-        Message final
-    """
-    vm_name = arguments.get("vm_name")
-    snapshot_name = arguments.get("snapshot_name")
-    create_safety = arguments.get("create_safety_snapshot", None)  # None = demander
-    restart_after = arguments.get("restart_after", None)  # None = demander
-
-    messages = []
-
-    # === ÉTAPE 0: Vérifications préalables ===
-    print()
-    ui.print_info("Vérifications préalables...")
-
-    # Lister les snapshots disponibles
-    # EnhancedPipeline wrappe Pipeline V2
-    hestia = pipeline._pipeline_v2._hestia if hasattr(pipeline, '_pipeline_v2') else pipeline._hestia
-    snapshots_result = hestia.execute("fedora.vm_snapshot", {
-        "vm_name": vm_name,
-        "action": "list"
-    })
-
-    if not snapshots_result.success:
-        ui.print_error(f"Impossible de lister les snapshots de {vm_name}")
-        return f"Erreur: {snapshots_result.error}"
-
-    print(f"\n{ui.colored('📸 Snapshots disponibles:', ui.Colors.CYAN)}")
-    print(snapshots_result.content)
-    print()
-
-    # Vérifier que le snapshot existe
-    if snapshot_name not in snapshots_result.content:
-        ui.print_error(f"Snapshot '{snapshot_name}' introuvable!")
-        return f"Snapshot '{snapshot_name}' n'existe pas pour {vm_name}"
-
-    # Afficher l'état actuel de la VM
-    # EnhancedPipeline wrappe Pipeline V2
-    hestia = pipeline._pipeline_v2._hestia if hasattr(pipeline, '_pipeline_v2') else pipeline._hestia
-    vm_state_result = hestia.execute("fedora.vm_status", {"vm_name": vm_name})
-    if vm_state_result.success:
-        print(f"{ui.colored('État actuel de la VM:', ui.Colors.CYAN)}")
-        for line in vm_state_result.content.split("\n")[:5]:
-            if line.strip():
-                print(f"  {line}")
-        print()
-
-    # Détecter si la VM est running
-    vm_running = "en cours" in vm_state_result.content.lower() if vm_state_result.success else False
-
-    # === ÉTAPE 1: Choix snapshot de sécurité ===
-    if create_safety is None:
-        print()
-        print(ui.colored("⚠️  ATTENTION: La restauration va écraser l'état actuel!", ui.Colors.BG_YELLOW + ui.Colors.BLACK + ui.Colors.BOLD))
-        print()
-        ui.print_info("💡 Je recommande de créer un snapshot de sécurité")
-        print("   pour pouvoir revenir à l'état actuel si besoin.")
-        print()
-        print(f"  1. {ui.colored('Créer snapshot de sécurité', ui.Colors.GREEN)} puis restaurer (recommandé)")
-        print(f"  2. {ui.colored('Restaurer directement', ui.Colors.YELLOW)} (sans snapshot de sécurité)")
-        print(f"  3. {ui.colored('Annuler', ui.Colors.RED)}")
-        print()
-
-        choice = input(ui.colored("  Ton choix ? (1/2/3) ", ui.Colors.YELLOW)).strip()
-
-        if choice == "3" or choice.lower() in ("annuler", "annule", "n"):
-            ui.print_warning("Restauration annulée.")
-            return "Restauration annulée."
-
-        create_safety = (choice == "1" or choice.lower() in ("oui", "o", ""))
-
-    safety_snapshot_name = f"restore-backup-{vm_name}-{__import__('datetime').datetime.now().strftime('%Y%m%d-%H%M%S')}" if create_safety else None
-
-    # === ÉTAPE 2: Plan d'action complet ===
-    print()
-    ui.print_info("📋 Plan d'action:")
-
-    step = 1
-    if create_safety:
-        print(f"  {step}. {ui.colored('Créer snapshot de sécurité', ui.Colors.CYAN)} «{safety_snapshot_name}»")
-        step += 1
-
-    if vm_running:
-        print(f"  {step}. {ui.colored('Arrêter', ui.Colors.YELLOW)} {vm_name}")
-        step += 1
-
-    print(f"  {step}. {ui.colored('Restaurer snapshot', ui.Colors.MAGENTA)} «{snapshot_name}»")
-    step += 1
-
-    if restart_after is None:
-        # Demander si redémarrage
-        restart_prompt = input(ui.colored(f"  Redémarrer {vm_name} après restauration ? [O/n] ", ui.Colors.YELLOW)).strip().lower()
-        restart_after = restart_prompt not in ("n", "non", "no")
-
-    if restart_after:
-        print(f"  {step}. {ui.colored('Redémarrer', ui.Colors.GREEN)} {vm_name}")
-
-    print()
-
-    # Confirmation du plan
-    plan_confirm = input(ui.colored("  Confirmer ce plan ? [O/n] ", ui.Colors.YELLOW)).strip().lower()
-    if plan_confirm in ("n", "non", "no"):
-        ui.print_warning("Plan annulé.")
-        return "Plan annulé."
-
-    # === ÉTAPE 3: Créer snapshot de sécurité (si demandé) ===
-    if create_safety:
-        print()
-        ui.print_info(f"Étape 1/{step-1}: Création snapshot de sécurité")
-
-        # Demander confirmation
-        safety_confirm = ui.confirm_action(
-            tool_name="vm_snapshot",
-            arguments={"vm_name": vm_name, "action": "create", "snapshot_name": safety_snapshot_name},
-            vocal_mode=vocal,
-            voice=voice
-        )
-
-        if safety_confirm == "modify":
-            ui.print_warning("Modification non disponible pour cette étape.")
-            safety_confirm = False
-
-        if not safety_confirm:
-            ui.print_warning("Snapshot de sécurité annulé. Restauration annulée.")
-            return "Restauration annulée (snapshot de sécurité refusé)."
-
-        # Créer le snapshot de sécurité
-        ui.print_info(f"Création de '{safety_snapshot_name}' en cours...")
-        safety_result = get_actual_pipeline(pipeline).execute_action("fedora.vm_snapshot", {
-            "vm_name": vm_name,
-            "action": "create",
-            "snapshot_name": safety_snapshot_name,
-            "description": f"Snapshot de sécurité avant restauration de '{snapshot_name}'"
-        })
-
-        if safety_result.error or not (safety_result.execution_result and safety_result.execution_result.success):
-            ui.print_error("Échec de la création du snapshot de sécurité")
-            return f"Impossible de créer le snapshot de sécurité: {safety_result.error}"
-
-        ui.print_success(f"✅ Snapshot de sécurité '{safety_snapshot_name}' créé")
-        messages.append(f"✅ Snapshot de sécurité créé")
-
-    # === ÉTAPE 4: Arrêter la VM (si running) ===
-    if vm_running:
-        print()
-        current_step = 2 if create_safety else 1
-        ui.print_info(f"Étape {current_step}/{step-1}: Arrêt de {vm_name}")
-
-        stop_confirm = ui.confirm_action(
-            tool_name="vm_stop",
-            arguments={"vm_name": vm_name},
-            vocal_mode=vocal,
-            voice=voice
-        )
-
-        if stop_confirm == "modify":
-            ui.print_warning("Modification non disponible.")
-            stop_confirm = False
-
-        if not stop_confirm:
-            ui.print_warning(f"Arrêt de {vm_name} annulé.")
-            return "Restauration annulée (arrêt refusé)."
-
-        ui.print_info(f"Arrêt de {vm_name} en cours...")
-        stop_result = get_actual_pipeline(pipeline).execute_action("fedora.vm_stop", {"vm_name": vm_name})
-
-        if stop_result.error or not (stop_result.execution_result and stop_result.execution_result.success):
-            ui.print_error(f"Échec de l'arrêt de {vm_name}")
-            return f"Impossible d'arrêter {vm_name}: {stop_result.error}"
-
-        ui.print_success(f"✅ {vm_name} arrêtée")
-        messages.append(f"✅ {vm_name} arrêtée")
-
-    # === ÉTAPE 5: Restaurer le snapshot ===
-    print()
-    restore_step = (2 if create_safety else 1) + (1 if vm_running else 0)
-    ui.print_info(f"Étape {restore_step}/{step-1}: Restauration snapshot '{snapshot_name}'")
-
-    print(f"\n{ui.colored('⚠️  ATTENTION:', ui.Colors.YELLOW)} Cette action va remplacer l'état actuel de {vm_name}")
-    print(f"   par l'état du snapshot '{snapshot_name}'.\n")
-
-    restore_confirm = ui.confirm_action(
-        tool_name="vm_snapshot",
-        arguments={"vm_name": vm_name, "action": "revert", "snapshot_name": snapshot_name},
-        vocal_mode=vocal,
-        voice=voice
-    )
-
-    if restore_confirm == "modify":
-        ui.print_warning("Modification non disponible.")
-        restore_confirm = False
-
-    if not restore_confirm:
-        ui.print_warning("Restauration annulée.")
-
-        # Proposer de redémarrer la VM si on l'a arrêtée
-        if vm_running:
-            restart_anyway = input(ui.colored(f"\n  Redémarrer {vm_name} quand même ? [O/n] ", ui.Colors.YELLOW)).strip().lower()
-            if restart_anyway not in ("n", "non", "no"):
-                ui.print_info(f"Redémarrage de {vm_name}...")
-                restart_result = get_actual_pipeline(pipeline).execute_action("fedora.vm_start", {"vm_name": vm_name})
-                if restart_result.execution_result and restart_result.execution_result.success:
-                    messages.append(f"✅ {vm_name} redémarrée")
-
-        return "\n".join(messages + ["⚠️  Restauration annulée"])
-
-    # Exécuter la restauration
-    ui.print_info(f"Restauration du snapshot '{snapshot_name}' en cours...")
-    restore_result = get_actual_pipeline(pipeline).execute_action("fedora.vm_snapshot", {
-        "vm_name": vm_name,
-        "action": "revert",
-        "snapshot_name": snapshot_name
-    })
-
-    if restore_result.error or not (restore_result.execution_result and restore_result.execution_result.success):
-        ui.print_error("Échec de la restauration")
-        messages.append(f"❌ Échec de la restauration: {restore_result.error}")
-
-        # Si échec ET on a créé un snapshot de sécurité, proposer de le restaurer
-        if create_safety:
-            ui.print_warning(f"\n💡 Tu peux restaurer le snapshot de sécurité '{safety_snapshot_name}'")
-            ui.print_warning("   pour revenir à l'état avant cette tentative de restauration.")
-
-        return "\n".join(messages)
-
-    ui.print_success(f"✅ Snapshot '{snapshot_name}' restauré")
-    messages.append(f"✅ Snapshot '{snapshot_name}' restauré")
-
-    # Envoyer notification Discord
-    _send_discord_if_async("vm_snapshot", {
-        "vm_name": vm_name,
-        "action": "revert",
-        "snapshot_name": snapshot_name,
-        "safety_snapshot": safety_snapshot_name
-    }, restore_result)
-
-    # === ÉTAPE 6: Redémarrer la VM (si demandé) ===
-    if restart_after:
-        print()
-        final_step = step - 1
-        ui.print_info(f"Étape {final_step}/{final_step}: Redémarrage de {vm_name}")
-
-        restart_confirm = input(ui.colored(f"\n  Redémarrer {vm_name} maintenant ? [O/n] ", ui.Colors.YELLOW)).strip().lower()
-
-        if restart_confirm not in ("n", "non", "no"):
-            ui.print_info(f"Redémarrage de {vm_name} en cours...")
-            restart_result = get_actual_pipeline(pipeline).execute_action("fedora.vm_start", {"vm_name": vm_name})
-
-            if restart_result.execution_result and restart_result.execution_result.success:
-                ui.print_success(f"✅ {vm_name} redémarrée")
-                messages.append(f"✅ {vm_name} redémarrée")
-            else:
-                ui.print_warning(f"Échec du redémarrage de {vm_name}")
-                messages.append(f"⚠️  Échec redémarrage de {vm_name}")
-        else:
-            ui.print_info(f"{vm_name} reste arrêtée")
-            messages.append(f"ℹ️  {vm_name} reste arrêtée")
-    else:
-        messages.append(f"ℹ️  {vm_name} reste arrêtée")
-
-    # Résumé final
-    final_message = "\n".join(messages)
-    print()
-    ui.print_tool_result(final_message, success=True)
-
-    return final_message
 
 
 def _send_discord_if_async(tool_name: str, arguments: dict, exec_result) -> bool:
