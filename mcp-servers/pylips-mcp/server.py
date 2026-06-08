@@ -18,9 +18,59 @@ Configuration:
 import asyncio
 import json
 import os
+import ssl
 import sys
 from pathlib import Path
 from typing import Any
+
+# ---------------------------------------------------------------------------
+# Adaptateur SSL pour la TV Philips (certificats TP Vision SHA1 auto-signés)
+#
+# Contexte technique: les firmwares Philips embarquent une chaîne PKI TP Vision
+# datant de 2015, signée en SHA1. OpenSSL >= 1.1 rejette SHA1 par défaut
+# (SECLEVEL >= 1). On ne peut pas obtenir un certificat Let's Encrypt pour
+# l'IP locale d'une TV — verify=False est unavoidable pour la TV.
+#
+# Amélioration vs verify=False pur:
+#   - On épingle explicitement le CA TP Vision (tpvision_ca.pem)
+#   - SECLEVEL=0 permet SHA1 sans désactiver toute la validation
+#   - check_hostname=False car le CN est "restfultv.tpvision.com" (pas l'IP)
+#   - Si le bundle est absent, fallback silencieux vers verify=False
+# ---------------------------------------------------------------------------
+
+_TPVISION_CERT_BUNDLE = Path(__file__).parent / "tpvision_ca.pem"
+
+
+def _build_tv_session():
+    """Retourne une requests.Session configurée pour la TV Philips."""
+    import requests
+    from requests.adapters import HTTPAdapter
+
+    session = requests.Session()
+
+    try:
+        from urllib3.util.ssl_ import create_urllib3_context
+
+        _bundle = _TPVISION_CERT_BUNDLE
+
+        class _TPVisionAdapter(HTTPAdapter):
+            def init_poolmanager(self, *args, **kwargs):
+                ctx = create_urllib3_context()
+                ctx.set_ciphers("DEFAULT@SECLEVEL=0")
+                ctx.check_hostname = False
+                if _bundle.exists():
+                    ctx.load_verify_locations(str(_bundle))
+                    ctx.verify_mode = ssl.CERT_REQUIRED
+                else:
+                    ctx.verify_mode = ssl.CERT_NONE
+                kwargs["ssl_context"] = ctx
+                return super().init_poolmanager(*args, **kwargs)
+
+        session.mount("https://", _TPVisionAdapter())
+    except Exception:
+        pass  # urllib3 manquant ou version incompatible, session basique
+
+    return session
 
 # Ajouter pylips au path
 PYLIPS_PATH = os.environ.get("PYLIPS_PATH", "/home/amineutron/dev/pylips")
@@ -137,6 +187,7 @@ class PhilipsTVController:
         self._pylips = None
         self._initialized = False
         self._screen_muted = False  # Etat du mute ecran (toggle local)
+        self._session = _build_tv_session()  # Session HTTP avec cert TP Vision
 
     def _init_pylips(self):
         """Initialise pylips de maniere paresseuse."""
@@ -165,8 +216,8 @@ class PhilipsTVController:
 
         connect_timeout: timeout de connexion TCP seul (plus court que le read timeout).
         """
-        import requests
         from requests.auth import HTTPDigestAuth
+        import requests
 
         url = f"https://{self.host}:1926/6/{endpoint}"
         auth = HTTPDigestAuth(self.user, self.password)
@@ -175,9 +226,9 @@ class PhilipsTVController:
 
         try:
             if method == "GET":
-                response = requests.get(url, auth=auth, verify=False, timeout=t)
+                response = self._session.get(url, auth=auth, verify=False, timeout=t)
             else:
-                response = requests.post(url, auth=auth, json=body, verify=False, timeout=t)
+                response = self._session.post(url, auth=auth, json=body, verify=False, timeout=t)
 
             if response.status_code == 200:
                 return response.json() if response.text else {"status": "ok"}
