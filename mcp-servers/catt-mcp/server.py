@@ -755,7 +755,10 @@ def tv_launch_at_position(video_id, position):
     try:
         subprocess.run(
             [ADB_PATH, "-s", f"{TV_HOST}:5555", "shell",
-             f"am start -a android.intent.action.VIEW -d \\'{url}\\' com.google.android.youtube.tv"],
+             "am", "start",
+             "-a", "android.intent.action.VIEW",
+             "-d", url,
+             "com.google.android.youtube.tv"],
             capture_output=True, timeout=15
         )
         return True

@@ -1282,6 +1282,13 @@ def main():
             # Input (vocal ou texte)
             # live_input affiche le bandeau et le rafraichit toutes les secondes
             if vocal and voice:
+                # Attendre la fin de l'init avant d'ecouter (evite pipeline.process sur init echouee)
+                if not _servers_shown:
+                    if not _init_done.is_set():
+                        _init_done.wait()
+                    if _init_error[0]:
+                        ui.print_error(f"Erreur initialisation: {_init_error[0]}")
+                        break
                 # En mode vocal, afficher le bandeau separement (pas de live refresh)
                 active_tasks = task_manager.get_active_tasks()
                 if active_tasks:

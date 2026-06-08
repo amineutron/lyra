@@ -741,10 +741,13 @@ class Pipeline:
                 return result
 
         # Extraire les nouveaux arguments avec EPHAISTOS
-        # Creer une analyse partielle pour extract_missing_args
+        if self._ephaistos is None:
+            # fast-path init ne charge pas EPHAISTOS — initialiser maintenant
+            self.initialize()
+
         partial_analysis = EphaistosAnalysis(
             tool=pending.tool_name,
-            arguments=pending.known_args,
+            arguments={**pending.known_args},
             missing_args=pending.missing_args,
             confidence=0.8,
             reasoning="Action en attente",
