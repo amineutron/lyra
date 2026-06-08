@@ -678,8 +678,6 @@ def handle_action(
         new_tool_name, new_arguments = correction
         tool_name = new_tool_name
         arguments = new_arguments
-        result.tool_call["name"] = tool_name
-        result.tool_call["arguments"] = arguments
 
         # Re-confirmer avec les nouvelles valeurs
         ui.print_tool_call(tool_name, arguments)

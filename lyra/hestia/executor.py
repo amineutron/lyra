@@ -102,6 +102,8 @@ class HestiaExecutor:
             notion_config: Configuration Notion optionnelle
             verbose: Afficher les details MCP (defaut: False)
         """
+        self._config = config
+
         # MCPManager existant
         self.mcp_manager = MCPManager(config, verbose=verbose)
 
@@ -344,13 +346,36 @@ class HestiaExecutor:
             return f"Tache '{description}' [{tracking_id}] marquee comme annulee (process deja termine ou introuvable)."
 
     def _execute_ironman(self) -> "ExecutionResult":
-        """Lance la scene Iron Man via ironman_run.sh en background."""
-        script = "/home/amineutron/dev/iron-man/scripts/ironman_run.sh"
+        """Lance la scene Iron Man en background.
+
+        Chemin configurable via config.yaml -> scenes.ironman.script_path.
+        Fallback: scenes/ironman/run_scene.py relatif a la racine du projet.
+        """
+        scenes_cfg = self._config.get("scenes", {}).get("ironman", {})
+        configured_path = scenes_cfg.get("script_path", "")
+
+        if configured_path and Path(configured_path).is_file():
+            cmd = ["bash", configured_path]
+        else:
+            # Fallback: run_scene.py dans le projet courant
+            project_root = Path(__file__).resolve().parents[3]
+            run_scene = project_root / "scenes" / "ironman" / "run_scene.py"
+            if not run_scene.is_file():
+                return ExecutionResult(
+                    success=False,
+                    content="",
+                    error=(
+                        "Scene Iron Man introuvable. Verifiez scenes/ironman/run_scene.py "
+                        "ou definissez scenes.ironman.script_path dans config.yaml."
+                    ),
+                )
+            cmd = [sys.executable, str(run_scene)]
+
         log_file = "/tmp/ironman_lyra.log"
         try:
             with open(log_file, "w") as f:
                 subprocess.Popen(
-                    ["bash", script],
+                    cmd,
                     stdout=f,
                     stderr=subprocess.STDOUT,
                     close_fds=True,
