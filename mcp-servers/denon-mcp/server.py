@@ -200,13 +200,13 @@ class DenonAVRController:
         return f"Erreur: {response}"
 
     def mute_toggle(self) -> str:
-        """Toggle le mute."""
-        # Denon n'a pas de toggle natif, on doit lire l'etat d'abord
-        # Pour simplifier, on envoie juste MUON (comportement toggle sur certains modeles)
-        response = self._send_command("MUON")
-        if "ERROR" not in response:
-            return "Mute toggle"
-        return f"Erreur: {response}"
+        """Toggle le mute (lit l'etat courant, puis inverse)."""
+        status = self._send_command("MU?")
+        if "ERROR" in status:
+            return f"Erreur lecture etat mute: {status}"
+        if "MUON" in status:
+            return self.mute_off()
+        return self.mute_on()
 
     def power_on(self) -> str:
         """Allume le Denon."""

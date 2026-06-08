@@ -5,6 +5,7 @@ Module Python pur pour l'execution MCP.
 Wrap le MCPManager existant avec logging optionnel.
 """
 
+import logging
 import sys
 import time
 import subprocess
@@ -337,8 +338,8 @@ class HestiaExecutor:
             for fpath in [pid_file, f"/tmp/lyra_task_{task_id}.progress"]:
                 if fpath:
                     Path(fpath).unlink(missing_ok=True)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning("Impossible de nettoyer le registre de taches: %s", e)
 
         if killed:
             return f"Tache '{description}' [{tracking_id}] arretee (SIGTERM)."
