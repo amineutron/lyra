@@ -549,7 +549,7 @@ def print_background_tasks(tasks: list, task_manager=None):
     print()
 
 
-def live_input(prompt: str, task_manager=None, loading: "threading.Event | None" = None) -> str:
+def live_input(prompt: str, task_manager=None, loading: "threading.Event | None" = None, mode: str = "") -> str:
     """Input colle en bas du terminal avec bandeau de taches optionnel.
 
     La barre d'input (separateur + fond bleu) est toujours dessinee aux deux
@@ -573,7 +573,8 @@ def live_input(prompt: str, task_manager=None, loading: "threading.Event | None"
     readline.parse_and_bind(r'"\C-e": "\C-a\C-k' + _CLEAR_ERR_SENTINEL + r'\C-m"')
 
     _STYLED_PROMPT = '\001\033[44;30m\002 Vous >> \001\033[0m\002'
-    _HINT_NORMAL   = "  /help  Ctrl+C: quitte  "
+    _mode_tag = f"  [{mode.upper()}]" if mode and mode != "default" else ""
+    _HINT_NORMAL   = f"{_mode_tag}  /help  Ctrl+C: quitte  "
     _HINT_LOADING  = "  chargement...  "
 
     def _get_failed():

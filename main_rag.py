@@ -1819,7 +1819,7 @@ def main():
                 if not _servers_shown and not _checks_done.is_set():
                     _checks_done.wait()
                 _loading = _init_done if not _servers_shown else None
-                user_input = ui.live_input(">>> ", task_manager, loading=_loading).strip()
+                user_input = ui.live_input(">>> ", task_manager, loading=_loading, mode=mode).strip()
 
             # Afficher les notifications de succes creees PENDANT live_input
             new_notifs = [n for n in task_manager.get_completed_notifications() if n.get("success")]
