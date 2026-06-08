@@ -459,13 +459,19 @@ class IronManOrchestrator:
             power = tv_state.get("power", "unknown")
             if power == "On":
                 url = f"https://{host}:1926/6/powerstate"
-                requests.put(url, json={"powerstate": "On"}, auth=auth, timeout=3, verify=False)
+                requests.post(url, json={"powerstate": "On"}, auth=auth, timeout=3, verify=False)
 
             # Restaurer volume
             volume = tv_state.get("volume", 0)
             if volume > 0:
                 url = f"https://{host}:1926/6/audio/volume"
                 requests.post(url, json={"current": volume, "muted": False}, auth=auth, timeout=3, verify=False)
+
+            # Restaurer ambilight
+            ambilight = tv_state.get("ambilight")
+            if ambilight:
+                url = f"https://{host}:1926/6/ambilight/currentconfiguration"
+                requests.post(url, json=ambilight, auth=auth, timeout=3, verify=False)
 
             logger.debug("TV restauree")
 

@@ -208,12 +208,14 @@ class Phase0Detection:
             "volume": 0,
             "muted": False,
             "app": None,
+            "ambilight": None,
         }
 
         try:
+            auth = (user, password) if user and password else None
+
             # Check power state via powerstate endpoint
             url = f"https://{host}:1926/6/powerstate"
-            auth = (user, password) if user and password else None
             response = requests.get(url, auth=auth, timeout=DEVICE_TIMEOUT, verify=False)
             if response.status_code == 200:
                 data = response.json()
@@ -235,6 +237,12 @@ class Phase0Detection:
                 pkg = data.get("component", {}).get("packageName")
                 if pkg:
                     state["app"] = pkg
+
+            # Get ambilight configuration
+            url = f"https://{host}:1926/6/ambilight/currentconfiguration"
+            response = requests.get(url, auth=auth, timeout=DEVICE_TIMEOUT, verify=False)
+            if response.status_code == 200:
+                state["ambilight"] = response.json()
 
         except Exception as e:
             logger.warning(f"Impossible de recuperer l'etat TV complet: {e}")
