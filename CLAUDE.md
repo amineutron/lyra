@@ -721,6 +721,7 @@ Lyra integre le MCP tracking pour suivre toutes ses operations longues (VM, back
 | tv.power_on timeout 10s quand TV completement eteinte | server.py | Fix: connect_timeout=1.5 pour detection rapide + WoL (wakeonlan lib, MAC AA:BB:CC:DD:EE:FF). Sequence: check powerstate -> Standby key -> POST powerstate On -> WoL si injoignable. |
 | vm-import.sh df retourne 0 si POOL_DIR inexistant | vm-import.sh | Fix: traverser vers le premier parent existant avant df -BG. |
 | vm-import.sh tar tzf bloque sur archive 14GB (etape 1 a 10% pendant 3+ min) | vm-import.sh | Fix: remplacer tar tzf (lecture complete) par tar tzf \| head -20 (lecture partielle). |
+| tv.launch_app inoperant: JointSpace activities/launch retourne 200 mais n'ouvre pas les apps Android TV | pylips/tv_server.py | Fix: ADB `am start -n pkg/class` si class_name fourni, sinon `monkey -p pkg -c LEANBACK_LAUNCHER 1`. Note: dumpsys activity top montre toujours org.droidtv.playtv en fond — verifier le vrai focus via `dumpsys window \| grep mCurrentFocus`. |
 
 ---
 

@@ -567,25 +567,45 @@ class PhilipsTVController:
 
     def launch_app(self, app: str) -> str:
         """Lance une application."""
-        self._init_pylips()
+        import subprocess
 
-        # Mapping des apps courantes
-        app_intents = {
-            "netflix": {"intent": {"component": {"packageName": "com.netflix.ninja", "className": "com.netflix.ninja.MainActivity"}, "action": "android.intent.action.MAIN"}},
-            "youtube": {"intent": {"component": {"packageName": "com.google.android.youtube.tv", "className": "com.google.android.apps.youtube.tv.activity.ShellActivity"}, "action": "android.intent.action.MAIN"}},
-            "plex": {"intent": {"component": {"packageName": "com.plexapp.android", "className": "com.plexapp.plex.activities.SplashActivity"}, "action": "android.intent.action.MAIN"}},
-            "disney": {"intent": {"component": {"packageName": "com.disney.disneyplus", "className": "com.bamtechmedia.domern.main.MainActivity"}, "action": "android.intent.action.MAIN"}},
-            "prime": {"intent": {"component": {"packageName": "com.amazon.amazonvideo.livingroom", "className": "com.amazon.ignition.IgnitionActivity"}, "action": "android.intent.action.MAIN"}},
+        # Mapping package + activite principale (Android TV / Leanback)
+        app_map = {
+            "netflix": ("com.netflix.ninja",                    "com.netflix.ninja.MainActivity"),
+            "youtube": ("com.google.android.youtube.tv",        "com.google.android.apps.youtube.tv.activity.ShellActivity"),
+            "plex":    ("com.plexapp.android",                  "com.plexapp.plex.activities.SplashActivity"),
+            "disney":  ("com.disney.disneyplus",                "com.bamtechmedia.domern.main.MainActivity"),
+            "prime":   ("com.amazon.amazonvideo.livingroom",    "com.amazon.ignition.IgnitionActivity"),
         }
 
         app_lower = app.lower()
-        if app_lower not in app_intents:
-            return f"App inconnue: {app}. Apps disponibles: {', '.join(app_intents.keys())}"
+        if app_lower not in app_map:
+            return f"App inconnue: {app}. Apps disponibles: {', '.join(app_map.keys())}"
 
-        result = self._api_call("activities/launch", "POST", app_intents[app_lower])
-        if "error" not in result:
-            return f"App {app} lancee"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        package, activity = app_map[app_lower]
+        adb_path = "/tmp/platform-tools/adb"
+        if not os.path.exists(adb_path):
+            adb_path = "adb"
+
+        # JointSpace activities/launch retourne 200 mais n'ouvre pas les apps Android TV.
+        # On utilise ADB am start directement.
+        try:
+            subprocess.run(
+                [adb_path, "connect", f"{self.host}:5555"],
+                capture_output=True, timeout=5,
+            )
+            result = subprocess.run(
+                [adb_path, "-s", f"{self.host}:5555", "shell",
+                 "am", "start", "-n", f"{package}/{activity}"],
+                capture_output=True, text=True, timeout=8,
+            )
+            if result.returncode == 0:
+                return f"App {app} lancee"
+            return f"Erreur ADB: {(result.stdout + result.stderr).strip()}"
+        except subprocess.TimeoutExpired:
+            return "Erreur: ADB timeout"
+        except Exception as e:
+            return f"Erreur: {e}"
 
     def youtube_video(self, video: str) -> str:
         """Lance YouTube sur une video specifique via ADB (utilise le compte connecte)."""
