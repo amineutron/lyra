@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..types import QueryType, PipelineResult
+from ...rag.session_memory import CHOICE_VM_START_CONFIRM
 
 if TYPE_CHECKING:
     from ...models.ephaistos import EphaistosAnalysis
@@ -83,7 +84,7 @@ def handle_vm_start_confirm(
         )
         response = clarif.text + f"\n\nDonc, veux-tu que je demarre **{vm_name}** ?"
         ctx.session.set_pending_choice(
-            choice_type="vm_start_confirm",
+            choice_type=CHOICE_VM_START_CONFIRM,
             options=[],
             question=response,
             metadata=metadata

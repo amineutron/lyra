@@ -13,6 +13,7 @@ import re
 from typing import TYPE_CHECKING
 
 from ..types import QueryType, PipelineResult
+from ...rag.session_memory import META_CUSTOM_EXPORT_STEP
 
 if TYPE_CHECKING:
     from ...rag.session_memory import PendingAction
@@ -136,7 +137,7 @@ def handle_vm_export_custom_workflow(
         tool_name="fedora.vm_export",
         known_args={
             "_custom_export_vm": vm_name,
-            "_custom_export_step": first_group["key"],
+            META_CUSTOM_EXPORT_STEP: first_group["key"],
             "_custom_export_ops": [],
             "_custom_export_firstboot": None,
         },
@@ -150,7 +151,7 @@ def handle_vm_export_custom_workflow(
         # tool_call presente pour les tests one-shot (args connus) ;
         # pending_args empeche l'execution immediate en mode interactif
         tool_call={"name": "fedora.vm_export", "arguments": {"vm_name": vm_name, "mode": "custom"}},
-        pending_args=["_custom_export_step"]
+        pending_args=[META_CUSTOM_EXPORT_STEP]
     )
 
 
@@ -168,7 +169,7 @@ def handle_custom_export_step(
         ctx:     Contexte workflow
     """
     vm_name = pending.known_args.get("_custom_export_vm", "")
-    current_step = pending.known_args.get("_custom_export_step", "")
+    current_step = pending.known_args.get(META_CUSTOM_EXPORT_STEP, "")
     ops: list = list(pending.known_args.get("_custom_export_ops", []))
     firstboot = pending.known_args.get("_custom_export_firstboot")
 
@@ -211,7 +212,7 @@ def handle_custom_export_step(
             tool_name="fedora.vm_export",
             known_args={
                 "_custom_export_vm": vm_name,
-                "_custom_export_step": next_group["key"],
+                META_CUSTOM_EXPORT_STEP: next_group["key"],
                 "_custom_export_ops": ops,
                 "_custom_export_firstboot": firstboot,
             },
@@ -222,7 +223,7 @@ def handle_custom_export_step(
         return PipelineResult(
             response=question,
             query_type=QueryType.ACTION,
-            pending_args=["_custom_export_step"]
+            pending_args=[META_CUSTOM_EXPORT_STEP]
         )
 
     # Tous les groupes parcourus
@@ -237,7 +238,7 @@ def handle_custom_export_step(
             tool_name="fedora.vm_export",
             known_args={
                 "_custom_export_vm": vm_name,
-                "_custom_export_step": "firstboot",
+                META_CUSTOM_EXPORT_STEP: "firstboot",
                 "_custom_export_ops": ops,
                 "_custom_export_firstboot": None,
             },
@@ -248,7 +249,7 @@ def handle_custom_export_step(
         return PipelineResult(
             response=question,
             query_type=QueryType.ACTION,
-            pending_args=["_custom_export_step"]
+            pending_args=[META_CUSTOM_EXPORT_STEP]
         )
 
     # Pas de user-account -> confirmation directe

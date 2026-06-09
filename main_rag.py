@@ -181,6 +181,46 @@ def check_models(config: RAGConfig) -> bool:
     return True
 
 
+def check_devices(cfg: dict) -> None:
+    """Ping rapide des peripheriques domotiques au demarrage (non-bloquant).
+
+    Affiche un avertissement si un device est injoignable, mais ne bloque pas.
+    """
+    import socket
+    import urllib.request
+
+    devices: list[tuple[str, str]] = []  # (label, check_type:address)
+
+    tv_host = cfg.get("tv", {}).get("host")
+    if tv_host:
+        devices.append((f"TV  [{tv_host}]", f"http:{tv_host}:1925"))
+
+    hue_ip = cfg.get("hue", {}).get("bridge_ip")
+    if hue_ip:
+        devices.append((f"Hue [{hue_ip}]", f"http:{hue_ip}:80"))
+
+    denon_host = cfg.get("denon", {}).get("host")
+    denon_port = cfg.get("denon", {}).get("port", 23)
+    if denon_host:
+        devices.append((f"Denon [{denon_host}]", f"tcp:{denon_host}:{denon_port}"))
+
+    if not devices:
+        return
+
+    for label, check in devices:
+        try:
+            proto, host, port_str = check.split(":")
+            port = int(port_str)
+            if proto == "tcp":
+                s = socket.create_connection((host, port), timeout=1.5)
+                s.close()
+            else:
+                urllib.request.urlopen(f"http://{host}:{port}/", timeout=1.5)
+            ui.print_success(f"  {label}")
+        except Exception:
+            ui.print_warning(f"  {label}  (injoignable)")
+
+
 def print_banner(mode="v2", ephaistos_model="Qwen", lyra_model="Llama"):
     """Affiche la banniere avec le mode actif et les vrais noms de modeles.
 
@@ -1045,7 +1085,13 @@ def main():
             if DISCORD_WEBHOOK_URL:
                 ui.print_info("Discord notifications activees")
     except Exception as e:
-        ui.print_warning(f"Config Discord non chargee: {e}")
+        cfg = {}
+        ui.print_warning(f"Config non chargee: {e}")
+
+    # Health check devices (interactif uniquement, non-bloquant)
+    if not one_shot:
+        ui.print_info("Peripheriques domotiques :")
+        check_devices(cfg)
 
     # Verifier les modeles en one-shot uniquement (interactif: fait dans le thread bg)
     if one_shot and _fast_analysis is None:

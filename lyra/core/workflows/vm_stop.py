@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..types import QueryType, PipelineResult
+from ...rag.session_memory import META_COW_CHOICE_PENDING
 
 if TYPE_CHECKING:
     from ...rag.session_memory import PendingAction
@@ -59,7 +60,7 @@ def handle_vm_stop_choice(
             "source_vm": source_vm,
             "new_vm_name": new_vm_name,
             "_restart_after": restart_after,
-            "_cow_choice_pending": True
+            META_COW_CHOICE_PENDING: True
         },
         missing_args=[],
         clarification_question=question

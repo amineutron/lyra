@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from ..types import QueryType, PipelineResult
 from ..validation import get_existing_vm_names, get_vm_state
+from ...rag.session_memory import META_COW_CHOICE_PENDING, META_STOP_CHOICE_PENDING
 
 if TYPE_CHECKING:
     from ...models.ephaistos import EphaistosAnalysis
@@ -351,7 +352,7 @@ def handle_vm_clone_workflow(
                 "source_vm": source_vm,
                 "new_vm_name": new_vm_name,
                 "_vm_running": True,
-                "_stop_choice_pending": True
+                META_STOP_CHOICE_PENDING: True
             },
             missing_args=[],
             clarification_question=question
@@ -381,7 +382,7 @@ def handle_vm_clone_workflow(
             known_args={
                 "source_vm": source_vm,
                 "new_vm_name": new_vm_name,
-                "_cow_choice_pending": True
+                META_COW_CHOICE_PENDING: True
             },
             missing_args=[],
             clarification_question=question

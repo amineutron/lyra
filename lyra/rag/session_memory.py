@@ -11,6 +11,16 @@ from collections import deque
 
 from ..utils.toon import toon_encode_history
 
+# --- Constantes PendingChoice.choice_type ---
+CHOICE_SERVER_SELECTION = "server_selection"
+CHOICE_VM_START_CONFIRM = "vm_start_confirm"
+CHOICE_TOOL_DISAMBIGUATION = "tool_disambiguation"
+
+# --- Constantes clés dans PendingAction.known_args (workflow multi-tours) ---
+META_COW_CHOICE_PENDING = "_cow_choice_pending"
+META_STOP_CHOICE_PENDING = "_stop_choice_pending"
+META_CUSTOM_EXPORT_STEP = "_custom_export_step"
+
 
 @dataclass
 class Turn:

@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .types import QueryType, PipelineResult, SERVER_DESCRIPTIONS
+from ..rag.session_memory import CHOICE_SERVER_SELECTION
 
 if TYPE_CHECKING:
     from .workflows.context import WorkflowContext
@@ -148,7 +149,7 @@ def process_tools_query_step1(query: str, ctx: "WorkflowContext") -> PipelineRes
     question = "\n".join(lines)
 
     ctx.session.set_pending_choice(
-        choice_type="server_selection",
+        choice_type=CHOICE_SERVER_SELECTION,
         options=options,
         question=question
     )

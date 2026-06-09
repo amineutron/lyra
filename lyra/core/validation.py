@@ -9,6 +9,7 @@ import re
 from typing import TYPE_CHECKING, Optional
 
 from .types import PipelineResult, QueryType
+from ..rag.session_memory import CHOICE_VM_START_CONFIRM
 
 if TYPE_CHECKING:
     from ..hestia.executor import HestiaExecutor
@@ -166,7 +167,7 @@ def validate_vm_existence(
                     f"Veux-tu que je la demarre ?"
                 )
                 session.set_pending_choice(
-                    choice_type="vm_start_confirm",
+                    choice_type=CHOICE_VM_START_CONFIRM,
                     options=[],
                     question=response,
                     metadata={"vm_name": vm_name, "original_tool": tool_short}

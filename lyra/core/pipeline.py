@@ -46,7 +46,11 @@ from .workflows.vm_snapshot import (
 )
 from .workflows.vm_clone import suggest_vm_name, handle_cow_choice, handle_vm_clone_workflow
 from .workflows.vm_export import handle_vm_export_custom_workflow, handle_custom_export_step
-from ..rag.session_memory import SessionMemory, PendingAction, PendingChoice
+from ..rag.session_memory import (
+    SessionMemory, PendingAction, PendingChoice,
+    CHOICE_VM_START_CONFIRM, CHOICE_SERVER_SELECTION, CHOICE_TOOL_DISAMBIGUATION,
+    META_COW_CHOICE_PENDING, META_STOP_CHOICE_PENDING, META_CUSTOM_EXPORT_STEP,
+)
 from ..models.model_manager import ModelManager
 from ..models.ephaistos import Ephaistos, EphaistosAnalysis
 from ..models.lyra_voice import LyraVoice, LyraResponse
@@ -240,13 +244,13 @@ class Pipeline:
         if pending.handler is not None:
             return pending.handler(query, pending, self._ctx)
 
-        if pending.choice_type == "server_selection":
+        if pending.choice_type == CHOICE_SERVER_SELECTION:
             return handle_server_selection(query, pending.options, self._ctx)
 
-        if pending.choice_type == "vm_start_confirm":
+        if pending.choice_type == CHOICE_VM_START_CONFIRM:
             return handle_vm_start_confirm(query, pending, self._ctx)
 
-        if pending.choice_type == "tool_disambiguation":
+        if pending.choice_type == CHOICE_TOOL_DISAMBIGUATION:
             return self._handle_tool_disambiguation(query, pending)
 
         # Type de choix inconnu, traiter normalement
@@ -473,7 +477,7 @@ class Pipeline:
             if len(candidates) >= 2:
                 question = _build_disambiguation_question(candidates)
                 pending = PendingChoice(
-                    choice_type="tool_disambiguation",
+                    choice_type=CHOICE_TOOL_DISAMBIGUATION,
                     options=[c["tool"] for c in candidates],
                     question=question,
                     metadata={"candidates": candidates, "query": query, "fused": fused},
@@ -723,15 +727,15 @@ class Pipeline:
                                       pending_args=["screen"])
 
         # Cas spécial: workflow vm_export mode custom (multi-tours)
-        if pending.known_args.get("_custom_export_step") is not None:
+        if pending.known_args.get(META_CUSTOM_EXPORT_STEP) is not None:
             return handle_custom_export_step(query, pending, self._ctx)
 
         # Cas spécial: choix COW vs copie complete pour clone
-        if pending.known_args.get("_cow_choice_pending"):
+        if pending.known_args.get(META_COW_CHOICE_PENDING):
             return handle_cow_choice(query, pending, self._ctx)
 
         # Cas spécial: choix arrêt VM pour clone
-        if pending.known_args.get("_stop_choice_pending"):
+        if pending.known_args.get(META_STOP_CHOICE_PENDING):
             return handle_vm_stop_choice(query, pending, self._ctx)
 
         # Cas spécial: snapshot avec reponse par defaut
@@ -818,7 +822,7 @@ class Pipeline:
                             "source_vm": source_vm,
                             "new_vm_name": new_vm_name,
                             "_vm_running": True,
-                            "_stop_choice_pending": True
+                            META_STOP_CHOICE_PENDING: True
                         },
                         missing_args=[],
                         clarification_question=question
