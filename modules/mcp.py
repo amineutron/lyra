@@ -319,7 +319,16 @@ class MCPManager:
                 error=f"Serveur MCP '{server_name}' non trouve"
             )
 
-        return self.clients[server_name].call_tool(tool_name, arguments)
+        result = self.clients[server_name].call_tool(tool_name, arguments)
+
+        # Retry unique si erreur de session/connexion (le process redémarre automatiquement)
+        if not result.success and result.error and \
+                any(kw in result.error.lower() for kw in
+                    ("session", "process", "broken pipe", "eof", "termine", "connexion")):
+            time.sleep(0.5)
+            result = self.clients[server_name].call_tool(tool_name, arguments)
+
+        return result
 
     def _call_without_prefix(self, tool_name: str, arguments: dict) -> MCPResult:
         """Recherche et execute un outil sans prefixe (compatibilite).
