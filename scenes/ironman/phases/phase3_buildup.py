@@ -114,6 +114,7 @@ class Phase3Buildup:
         self.config = self._load_config(config_path)
         self.hue_config = self.config.get("hue", {})
         self.tv_config = self.config.get("tv", {})
+        self.beat_intensities: List[float] = []
         self.beats = self._load_beats()
 
         # Stats d'execution
@@ -145,17 +146,22 @@ class Phase3Buildup:
         return config
 
     def _load_beats(self) -> List[float]:
-        """Charge les timestamps des beats depuis le fichier JSON."""
+        """
+        Charge les timestamps des beats (+ intensites mesurees si
+        presentes) depuis le fichier JSON.
+        """
         try:
             with open(BEATS_FILE, 'r') as f:
                 data = json.load(f)
-                # Utiliser les beats des 15 premières secondes
-                beats = data.get("beats_first_15s", data.get("beats", []))
-                logger.info(f"Chargé {len(beats)} beats depuis {BEATS_FILE.name}")
+                beats = data.get("beats", [])
+                self.beat_intensities = data.get("intensities", [])
+                measured = " (intensites mesurees)" if self.beat_intensities else ""
+                logger.info(f"Chargé {len(beats)} beats depuis {BEATS_FILE.name}{measured}")
                 return beats
         except Exception as e:
             logger.warning(f"Impossible de charger les beats: {e}")
             # Fallback: beats réguliers à 94 BPM
+            self.beat_intensities = []
             return [i * 0.638 for i in range(24)]  # ~94 BPM
 
     def _get_playback_position(self) -> Optional[float]:
@@ -384,9 +390,17 @@ class Phase3Buildup:
                 time.sleep(wait)
             elif wait < -0.5:
                 continue  # beat deja depasse (observation), ne pas rafaler
-            intensity = CTRL_INTENSITY_PATTERN[i % len(CTRL_INTENSITY_PATTERN)]
+            # Intensite mesuree sur l'audio reel si disponible,
+            # sinon pattern cyclique
+            if i < len(self.beat_intensities):
+                intensity = self.beat_intensities[i]
+            else:
+                intensity = CTRL_INTENSITY_PATTERN[i % len(CTRL_INTENSITY_PATTERN)]
             if self._send_hue_beat_pulse(intensity):
                 sent += 1
+                lag_ms = (time.perf_counter() - target) * 1000
+                logger.info(f"[LIGHTS] pulse #{sent} video-t={beat_time:.2f}s "
+                            f"intensity={intensity:.2f} lag={lag_ms:+.0f}ms")
         return sent
 
     def execute(self, video_start_delay: float = 0.0, music_offset: float = 0.0) -> dict:
@@ -428,15 +442,21 @@ class Phase3Buildup:
             # lumieres seraient noires pendant l'observation
             self._send_hue_beat_ctrl({"floor": CTRL_FLOOR})
 
-            # Observation: hue_beat entend-il l'audio ? (non quand
-            # YouTube joue sur la TV: rien ne passe par le PC)
-            observe_until = min(video_start + HUE_BEAT_OBSERVE_S, deadline)
-            while time.perf_counter() < observe_until:
-                if self._hue_beat_beat_count() > 0:
-                    break
-                time.sleep(0.1)
+            # Une source audio n'est attendue que si elle est configuree
+            # (sinon YouTube joue sur la TV: hue_beat n'entendra jamais
+            # rien, observer 2s ne ferait que perdre les premiers beats)
+            audio_expected = bool(
+                self.config.get("scenes", {}).get("ironman", {})
+                .get("hue_beat_source")
+            )
+            if audio_expected:
+                observe_until = min(video_start + HUE_BEAT_OBSERVE_S, deadline)
+                while time.perf_counter() < observe_until:
+                    if self._hue_beat_beat_count() > 0:
+                        break
+                    time.sleep(0.1)
 
-            if self._hue_beat_beat_count() > 0:
+            if audio_expected and self._hue_beat_beat_count() > 0:
                 logger.info("Phase 3: hue_beat audio-reactif, attente passive")
                 remaining = deadline - time.perf_counter()
                 if remaining > 0:
@@ -468,8 +488,15 @@ class Phase3Buildup:
 
         self._beats_executed = 0
 
-        # Prendre tous les beats disponibles (jusqu'à la durée max)
-        relevant_beats = [b for b in self.beats if b <= 20.0]  # Max 20s
+        # Prendre les beats disponibles (jusqu'à la durée max), amincis
+        # a >= 0.9s d'ecart: le fallback REST est limite par le bridge
+        # (~1 commande groupe/s), les beats mesures sont trop denses
+        relevant_beats = []
+        for b in self.beats:
+            if b > 20.0:
+                break
+            if not relevant_beats or b - relevant_beats[-1] >= 0.9:
+                relevant_beats.append(b)
 
         if not relevant_beats:
             logger.warning("Aucun beat trouvé!")

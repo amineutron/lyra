@@ -82,16 +82,40 @@ class TestPhase3Buildup:
     @patch("requests.put")
     @patch("time.sleep")
     def test_execute_hue_beat_mode(self, mock_sleep, mock_put, phase3):
-        """hue_beat detecte l'audio: attente passive."""
+        """Source audio configuree + beats detectes: attente passive."""
         mock_put.return_value = Mock(status_code=200)
+        phase3.config["scenes"] = {"ironman": {"hue_beat_source": "mic.monitor"}}
         with patch.object(phase3, "_hue_beat_running", return_value=True):
             with patch.object(phase3, "_hue_beat_beat_count", return_value=3):
                 with patch.object(phase3, "_measure_video_position",
                                   return_value=None):
-                    result = phase3.execute()
+                    with patch.object(phase3, "_send_hue_beat_ctrl",
+                                      return_value=True):
+                        result = phase3.execute()
         assert result["mode"] == "hue_beat"
         assert result["success"] is True
         assert result["video_anchor"] == "estimated"
+
+    @patch("requests.put")
+    @patch("time.sleep")
+    def test_no_audio_source_drives_immediately(self, mock_sleep, mock_put, phase3):
+        """Pas de source audio configuree: pilotage direct, sans
+        fenetre d'observation (elle perdait les premiers beats)."""
+        mock_put.return_value = Mock(status_code=200)
+        phase3.beats = [0.1]
+        phase3.beat_intensities = []
+        with patch.object(phase3, "_hue_beat_running", return_value=True):
+            with patch.object(phase3, "_hue_beat_beat_count",
+                              return_value=99) as mock_count:
+                with patch.object(phase3, "_measure_video_position",
+                                  return_value=None):
+                    with patch.object(phase3, "_send_hue_beat_ctrl",
+                                      return_value=True):
+                        with patch.object(phase3, "_send_hue_beat_pulse",
+                                          return_value=True):
+                            result = phase3.execute()
+        assert result["mode"] == "hue_beat_ctrl"
+        mock_count.assert_not_called()
 
     @patch("requests.put")
     @patch("time.sleep")
@@ -263,10 +287,11 @@ class TestDrivePulses:
         first_cmd = mock_ctrl.call_args_list[0][0][0]
         assert first_cmd == {"floor": CTRL_FLOOR}
 
-    def test_intensity_follows_pattern(self, phase3):
-        """L'intensite suit le pattern cyclique (groove, pas de strobe)."""
+    def test_intensity_follows_pattern_without_measurements(self, phase3):
+        """Sans intensites mesurees: pattern cyclique (groove)."""
         from .phase3_buildup import CTRL_INTENSITY_PATTERN
         phase3.beats = [0.01, 0.02, 0.03, 0.04, 0.05]
+        phase3.beat_intensities = []
         now = time.perf_counter()
         with patch.object(phase3, '_send_hue_beat_ctrl', return_value=True):
             with patch.object(phase3, '_send_hue_beat_pulse',
@@ -276,6 +301,18 @@ class TestDrivePulses:
         expected = [CTRL_INTENSITY_PATTERN[i % len(CTRL_INTENSITY_PATTERN)]
                     for i in range(5)]
         assert intensities == expected
+
+    def test_measured_intensities_take_precedence(self, phase3):
+        """Intensites mesurees sur l'audio reel: utilisees telles quelles."""
+        phase3.beats = [0.01, 0.02, 0.03]
+        phase3.beat_intensities = [0.9, 0.5, 0.75]
+        now = time.perf_counter()
+        with patch.object(phase3, '_send_hue_beat_ctrl', return_value=True):
+            with patch.object(phase3, '_send_hue_beat_pulse',
+                              return_value=True) as mock_pulse:
+                phase3._drive_hue_beat_pulses(phase_start=now, deadline=now + 1.0)
+        intensities = [c[0][0] for c in mock_pulse.call_args_list]
+        assert intensities == [0.9, 0.5, 0.75]
 
 
 class TestMeasureVideoPosition:

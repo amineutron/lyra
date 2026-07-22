@@ -60,6 +60,7 @@ logger = logging.getLogger(__name__)
 
 HUE_BEAT_PY = Path("/home/amineutron/dev/ironman-hue/hue_beat.py")
 HUE_BEAT_PID_FILE = Path("/tmp/ironman_hue.pid")
+HUE_BEAT_LOG_FILE = Path("/tmp/lyra_hue_beat.log")
 LYRA_VENV_PYTHON = Path(__file__).parent.parent.parent / ".venv" / "bin" / "python3"
 
 
@@ -221,14 +222,18 @@ class IronManOrchestrator:
             logger.debug(f"[IRONMAN] purge PID file: {e}")
 
         try:
+            # Logs hue_beat dans un fichier (pas DEVNULL): indispensable
+            # pour diagnostiquer les pulses apres coup
+            log_file = open(HUE_BEAT_LOG_FILE, "w")
             subprocess.Popen(
                 [python_bin, str(HUE_BEAT_PY),
                  "--mode=pulse", "--palette=ironman", "--bass-only"],
                 env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
                 start_new_session=True,
             )
+            log_file.close()
             # Non bloquant: la disponibilite est verifiee par
             # _wait_hue_beat() (poll du PID file) avant la Phase 3
             logger.info("[IRONMAN] hue_beat lance (pulse/ironman/bass-only)")
