@@ -401,3 +401,52 @@ class TestSendCtrlAtomic:
             assert _json.loads(ctrl.read_text()) == {"floor": 0.22}
             # le fichier temporaire ne traine pas
             assert not (tmp_path / "ctrl.tmp").exists()
+
+
+class TestSetupConsumedBeforePulses:
+    """Le setup ctrl doit etre consomme avant le premier pulse
+    (regression: le premier pulse ecrasait la commande uniform/anchor)."""
+
+    @pytest.fixture
+    def phase3(self):
+        with patch.object(Phase3Buildup, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase3Buildup()
+
+    def test_waits_for_ctrl_consumption(self, phase3, tmp_path):
+        """Si le fichier ctrl existe encore, on attend (max 300ms)."""
+        ctrl = tmp_path / "ctrl"
+        phase3.beats = [0.01]
+        phase3.beat_intensities = [1.0]
+
+        consumed_at = {}
+
+        def fake_send(cmd):
+            ctrl.write_text("x")  # simule un fichier en attente
+            return True
+
+        def fake_pulse(intensity):
+            consumed_at["ctrl_still_there"] = ctrl.exists()
+            return True
+
+        import threading
+
+        def consumer():
+            time.sleep(0.1)
+            ctrl.unlink()  # le watcher consomme apres 100ms
+
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE', ctrl):
+            with patch.object(phase3, '_send_hue_beat_ctrl', side_effect=fake_send):
+                with patch.object(phase3, '_send_hue_beat_pulse',
+                                  side_effect=fake_pulse):
+                    t = threading.Thread(target=consumer)
+                    t.start()
+                    now = time.perf_counter()
+                    phase3._drive_hue_beat_pulses(phase_start=now,
+                                                  deadline=now + 1.0)
+                    t.join()
+
+        # Le pulse est parti APRES la consommation du setup
+        assert consumed_at["ctrl_still_there"] is False

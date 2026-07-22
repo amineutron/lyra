@@ -379,8 +379,15 @@ class Phase3Buildup:
         """
         # Pas d'ancres aleatoires + flash uniforme (tous les canaux, meme
         # couleur): les segments/accents tires au hasard a chaque pulse
-        # rendaient le rendu spatialement chaotique
+        # rendaient le rendu spatialement chaotique.
+        # IMPORTANT: attendre que le watcher consomme la commande avant
+        # d'ecrire le premier pulse (meme fichier: il l'ecraserait)
         self._send_hue_beat_ctrl({"anchor": False, "uniform": True})
+        consume_deadline = time.perf_counter() + 0.3
+        while HUE_BEAT_CTRL_FILE.exists() and time.perf_counter() < consume_deadline:
+            time.sleep(0.02)
+        if HUE_BEAT_CTRL_FILE.exists():
+            logger.warning("[LIGHTS] setup ctrl non consomme apres 300ms")
 
         sent = 0
         for i, beat_time in enumerate(self.beats):
