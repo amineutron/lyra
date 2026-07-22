@@ -40,9 +40,9 @@ MAX_RUNS = 5
 
 # Cles des resultats de phase conservees dans les metriques
 _STEP_EXTRA_KEYS = (
-    "latency_ms", "lights_off", "tv_off", "tv_action", "pc_screens_off",
-    "flash_ok", "blue_ok", "tv_on", "music_started", "music_method",
-    "mode", "beats_sent", "tts_ok",
+    "latency_ms", "lights_off", "tv_off", "tv_action", "ambilight_off",
+    "pc_screens_off", "flash_ok", "blue_ok", "tv_on", "music_started",
+    "music_method", "mode", "beats_executed", "music_stopped", "tts_ok",
 )
 
 
