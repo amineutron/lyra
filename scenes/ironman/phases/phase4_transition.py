@@ -260,19 +260,27 @@ class Phase4Transition:
         return False
 
     def _send_pause_adb(self, host: str) -> bool:
-        """Envoie pause via ADB."""
-        adb_path = "/tmp/platform-tools/adb"
+        """Envoie pause via ADB (adb du PATH, timeouts courts)."""
+        try:
+            from music_anticipator import _adb_path
+        except ImportError:
+            from .music_anticipator import _adb_path
 
-        if not os.path.exists(adb_path):
+        adb_path = _adb_path()
+        if adb_path is None:
             return False
 
         try:
+            subprocess.run(
+                [adb_path, "connect", f"{host}:5555"],
+                capture_output=True, timeout=2
+            )
             # Envoyer keycode MEDIA_PAUSE (127)
             result = subprocess.run(
                 [adb_path, "-s", f"{host}:5555", "shell",
                  "input", "keyevent", "127"],
                 capture_output=True,
-                timeout=5
+                timeout=2.5
             )
             return result.returncode == 0
         except Exception as e:
@@ -346,14 +354,28 @@ class Phase4Transition:
 
         results["fade_ok"] = self._fade_to_stable()
 
-        # T+4s: Couper musique
+        # T+4s: Couper musique (en thread: la cascade ADB/volume/power
+        # pouvait deborder la phase de plusieurs secondes)
         elapsed = time.perf_counter() - phase_start
         if elapsed < MUSIC_STOP:
             time.sleep(MUSIC_STOP - elapsed)
 
-        results["music_stopped"] = self._stop_music()
+        import threading
+        stop_result = {"ok": False}
 
-        # Attendre fin de phase (stabilisation)
+        def _stop():
+            stop_result["ok"] = self._stop_music()
+
+        stop_thread = threading.Thread(target=_stop, daemon=True)
+        stop_thread.start()
+
+        # Attendre fin de phase (stabilisation); la coupure musique a
+        # jusqu'a la fin de la phase pour aboutir, jamais plus
+        elapsed = time.perf_counter() - phase_start
+        if elapsed < DURATION:
+            stop_thread.join(timeout=DURATION - elapsed)
+        results["music_stopped"] = stop_result["ok"]
+
         elapsed = time.perf_counter() - phase_start
         if elapsed < DURATION:
             time.sleep(DURATION - elapsed)

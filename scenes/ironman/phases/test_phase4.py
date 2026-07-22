@@ -225,3 +225,41 @@ class TestConstants:
     def test_stable_brightness(self):
         """Brightness stable = 150."""
         assert STABLE_BRIGHTNESS == 150
+
+
+# =============================================================================
+# Tests coupure musique bornee par la duree de phase
+# =============================================================================
+
+class TestStopMusicBounded:
+    """La cascade _stop_music ne doit jamais deborder la phase."""
+
+    @pytest.fixture
+    def phase4(self):
+        with patch.object(Phase4Transition, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase4Transition()
+
+    def test_hanging_stop_music_does_not_overrun(self, phase4):
+        """_stop_music qui pend: la phase finit a l'heure, music False."""
+        import time as _time
+
+        def hanging_stop():
+            _time.sleep(10)
+            return True
+
+        with patch.object(phase4, '_slowdown_beats', return_value=0):
+            with patch.object(phase4, '_fade_to_stable', return_value=True):
+                with patch.object(phase4, '_stop_music', side_effect=hanging_stop):
+                    with patch('scenes.ironman.phases.phase4_transition.DURATION', 0.6):
+                        with patch('scenes.ironman.phases.phase4_transition.FADE_START', 0.0):
+                            with patch('scenes.ironman.phases.phase4_transition.MUSIC_STOP', 0.1):
+                                start = _time.perf_counter()
+                                result = phase4.execute()
+                                elapsed = _time.perf_counter() - start
+
+        assert elapsed < 2.0  # pas les 10s du stop qui pend
+        assert result["music_stopped"] is False
+        assert result["success"] is True  # fade OK suffit
