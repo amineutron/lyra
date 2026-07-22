@@ -377,9 +377,10 @@ class Phase3Buildup:
         Returns:
             Nombre de pulses envoyes
         """
-        # Pas d'ancres aleatoires en cadence fixe (le plancher est deja
-        # envoye a l'entree de la branche hue_beat)
-        self._send_hue_beat_ctrl({"anchor": False})
+        # Pas d'ancres aleatoires + flash uniforme (tous les canaux, meme
+        # couleur): les segments/accents tires au hasard a chaque pulse
+        # rendaient le rendu spatialement chaotique
+        self._send_hue_beat_ctrl({"anchor": False, "uniform": True})
 
         sent = 0
         for i, beat_time in enumerate(self.beats):
