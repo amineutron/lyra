@@ -82,10 +82,32 @@ class TestPhase3Buildup:
     @patch("requests.put")
     @patch("time.sleep")
     def test_execute_hue_beat_mode(self, mock_sleep, mock_put, phase3):
+        """hue_beat detecte l'audio: attente passive."""
         mock_put.return_value = Mock(status_code=200)
         with patch.object(phase3, "_hue_beat_running", return_value=True):
-            result = phase3.execute()
+            with patch.object(phase3, "_hue_beat_beat_count", return_value=3):
+                result = phase3.execute()
         assert result["mode"] == "hue_beat"
+        assert result["success"] is True
+
+    @patch("requests.put")
+    @patch("time.sleep")
+    def test_execute_hue_beat_silent_drives_pulses(self, mock_sleep, mock_put, phase3):
+        """hue_beat n'entend rien (YouTube sur TV): pulses pilotes."""
+        mock_put.return_value = Mock(status_code=200)
+        phase3.beats = [0.5, 1.0, 1.5]
+        with patch.object(phase3, "_hue_beat_running", return_value=True):
+            with patch.object(phase3, "_hue_beat_beat_count", return_value=0):
+                with patch(
+                    "scenes.ironman.phases.phase3_buildup.HUE_BEAT_OBSERVE_S", 0.0
+                ):
+                    with patch.object(phase3, "_send_hue_beat_pulse",
+                                      return_value=True) as mock_pulse:
+                        result = phase3.execute()
+
+        assert result["mode"] == "hue_beat_ctrl"
+        assert result["beats_executed"] == 3
+        assert mock_pulse.call_count == 3
         assert result["success"] is True
 
 
@@ -118,3 +140,72 @@ class TestRgbToXy:
     def test_black(self):
         x, y = rgb_to_xy(0, 0, 0)
         assert x == 0.0 and y == 0.0
+
+
+class TestHueBeatStateReading:
+    """Lecture du state file hue_beat (validation PID)."""
+
+    @pytest.fixture
+    def phase3(self):
+        with patch.object(Phase3Buildup, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase3Buildup()
+
+    def test_beat_count_valid_pid(self, phase3, tmp_path):
+        import json as _json
+        state = tmp_path / "state.json"
+        pid = tmp_path / "pid"
+        state.write_text(_json.dumps({"pid": 4242, "beat_count": 7}))
+        pid.write_text("4242")
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_STATE_FILE', state):
+            with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_PID_FILE', pid):
+                assert phase3._hue_beat_beat_count() == 7
+
+    def test_beat_count_stale_pid_ignored(self, phase3, tmp_path):
+        """State d'un ancien run (PID different): compte comme 0."""
+        import json as _json
+        state = tmp_path / "state.json"
+        pid = tmp_path / "pid"
+        state.write_text(_json.dumps({"pid": 1111, "beat_count": 50}))
+        pid.write_text("2222")
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_STATE_FILE', state):
+            with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_PID_FILE', pid):
+                assert phase3._hue_beat_beat_count() == 0
+
+    def test_beat_count_missing_files(self, phase3, tmp_path):
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_STATE_FILE',
+                   tmp_path / "absent.json"):
+            assert phase3._hue_beat_beat_count() == 0
+
+    def test_send_pulse_writes_ctrl_file(self, phase3, tmp_path):
+        import json as _json
+        ctrl = tmp_path / "ctrl"
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE', ctrl):
+            assert phase3._send_hue_beat_pulse(0.8) is True
+            assert _json.loads(ctrl.read_text()) == {"pulse": 0.8}
+
+
+class TestDrivePulses:
+    """Pilotage des pulses sur beats precalcules."""
+
+    @pytest.fixture
+    def phase3(self):
+        with patch.object(Phase3Buildup, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase3Buildup()
+
+    def test_beats_after_deadline_not_sent(self, phase3):
+        """Les beats au-dela de la fin de phase ne sont pas envoyes."""
+        phase3.beats = [0.05, 0.10, 5.0, 9.0]
+        now = time.perf_counter()
+        with patch.object(phase3, '_send_hue_beat_pulse',
+                          return_value=True) as mock_pulse:
+            sent = phase3._drive_hue_beat_pulses(
+                phase_start=now, deadline=now + 0.3
+            )
+        assert sent == 2
+        assert mock_pulse.call_count == 2

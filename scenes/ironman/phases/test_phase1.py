@@ -160,6 +160,12 @@ class TestExecute:
         }):
             return Phase1Blackout()
 
+    @pytest.fixture(autouse=True)
+    def _no_real_ambilight(self, phase1):
+        """execute() ne doit jamais toucher la vraie TV dans les tests."""
+        with patch.object(phase1, '_turn_off_ambilight', return_value=True):
+            yield
+
     def test_execute_all_success(self, phase1):
         """Execution complete avec succes."""
         with patch.object(phase1, '_turn_off_lights', return_value=(True, 50.0)):
@@ -273,6 +279,12 @@ class TestExecuteSkipTv:
         }):
             return Phase1Blackout()
 
+    @pytest.fixture(autouse=True)
+    def _no_real_ambilight(self, phase1):
+        """execute() ne doit jamais toucher la vraie TV dans les tests."""
+        with patch.object(phase1, '_turn_off_ambilight', return_value=True):
+            yield
+
     def test_skip_tv_does_not_touch_tv(self, phase1):
         with patch.object(phase1, '_turn_off_lights', return_value=(True, 100.0)):
             with patch.object(phase1, '_turn_off_tv') as mock_tv:
@@ -282,6 +294,46 @@ class TestExecuteSkipTv:
         mock_tv.assert_not_called()
         assert result["tv_action"] == "anticipated"
         assert result["tv_off"] is True
+
+    def test_skip_tv_still_cuts_ambilight(self, phase1):
+        """L'Ambilight est coupe meme quand la TV est anticipee."""
+        with patch.object(phase1, '_turn_off_lights', return_value=(True, 100.0)):
+            with patch.object(phase1, '_turn_off_ambilight',
+                              return_value=True) as mock_ambi:
+                with patch('time.sleep'):
+                    result = phase1.execute(skip_tv=True)
+
+        mock_ambi.assert_called_once()
+        assert result["ambilight_off"] is True
+
+
+class TestTurnOffAmbilight:
+    """Tests de la coupure Ambilight."""
+
+    @pytest.fixture
+    def phase1(self):
+        with patch.object(Phase1Blackout, '_load_config', return_value={
+            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'},
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+        }):
+            return Phase1Blackout()
+
+    def test_ambilight_off_success(self, phase1):
+        with patch('requests.post') as mock_post:
+            mock_post.return_value = MagicMock(status_code=200)
+            assert phase1._turn_off_ambilight() is True
+            url = mock_post.call_args[0][0]
+            assert "ambilight/power" in url
+            assert mock_post.call_args[1]["json"] == {"power": "Off"}
+
+    def test_ambilight_off_http_error(self, phase1):
+        with patch('requests.post') as mock_post:
+            mock_post.return_value = MagicMock(status_code=500)
+            assert phase1._turn_off_ambilight() is False
+
+    def test_ambilight_off_network_error_non_blocking(self, phase1):
+        with patch('requests.post', side_effect=requests.exceptions.Timeout()):
+            assert phase1._turn_off_ambilight() is False
 
     def test_default_still_turns_off_tv(self, phase1):
         with patch.object(phase1, '_turn_off_lights', return_value=(True, 100.0)):

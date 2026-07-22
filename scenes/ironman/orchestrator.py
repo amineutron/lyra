@@ -196,6 +196,14 @@ class IronManOrchestrator:
             "HUE_CLIENTKEY": secrets.get("clientkey", ""),
             "HUE_AREA_ID": secrets.get("area_id", ""),
         }
+        # Source audio configurable (defaut hue_beat: sortie HDMI du PC;
+        # inutile quand YouTube joue sur la TV -> beats pilotes en ctrl)
+        audio_source = (
+            self.config.get("scenes", {}).get("ironman", {})
+            .get("hue_beat_source")
+        )
+        if audio_source:
+            env["HUE_MONITOR_SRC"] = audio_source
 
         if not env["HUE_CLIENTKEY"] or not env["HUE_AREA_ID"]:
             logger.warning("hue_beat: clientkey ou area_id manquant dans secrets.yaml")
@@ -680,9 +688,11 @@ class IronManOrchestrator:
                 url = f"https://{host}:1926/6/audio/volume"
                 requests.post(url, json={"current": volume, "muted": False}, auth=auth, timeout=3, verify=False)
 
-            # Restaurer ambilight
+            # Restaurer ambilight (power On d'abord: la Phase 1 l'a coupe)
             ambilight = tv_state.get("ambilight")
             if ambilight:
+                url = f"https://{host}:1926/6/ambilight/power"
+                requests.post(url, json={"power": "On"}, auth=auth, timeout=3, verify=False)
                 url = f"https://{host}:1926/6/ambilight/currentconfiguration"
                 requests.post(url, json=ambilight, auth=auth, timeout=3, verify=False)
 

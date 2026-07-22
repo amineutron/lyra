@@ -48,7 +48,17 @@ BEAT_SYNC_OFFSET = 0.0  # secondes
 BLUE_ARC_REACTOR_RGB = (0, 0, 255)
 
 HUE_BEAT_PID_FILE = Path("/tmp/ironman_hue.pid")
+HUE_BEAT_CTRL_FILE = Path("/tmp/lyra_hue_beat.ctrl")
+HUE_BEAT_STATE_FILE = Path("/tmp/lyra_hue_beat.state.json")
 RED_INTENSE_RGB = (255, 0, 0)
+
+# Fenetre d'observation avant de basculer en pulses pilotes:
+# si hue_beat n'a detecte aucun beat audio apres ce delai (cas normal
+# quand YouTube joue sur la TV: aucun audio ne passe par le PC), la
+# phase pilote les pulses via CTRL_FILE sur les beats precalcules.
+HUE_BEAT_OBSERVE_S = 2.0
+# Avance d'ecriture du pulse (compense le poll 100ms du watcher)
+CTRL_PULSE_LEAD_S = 0.06
 
 # API
 API_TIMEOUT = 1.5  # Timeout court pour les beats rapides
@@ -249,6 +259,60 @@ class Phase3Buildup:
         except (FileNotFoundError, ValueError, ProcessLookupError, PermissionError):
             return False
 
+    def _hue_beat_beat_count(self) -> int:
+        """
+        Lit beat_count dans le state file de hue_beat (0 si absent).
+
+        Le PID du state doit correspondre au PID file courant, sinon le
+        state provient d'un ancien run (beat_count residuel trompeur).
+        """
+        try:
+            state = json.loads(HUE_BEAT_STATE_FILE.read_text())
+            current_pid = int(HUE_BEAT_PID_FILE.read_text().strip())
+            if int(state.get("pid", -1)) != current_pid:
+                return 0
+            return int(state.get("beat_count", 0))
+        except Exception:
+            return 0
+
+    def _send_hue_beat_pulse(self, intensity: float = 1.0) -> bool:
+        """Ecrit une commande pulse dans le CTRL_FILE de hue_beat."""
+        try:
+            HUE_BEAT_CTRL_FILE.write_text(json.dumps({"pulse": intensity}))
+            return True
+        except Exception as e:
+            logger.debug(f"ctrl pulse erreur: {e}")
+            return False
+
+    def _drive_hue_beat_pulses(self, phase_start: float,
+                               deadline: float) -> int:
+        """
+        Pilote les pulses hue_beat sur les beats precalcules.
+
+        Utilise quand l'audio ne passe pas par le PC (YouTube sur la TV):
+        hue_beat n'entend rien, on lui envoie les beats via CTRL_FILE.
+
+        Args:
+            phase_start: perf_counter du debut de la video (t=0 des beats)
+            deadline: perf_counter de fin de phase (jamais depasse)
+
+        Returns:
+            Nombre de pulses envoyes
+        """
+        sent = 0
+        for beat_time in self.beats:
+            target = phase_start + beat_time + BEAT_SYNC_OFFSET - CTRL_PULSE_LEAD_S
+            if target >= deadline:
+                break
+            wait = target - time.perf_counter()
+            if wait > 0:
+                time.sleep(wait)
+            elif wait < -0.5:
+                continue  # beat deja depasse (observation), ne pas rafaler
+            if self._send_hue_beat_pulse(1.0):
+                sent += 1
+        return sent
+
     def execute(self, video_start_delay: float = 0.0, music_offset: float = 0.0) -> dict:
         """
         Execute la Phase 3: Pulsations Synchronisees.
@@ -262,16 +326,46 @@ class Phase3Buildup:
         """
         logger.info(f"Phase 3: BUILDUP - Debut (attente video: {video_start_delay:.2f}s)")
 
-        # hue_beat (Entertainment API) gere les beats en temps reel — juste dormir
+        # hue_beat (Entertainment API) gere les beats en temps reel
         if self._hue_beat_running():
-            logger.info("Phase 3: hue_beat actif, attente passive")
-            time.sleep(PHASE_DURATION)
+            phase_entry = time.perf_counter()
+
+            # Attendre le vrai demarrage de la video (t=0 des beats)
+            if video_start_delay > 0:
+                time.sleep(video_start_delay)
+            video_start = time.perf_counter()
+            deadline = phase_entry + PHASE_DURATION
+
+            # Observation: hue_beat entend-il l'audio ? (non quand
+            # YouTube joue sur la TV: rien ne passe par le PC)
+            observe_until = min(video_start + HUE_BEAT_OBSERVE_S, deadline)
+            while time.perf_counter() < observe_until:
+                if self._hue_beat_beat_count() > 0:
+                    break
+                time.sleep(0.1)
+
+            if self._hue_beat_beat_count() > 0:
+                logger.info("Phase 3: hue_beat audio-reactif, attente passive")
+                remaining = deadline - time.perf_counter()
+                if remaining > 0:
+                    time.sleep(remaining)
+                mode, beats_sent = "hue_beat", -1
+            else:
+                logger.info("Phase 3: hue_beat silencieux -> pulses pilotes "
+                            "(beats precalcules via CTRL_FILE)")
+                beats_sent = self._drive_hue_beat_pulses(video_start, deadline)
+                remaining = deadline - time.perf_counter()
+                if remaining > 0:
+                    time.sleep(remaining)
+                mode = "hue_beat_ctrl"
+                logger.info(f"Phase 3: {beats_sent} pulses pilotes envoyes")
+
             return {
                 "success": True,
-                "beats_executed": -1,  # gere par hue_beat
-                "total_beats": -1,
-                "duration": PHASE_DURATION,
-                "mode": "hue_beat",
+                "beats_executed": beats_sent,
+                "total_beats": len(self.beats),
+                "duration": time.perf_counter() - phase_entry,
+                "mode": mode,
             }
 
         # Attendre que la vidéo commence vraiment

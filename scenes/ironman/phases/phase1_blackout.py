@@ -155,6 +155,30 @@ class Phase1Blackout:
             return HTTPDigestAuth(user, password)
         return None
 
+    def _turn_off_ambilight(self) -> bool:
+        """
+        Coupe l'Ambilight de la TV (POST ambilight/power Off).
+
+        Non-bloquant: un echec n'empeche pas le blackout.
+        Le rollback restaure la configuration sauvegardee en Phase 0.
+        """
+        host = self.tv_config.get("host", "192.168.1.50")
+        url = f"https://{host}:1926/6/ambilight/power"
+        try:
+            response = requests.post(
+                url, json={"power": "Off"}, auth=self._get_tv_auth(),
+                timeout=API_TIMEOUT, verify=False
+            )
+            ok = response.status_code == 200
+            if ok:
+                logger.info("Ambilight coupe")
+            else:
+                logger.warning(f"Ambilight off: HTTP {response.status_code}")
+            return ok
+        except Exception as e:
+            logger.warning(f"Ambilight off erreur: {e}")
+            return False
+
     def _check_tv_power(self) -> str:
         """
         Verifie l'etat d'alimentation de la TV.
@@ -247,6 +271,9 @@ class Phase1Blackout:
             tv_ok, tv_action = True, "anticipated"
         else:
             tv_ok, tv_action = self._turn_off_tv()
+        # Ambilight coupe dans tous les cas (meme TV geree par
+        # l'anticipateur): il polluerait le noir et les pulsations Hue
+        ambilight_off = self._turn_off_ambilight()
         pc_off = self.pc_screens.turn_off()
 
         extinction_time = (time.perf_counter() - extinction_start) * 1000
@@ -274,6 +301,7 @@ class Phase1Blackout:
             "lights_off": lights_ok,
             "tv_off": tv_ok,
             "tv_action": tv_action,
+            "ambilight_off": ambilight_off,
             "pc_screens_off": pc_off,
             "duration": duration,
             "latency_ms": latency_ms,
