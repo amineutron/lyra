@@ -294,3 +294,12 @@ tracking:
   api_url: "http://127.0.0.1:8765"
   server_script: "/chemin/vers/MCP/tracking/server.py"
   venv_python: "/chemin/vers/MCP/tracking/.venv/bin/python"
+
+# =============================================================================
+# Scenes (Phase 6 - Iron Man)
+# =============================================================================
+scenes:
+  ironman:
+    # Eteint les ecrans PC pendant le blackout (necessite Hyprland).
+    # Sortie: n'importe quelle touche clavier (armee 1s apres extinction).
+    pc_screens: false

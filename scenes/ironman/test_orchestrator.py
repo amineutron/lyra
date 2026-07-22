@@ -267,3 +267,84 @@ class TestSceneState:
         """Chaque etat a une valeur unique."""
         values = [s.value for s in SceneState]
         assert len(values) == len(set(values))
+
+
+class TestRunPhases:
+    """Tests pour l'execution de sous-scenes independantes."""
+
+    @pytest.fixture
+    def orchestrator(self):
+        with patch.object(IronManOrchestrator, '_load_config') as mock_config:
+            mock_config.return_value = {
+                "hue": {"bridge_ip": "192.168.1.51", "username": "test-user"},
+                "tv": {"host": "192.168.1.50", "user": "u", "pass": "p"},
+            }
+            orch = IronManOrchestrator()
+
+        # Court-circuiter l'init des vraies phases
+        orch._init_phases = Mock()
+        orch._execute_phase0 = Mock(return_value={"success": True})
+        orch._execute_phase1 = Mock(return_value={"success": True})
+        orch._execute_phase2 = Mock(return_value={"success": True})
+        orch._execute_phase3 = Mock(return_value={"success": True})
+        orch._execute_phase4 = Mock(return_value={"success": True})
+        orch._execute_phase5 = Mock(return_value={"success": True})
+        orch._rollback = Mock()
+        orch._stop_hue_beat = Mock()
+        return orch
+
+    def test_invalid_phase_rejected(self, orchestrator):
+        result = orchestrator.run_phases([7])
+        assert result["success"] is False
+        assert "invalides" in result["error"]
+
+    def test_phase0_prepended_by_default(self, orchestrator):
+        result = orchestrator.run_phases([1])
+        assert result["success"] is True
+        assert result["phases_run"] == [0, 1]
+        orchestrator._execute_phase0.assert_called_once()
+        orchestrator._execute_phase1.assert_called_once()
+
+    def test_no_validate_skips_phase0(self, orchestrator):
+        result = orchestrator.run_phases([2], validate_first=False)
+        assert result["phases_run"] == [2]
+        orchestrator._execute_phase0.assert_not_called()
+
+    def test_rollback_called_without_pc_wake(self, orchestrator):
+        """Fin de sous-scene: rollback sans rallumer les ecrans PC."""
+        orchestrator.run_phases([1])
+        orchestrator._rollback.assert_called_once_with(wake_pc=False)
+
+    def test_no_rollback_flag(self, orchestrator):
+        orchestrator.run_phases([1], rollback=False)
+        orchestrator._rollback.assert_not_called()
+
+    def test_phase0_alone_no_rollback(self, orchestrator):
+        orchestrator.run_phases([0])
+        orchestrator._rollback.assert_not_called()
+
+    def test_exception_triggers_rollback_with_pc_wake(self, orchestrator):
+        """Erreur en cours de phase: rollback complet, ecrans rallumes."""
+        orchestrator._execute_phase2.side_effect = Exception("boom")
+        result = orchestrator.run_phases([2])
+        assert result["success"] is False
+        orchestrator._rollback.assert_called_once_with(wake_pc=True)
+
+    def test_validation_failure_stops(self, orchestrator):
+        orchestrator._execute_phase0.return_value = {"success": False}
+        result = orchestrator.run_phases([1])
+        assert result["success"] is False
+        assert result["phases_run"] == []
+        orchestrator._execute_phase1.assert_not_called()
+
+    def test_hue_beat_stopped_if_phase3_without_phase5(self, orchestrator):
+        orchestrator.run_phases([3])
+        orchestrator._stop_hue_beat.assert_called_once()
+
+    def test_hue_beat_not_stopped_if_phase5_in_selection(self, orchestrator):
+        orchestrator.run_phases([3, 4, 5])
+        orchestrator._stop_hue_beat.assert_not_called()
+
+    def test_ordered_selection_preserved(self, orchestrator):
+        result = orchestrator.run_phases([2, 3, 4], validate_first=False)
+        assert result["phases_run"] == [2, 3, 4]

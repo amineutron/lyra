@@ -85,18 +85,22 @@ class IronManOrchestrator:
             pass
     """
 
-    def __init__(self, config_path: Path = None):
+    def __init__(self, config_path: Path = None,
+                 pc_auto_wake_s: Optional[int] = None):
         """
         Initialise l'orchestrateur.
 
         Args:
             config_path: Chemin vers config.yaml
+            pc_auto_wake_s: rallumage auto des ecrans PC apres N secondes
+                            (tests de sous-scenes uniquement, None en prod)
         """
         if config_path is None:
             config_path = Path(__file__).parent.parent.parent / "config.yaml"
 
         self.config_path = config_path
         self.config = self._load_config(config_path)
+        self.pc_auto_wake_s = pc_auto_wake_s
 
         # State machine
         self._state = SceneState.IDLE
@@ -225,7 +229,9 @@ class IronManOrchestrator:
         """Initialise les phases (lazy)."""
         if self._phase0 is None:
             self._phase0 = Phase0Detection(self.config_path)
-            self._phase1 = Phase1Blackout(self.config_path)
+            self._phase1 = Phase1Blackout(
+                self.config_path, pc_auto_wake_s=self.pc_auto_wake_s
+            )
             self._phase2 = Phase2Impact(self.config_path)
             self._phase3 = Phase3Buildup(self.config_path)
             self._phase4 = Phase4Transition(self.config_path)
@@ -401,17 +407,27 @@ class IronManOrchestrator:
         self._stop_hue_beat()
         return result
 
-    def _rollback(self):
+    def _rollback(self, wake_pc: bool = True):
         """
         Restaure l'etat initial apres une erreur.
 
         Utilise l'etat sauvegarde par Phase 0.
+
+        Args:
+            wake_pc: rallume les ecrans PC (True sur erreur; False pour
+                     la restauration de fin de sous-scene, ou la sortie
+                     clavier / l'auto-wake s'en chargent)
         """
         logger.info("[IRONMAN] Rollback started")
         self._state = SceneState.ROLLBACK
 
         # Arreter hue_beat si actif
         self._stop_hue_beat()
+
+        # Rallumer les ecrans PC (erreur => on ne laisse pas l'utilisateur
+        # dans le noir)
+        if wake_pc and self._phase1 is not None:
+            self._phase1.pc_screens.wake()
 
         # Charger l'etat sauvegarde
         state = self._saved_state or load_rollback_state()
@@ -492,6 +508,80 @@ class IronManOrchestrator:
 
         except Exception as e:
             logger.warning(f"Restauration TV echouee: {e}")
+
+    def run_phases(self, selection: list, rollback: bool = True,
+                   validate_first: bool = True) -> dict:
+        """
+        Execute une selection de phases (sous-scene independante).
+
+        Permet de tester une partie de la scene sans tout lancer:
+            orchestrator.run_phases([1])        # blackout seul
+            orchestrator.run_phases([2, 3, 4])  # impact -> transition
+
+        Args:
+            selection: numeros de phases a executer, dans l'ordre (0-5)
+            rollback: restaurer l'etat initial (Hue/TV) a la fin
+            validate_first: prefixer la Phase 0 si absente de la selection
+                            (necessaire pour capturer l'etat de rollback)
+
+        Returns:
+            dict {success, phases_run, phase_results}
+        """
+        self._init_phases()
+
+        steps = {
+            0: (SceneState.VALIDATING, "Phase 0 - Validation", self._execute_phase0),
+            1: (SceneState.BLACKOUT, "Phase 1 - Blackout", self._execute_phase1),
+            2: (SceneState.IMPACT, "Phase 2 - Impact", self._execute_phase2),
+            3: (SceneState.BUILDUP, "Phase 3 - Buildup", self._execute_phase3),
+            4: (SceneState.TRANSITION, "Phase 4 - Transition", self._execute_phase4),
+            5: (SceneState.TTS, "Phase 5 - TTS", self._execute_phase5),
+        }
+
+        invalid = [n for n in selection if n not in steps]
+        if invalid:
+            return {"success": False, "error": f"Phases invalides: {invalid}",
+                    "phases_run": [], "phase_results": {}}
+
+        to_run = list(selection)
+        if validate_first and 0 not in to_run:
+            to_run.insert(0, 0)
+
+        self._scene_start_time = time.perf_counter()
+        self._phase_results = {}
+        phases_run = []
+        success = True
+
+        try:
+            for n in to_run:
+                state, name, func = steps[n]
+                if not self._run_phase(state, name, func):
+                    # Seule la Phase 0 retourne False sans lever (validation)
+                    success = False
+                    break
+                phases_run.append(n)
+
+            self._state = SceneState.STABLE if success else SceneState.IDLE
+
+        except Exception as e:
+            logger.error(f"[IRONMAN] Sous-scene erreur: {e}")
+            success = False
+            self._rollback(wake_pc=True)
+            return {"success": False, "phases_run": phases_run,
+                    "phase_results": self._phase_results}
+
+        finally:
+            # hue_beat ne doit jamais survivre a une sous-scene sans Phase 5
+            if 3 in phases_run and 5 not in to_run:
+                self._stop_hue_beat()
+
+        if rollback and phases_run and phases_run != [0]:
+            # Restauration de fin de sous-scene: les ecrans PC restent
+            # eteints (sortie clavier ou auto-wake du watcher)
+            self._rollback(wake_pc=False)
+
+        return {"success": success, "phases_run": phases_run,
+                "phase_results": self._phase_results}
 
     def cancel(self):
         """

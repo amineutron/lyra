@@ -22,6 +22,13 @@ import requests
 from requests.auth import HTTPDigestAuth
 import yaml
 from pathlib import Path
+from typing import Optional
+
+try:
+    from .pc_screens import PCScreenController
+except ImportError:
+    # Import direct hors package (tests avec sys.path sur phases/)
+    from pc_screens import PCScreenController
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +55,15 @@ class Phase1Blackout:
         # result = {"success": True, "lights_off": True, "tv_off": True, "duration": 3.01}
     """
 
-    def __init__(self, config_path: Path = None):
+    def __init__(self, config_path: Path = None,
+                 pc_auto_wake_s: Optional[int] = None):
         """
         Initialise Phase1 avec la configuration.
 
         Args:
             config_path: Chemin vers config.yaml (defaut: lyra/config.yaml)
+            pc_auto_wake_s: rallumage auto des ecrans PC apres N secondes
+                            (tests de sous-scenes uniquement, None en prod)
         """
         if config_path is None:
             config_path = Path(__file__).parent.parent.parent.parent / "config.yaml"
@@ -61,6 +71,16 @@ class Phase1Blackout:
         self.config = self._load_config(config_path)
         self.tv_config = self.config.get("tv", {})
         self.hue_config = self.config.get("hue", {})
+
+        # Defaut False: opt-in explicite via config (scenes.ironman.pc_screens)
+        pc_enabled = (
+            self.config.get("scenes", {})
+            .get("ironman", {})
+            .get("pc_screens", False)
+        )
+        self.pc_screens = PCScreenController(
+            enabled=pc_enabled, auto_wake_s=pc_auto_wake_s
+        )
 
     def _load_config(self, config_path: Path) -> dict:
         """Charge config.yaml et fusionne secrets.yaml si present."""
@@ -220,6 +240,7 @@ class Phase1Blackout:
 
         lights_ok, latency_ms = self._turn_off_lights()
         tv_ok, tv_action = self._turn_off_tv()
+        pc_off = self.pc_screens.turn_off()
 
         extinction_time = (time.perf_counter() - extinction_start) * 1000
         logger.debug(f"Extinction complete en {extinction_time:.0f}ms")
@@ -246,6 +267,7 @@ class Phase1Blackout:
             "lights_off": lights_ok,
             "tv_off": tv_ok,
             "tv_action": tv_action,
+            "pc_screens_off": pc_off,
             "duration": duration,
             "latency_ms": latency_ms,
         }
