@@ -382,7 +382,10 @@ class Phase3Buildup:
         # rendaient le rendu spatialement chaotique.
         # IMPORTANT: attendre que le watcher consomme la commande avant
         # d'ecrire le premier pulse (meme fichier: il l'ecraserait)
-        self._send_hue_beat_ctrl({"anchor": False, "uniform": True})
+        # pulse_duration court: fade rapide vers le noir ABSOLU entre
+        # les kicks (avec le gamma perceptuel cote hue_beat)
+        self._send_hue_beat_ctrl({"anchor": False, "uniform": True,
+                                  "pulse_duration": 0.30})
         # 2s max: couvre un boot lent de hue_beat (watcher démarre
         # desormais des le lancement, consommation quasi immediate)
         consume_deadline = time.perf_counter() + 2.0
