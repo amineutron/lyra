@@ -238,7 +238,7 @@ class TestDrivePulses:
         assert mock_pulse.call_count == 2
 
     def test_setup_ctrl_sent_before_pulses(self, phase3):
-        """floor + anchor off envoyes avant le premier pulse."""
+        """anchor off envoye avant le premier pulse."""
         phase3.beats = [0.05]
         now = time.perf_counter()
         with patch.object(phase3, '_send_hue_beat_ctrl',
@@ -247,7 +247,21 @@ class TestDrivePulses:
                 phase3._drive_hue_beat_pulses(phase_start=now, deadline=now + 0.2)
         setup = mock_ctrl.call_args_list[0][0][0]
         assert setup["anchor"] is False
-        assert setup["floor"] > 0
+
+    def test_floor_sent_at_branch_entry(self, phase3):
+        """Le plancher est envoye des l'entree de la branche hue_beat."""
+        from .phase3_buildup import CTRL_FLOOR
+        phase3.beats = []
+        with patch.object(phase3, "_hue_beat_running", return_value=True):
+            with patch.object(phase3, "_hue_beat_beat_count", return_value=3):
+                with patch.object(phase3, "_measure_video_position",
+                                  return_value=None):
+                    with patch.object(phase3, "_send_hue_beat_ctrl",
+                                      return_value=True) as mock_ctrl:
+                        with patch('time.sleep'):
+                            phase3.execute()
+        first_cmd = mock_ctrl.call_args_list[0][0][0]
+        assert first_cmd == {"floor": CTRL_FLOOR}
 
     def test_intensity_follows_pattern(self, phase3):
         """L'intensite suit le pattern cyclique (groove, pas de strobe)."""

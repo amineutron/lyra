@@ -370,8 +370,9 @@ class Phase3Buildup:
         Returns:
             Nombre de pulses envoyes
         """
-        # Ambiance entre les pulses + pas d'ancres aleatoires en cadence fixe
-        self._send_hue_beat_ctrl({"floor": CTRL_FLOOR, "anchor": False})
+        # Pas d'ancres aleatoires en cadence fixe (le plancher est deja
+        # envoye a l'entree de la branche hue_beat)
+        self._send_hue_beat_ctrl({"anchor": False})
 
         sent = 0
         for i, beat_time in enumerate(self.beats):
@@ -421,6 +422,11 @@ class Phase3Buildup:
                 video_anchor = "measured"
                 logger.info(f"Phase 3: position video mesuree {measured:.2f}s "
                             f"(ancrage exact des beats)")
+
+            # Plancher lumineux des l'entree: le stream Entertainment
+            # ecrase le bleu REST de la Phase 2, sans plancher les
+            # lumieres seraient noires pendant l'observation
+            self._send_hue_beat_ctrl({"floor": CTRL_FLOOR})
 
             # Observation: hue_beat entend-il l'audio ? (non quand
             # YouTube joue sur la TV: rien ne passe par le PC)
