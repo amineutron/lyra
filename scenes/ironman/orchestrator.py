@@ -135,6 +135,7 @@ class IronManOrchestrator:
 
         # Anticipation musique (lancee pendant le blackout)
         self._anticipator: Optional[MusicAnticipator] = None
+        self._current_selection: list = []
 
     def _load_config(self, config_path: Path) -> dict:
         """Charge config.yaml et fusionne secrets.yaml si present."""
@@ -352,7 +353,8 @@ class IronManOrchestrator:
         """Execute la scene complete avec gestion des erreurs."""
         self._scene_start_time = time.perf_counter()
         self._phase_results = {}
-        self._start_telemetry("full", [0, 1, 2, 3, 4, 5])
+        self._current_selection = [0, 1, 2, 3, 4, 5]
+        self._start_telemetry("full", self._current_selection)
 
         # Precharger Piper TTS pendant que la scene se deroule
         threading.Thread(target=self._preload_tts, daemon=True).start()
@@ -509,7 +511,9 @@ class IronManOrchestrator:
         la musique demarre alors ~au flash de la Phase 2.
         """
         self._anticipator = None
-        if self._anticipation_enabled():
+        # Anticiper seulement si la Phase 2 va suivre (sinon on
+        # lancerait une musique orpheline pendant un test de blackout)
+        if self._anticipation_enabled() and 2 in self._current_selection:
             tv_cfg = self.config.get("tv", {})
             user, password = tv_cfg.get("user", ""), tv_cfg.get("pass", "")
             auth = HTTPDigestAuth(user, password) if user and password else None
@@ -727,6 +731,7 @@ class IronManOrchestrator:
 
         self._scene_start_time = time.perf_counter()
         self._phase_results = {}
+        self._current_selection = to_run
         self._start_telemetry("sub-scene", to_run)
         phases_run = []
         success = True

@@ -376,12 +376,24 @@ class TestMusicAnticipation:
 
     def test_enabled_starts_anticipator_and_skips_tv(self):
         orch = self._orch(anticipate=True)
+        orch._current_selection = [0, 1, 2, 3, 4, 5]
         with patch('scenes.ironman.orchestrator.MusicAnticipator') as MockAntic:
             orch._execute_phase1()
 
         MockAntic.assert_called_once()
         MockAntic.return_value.start.assert_called_once()
         orch._phase1.execute.assert_called_once_with(skip_tv=True)
+
+    def test_no_anticipation_without_phase2_in_selection(self):
+        """Sous-scene sans Phase 2: pas de musique orpheline."""
+        orch = self._orch(anticipate=True)
+        orch._current_selection = [0, 1]
+        with patch('scenes.ironman.orchestrator.MusicAnticipator') as MockAntic:
+            orch._execute_phase1()
+
+        MockAntic.assert_not_called()
+        orch._phase1.execute.assert_called_once_with()
+        assert orch._anticipator is None
 
     def test_phase2_uses_anticipator_launch_time(self):
         orch = self._orch(anticipate=True)
