@@ -15,9 +15,12 @@ Usage :
 """
 
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 from .config import SlangNormalizerConfig
 from .constants import SLANG_MAX_PATTERNS
@@ -188,8 +191,7 @@ class SlangNormalizer:
             normalized = normalized.replace(key, original)
 
         if self.log_normalizations and normalized != query.lower():
-            # TODO: Logger les normalisations
-            pass
+            logger.debug(f"[SLANG] '{query}' -> '{normalized}'")
 
         return normalized
 

@@ -431,7 +431,7 @@ tv:
 
 hue:
   bridge_ip: "192.168.1.51"
-  username: "***REMOVED***"
+  username: "<cle-api-hue>"
 ```
 
 ### Devices

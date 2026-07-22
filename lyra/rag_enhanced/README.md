@@ -203,26 +203,22 @@ pytest tests/e2e/rag_enhanced/ -v
 ## Roadmap
 
 - [x] SESSION 1 : Infrastructure et Configuration (P0)
-- [ ] SESSION 2 : Slang Normalizer (P1)
-- [ ] SESSION 3 : Synonym Expander (P2)
-- [ ] SESSION 4 : Context Injector (P3)
-- [ ] SESSION 5 : RAG 3-Tier (P4)
-- [ ] SESSION 6 : Feedback Loop + Cascader (P5)
-- [ ] SESSION 7 : Pipeline Integration (P6.1)
-- [ ] SESSION 8 : Tests E2E (P6.2)
+- [x] SESSION 2 : Slang Normalizer (P1)
+- [x] SESSION 3 : Synonym Expander (P2)
+- [x] SESSION 4 : Context Injector (P3)
+- [x] SESSION 5 : RAG 3-Tier (P4)
+- [x] SESSION 6 : Feedback Loop + Cascader (P5)
+- [x] SESSION 7 : Pipeline Integration (P6.1)
+- [x] SESSION 8 : Tests E2E (P6.2)
 
-Voir `PROGRESS.md` pour le détail.
+Toutes les sessions sont implémentées et testées
+(`tests/unit/rag_enhanced/`, `tests/e2e/rag_enhanced/`).
 
-## Limitations Connues
+## Etat actuel
 
-**SESSION 1 (Actuel)** :
-- Seules les structures de base sont implémentées
-- Composants 2-6 pas encore implémentés
-- Tests E2E non disponibles
-
-**Après SESSION 8** :
-- Système complet fonctionnel
-- 12 scénarios E2E validés
+- Tous les composants sont actifs par défaut dans le pipeline Enhanced,
+  sauf **SynonymExpander** (désactivé volontairement : l'enrichissement
+  est fait côté indexation, voir `config.yaml`)
 - Backward compatibility V2 garantie
 
 ## Contributing

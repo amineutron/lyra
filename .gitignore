@@ -103,3 +103,7 @@ lyra-v1-CDC
 readme
 to-synthese/
 demandes/
+
+# Debug artifacts
+.playwright-mcp/
+.claude-sync/

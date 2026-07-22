@@ -514,13 +514,13 @@ tv:
   enabled: true
   host: "192.168.1.50"
   user: "***REMOVED***"           # Genere par pairing pylips
-  pass: "***REMOVED***"        # 64 chars hex
+  pass: "<64-hex-jointspace>"        # 64 chars hex
 
 # Philips Hue
 hue:
   enabled: true
   bridge_ip: "192.168.1.51"
-  username: "***REMOVED***"       # Genere par pairing Bridge
+  username: "<cle-api-hue>"       # Genere par pairing Bridge
 ```
 
 ### Installation domotique
