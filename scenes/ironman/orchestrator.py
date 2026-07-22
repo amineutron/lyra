@@ -589,6 +589,8 @@ class IronManOrchestrator:
         # au REST des Phases 4-5 (fondu + pulse TTS redeviennent visibles,
         # le stream Entertainment ecrasait tout en le laissant tourner)
         if result.get("mode") == "hue_beat_ctrl":
+            # Laisser le watcher (50ms) consommer le dernier pulse envoye
+            time.sleep(0.15)
             self._stop_hue_beat()
 
         return result

@@ -1,14 +1,16 @@
 {
  "bpm": 91,
- "first_drum": 0.48,
+ "first_drum": 0.544,
  "beat_interval": null,
  "beats": [
-  0.48,
-  1.14,
-  2.28,
-  3.27,
-  3.81,
-  5.13,
+  0.544,
+  1.196,
+  1.848,
+  2.5,
+  3.152,
+  3.804,
+  4.456,
+  5.108,
   5.76,
   6.42,
   7.08,
@@ -48,11 +50,13 @@
   29.88
  ],
  "intensities": [
-  0.55,
-  0.56,
-  1.0,
-  1.0,
-  0.55,
+  0.35,
+  0.38,
+  0.41,
+  0.44,
+  0.46,
+  0.49,
+  0.52,
   0.55,
   1.0,
   0.55,
@@ -92,5 +96,5 @@
   0.93,
   0.56
  ],
- "note": "KICKS marques mesures sur l'audio reel de pAgnJDJN4VA (bande 30-130Hz, flux d'energie positif = attaques, min gap 0.5s, 2026-07-22). La basse en croches continues est ignoree."
+ "note": "Intro: ticks reguliers 92 BPM retro-projetes du riff (hi-hat), intensite 0.35->0.55 en montee. A partir de 5.76s: kicks marques MESURES (bande 30-130Hz, flux d'attaque) avec intensites reelles. 2026-07-22."
 }
