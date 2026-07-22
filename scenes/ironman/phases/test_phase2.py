@@ -327,3 +327,64 @@ class TestExecute:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# =============================================================================
+# Tests mode anticipation (musique lancee pendant le blackout)
+# =============================================================================
+
+class TestExecuteAnticipated:
+    """Phase 2 avec anticipation musique."""
+
+    @pytest.fixture
+    def phase2(self):
+        with patch.object(Phase2Impact, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase2Impact()
+
+    def _anticipator(self, started=True):
+        antic = MagicMock()
+        antic.music_started = started
+        antic.tv_prepared = True
+        antic.launch_time = 12345.6
+        return antic
+
+    def test_anticipated_skips_tv_and_catt(self, phase2):
+        """Musique deja lancee: pas de power-on TV ni de catt."""
+        with patch.object(phase2, '_flash_white', return_value=True):
+            with patch.object(phase2, '_transition_to_blue', return_value=True):
+                with patch.object(phase2, '_power_on_tv') as mock_tv:
+                    with patch.object(phase2, '_launch_youtube') as mock_yt:
+                        result = phase2.execute(anticipator=self._anticipator())
+
+        mock_tv.assert_not_called()
+        mock_yt.assert_not_called()
+        assert result["success"] is True
+        assert result["music_started"] is True
+        assert result["music_method"] == "adb-anticipated"
+        assert result["youtube_launch_time"] == 12345.6
+
+    def test_anticipated_ends_early(self, phase2):
+        """La phase se termine tot (pas de padding 3.5s)."""
+        with patch.object(phase2, '_flash_white', return_value=True):
+            with patch.object(phase2, '_transition_to_blue', return_value=True):
+                result = phase2.execute(anticipator=self._anticipator())
+
+        assert result["duration"] < 2.0
+
+    def test_anticipation_failed_falls_back_to_catt(self, phase2):
+        """Anticipation en echec: voie classique power-on + catt."""
+        with patch.object(phase2, '_flash_white', return_value=True):
+            with patch.object(phase2, '_transition_to_blue', return_value=True):
+                with patch.object(phase2, '_power_on_tv', return_value=True) as mock_tv:
+                    with patch.object(phase2, '_launch_youtube', return_value=True) as mock_yt:
+                        with patch('time.sleep'):
+                            result = phase2.execute(
+                                anticipator=self._anticipator(started=False)
+                            )
+
+        mock_tv.assert_called_once()
+        mock_yt.assert_called_once()
+        assert result["music_method"] == "catt"

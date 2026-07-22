@@ -256,3 +256,39 @@ class TestPerformance:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# =============================================================================
+# Tests skip_tv (anticipation musique)
+# =============================================================================
+
+class TestExecuteSkipTv:
+    """Phase 1 avec TV geree par l'anticipateur."""
+
+    @pytest.fixture
+    def phase1(self):
+        with patch.object(Phase1Blackout, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase1Blackout()
+
+    def test_skip_tv_does_not_touch_tv(self, phase1):
+        with patch.object(phase1, '_turn_off_lights', return_value=(True, 100.0)):
+            with patch.object(phase1, '_turn_off_tv') as mock_tv:
+                with patch('time.sleep'):
+                    result = phase1.execute(skip_tv=True)
+
+        mock_tv.assert_not_called()
+        assert result["tv_action"] == "anticipated"
+        assert result["tv_off"] is True
+
+    def test_default_still_turns_off_tv(self, phase1):
+        with patch.object(phase1, '_turn_off_lights', return_value=(True, 100.0)):
+            with patch.object(phase1, '_turn_off_tv',
+                              return_value=(True, "off")) as mock_tv:
+                with patch('time.sleep'):
+                    result = phase1.execute()
+
+        mock_tv.assert_called_once()
+        assert result["tv_action"] == "off"

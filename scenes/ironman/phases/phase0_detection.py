@@ -13,11 +13,13 @@ import logging
 import re
 import unicodedata
 import urllib3
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Optional
 
 import requests
+from requests.auth import HTTPDigestAuth
 import yaml
 
 # Disable SSL warnings for TV API (self-signed cert)
@@ -227,7 +229,8 @@ class Phase0Detection:
         }
 
         try:
-            auth = (user, password) if user and password else None
+            # JointSpace exige l'auth Digest (Basic echoue en silence)
+            auth = HTTPDigestAuth(user, password) if user and password else None
 
             # Check power state via powerstate endpoint
             url = f"https://{host}:1926/6/powerstate"
@@ -328,15 +331,17 @@ class Phase0Detection:
             "tv": self._get_tv_state(),
             "hue": self._get_hue_state(),
         }
+        self._write_rollback(state)
+        return state
 
+    def _write_rollback(self, state: dict):
+        """Persiste l'etat de rollback dans ROLLBACK_FILE."""
         try:
             with open(ROLLBACK_FILE, 'w') as f:
                 json.dump(state, f, indent=2)
             logger.info(f"Etat sauvegarde dans {ROLLBACK_FILE}")
         except Exception as e:
             logger.error(f"Impossible de sauvegarder l'etat: {e}")
-
-        return state
 
     def validate_and_prepare(self) -> Tuple[bool, str, dict]:
         """
@@ -354,18 +359,31 @@ class Phase0Detection:
         """
         logger.info("Phase 0: Validation et preparation")
 
-        # Check TV
-        tv_ok, tv_msg = self.check_tv_available()
-        if not tv_ok:
-            return False, tv_msg, {}
+        # Checks + captures d'etat en parallele: la duree de la phase
+        # devient celle de la requete la plus lente, pas leur somme.
+        # Les captures sont speculatives (GET sans effet de bord), leur
+        # resultat est jete si un check echoue.
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            f_tv_check = pool.submit(self.check_tv_available)
+            f_hue_check = pool.submit(self.check_hue_available)
+            f_tv_state = pool.submit(self._get_tv_state)
+            f_hue_state = pool.submit(self._get_hue_state)
 
-        # Check Hue
-        hue_ok, hue_msg = self.check_hue_available()
-        if not hue_ok:
-            return False, hue_msg, {}
+            tv_ok, tv_msg = f_tv_check.result()
+            hue_ok, hue_msg = f_hue_check.result()
 
-        # Save state for rollback
-        saved_state = self.save_current_state()
+            if not tv_ok:
+                return False, tv_msg, {}
+            if not hue_ok:
+                return False, hue_msg, {}
+
+            saved_state = {
+                "timestamp": datetime.now().isoformat(),
+                "tv": f_tv_state.result(),
+                "hue": f_hue_state.result(),
+            }
+
+        self._write_rollback(saved_state)
 
         logger.info("Phase 0: Validation complete, pret pour la scene")
         return True, "Pret pour la scene Iron Man", saved_state

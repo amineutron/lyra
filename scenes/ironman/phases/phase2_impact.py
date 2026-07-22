@@ -299,21 +299,29 @@ class Phase2Impact:
             logger.warning(f"Ambilight error: {e}")
             return False
 
-    def execute(self) -> dict:
+    def execute(self, anticipator=None) -> dict:
         """
         Execute la Phase 2: Premier Impact.
 
-        Timeline:
+        Timeline classique (sans anticipation):
             T+0.0s: Flash blanc
             T+0.2s: Transition bleu
             T+0.5s: Power on TV
-            T+2.5s: Launch YouTube
-            T+3.0s: Activate Ambilight
+            T+2.5s: Launch YouTube (catt)
             T+3.5s: End
+
+        Avec anticipation (musique deja lancee pendant le blackout):
+            T+0.0s: Flash blanc
+            T+0.2s: Transition bleu
+            T+~0.5s: End (la musique demarre d'elle-meme, la Phase 3
+                     se synchronise via youtube_launch_time)
+
+        Args:
+            anticipator: MusicAnticipator de l'orchestrateur (ou None)
 
         Returns:
             dict avec: success, flash_ok, blue_ok, tv_on, music_started,
-                      ambilight_active, duration
+                      music_method, ambilight_active, duration
         """
         logger.info("Phase 2: IMPACT - Debut")
         phase_start = time.perf_counter()
@@ -323,6 +331,7 @@ class Phase2Impact:
             "blue_ok": False,
             "tv_on": False,
             "music_started": False,
+            "music_method": None,
             "ambilight_active": False,
         }
 
@@ -332,30 +341,42 @@ class Phase2Impact:
         # T+0.2s: Transition bleu
         results["blue_ok"] = self._transition_to_blue()
 
-        # T+0.5s: Power on TV
-        elapsed = time.perf_counter() - phase_start
-        if elapsed < 0.5:
-            time.sleep(0.5 - elapsed)
+        anticipated = anticipator is not None and anticipator.music_started
+        if anticipated:
+            # Musique lancee pendant le blackout: rien d'autre a faire,
+            # la phase se termine tot et la Phase 3 demarre plus vite
+            results["tv_on"] = anticipator.tv_prepared
+            results["music_started"] = True
+            results["music_method"] = "adb-anticipated"
+            results["youtube_launch_time"] = anticipator.launch_time
+        else:
+            # Voie classique: power-on TV puis catt
+            elapsed = time.perf_counter() - phase_start
+            if elapsed < 0.5:
+                time.sleep(0.5 - elapsed)
 
-        results["tv_on"] = self._power_on_tv()
+            results["tv_on"] = self._power_on_tv()
 
-        # T+2.5s: Launch YouTube
-        elapsed = time.perf_counter() - phase_start
-        if elapsed < 2.5:
-            time.sleep(2.5 - elapsed)
+            # T+2.5s: Launch YouTube
+            elapsed = time.perf_counter() - phase_start
+            if elapsed < 2.5:
+                time.sleep(2.5 - elapsed)
 
-        youtube_launch_time = time.perf_counter()
-        results["music_started"] = self._launch_youtube(YOUTUBE_VIDEO_ID)
-        results["youtube_launch_time"] = youtube_launch_time if results["music_started"] else None
+            youtube_launch_time = time.perf_counter()
+            results["music_started"] = self._launch_youtube(YOUTUBE_VIDEO_ID)
+            results["music_method"] = "catt" if results["music_started"] else None
+            results["youtube_launch_time"] = (
+                youtube_launch_time if results["music_started"] else None
+            )
 
-        # Attendre fin de phase
-        elapsed = time.perf_counter() - phase_start
-        if elapsed < PHASE_DURATION:
-            time.sleep(PHASE_DURATION - elapsed)
+            # Attendre fin de phase
+            elapsed = time.perf_counter() - phase_start
+            if elapsed < PHASE_DURATION:
+                time.sleep(PHASE_DURATION - elapsed)
 
         duration = time.perf_counter() - phase_start
 
-        # Success = flash OK (YouTube optionnel si ADB indisponible)
+        # Success = flash OK (YouTube optionnel si indisponible)
         results["success"] = results["flash_ok"]
         results["duration"] = duration
 

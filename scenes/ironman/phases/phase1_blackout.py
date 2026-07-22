@@ -215,13 +215,17 @@ class Phase1Blackout:
             logger.warning(f"Erreur extinction TV: {e}")
             return False, "error"
 
-    def execute(self) -> dict:
+    def execute(self, skip_tv: bool = False) -> dict:
         """
         Execute la Phase 1: Blackout dramatique.
 
         1. Eteint toutes les lumieres (instantane)
-        2. Eteint la TV si allumee
+        2. Eteint la TV si allumee (sauf skip_tv: l'anticipation musique
+           gere alors la TV via screensaver/power-on, sans power-cycle)
         3. Attend 3 secondes dans le noir
+
+        Args:
+            skip_tv: ne pas toucher a la TV (geree par l'anticipateur)
 
         Returns:
             dict avec:
@@ -239,7 +243,10 @@ class Phase1Blackout:
         extinction_start = time.perf_counter()
 
         lights_ok, latency_ms = self._turn_off_lights()
-        tv_ok, tv_action = self._turn_off_tv()
+        if skip_tv:
+            tv_ok, tv_action = True, "anticipated"
+        else:
+            tv_ok, tv_action = self._turn_off_tv()
         pc_off = self.pc_screens.turn_off()
 
         extinction_time = (time.perf_counter() - extinction_start) * 1000

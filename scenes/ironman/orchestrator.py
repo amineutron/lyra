@@ -27,6 +27,7 @@ import os
 import signal
 import subprocess
 import sys
+import threading
 import time
 import traceback
 from enum import Enum, auto
@@ -46,6 +47,8 @@ from .phases import (
     Phase5TTS,
 )
 from .phases.phase0_detection import load_rollback_state, ROLLBACK_FILE
+from .phases.phase2_impact import YOUTUBE_VIDEO_ID
+from .phases.music_anticipator import MusicAnticipator
 from .metrics import SceneMetrics
 
 try:
@@ -130,6 +133,9 @@ class IronManOrchestrator:
         self._tracking = TrackingClient() if TrackingClient else None
         self._tracking_id: Optional[str] = None
 
+        # Anticipation musique (lancee pendant le blackout)
+        self._anticipator: Optional[MusicAnticipator] = None
+
     def _load_config(self, config_path: Path) -> dict:
         """Charge config.yaml et fusionne secrets.yaml si present."""
         config = {}
@@ -196,6 +202,15 @@ class IronManOrchestrator:
 
         python_bin = str(LYRA_VENV_PYTHON) if LYRA_VENV_PYTHON.exists() else sys.executable
 
+        # Purger un PID file perime (sinon _wait_hue_beat validerait
+        # un process d'un ancien run)
+        try:
+            HUE_BEAT_PID_FILE.unlink()
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            logger.debug(f"[IRONMAN] purge PID file: {e}")
+
         try:
             subprocess.Popen(
                 [python_bin, str(HUE_BEAT_PY),
@@ -205,13 +220,29 @@ class IronManOrchestrator:
                 stderr=subprocess.DEVNULL,
                 start_new_session=True,
             )
-            # Laisser le temps a hue_beat de demarrer et ecrire son PID
-            time.sleep(2.5)
-            logger.info("[IRONMAN] hue_beat demarré (pulse/ironman/bass-only)")
+            # Non bloquant: la disponibilite est verifiee par
+            # _wait_hue_beat() (poll du PID file) avant la Phase 3
+            logger.info("[IRONMAN] hue_beat lance (pulse/ironman/bass-only)")
             return True
         except Exception as e:
             logger.warning(f"[IRONMAN] hue_beat start failed: {e}")
             return False
+
+    def _wait_hue_beat(self, timeout: float = 2.5) -> bool:
+        """
+        Attend que hue_beat ait ecrit son PID file (poll 100ms).
+
+        Remplace l'ancien sleep(2.5) fixe: retourne des que le process
+        est pret, ou apres timeout.
+        """
+        deadline = time.perf_counter() + timeout
+        while time.perf_counter() < deadline:
+            if HUE_BEAT_PID_FILE.exists():
+                logger.info("[IRONMAN] hue_beat pret")
+                return True
+            time.sleep(0.1)
+        logger.warning(f"[IRONMAN] hue_beat pas pret apres {timeout}s")
+        return False
 
     def _stop_hue_beat(self):
         """Arrete hue_beat proprement via SIGTERM sur le PID sauvegarde."""
@@ -225,6 +256,11 @@ class IronManOrchestrator:
             logger.debug(f"[IRONMAN] hue_beat stop: {e}")
         except Exception as e:
             logger.warning(f"[IRONMAN] hue_beat stop error: {e}")
+        finally:
+            try:
+                HUE_BEAT_PID_FILE.unlink()
+            except Exception:
+                pass
 
     @property
     def state(self) -> SceneState:
@@ -317,6 +353,9 @@ class IronManOrchestrator:
         self._scene_start_time = time.perf_counter()
         self._phase_results = {}
         self._start_telemetry("full", [0, 1, 2, 3, 4, 5])
+
+        # Precharger Piper TTS pendant que la scene se deroule
+        threading.Thread(target=self._preload_tts, daemon=True).start()
 
         try:
             # Phase 0: Validation
@@ -445,21 +484,78 @@ class IronManOrchestrator:
         self._saved_state = saved_state
         return {"success": success, "message": message}
 
+    def _anticipation_enabled(self) -> bool:
+        """Anticipation musique activee via config (opt-in)."""
+        return bool(
+            self.config.get("scenes", {})
+            .get("ironman", {})
+            .get("anticipate_music", False)
+        )
+
+    def _preload_tts(self):
+        """Precharge Piper TTS en arriere-plan (evite 1-3s en Phase 5)."""
+        try:
+            self._phase5._get_tts()
+            logger.info("[IRONMAN] TTS precharge")
+        except Exception as e:
+            logger.debug(f"[IRONMAN] preload TTS: {e}")
+
     def _execute_phase1(self) -> dict:
-        """Execute Phase 1 - Blackout."""
+        """
+        Execute Phase 1 - Blackout.
+
+        Si l'anticipation musique est activee, un thread prepare la TV
+        (screensaver ou power-on) et lance YouTube pendant le noir --
+        la musique demarre alors ~au flash de la Phase 2.
+        """
+        self._anticipator = None
+        if self._anticipation_enabled():
+            tv_cfg = self.config.get("tv", {})
+            user, password = tv_cfg.get("user", ""), tv_cfg.get("pass", "")
+            auth = HTTPDigestAuth(user, password) if user and password else None
+            video_id = (
+                self.config.get("scenes", {}).get("ironman", {})
+                .get("youtube_video_id", YOUTUBE_VIDEO_ID)
+            )
+            tv_power = (self._saved_state or {}).get("tv", {}).get("power", "unknown")
+
+            self._anticipator = MusicAnticipator(
+                tv_host=tv_cfg.get("host", "192.168.1.50"),
+                tv_auth=auth,
+                video_id=video_id,
+                tv_power=tv_power,
+            )
+            self._anticipator.start()
+            # La TV est geree par l'anticipateur: pas de standby en Phase 1
+            return self._phase1.execute(skip_tv=True)
+
         return self._phase1.execute()
 
     def _execute_phase2(self) -> dict:
-        """Execute Phase 2 - Impact."""
-        result = self._phase2.execute()
-        # Sauvegarder le timestamp de lancement YouTube pour Phase 3
-        self._youtube_launch_time = result.get("youtube_launch_time")
+        """Execute Phase 2 - Impact (puis lance hue_beat en avance)."""
+        anticipator = self._anticipator
+        if anticipator is not None:
+            # L'anticipation se termine ~T+2s du blackout: deja finie ici
+            anticipator.done.wait(timeout=4)
+
+        result = self._phase2.execute(anticipator=anticipator)
+
+        # Timestamp de lancement YouTube pour la sync Phase 3
+        if anticipator is not None and anticipator.music_started:
+            self._youtube_launch_time = anticipator.launch_time
+        else:
+            self._youtube_launch_time = result.get("youtube_launch_time")
+
+        # Lancer hue_beat des maintenant (non bloquant): il demarre
+        # pendant la fin de l'impact, la Phase 3 le poll au lieu de dormir
+        self._start_hue_beat()
         return result
 
     def _execute_phase3(self) -> dict:
         """Execute Phase 3 - Buildup avec hue_beat audio-reactif."""
-        # Lancer hue_beat avant la phase (Entertainment API DTLS)
-        self._start_hue_beat()
+        # hue_beat a ete lance en fin de Phase 2: attendre qu'il soit
+        # pret (poll PID, max 2.5s) au lieu de l'ancien sleep(2.5) fixe
+        self._wait_hue_beat(timeout=2.5)
 
         # Calculer le délai avant que la vidéo commence vraiment
         video_start_delay = 0.0
@@ -532,8 +628,7 @@ class IronManOrchestrator:
         if not username:
             return
 
-        lights = hue_state.get("lights", {})
-        for light_id, light_state in lights.items():
+        def _restore_light(light_id: str, light_state: dict):
             try:
                 url = f"http://{bridge_ip}/api/{username}/lights/{light_id}/state"
                 payload = {
@@ -549,6 +644,16 @@ class IronManOrchestrator:
 
             except Exception as e:
                 logger.warning(f"Restauration lumiere {light_id} echouee: {e}")
+
+        lights = hue_state.get("lights", {})
+        if not lights:
+            return
+        # Restauration en parallele: fidele par lumiere, sans payer
+        # 5 aller-retours sequentiels
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=len(lights)) as pool:
+            for light_id, light_state in lights.items():
+                pool.submit(_restore_light, light_id, light_state)
 
     def _restore_tv(self, tv_state: dict):
         """Restaure l'etat de la TV."""
@@ -625,6 +730,9 @@ class IronManOrchestrator:
         self._start_telemetry("sub-scene", to_run)
         phases_run = []
         success = True
+
+        if 5 in to_run:
+            threading.Thread(target=self._preload_tts, daemon=True).start()
 
         try:
             for n in to_run:

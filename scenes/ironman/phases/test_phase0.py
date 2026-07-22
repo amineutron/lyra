@@ -325,12 +325,15 @@ class TestValidateAndPrepare:
         with patch('phase0_detection.ROLLBACK_FILE', test_file):
             with patch.object(phase0, 'check_tv_available', return_value=(True, "")):
                 with patch.object(phase0, 'check_hue_available', return_value=(True, "")):
-                    with patch.object(phase0, 'save_current_state', return_value={"test": True}):
-                        success, msg, state = phase0.validate_and_prepare()
+                    with patch.object(phase0, '_get_tv_state', return_value={"power": "On"}):
+                        with patch.object(phase0, '_get_hue_state', return_value={"lights": {}}):
+                            success, msg, state = phase0.validate_and_prepare()
 
-                        assert success is True
-                        assert "pret" in msg.lower()
-                        assert state == {"test": True}
+                            assert success is True
+                            assert "pret" in msg.lower()
+                            assert state["tv"] == {"power": "On"}
+                            assert state["hue"] == {"lights": {}}
+                            assert test_file.exists()
 
     def test_validate_tv_offline(self, phase0):
         """TV non disponible -> echec."""

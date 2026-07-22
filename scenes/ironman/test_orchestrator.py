@@ -348,3 +348,89 @@ class TestRunPhases:
     def test_ordered_selection_preserved(self, orchestrator):
         result = orchestrator.run_phases([2, 3, 4], validate_first=False)
         assert result["phases_run"] == [2, 3, 4]
+
+
+class TestMusicAnticipation:
+    """Tests du cablage anticipation musique dans l'orchestrateur."""
+
+    def _orch(self, anticipate: bool):
+        with patch.object(IronManOrchestrator, '_load_config') as mock_config:
+            mock_config.return_value = {
+                "hue": {"bridge_ip": "192.168.1.51", "username": "u"},
+                "tv": {"host": "192.168.1.50", "user": "u", "pass": "p"},
+                "scenes": {"ironman": {"anticipate_music": anticipate}},
+            }
+            orch = IronManOrchestrator()
+        orch._phase1 = Mock()
+        orch._phase1.execute.return_value = {"success": True}
+        orch._phase2 = Mock()
+        orch._phase2.execute.return_value = {"success": True}
+        orch._start_hue_beat = Mock()
+        return orch
+
+    def test_disabled_classic_path(self):
+        orch = self._orch(anticipate=False)
+        orch._execute_phase1()
+        orch._phase1.execute.assert_called_once_with()
+        assert orch._anticipator is None
+
+    def test_enabled_starts_anticipator_and_skips_tv(self):
+        orch = self._orch(anticipate=True)
+        with patch('scenes.ironman.orchestrator.MusicAnticipator') as MockAntic:
+            orch._execute_phase1()
+
+        MockAntic.assert_called_once()
+        MockAntic.return_value.start.assert_called_once()
+        orch._phase1.execute.assert_called_once_with(skip_tv=True)
+
+    def test_phase2_uses_anticipator_launch_time(self):
+        orch = self._orch(anticipate=True)
+        antic = Mock()
+        antic.music_started = True
+        antic.launch_time = 111.0
+        orch._anticipator = antic
+
+        orch._execute_phase2()
+
+        antic.done.wait.assert_called_once()
+        orch._phase2.execute.assert_called_once_with(anticipator=antic)
+        assert orch._youtube_launch_time == 111.0
+        orch._start_hue_beat.assert_called_once()
+
+    def test_phase2_fallback_launch_time_from_result(self):
+        orch = self._orch(anticipate=False)
+        orch._phase2.execute.return_value = {
+            "success": True, "youtube_launch_time": 222.0
+        }
+        orch._anticipator = None
+
+        orch._execute_phase2()
+
+        orch._phase2.execute.assert_called_once_with(anticipator=None)
+        assert orch._youtube_launch_time == 222.0
+
+
+class TestWaitHueBeat:
+    """Tests de la vraie implementation du poll PID hue_beat."""
+
+    @pytest.fixture
+    def orchestrator(self):
+        with patch.object(IronManOrchestrator, '_load_config', return_value={}):
+            return IronManOrchestrator()
+
+    def test_pid_file_present_returns_fast(self, orchestrator, tmp_path):
+        from .conftest import REAL_WAIT_HUE_BEAT
+        pid_file = tmp_path / "hue.pid"
+        pid_file.write_text("1234")
+        with patch('scenes.ironman.orchestrator.HUE_BEAT_PID_FILE', pid_file):
+            start = time.perf_counter()
+            assert REAL_WAIT_HUE_BEAT(orchestrator, timeout=2.0) is True
+            assert time.perf_counter() - start < 0.5
+
+    def test_pid_file_absent_times_out(self, orchestrator, tmp_path):
+        from .conftest import REAL_WAIT_HUE_BEAT
+        pid_file = tmp_path / "absent.pid"
+        with patch('scenes.ironman.orchestrator.HUE_BEAT_PID_FILE', pid_file):
+            start = time.perf_counter()
+            assert REAL_WAIT_HUE_BEAT(orchestrator, timeout=0.3) is False
+            assert time.perf_counter() - start >= 0.3

@@ -303,3 +303,6 @@ scenes:
     # Eteint les ecrans PC pendant le blackout (necessite Hyprland).
     # Sortie: n'importe quelle touche clavier (armee 1s apres extinction).
     pc_screens: false
+    # Lance YouTube pendant le blackout via ADB deep-link: la musique
+    # demarre au flash au lieu de 3-15s apres (necessite adb + TV Android).
+    anticipate_music: false
