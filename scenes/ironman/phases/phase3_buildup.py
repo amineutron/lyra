@@ -17,6 +17,7 @@ Position scene: T+8.5s -> T+20.5s
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -57,8 +58,13 @@ RED_INTENSE_RGB = (255, 0, 0)
 # quand YouTube joue sur la TV: aucun audio ne passe par le PC), la
 # phase pilote les pulses via CTRL_FILE sur les beats precalcules.
 HUE_BEAT_OBSERVE_S = 2.0
-# Avance d'ecriture du pulse (compense le poll 100ms du watcher)
-CTRL_PULSE_LEAD_S = 0.06
+# Avance d'ecriture du pulse (compense le poll 50ms du watcher)
+CTRL_PULSE_LEAD_S = 0.03
+
+# Pulses pilotes: plancher lumineux entre les pulses (0 = noir) et
+# pattern d'intensite cyclique pour garder un groove (temps fort a 1.0)
+CTRL_FLOOR = 0.22
+CTRL_INTENSITY_PATTERN = (1.0, 0.7, 0.85, 0.7)
 
 # API
 API_TIMEOUT = 1.5  # Timeout court pour les beats rapides
@@ -107,6 +113,7 @@ class Phase3Buildup:
 
         self.config = self._load_config(config_path)
         self.hue_config = self.config.get("hue", {})
+        self.tv_config = self.config.get("tv", {})
         self.beats = self._load_beats()
 
         # Stats d'execution
@@ -275,14 +282,76 @@ class Phase3Buildup:
         except Exception:
             return 0
 
-    def _send_hue_beat_pulse(self, intensity: float = 1.0) -> bool:
-        """Ecrit une commande pulse dans le CTRL_FILE de hue_beat."""
+    def _send_hue_beat_ctrl(self, cmd: dict) -> bool:
+        """
+        Ecrit une commande dans le CTRL_FILE de hue_beat (atomique).
+
+        tmp + os.replace: le watcher ne peut jamais lire un JSON partiel.
+        """
         try:
-            HUE_BEAT_CTRL_FILE.write_text(json.dumps({"pulse": intensity}))
+            tmp = HUE_BEAT_CTRL_FILE.with_suffix(".tmp")
+            tmp.write_text(json.dumps(cmd))
+            os.replace(tmp, HUE_BEAT_CTRL_FILE)
             return True
         except Exception as e:
-            logger.debug(f"ctrl pulse erreur: {e}")
+            logger.debug(f"ctrl erreur: {e}")
             return False
+
+    def _send_hue_beat_pulse(self, intensity: float = 1.0) -> bool:
+        """Envoie un pulse a hue_beat via le CTRL_FILE."""
+        return self._send_hue_beat_ctrl({"pulse": intensity})
+
+    def _measure_video_position(self) -> Optional[float]:
+        """
+        Mesure la position de lecture reelle de YouTube via ADB.
+
+        dumpsys media_session expose position (ms), speed et updated
+        (elapsedRealtime ms de la derniere mise a jour). La position
+        courante = position + (uptime_ms - updated) * speed.
+
+        Returns:
+            Position en secondes si YouTube est en lecture, sinon None
+        """
+        import shutil
+        adb = shutil.which("adb")
+        host = self.tv_config.get("host", "192.168.1.50")
+        if not adb:
+            return None
+        try:
+            result = subprocess.run(
+                [adb, "-s", f"{host}:5555", "shell",
+                 "dumpsys media_session; echo ---UPTIME---; cat /proc/uptime"],
+                capture_output=True, text=True, timeout=4
+            )
+            if result.returncode != 0:
+                return None
+            output, _, uptime_part = result.stdout.partition("---UPTIME---")
+            uptime_ms = float(uptime_part.strip().split()[0]) * 1000.0
+
+            # Bloc de la session YouTube uniquement
+            yt_block = output.split("com.google.android.youtube.tv", 1)
+            if len(yt_block) < 2:
+                return None
+            match = re.search(
+                r"state=(\d+), position=(\d+), buffered position=\d+, "
+                r"speed=([\d.]+), updated=(\d+)",
+                yt_block[1]
+            )
+            if not match:
+                return None
+            state, position_ms, speed, updated_ms = (
+                int(match.group(1)), float(match.group(2)),
+                float(match.group(3)), float(match.group(4)),
+            )
+            if state != 3:  # 3 = PLAYING
+                return None
+            current_s = (position_ms + (uptime_ms - updated_ms) * speed) / 1000.0
+            if current_s < 0 or current_s > 300:
+                return None
+            return current_s
+        except Exception as e:
+            logger.debug(f"mesure position video: {e}")
+            return None
 
     def _drive_hue_beat_pulses(self, phase_start: float,
                                deadline: float) -> int:
@@ -291,6 +360,8 @@ class Phase3Buildup:
 
         Utilise quand l'audio ne passe pas par le PC (YouTube sur la TV):
         hue_beat n'entend rien, on lui envoie les beats via CTRL_FILE.
+        L'intensite suit CTRL_INTENSITY_PATTERN (temps fort a 1.0) pour
+        garder un groove au lieu d'un strobe monotone.
 
         Args:
             phase_start: perf_counter du debut de la video (t=0 des beats)
@@ -299,8 +370,11 @@ class Phase3Buildup:
         Returns:
             Nombre de pulses envoyes
         """
+        # Ambiance entre les pulses + pas d'ancres aleatoires en cadence fixe
+        self._send_hue_beat_ctrl({"floor": CTRL_FLOOR, "anchor": False})
+
         sent = 0
-        for beat_time in self.beats:
+        for i, beat_time in enumerate(self.beats):
             target = phase_start + beat_time + BEAT_SYNC_OFFSET - CTRL_PULSE_LEAD_S
             if target >= deadline:
                 break
@@ -309,7 +383,8 @@ class Phase3Buildup:
                 time.sleep(wait)
             elif wait < -0.5:
                 continue  # beat deja depasse (observation), ne pas rafaler
-            if self._send_hue_beat_pulse(1.0):
+            intensity = CTRL_INTENSITY_PATTERN[i % len(CTRL_INTENSITY_PATTERN)]
+            if self._send_hue_beat_pulse(intensity):
                 sent += 1
         return sent
 
@@ -335,6 +410,17 @@ class Phase3Buildup:
                 time.sleep(video_start_delay)
             video_start = time.perf_counter()
             deadline = phase_entry + PHASE_DURATION
+
+            # Ancrage exact: position de lecture reelle via ADB (le
+            # delai de chargement YouTube estime peut etre faux de
+            # plusieurs secondes -> tous les beats seraient decales)
+            video_anchor = "estimated"
+            measured = self._measure_video_position()
+            if measured is not None:
+                video_start = time.perf_counter() - measured
+                video_anchor = "measured"
+                logger.info(f"Phase 3: position video mesuree {measured:.2f}s "
+                            f"(ancrage exact des beats)")
 
             # Observation: hue_beat entend-il l'audio ? (non quand
             # YouTube joue sur la TV: rien ne passe par le PC)
@@ -366,6 +452,7 @@ class Phase3Buildup:
                 "total_beats": len(self.beats),
                 "duration": time.perf_counter() - phase_entry,
                 "mode": mode,
+                "video_anchor": video_anchor,
             }
 
         # Attendre que la vidéo commence vraiment

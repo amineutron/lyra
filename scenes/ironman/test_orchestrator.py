@@ -446,3 +446,30 @@ class TestWaitHueBeat:
             start = time.perf_counter()
             assert REAL_WAIT_HUE_BEAT(orchestrator, timeout=0.3) is False
             assert time.perf_counter() - start >= 0.3
+
+
+class TestPhase3HueBeatStop:
+    """La scene (pas hue_beat) decide de l'arret en mode pilote."""
+
+    def _orch(self):
+        with patch.object(IronManOrchestrator, '_load_config', return_value={}):
+            orch = IronManOrchestrator()
+        orch._phase3 = Mock()
+        orch._stop_hue_beat = Mock()
+        orch._youtube_launch_time = None
+        return orch
+
+    def test_ctrl_mode_stops_hue_beat_after_phase3(self):
+        orch = self._orch()
+        orch._phase3.execute.return_value = {"success": True,
+                                             "mode": "hue_beat_ctrl"}
+        orch._execute_phase3()
+        orch._stop_hue_beat.assert_called_once()
+
+    def test_audio_mode_keeps_hue_beat_running(self):
+        """Mode audio-reactif: hue_beat continue (arret en fin de Phase 5)."""
+        orch = self._orch()
+        orch._phase3.execute.return_value = {"success": True,
+                                             "mode": "hue_beat"}
+        orch._execute_phase3()
+        orch._stop_hue_beat.assert_not_called()

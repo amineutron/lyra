@@ -576,7 +576,17 @@ class IronManOrchestrator:
             YOUTUBE_LOAD_TIME = 2.5  # secondes pour charger
             video_start_delay = max(0.0, YOUTUBE_LOAD_TIME - time_since_launch)
             logger.info(f"[IRONMAN] YouTube lancé il y a {time_since_launch:.1f}s, attente vidéo: {video_start_delay:.1f}s")
-        return self._phase3.execute(video_start_delay=video_start_delay)
+
+        result = self._phase3.execute(video_start_delay=video_start_delay)
+
+        # En mode pulses pilotes, la scene (et non hue_beat) decide de
+        # l'arret: on coupe des la fin de la Phase 3 pour rendre la main
+        # au REST des Phases 4-5 (fondu + pulse TTS redeviennent visibles,
+        # le stream Entertainment ecrasait tout en le laissant tourner)
+        if result.get("mode") == "hue_beat_ctrl":
+            self._stop_hue_beat()
+
+        return result
 
     def _execute_phase4(self) -> dict:
         """Execute Phase 4 - Transition (hue_beat continue)."""

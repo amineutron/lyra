@@ -43,6 +43,7 @@ _STEP_EXTRA_KEYS = (
     "latency_ms", "lights_off", "tv_off", "tv_action", "ambilight_off",
     "pc_screens_off", "flash_ok", "blue_ok", "tv_on", "music_started",
     "music_method", "mode", "beats_executed", "music_stopped", "tts_ok",
+    "video_anchor",
 )
 
 

@@ -86,9 +86,12 @@ class TestPhase3Buildup:
         mock_put.return_value = Mock(status_code=200)
         with patch.object(phase3, "_hue_beat_running", return_value=True):
             with patch.object(phase3, "_hue_beat_beat_count", return_value=3):
-                result = phase3.execute()
+                with patch.object(phase3, "_measure_video_position",
+                                  return_value=None):
+                    result = phase3.execute()
         assert result["mode"] == "hue_beat"
         assert result["success"] is True
+        assert result["video_anchor"] == "estimated"
 
     @patch("requests.put")
     @patch("time.sleep")
@@ -98,17 +101,40 @@ class TestPhase3Buildup:
         phase3.beats = [0.5, 1.0, 1.5]
         with patch.object(phase3, "_hue_beat_running", return_value=True):
             with patch.object(phase3, "_hue_beat_beat_count", return_value=0):
-                with patch(
-                    "scenes.ironman.phases.phase3_buildup.HUE_BEAT_OBSERVE_S", 0.0
-                ):
-                    with patch.object(phase3, "_send_hue_beat_pulse",
-                                      return_value=True) as mock_pulse:
-                        result = phase3.execute()
+                with patch.object(phase3, "_measure_video_position",
+                                  return_value=None):
+                    with patch(
+                        "scenes.ironman.phases.phase3_buildup.HUE_BEAT_OBSERVE_S", 0.0
+                    ):
+                        with patch.object(phase3, "_send_hue_beat_ctrl",
+                                          return_value=True):
+                            with patch.object(phase3, "_send_hue_beat_pulse",
+                                              return_value=True) as mock_pulse:
+                                result = phase3.execute()
 
         assert result["mode"] == "hue_beat_ctrl"
         assert result["beats_executed"] == 3
         assert mock_pulse.call_count == 3
         assert result["success"] is True
+
+    @patch("requests.put")
+    @patch("time.sleep")
+    def test_execute_measured_anchor(self, mock_sleep, mock_put, phase3):
+        """Position video mesuree: ancrage exact des beats."""
+        mock_put.return_value = Mock(status_code=200)
+        phase3.beats = []
+        with patch.object(phase3, "_hue_beat_running", return_value=True):
+            with patch.object(phase3, "_hue_beat_beat_count", return_value=0):
+                with patch.object(phase3, "_measure_video_position",
+                                  return_value=4.2):
+                    with patch(
+                        "scenes.ironman.phases.phase3_buildup.HUE_BEAT_OBSERVE_S", 0.0
+                    ):
+                        with patch.object(phase3, "_send_hue_beat_ctrl",
+                                          return_value=True):
+                            result = phase3.execute()
+
+        assert result["video_anchor"] == "measured"
 
 
 class TestConstants:
@@ -202,10 +228,126 @@ class TestDrivePulses:
         """Les beats au-dela de la fin de phase ne sont pas envoyes."""
         phase3.beats = [0.05, 0.10, 5.0, 9.0]
         now = time.perf_counter()
-        with patch.object(phase3, '_send_hue_beat_pulse',
-                          return_value=True) as mock_pulse:
-            sent = phase3._drive_hue_beat_pulses(
-                phase_start=now, deadline=now + 0.3
-            )
+        with patch.object(phase3, '_send_hue_beat_ctrl', return_value=True):
+            with patch.object(phase3, '_send_hue_beat_pulse',
+                              return_value=True) as mock_pulse:
+                sent = phase3._drive_hue_beat_pulses(
+                    phase_start=now, deadline=now + 0.3
+                )
         assert sent == 2
         assert mock_pulse.call_count == 2
+
+    def test_setup_ctrl_sent_before_pulses(self, phase3):
+        """floor + anchor off envoyes avant le premier pulse."""
+        phase3.beats = [0.05]
+        now = time.perf_counter()
+        with patch.object(phase3, '_send_hue_beat_ctrl',
+                          return_value=True) as mock_ctrl:
+            with patch.object(phase3, '_send_hue_beat_pulse', return_value=True):
+                phase3._drive_hue_beat_pulses(phase_start=now, deadline=now + 0.2)
+        setup = mock_ctrl.call_args_list[0][0][0]
+        assert setup["anchor"] is False
+        assert setup["floor"] > 0
+
+    def test_intensity_follows_pattern(self, phase3):
+        """L'intensite suit le pattern cyclique (groove, pas de strobe)."""
+        from .phase3_buildup import CTRL_INTENSITY_PATTERN
+        phase3.beats = [0.01, 0.02, 0.03, 0.04, 0.05]
+        now = time.perf_counter()
+        with patch.object(phase3, '_send_hue_beat_ctrl', return_value=True):
+            with patch.object(phase3, '_send_hue_beat_pulse',
+                              return_value=True) as mock_pulse:
+                phase3._drive_hue_beat_pulses(phase_start=now, deadline=now + 1.0)
+        intensities = [c[0][0] for c in mock_pulse.call_args_list]
+        expected = [CTRL_INTENSITY_PATTERN[i % len(CTRL_INTENSITY_PATTERN)]
+                    for i in range(5)]
+        assert intensities == expected
+
+
+class TestMeasureVideoPosition:
+    """Mesure de la position de lecture YouTube via ADB."""
+
+    @pytest.fixture
+    def phase3(self):
+        with patch.object(Phase3Buildup, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase3Buildup()
+
+    def _dumpsys(self, state=3, position=8500, speed=1.0, updated=1000000):
+        return (
+            "  package=com.google.android.youtube.tv\n"
+            "  active=true\n"
+            f"  state=PlaybackState {{state={state}, position={position}, "
+            f"buffered position=0, speed={speed}, updated={updated}, "
+            "actions=382, custom actions=[], active item id=-1, error=null}\n"
+            "---UPTIME---\n"
+            "1002.50 4000.00\n"
+        )
+
+    def test_playing_returns_position(self, phase3):
+        """state=3 (lecture): position = position + delta uptime."""
+        with patch('shutil.which', return_value='/usr/bin/adb'):
+            with patch('subprocess.run') as mock_run:
+                mock_run.return_value = Mock(
+                    returncode=0,
+                    stdout=self._dumpsys(state=3, position=8500,
+                                         updated=1000000)
+                )
+                pos = phase3._measure_video_position()
+        # 8500ms + (1002500 - 1000000)ms * 1.0 = 11000ms
+        assert pos == pytest.approx(11.0, abs=0.01)
+
+    def test_paused_returns_none(self, phase3):
+        with patch('shutil.which', return_value='/usr/bin/adb'):
+            with patch('subprocess.run') as mock_run:
+                mock_run.return_value = Mock(
+                    returncode=0, stdout=self._dumpsys(state=2)
+                )
+                assert phase3._measure_video_position() is None
+
+    def test_no_youtube_session_returns_none(self, phase3):
+        with patch('shutil.which', return_value='/usr/bin/adb'):
+            with patch('subprocess.run') as mock_run:
+                mock_run.return_value = Mock(
+                    returncode=0,
+                    stdout="package=org.droidtv.playtv\n---UPTIME---\n100.0 50.0\n"
+                )
+                assert phase3._measure_video_position() is None
+
+    def test_no_adb_returns_none(self, phase3):
+        with patch('shutil.which', return_value=None):
+            assert phase3._measure_video_position() is None
+
+    def test_absurd_position_rejected(self, phase3):
+        """Position > 300s: session residuelle, rejetee."""
+        with patch('shutil.which', return_value='/usr/bin/adb'):
+            with patch('subprocess.run') as mock_run:
+                mock_run.return_value = Mock(
+                    returncode=0,
+                    stdout=self._dumpsys(state=3, position=900000,
+                                         updated=1002500)
+                )
+                assert phase3._measure_video_position() is None
+
+
+class TestSendCtrlAtomic:
+    """Ecriture atomique du CTRL_FILE."""
+
+    @pytest.fixture
+    def phase3(self):
+        with patch.object(Phase3Buildup, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase3Buildup()
+
+    def test_ctrl_written_via_tmp_rename(self, phase3, tmp_path):
+        import json as _json
+        ctrl = tmp_path / "ctrl"
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE', ctrl):
+            assert phase3._send_hue_beat_ctrl({"floor": 0.22}) is True
+            assert _json.loads(ctrl.read_text()) == {"floor": 0.22}
+            # le fichier temporaire ne traine pas
+            assert not (tmp_path / "ctrl.tmp").exists()
