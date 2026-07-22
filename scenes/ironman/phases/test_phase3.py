@@ -272,20 +272,19 @@ class TestDrivePulses:
         setup = mock_ctrl.call_args_list[0][0][0]
         assert setup["anchor"] is False
 
-    def test_floor_sent_at_branch_entry(self, phase3):
-        """Le plancher est envoye des l'entree de la branche hue_beat."""
-        from .phase3_buildup import CTRL_FLOOR
+    def test_no_floor_sent_black_between_pulses(self, phase3):
+        """Pas de plancher: noir entre les pulses (esthetique voulue)."""
         phase3.beats = []
         with patch.object(phase3, "_hue_beat_running", return_value=True):
-            with patch.object(phase3, "_hue_beat_beat_count", return_value=3):
+            with patch.object(phase3, "_hue_beat_beat_count", return_value=0):
                 with patch.object(phase3, "_measure_video_position",
                                   return_value=None):
                     with patch.object(phase3, "_send_hue_beat_ctrl",
                                       return_value=True) as mock_ctrl:
                         with patch('time.sleep'):
                             phase3.execute()
-        first_cmd = mock_ctrl.call_args_list[0][0][0]
-        assert first_cmd == {"floor": CTRL_FLOOR}
+        for call in mock_ctrl.call_args_list:
+            assert "floor" not in call[0][0]
 
     def test_intensity_follows_pattern_without_measurements(self, phase3):
         """Sans intensites mesurees: pattern cyclique (groove)."""

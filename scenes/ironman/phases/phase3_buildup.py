@@ -61,9 +61,10 @@ HUE_BEAT_OBSERVE_S = 2.0
 # Avance d'ecriture du pulse (compense le poll 50ms du watcher)
 CTRL_PULSE_LEAD_S = 0.03
 
-# Pulses pilotes: plancher lumineux entre les pulses (0 = noir) et
-# pattern d'intensite cyclique pour garder un groove (temps fort a 1.0)
-CTRL_FLOOR = 0.22
+# Pulses pilotes: noir entre les pulses (esthetique voulue: flash
+# depuis le noir sur chaque kick marque) et pattern d'intensite de
+# secours si le fichier de beats n'a pas d'intensites mesurees
+CTRL_FLOOR = 0.0
 CTRL_INTENSITY_PATTERN = (1.0, 0.7, 0.85, 0.7)
 
 # API
@@ -436,11 +437,6 @@ class Phase3Buildup:
                 video_anchor = "measured"
                 logger.info(f"Phase 3: position video mesuree {measured:.2f}s "
                             f"(ancrage exact des beats)")
-
-            # Plancher lumineux des l'entree: le stream Entertainment
-            # ecrase le bleu REST de la Phase 2, sans plancher les
-            # lumieres seraient noires pendant l'observation
-            self._send_hue_beat_ctrl({"floor": CTRL_FLOOR})
 
             # Une source audio n'est attendue que si elle est configuree
             # (sinon YouTube joue sur la TV: hue_beat n'entendra jamais
