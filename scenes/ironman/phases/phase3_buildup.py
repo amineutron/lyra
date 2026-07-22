@@ -383,11 +383,15 @@ class Phase3Buildup:
         # IMPORTANT: attendre que le watcher consomme la commande avant
         # d'ecrire le premier pulse (meme fichier: il l'ecraserait)
         self._send_hue_beat_ctrl({"anchor": False, "uniform": True})
-        consume_deadline = time.perf_counter() + 0.3
+        # 2s max: couvre un boot lent de hue_beat (watcher démarre
+        # desormais des le lancement, consommation quasi immediate)
+        consume_deadline = time.perf_counter() + 2.0
         while HUE_BEAT_CTRL_FILE.exists() and time.perf_counter() < consume_deadline:
             time.sleep(0.02)
         if HUE_BEAT_CTRL_FILE.exists():
-            logger.warning("[LIGHTS] setup ctrl non consomme apres 300ms")
+            logger.warning("[LIGHTS] setup ctrl non consomme apres 2s")
+        else:
+            logger.info("[LIGHTS] setup appliqué (uniform + no-anchor)")
 
         sent = 0
         for i, beat_time in enumerate(self.beats):
