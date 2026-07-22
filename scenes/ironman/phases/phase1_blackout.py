@@ -63,13 +63,28 @@ class Phase1Blackout:
         self.hue_config = self.config.get("hue", {})
 
     def _load_config(self, config_path: Path) -> dict:
-        """Charge la configuration depuis config.yaml."""
+        """Charge config.yaml et fusionne secrets.yaml si present."""
+        config = {}
         try:
             with open(config_path, 'r') as f:
-                return yaml.safe_load(f)
+                config = yaml.safe_load(f) or {}
         except Exception as e:
             logger.warning(f"Impossible de charger config.yaml: {e}")
-            return {}
+
+        secrets_path = config_path.parent / "secrets.yaml"
+        if secrets_path.exists():
+            try:
+                with open(secrets_path, 'r') as f:
+                    secrets = yaml.safe_load(f) or {}
+                for section, values in secrets.items():
+                    if section in config and isinstance(config[section], dict):
+                        config[section].update(values)
+                    else:
+                        config[section] = values
+            except Exception as e:
+                logger.warning(f"Impossible de charger secrets.yaml: {e}")
+
+        return config
 
     def _turn_off_lights(self) -> Tuple[bool, float]:
         """

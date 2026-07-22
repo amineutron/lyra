@@ -189,27 +189,22 @@ class TestLaunchYouTube:
                 success = phase2._launch_youtube("test123")
                 assert success is True
 
-    def test_youtube_no_adb(self, phase2):
-        """ADB non disponible."""
+    def test_youtube_no_catt(self, phase2):
+        """catt non disponible."""
         with patch('os.path.exists', return_value=False):
             success = phase2._launch_youtube("test123")
             assert success is False
 
-    def test_youtube_retry_on_failure(self, phase2):
-        """Retry automatique si echec."""
+    def test_youtube_catt_failure_no_retry(self, phase2):
+        """Echec catt: retourne False sans retry (un seul appel)."""
         with patch('os.path.exists', return_value=True):
             with patch('subprocess.run') as mock_run:
-                # Premier appel echoue, second reussit
-                mock_run.side_effect = [
-                    MagicMock(returncode=0),  # connect
-                    MagicMock(returncode=1, stderr="error", stdout=""),  # start fail
-                    MagicMock(returncode=0),  # connect retry
-                    MagicMock(returncode=0),  # start success
-                ]
-                with patch('time.sleep'):
-                    success = phase2._launch_youtube("test123", retry=True)
-                    # Should have retried
-                    assert mock_run.call_count >= 3
+                mock_run.return_value = MagicMock(
+                    returncode=1, stderr="error", stdout=""
+                )
+                success = phase2._launch_youtube("test123")
+                assert success is False
+                assert mock_run.call_count == 1
 
     def test_youtube_timeout(self, phase2):
         """Timeout YouTube."""
@@ -292,8 +287,8 @@ class TestExecute:
                             with patch('time.sleep'):
                                 result = phase2.execute()
 
-                                # flash_ok=True mais music=False => success=False
-                                assert result["success"] is False
+                                # YouTube optionnel: flash_ok suffit => success=True
+                                assert result["success"] is True
                                 assert result["music_started"] is False
                                 # Ambilight skip si pas de musique
                                 mock_ambi.assert_not_called()

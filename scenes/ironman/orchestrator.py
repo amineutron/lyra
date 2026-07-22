@@ -116,13 +116,28 @@ class IronManOrchestrator:
         self._youtube_launch_time: Optional[float] = None
 
     def _load_config(self, config_path: Path) -> dict:
-        """Charge la configuration."""
+        """Charge config.yaml et fusionne secrets.yaml si present."""
+        config = {}
         try:
             with open(config_path, 'r') as f:
-                return yaml.safe_load(f)
+                config = yaml.safe_load(f) or {}
         except Exception as e:
             logger.warning(f"Config load error: {e}")
-            return {}
+
+        secrets_path = config_path.parent / "secrets.yaml"
+        if secrets_path.exists():
+            try:
+                with open(secrets_path) as f:
+                    secrets = yaml.safe_load(f) or {}
+                for section, values in secrets.items():
+                    if section in config and isinstance(config[section], dict):
+                        config[section].update(values)
+                    else:
+                        config[section] = values
+            except Exception as e:
+                logger.warning(f"secrets.yaml load error: {e}")
+
+        return config
 
     def _load_hue_secrets(self) -> dict:
         """Charge clientkey et area_id depuis secrets.yaml."""

@@ -96,13 +96,28 @@ class Phase2Impact:
         self.hue_config = self.config.get("hue", {})
 
     def _load_config(self, config_path: Path) -> dict:
-        """Charge la configuration depuis config.yaml."""
+        """Charge config.yaml et fusionne secrets.yaml si present."""
+        config = {}
         try:
             with open(config_path, 'r') as f:
-                return yaml.safe_load(f)
+                config = yaml.safe_load(f) or {}
         except Exception as e:
             logger.warning(f"Impossible de charger config.yaml: {e}")
-            return {}
+
+        secrets_path = config_path.parent / "secrets.yaml"
+        if secrets_path.exists():
+            try:
+                with open(secrets_path, 'r') as f:
+                    secrets = yaml.safe_load(f) or {}
+                for section, values in secrets.items():
+                    if section in config and isinstance(config[section], dict):
+                        config[section].update(values)
+                    else:
+                        config[section] = values
+            except Exception as e:
+                logger.warning(f"Impossible de charger secrets.yaml: {e}")
+
+        return config
 
     def _get_tv_auth(self):
         """Retourne l'auth HTTPDigest pour la TV."""
@@ -217,62 +232,41 @@ class Phase2Impact:
 
     def _launch_youtube(self, video_id: str, retry: bool = True) -> bool:
         """
-        Lance YouTube sur une video via ADB.
+        Caste une video YouTube via catt (deja disponible dans Lyra).
 
         Args:
             video_id: ID de la video YouTube
-            retry: Tenter un retry en cas d'echec
 
         Returns:
             True si succes
         """
-        adb_path = "/tmp/platform-tools/adb"
-        host = self.tv_config.get("host", "192.168.1.50")
+        import shutil
+        catt_path = shutil.which("catt") or os.path.expanduser("~/.local/bin/catt")
+        device = self.config.get("catt", {}).get("device", "55OLED705/12")
 
-        if not os.path.exists(adb_path):
-            logger.warning("ADB non disponible, YouTube skip")
+        if not os.path.exists(catt_path):
+            logger.warning("catt non disponible, YouTube skip")
             return False
 
         url = f"https://www.youtube.com/watch?v={video_id}"
 
         try:
-            # Connecter ADB
-            subprocess.run(
-                [adb_path, "connect", f"{host}:5555"],
-                capture_output=True, timeout=10
-            )
-
-            # Lancer YouTube
             result = subprocess.run(
-                [adb_path, "-s", f"{host}:5555", "shell", "am", "start",
-                 "-a", "android.intent.action.VIEW",
-                 "-d", url,
-                 "com.google.android.youtube.tv"],
+                [catt_path, "-d", device, "cast_site", url],
                 capture_output=True,
                 text=True,
-                timeout=15
+                timeout=20
             )
-
             if result.returncode == 0:
-                logger.info(f"YouTube lance: {video_id}")
+                logger.info(f"YouTube caste via catt: {video_id}")
                 return True
-
-            # Echec - retry?
-            if retry:
-                logger.warning("YouTube echec, retry...")
-                time.sleep(0.5)
-                return self._launch_youtube(video_id, retry=False)
-
-            logger.warning(f"YouTube error: {result.stderr or result.stdout}")
+            logger.warning(f"catt error: {result.stderr or result.stdout}")
             return False
-
         except subprocess.TimeoutExpired:
-            logger.warning("YouTube timeout")
-            if retry:
-                return self._launch_youtube(video_id, retry=False)
+            logger.warning("catt timeout")
             return False
         except Exception as e:
-            logger.warning(f"YouTube error: {e}")
+            logger.warning(f"catt error: {e}")
             return False
 
     def _activate_ambilight(self) -> bool:
@@ -361,8 +355,8 @@ class Phase2Impact:
 
         duration = time.perf_counter() - phase_start
 
-        # Success = flash OK ET musique lancee
-        results["success"] = results["flash_ok"] and results["music_started"]
+        # Success = flash OK (YouTube optionnel si ADB indisponible)
+        results["success"] = results["flash_ok"]
         results["duration"] = duration
 
         logger.info(f"Phase 2: IMPACT - Fin (duree: {duration:.2f}s)")

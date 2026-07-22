@@ -95,13 +95,28 @@ class Phase4Transition:
         self.tv_config = self.config.get("tv", {})
 
     def _load_config(self, config_path: Path) -> dict:
-        """Charge la configuration depuis config.yaml."""
+        """Charge config.yaml et fusionne secrets.yaml si present."""
+        config = {}
         try:
             with open(config_path, 'r') as f:
-                return yaml.safe_load(f)
+                config = yaml.safe_load(f) or {}
         except Exception as e:
             logger.warning(f"Impossible de charger config.yaml: {e}")
-            return {}
+
+        secrets_path = config_path.parent / "secrets.yaml"
+        if secrets_path.exists():
+            try:
+                with open(secrets_path, 'r') as f:
+                    secrets = yaml.safe_load(f) or {}
+                for section, values in secrets.items():
+                    if section in config and isinstance(config[section], dict):
+                        config[section].update(values)
+                    else:
+                        config[section] = values
+            except Exception as e:
+                logger.warning(f"Impossible de charger secrets.yaml: {e}")
+
+        return config
 
     def _get_tv_auth(self):
         """Retourne l'auth HTTPDigest pour la TV."""
