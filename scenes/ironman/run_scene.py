@@ -32,6 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from scenes.ironman import IronManOrchestrator
+from scenes.ironman.metrics import load_runs, format_comparison
 
 # Rallumage auto des ecrans PC en mode test/sous-scene (secours)
 TEST_PC_AUTO_WAKE_S = 60
@@ -180,7 +181,14 @@ def main():
                         help="Ne pas restaurer l'etat Hue/TV apres la sous-scene")
     parser.add_argument("--no-validate", action="store_true",
                         help="Ne pas prefixer la Phase 0 (pas d'etat rollback)")
+    parser.add_argument("--metrics", action="store_true",
+                        help="Afficher les metriques des 5 derniers runs")
     args = parser.parse_args()
+
+    if args.metrics:
+        print("\n\033[1;36m=== METRIQUES - 5 DERNIERS RUNS ===\033[0m\n")
+        print(format_comparison(load_runs()))
+        return
 
     exclusive = [args.test, args.phase is not None,
                  args.phases is not None, args.from_phase is not None]

@@ -46,6 +46,12 @@ from .phases import (
     Phase5TTS,
 )
 from .phases.phase0_detection import load_rollback_state, ROLLBACK_FILE
+from .metrics import SceneMetrics
+
+try:
+    from lyra.hestia.tracking_client import TrackingClient
+except ImportError:
+    TrackingClient = None
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +124,11 @@ class IronManOrchestrator:
         self._scene_start_time: float = 0
         self._phase_results: Dict[str, Any] = {}
         self._youtube_launch_time: Optional[float] = None
+
+        # Telemetrie (metriques locales + tracking dashboard)
+        self._metrics: Optional[SceneMetrics] = None
+        self._tracking = TrackingClient() if TrackingClient else None
+        self._tracking_id: Optional[str] = None
 
     def _load_config(self, config_path: Path) -> dict:
         """Charge config.yaml et fusionne secrets.yaml si present."""
@@ -264,10 +275,48 @@ class IronManOrchestrator:
         self._execute_scene()
         return True
 
+    def _start_telemetry(self, run_type: str, selection: list):
+        """Initialise metriques locales + session tracking dashboard."""
+        # Kill-switch (tests unitaires: pas de fichier reel ni de session
+        # tracking sur le dashboard)
+        if os.environ.get("IRONMAN_NO_TELEMETRY"):
+            return
+        self._metrics = SceneMetrics(run_type, selection)
+        if self._tracking is not None:
+            try:
+                self._tracking_id = self._tracking.create(
+                    name="Scene Iron Man" if run_type == "full"
+                         else f"Iron Man sous-scene {selection}",
+                    template="lyra_task",
+                    total=len(selection) or 1,
+                    unit="phases",
+                    extra={"operation": "ironman_scene",
+                           "target": ",".join(str(n) for n in selection)},
+                )
+            except Exception as e:
+                logger.debug(f"[IRONMAN] tracking indisponible: {e}")
+                self._tracking_id = None
+
+    def _end_telemetry(self, success: bool):
+        """Clot metriques + session tracking (jamais bloquant)."""
+        if self._metrics is not None:
+            self._metrics.finalize(success=success)
+            self._metrics = None
+        if self._tracking is not None and self._tracking_id:
+            try:
+                if success:
+                    self._tracking.complete(self._tracking_id, log="Scene terminee")
+                else:
+                    self._tracking.error(self._tracking_id, "Scene en echec")
+            except Exception:
+                pass
+            self._tracking_id = None
+
     def _execute_scene(self):
         """Execute la scene complete avec gestion des erreurs."""
         self._scene_start_time = time.perf_counter()
         self._phase_results = {}
+        self._start_telemetry("full", [0, 1, 2, 3, 4, 5])
 
         try:
             # Phase 0: Validation
@@ -319,11 +368,13 @@ class IronManOrchestrator:
             self._state = SceneState.STABLE
             total_duration = time.perf_counter() - self._scene_start_time
             logger.info(f"[IRONMAN] Scene terminee avec succes! (duree: {total_duration:.1f}s)")
+            self._end_telemetry(success=True)
 
         except Exception as e:
             logger.error(f"[IRONMAN] Erreur scene: {e}")
             logger.error(traceback.format_exc())
             self._rollback()
+            self._end_telemetry(success=False)
 
     def _run_phase(self, state: SceneState, name: str, func: Callable) -> bool:
         """
@@ -342,6 +393,7 @@ class IronManOrchestrator:
         """
         self._state = state
         phase_start = time.perf_counter()
+        phase_offset = phase_start - self._scene_start_time
         logger.info(f"[IRONMAN] {name} started")
 
         try:
@@ -351,6 +403,27 @@ class IronManOrchestrator:
             # Sauvegarder le resultat
             phase_key = state.name.lower()
             self._phase_results[phase_key] = result
+
+            # Telemetrie
+            if self._metrics is not None:
+                self._metrics.record_step(
+                    phase_key, duration, result.get("success", True), result
+                )
+                # Premier effet visible = extinction lumieres en Phase 1
+                if state == SceneState.BLACKOUT and result.get("lights_off"):
+                    latency_s = result.get("latency_ms", 0) / 1000.0
+                    self._metrics.mark_at(
+                        "first_visible_effect", phase_offset + latency_s
+                    )
+            if self._tracking is not None and self._tracking_id:
+                try:
+                    self._tracking.update(
+                        self._tracking_id,
+                        log=f"{name} ({duration:.1f}s)",
+                        extra={"phase": name},
+                    )
+                except Exception:
+                    pass
 
             if result.get("success", True):
                 logger.info(f"[IRONMAN] {name} completed (duration: {duration:.2f}s)")
@@ -549,6 +622,7 @@ class IronManOrchestrator:
 
         self._scene_start_time = time.perf_counter()
         self._phase_results = {}
+        self._start_telemetry("sub-scene", to_run)
         phases_run = []
         success = True
 
@@ -567,6 +641,7 @@ class IronManOrchestrator:
             logger.error(f"[IRONMAN] Sous-scene erreur: {e}")
             success = False
             self._rollback(wake_pc=True)
+            self._end_telemetry(success=False)
             return {"success": False, "phases_run": phases_run,
                     "phase_results": self._phase_results}
 
@@ -580,6 +655,7 @@ class IronManOrchestrator:
             # eteints (sortie clavier ou auto-wake du watcher)
             self._rollback(wake_pc=False)
 
+        self._end_telemetry(success=success)
         return {"success": success, "phases_run": phases_run,
                 "phase_results": self._phase_results}
 
