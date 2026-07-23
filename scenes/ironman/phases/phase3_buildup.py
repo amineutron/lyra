@@ -423,10 +423,10 @@ class Phase3Buildup:
             except (FileNotFoundError, OSError):
                 pass
 
-        # Pas d'ancres aleatoires + flash uniforme + fade court vers le
-        # noir absolu (gamma cote hue_beat)
-        self._send_hue_beat_ctrl({"anchor": False, "uniform": True,
-                                  "pulse_duration": 0.30})
+        # Fade court vers le noir absolu; la choregraphie gros/petits
+        # kicks de hue_beat (base + ampoules designees + alternance
+        # strip) fait le reste — plus de mode uniforme force
+        self._send_hue_beat_ctrl({"anchor": False, "pulse_duration": 0.30})
         if self._hue_beat_fifo is None:
             # Fallback fichier: attendre la consommation du setup avant
             # le premier pulse (meme fichier: il l'ecraserait)
