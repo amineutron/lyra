@@ -423,10 +423,10 @@ class Phase3Buildup:
             except (FileNotFoundError, OSError):
                 pass
 
-        # Fade court vers le noir absolu; la choregraphie gros/petits
-        # kicks de hue_beat (base + ampoules designees + alternance
-        # strip) fait le reste — plus de mode uniforme force
-        self._send_hue_beat_ctrl({"anchor": False, "pulse_duration": 0.30})
+        # La choregraphie gros/petits kicks de hue_beat (base + solistes
+        # + alternance strip) et son fade par defaut (0.70s, valide a
+        # l'oreille par l'utilisateur) font le rendu — pas d'override
+        self._send_hue_beat_ctrl({"anchor": False})
         if self._hue_beat_fifo is None:
             # Fallback fichier: attendre la consommation du setup avant
             # le premier pulse (meme fichier: il l'ecraserait)
