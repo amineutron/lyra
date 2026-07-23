@@ -421,6 +421,14 @@ class TestSetupConsumedBeforePulses:
     """Le setup ctrl doit etre consomme avant le premier pulse
     (regression: le premier pulse ecrasait la commande uniform/anchor)."""
 
+    @pytest.fixture(autouse=True)
+    def _no_real_fifo(self, tmp_path):
+        """Isole du vrai FIFO: une instance hue_beat vivante ferait
+        prendre la voie FIFO et sauter l'attente de consommation."""
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_FIFO_FILE',
+                   tmp_path / "no_fifo"):
+            yield
+
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
