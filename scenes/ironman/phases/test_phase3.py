@@ -1,3 +1,4 @@
+import os
 import time
 from unittest.mock import Mock, patch
 import pytest
@@ -234,11 +235,22 @@ class TestHueBeatStateReading:
         ctrl = tmp_path / "ctrl"
         with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE', ctrl):
             assert phase3._send_hue_beat_pulse(0.8) is True
-            assert _json.loads(ctrl.read_text()) == {"pulse": 0.8}
+            msg = _json.loads(ctrl.read_text())
+            assert msg["pulse"] == 0.8
+            assert "ts" in msg  # horodatage anti-bouchon
 
 
 class TestDrivePulses:
     """Pilotage des pulses sur beats precalcules."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated_channels(self, tmp_path):
+        """Jamais les vrais /tmp: fifo absent + ctrl file en tmp."""
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_FIFO_FILE',
+                   tmp_path / "no_fifo"):
+            with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE',
+                       tmp_path / "ctrl"):
+                yield
 
     @pytest.fixture
     def phase3(self):
@@ -398,7 +410,9 @@ class TestSendCtrlAtomic:
         ctrl = tmp_path / "ctrl"
         with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE', ctrl):
             assert phase3._send_hue_beat_ctrl({"floor": 0.22}) is True
-            assert _json.loads(ctrl.read_text()) == {"floor": 0.22}
+            msg = _json.loads(ctrl.read_text())
+            assert msg["floor"] == 0.22
+            assert "ts" in msg
             # le fichier temporaire ne traine pas
             assert not (tmp_path / "ctrl.tmp").exists()
 
@@ -450,3 +464,129 @@ class TestSetupConsumedBeforePulses:
 
         # Le pulse est parti APRES la consommation du setup
         assert consumed_at["ctrl_still_there"] is False
+
+
+class TestFifoChannel:
+    """Voie FIFO vers hue_beat (latence <1ms, messages ordonnes)."""
+
+    @pytest.fixture
+    def phase3(self):
+        with patch.object(Phase3Buildup, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase3Buildup()
+
+    def test_fifo_messages_ordered_with_timestamp(self, phase3, tmp_path):
+        """Deux commandes rapprochees: DEUX messages, ordonnes, avec ts."""
+        import json as _json
+        import threading
+
+        fifo = tmp_path / "fifo"
+        os.mkfifo(fifo)
+        received = []
+
+        def reader():
+            with open(fifo) as f:
+                for line in f:
+                    received.append(_json.loads(line))
+
+        t = threading.Thread(target=reader, daemon=True)
+        t.start()
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_FIFO_FILE', fifo):
+            phase3._hue_beat_fifo = phase3._open_hue_beat_fifo()
+            assert phase3._hue_beat_fifo is not None
+            phase3._send_hue_beat_ctrl({"uniform": True})
+            phase3._send_hue_beat_pulse(0.9)
+            phase3._hue_beat_fifo.close()
+            phase3._hue_beat_fifo = None
+        t.join(timeout=2)
+
+        assert len(received) == 2  # rien n'est ecrase
+        assert received[0]["uniform"] is True
+        assert received[1]["pulse"] == 0.9
+        assert all("ts" in m for m in received)
+
+    def test_no_reader_falls_back_to_ctrl_file(self, phase3, tmp_path):
+        """FIFO sans lecteur: fallback fichier ctrl (avec ts)."""
+        import json as _json
+        fifo = tmp_path / "fifo"
+        os.mkfifo(fifo)
+        ctrl = tmp_path / "ctrl"
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_FIFO_FILE', fifo):
+            with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE', ctrl):
+                phase3._hue_beat_fifo = phase3._open_hue_beat_fifo()
+                assert phase3._hue_beat_fifo is None  # pas de lecteur
+                assert phase3._send_hue_beat_ctrl({"pulse": 1.0}) is True
+        msg = _json.loads(ctrl.read_text())
+        assert msg["pulse"] == 1.0
+        assert "ts" in msg
+
+    def test_missing_fifo_returns_none(self, phase3, tmp_path):
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_FIFO_FILE',
+                   tmp_path / "absent"):
+            assert phase3._open_hue_beat_fifo() is None
+
+
+class TestResync:
+    """Re-mesure de position a mi-buildup."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated_channels(self, tmp_path):
+        """Jamais les vrais /tmp: fifo absent + ctrl file en tmp."""
+        with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_FIFO_FILE',
+                   tmp_path / "no_fifo"):
+            with patch('scenes.ironman.phases.phase3_buildup.HUE_BEAT_CTRL_FILE',
+                       tmp_path / "ctrl"):
+                yield
+
+    @pytest.fixture
+    def phase3(self):
+        with patch.object(Phase3Buildup, '_load_config', return_value={
+            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
+            'tv': {'host': '192.168.1.50'}
+        }):
+            return Phase3Buildup()
+
+    def test_resync_shifts_remaining_beats(self, phase3):
+        """Un ecart mesure > seuil decale les beats restants."""
+        phase3.beats = [0.05, 0.60]
+        phase3.beat_intensities = [1.0, 1.0]
+        # video en avance de ~200ms sur la prediction
+        with patch('scenes.ironman.phases.phase3_buildup.RESYNC_AT_S', 0.15):
+            with patch.object(phase3, '_measure_video_position') as mock_measure:
+                mock_measure.side_effect = lambda: (
+                    time.perf_counter() - start + 0.2)
+                with patch.object(phase3, '_open_hue_beat_fifo',
+                                  return_value=None):
+                    with patch.object(phase3, '_send_hue_beat_ctrl',
+                                      return_value=True):
+                        with patch.object(phase3, '_send_hue_beat_pulse',
+                                          return_value=True):
+                            start = time.perf_counter()
+                            phase3._drive_hue_beat_pulses(
+                                phase_start=start, deadline=start + 1.0)
+
+        mock_measure.assert_called()
+        # correction appliquee (video en avance -> beats avances)
+        assert phase3._sync_offset == pytest.approx(-0.2, abs=0.05)
+
+    def test_resync_below_threshold_no_change(self, phase3):
+        phase3.beats = [0.05, 0.45]
+        phase3.beat_intensities = [1.0, 1.0]
+        with patch('scenes.ironman.phases.phase3_buildup.RESYNC_AT_S', 0.1):
+            with patch.object(phase3, '_measure_video_position') as mock_measure:
+                mock_measure.side_effect = lambda: (
+                    time.perf_counter() - start + 0.02)  # +20ms seulement
+                with patch.object(phase3, '_open_hue_beat_fifo',
+                                  return_value=None):
+                    with patch.object(phase3, '_send_hue_beat_ctrl',
+                                      return_value=True):
+                        with patch.object(phase3, '_send_hue_beat_pulse',
+                                          return_value=True):
+                            start = time.perf_counter()
+                            phase3._drive_hue_beat_pulses(
+                                phase_start=start, deadline=start + 0.6)
+
+        mock_measure.assert_called()
+        assert phase3._sync_offset == 0.0

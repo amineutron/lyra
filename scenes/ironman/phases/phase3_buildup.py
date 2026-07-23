@@ -51,6 +51,13 @@ BLUE_ARC_REACTOR_RGB = (0, 0, 255)
 HUE_BEAT_PID_FILE = Path("/tmp/ironman_hue.pid")
 HUE_BEAT_CTRL_FILE = Path("/tmp/lyra_hue_beat.ctrl")
 HUE_BEAT_STATE_FILE = Path("/tmp/lyra_hue_beat.state.json")
+HUE_BEAT_FIFO_FILE = Path("/tmp/lyra_hue_beat.fifo")
+
+# Re-mesure de la position video a mi-buildup: si l'ecart entre la
+# position reelle et la prediction depasse ce seuil, les beats
+# restants sont recales d'autant
+RESYNC_AT_S = 5.5
+RESYNC_THRESHOLD_S = 0.08
 RED_INTENSE_RGB = (255, 0, 0)
 
 # Fenetre d'observation avant de basculer en pulses pilotes:
@@ -289,12 +296,39 @@ class Phase3Buildup:
         except Exception:
             return 0
 
+    def _open_hue_beat_fifo(self):
+        """
+        Ouvre le FIFO de hue_beat en ecriture (non bloquant).
+
+        Returns:
+            File object ou None (pas de FIFO / pas de lecteur ->
+            fallback sur le CTRL_FILE polle)
+        """
+        try:
+            fd = os.open(str(HUE_BEAT_FIFO_FILE), os.O_WRONLY | os.O_NONBLOCK)
+            return os.fdopen(fd, "w")
+        except OSError:
+            return None
+
     def _send_hue_beat_ctrl(self, cmd: dict) -> bool:
         """
-        Ecrit une commande dans le CTRL_FILE de hue_beat (atomique).
+        Envoie une commande a hue_beat.
 
-        tmp + os.replace: le watcher ne peut jamais lire un JSON partiel.
+        Voie rapide: FIFO (latence <1ms, messages ordonnes, pas
+        d'ecrasement possible). Fallback: CTRL_FILE atomique (tmp +
+        os.replace) polle a 50ms. Chaque commande est horodatee ("ts")
+        pour que hue_beat jette les pulses arrives trop tard.
         """
+        cmd = {**cmd, "ts": time.time()}
+        fifo = getattr(self, "_hue_beat_fifo", None)
+        if fifo is not None:
+            try:
+                fifo.write(json.dumps(cmd) + "\n")
+                fifo.flush()
+                return True
+            except Exception as e:
+                logger.warning(f"[LIGHTS] fifo perdu ({e}), fallback ctrl")
+                self._hue_beat_fifo = None
         try:
             tmp = HUE_BEAT_CTRL_FILE.with_suffix(".tmp")
             tmp.write_text(json.dumps(cmd))
@@ -305,7 +339,7 @@ class Phase3Buildup:
             return False
 
     def _send_hue_beat_pulse(self, intensity: float = 1.0) -> bool:
-        """Envoie un pulse a hue_beat via le CTRL_FILE."""
+        """Envoie un pulse a hue_beat (FIFO, fallback CTRL_FILE)."""
         return self._send_hue_beat_ctrl({"pulse": intensity})
 
     def _measure_video_position(self) -> Optional[float]:
@@ -377,46 +411,88 @@ class Phase3Buildup:
         Returns:
             Nombre de pulses envoyes
         """
-        # Pas d'ancres aleatoires + flash uniforme (tous les canaux, meme
-        # couleur): les segments/accents tires au hasard a chaque pulse
-        # rendaient le rendu spatialement chaotique.
-        # IMPORTANT: attendre que le watcher consomme la commande avant
-        # d'ecrire le premier pulse (meme fichier: il l'ecraserait)
-        # pulse_duration court: fade rapide vers le noir ABSOLU entre
-        # les kicks (avec le gamma perceptuel cote hue_beat)
+        # Voie rapide FIFO si hue_beat l'expose (latence <1ms, ordonne)
+        self._hue_beat_fifo = self._open_hue_beat_fifo()
+        via = "fifo" if self._hue_beat_fifo is not None else "ctrl-file"
+        logger.info(f"[LIGHTS] canal de commande: {via}")
+        if self._hue_beat_fifo is None:
+            # Purger un ctrl file perime d'un ancien run: il fausserait
+            # l'attente de consommation du setup
+            try:
+                HUE_BEAT_CTRL_FILE.unlink()
+            except (FileNotFoundError, OSError):
+                pass
+
+        # Pas d'ancres aleatoires + flash uniforme + fade court vers le
+        # noir absolu (gamma cote hue_beat)
         self._send_hue_beat_ctrl({"anchor": False, "uniform": True,
                                   "pulse_duration": 0.30})
-        # 2s max: couvre un boot lent de hue_beat (watcher démarre
-        # desormais des le lancement, consommation quasi immediate)
-        consume_deadline = time.perf_counter() + 2.0
-        while HUE_BEAT_CTRL_FILE.exists() and time.perf_counter() < consume_deadline:
-            time.sleep(0.02)
-        if HUE_BEAT_CTRL_FILE.exists():
-            logger.warning("[LIGHTS] setup ctrl non consomme apres 2s")
-        else:
-            logger.info("[LIGHTS] setup appliqué (uniform + no-anchor)")
+        if self._hue_beat_fifo is None:
+            # Fallback fichier: attendre la consommation du setup avant
+            # le premier pulse (meme fichier: il l'ecraserait)
+            consume_deadline = time.perf_counter() + 2.0
+            while (HUE_BEAT_CTRL_FILE.exists()
+                   and time.perf_counter() < consume_deadline):
+                time.sleep(0.02)
+            if HUE_BEAT_CTRL_FILE.exists():
+                logger.warning("[LIGHTS] setup ctrl non consomme apres 2s")
+
+        # Re-mesure de position a mi-buildup (thread): corrige la
+        # derive/imprecision de l'ancrage initial pour les beats restants
+        self._sync_offset = 0.0
+
+        def _resync():
+            time.sleep(RESYNC_AT_S)
+            if time.perf_counter() >= deadline:
+                return
+            measured = self._measure_video_position()
+            if measured is None:
+                logger.info("[LIGHTS] re-mesure indisponible, ancrage inchange")
+                return
+            expected = time.perf_counter() - phase_start
+            offset = measured - expected
+            if abs(offset) > RESYNC_THRESHOLD_S:
+                self._sync_offset = -offset
+                logger.info(f"[LIGHTS] re-mesure: video a {measured:.2f}s, "
+                            f"attendu {expected:.2f}s -> correction "
+                            f"{-offset*1000:+.0f}ms sur les beats restants")
+            else:
+                logger.info(f"[LIGHTS] re-mesure: derive {offset*1000:+.0f}ms "
+                            f"(< seuil, ancrage inchange)")
+
+        import threading
+        threading.Thread(target=_resync, daemon=True).start()
 
         sent = 0
-        for i, beat_time in enumerate(self.beats):
-            target = phase_start + beat_time + BEAT_SYNC_OFFSET - CTRL_PULSE_LEAD_S
-            if target >= deadline:
-                break
-            wait = target - time.perf_counter()
-            if wait > 0:
-                time.sleep(wait)
-            elif wait < -0.5:
-                continue  # beat deja depasse (observation), ne pas rafaler
-            # Intensite mesuree sur l'audio reel si disponible,
-            # sinon pattern cyclique
-            if i < len(self.beat_intensities):
-                intensity = self.beat_intensities[i]
-            else:
-                intensity = CTRL_INTENSITY_PATTERN[i % len(CTRL_INTENSITY_PATTERN)]
-            if self._send_hue_beat_pulse(intensity):
-                sent += 1
-                lag_ms = (time.perf_counter() - target) * 1000
-                logger.info(f"[LIGHTS] pulse #{sent} video-t={beat_time:.2f}s "
-                            f"intensity={intensity:.2f} lag={lag_ms:+.0f}ms")
+        try:
+            for i, beat_time in enumerate(self.beats):
+                target = (phase_start + beat_time + BEAT_SYNC_OFFSET
+                          + self._sync_offset - CTRL_PULSE_LEAD_S)
+                if target >= deadline:
+                    break
+                wait = target - time.perf_counter()
+                if wait > 0:
+                    time.sleep(wait)
+                elif wait < -0.5:
+                    continue  # beat deja depasse (observation), ne pas rafaler
+                # Intensite mesuree sur l'audio reel si disponible,
+                # sinon pattern cyclique
+                if i < len(self.beat_intensities):
+                    intensity = self.beat_intensities[i]
+                else:
+                    intensity = CTRL_INTENSITY_PATTERN[i % len(CTRL_INTENSITY_PATTERN)]
+                if self._send_hue_beat_pulse(intensity):
+                    sent += 1
+                    lag_ms = (time.perf_counter() - target) * 1000
+                    logger.info(f"[LIGHTS] pulse #{sent} video-t={beat_time:.2f}s "
+                                f"intensity={intensity:.2f} lag={lag_ms:+.0f}ms")
+        finally:
+            if self._hue_beat_fifo is not None:
+                try:
+                    self._hue_beat_fifo.close()
+                except Exception:
+                    pass
+                self._hue_beat_fifo = None
         return sent
 
     def execute(self, video_start_delay: float = 0.0, music_offset: float = 0.0) -> dict:
