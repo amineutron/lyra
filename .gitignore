@@ -107,3 +107,4 @@ demandes/
 # Debug artifacts
 .playwright-mcp/
 .claude-sync/
+secrets.yaml.bak
