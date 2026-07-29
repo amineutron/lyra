@@ -7,10 +7,13 @@ afin d'eviter les divergences silencieuses entre les fichiers.
 
 from __future__ import annotations
 
-# Outils qui exigent une confirmation explicite "oui" et un affichage rouge
+# Outils qui exigent une confirmation explicite "oui" et un affichage rouge.
+# vm_exec execute une commande arbitraire extraite du texte utilisateur :
+# jamais d'auto-confirmation, meme en mode -y.
 DANGEROUS_TOOLS: frozenset[str] = frozenset({
     "vm_destroy",
     "vm_stop",
+    "vm_exec",
     "backup_restore",
     "backup_clean",
     "vm_clone_system",

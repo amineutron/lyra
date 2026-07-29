@@ -403,21 +403,18 @@ class HestiaExecutor:
     def is_dangerous_tool(self, tool_name: str) -> bool:
         """Verifie si un outil est dangereux.
 
+        Delegue a la source unique de verite (lyra.core.constants.DANGEROUS_TOOLS)
+        pour eviter toute divergence entre les listes.
+
         Args:
             tool_name: Nom de l'outil
 
         Returns:
             True si l'outil est dangereux
         """
-        dangerous = [
-            "vm_destroy",
-            "vm_delete",
-            "backup_restore",
-            "backup_clean",
-        ]
-        # Normaliser le nom
+        from lyra.core.constants import DANGEROUS_TOOLS
         base_name = tool_name.split(".")[-1] if "." in tool_name else tool_name
-        return base_name in dangerous
+        return base_name in DANGEROUS_TOOLS
 
     def is_async_tool(self, tool_name: str) -> bool:
         """Verifie si un outil doit etre execute en arriere-plan.

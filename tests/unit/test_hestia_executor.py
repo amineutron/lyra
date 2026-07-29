@@ -270,11 +270,13 @@ class TestHestiaExecutor:
         assert servers == ["fedora", "tv", "hue"]
 
     def test_is_dangerous_tool_true(self, executor):
-        """Test de detection d'outils dangereux."""
+        """Test de detection d'outils dangereux (source: constants.DANGEROUS_TOOLS)."""
         assert executor.is_dangerous_tool("vm_destroy") is True
         assert executor.is_dangerous_tool("backup_restore") is True
         assert executor.is_dangerous_tool("backup_clean") is True
-        assert executor.is_dangerous_tool("vm_delete") is True
+        assert executor.is_dangerous_tool("vm_stop") is True
+        assert executor.is_dangerous_tool("vm_exec") is True
+        assert executor.is_dangerous_tool("vm_clone_system") is True
 
     def test_is_dangerous_tool_false(self, executor):
         """Test que les outils normaux ne sont pas dangereux."""

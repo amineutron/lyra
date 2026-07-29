@@ -42,15 +42,65 @@ ASYNC_TOOLS = {
 
 
 # ==============================================
+# Validation de format des arguments
+# ==============================================
+# Les valeurs proviennent d'une extraction LLM/regex sur du texte libre
+# (vocal ou clavier). subprocess est appele en liste (pas de shell=True),
+# mais les scripts bash en aval ne sont pas garantis safe : on refuse ici
+# tout caractere hors whitelist (defense en profondeur).
+
+import re
+
+# Nom de VM / identifiant / taille disque : alphanumerique + . _ -
+# Premier caractere alphanumerique (empeche une valeur interpretee comme option)
+_SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+# Chemin : alphanumerique + / . _ ~ -  (pas d'espace ni metacaractere shell)
+_SAFE_PATH_RE = re.compile(r"^[A-Za-z0-9/~][A-Za-z0-9_./~-]{0,255}$")
+# Texte libre (commentaire) : refuse uniquement les metacaracteres shell
+_UNSAFE_TEXT_RE = re.compile(r"[`$;|&<>\n\r\"'\\]")
+
+
+def validate_safe_name(value, field_name: str) -> str:
+    """Valide un nom (VM, identifiant, user...). Leve ValueError sinon."""
+    if not isinstance(value, str) or not _SAFE_NAME_RE.match(value):
+        raise ValueError(
+            f"Argument {field_name} invalide: {value!r} "
+            "(attendu: alphanumerique, tirets, points, max 64 caracteres)"
+        )
+    return value
+
+
+def validate_safe_path(value, field_name: str) -> str:
+    """Valide un chemin de fichier/repertoire. Leve ValueError sinon."""
+    if not isinstance(value, str) or not _SAFE_PATH_RE.match(value):
+        raise ValueError(
+            f"Argument {field_name} invalide: {value!r} "
+            "(attendu: chemin sans espace ni caractere special)"
+        )
+    return value
+
+
+def validate_safe_text(value, field_name: str) -> str:
+    """Valide un texte libre (commentaire) : refuse les metacaracteres shell."""
+    if not isinstance(value, str) or _UNSAFE_TEXT_RE.search(value):
+        raise ValueError(
+            f"Argument {field_name} invalide: {value!r} "
+            "(caracteres shell interdits)"
+        )
+    return value
+
+
+# ==============================================
 # Construction des arguments shell par outil
 # ==============================================
 
 def build_args_vm_export(args_dict):
     """Construit la commande pour vm-export.sh."""
-    cmd = [str(VM_CTRL / "vm-export.sh"), args_dict["vm_name"],
-           f"--mode={args_dict.get('mode', 'classic')}"]
+    cmd = [str(VM_CTRL / "vm-export.sh"),
+           validate_safe_name(args_dict["vm_name"], "vm_name"),
+           f"--mode={validate_safe_name(args_dict.get('mode', 'classic'), 'mode')}"]
     if args_dict.get("output_path"):
-        cmd += [f"--output={args_dict['output_path']}"]
+        cmd += [f"--output={validate_safe_path(args_dict['output_path'], 'output_path')}"]
     if args_dict.get("force"):
         cmd.append("--force")
     if args_dict.get("dry_run"):
@@ -60,11 +110,12 @@ def build_args_vm_export(args_dict):
 
 def build_args_vm_import(args_dict):
     """Construit la commande pour vm-import.sh."""
-    cmd = [str(VM_CTRL / "vm-import.sh"), args_dict["archive_path"]]
+    cmd = [str(VM_CTRL / "vm-import.sh"),
+           validate_safe_path(args_dict["archive_path"], "archive_path")]
     if args_dict.get("new_name"):
-        cmd += [f"--name={args_dict['new_name']}"]
+        cmd += [f"--name={validate_safe_name(args_dict['new_name'], 'new_name')}"]
     if args_dict.get("pool_dir"):
-        cmd += [f"--pool={args_dict['pool_dir']}"]
+        cmd += [f"--pool={validate_safe_path(args_dict['pool_dir'], 'pool_dir')}"]
     if args_dict.get("start"):
         cmd.append("--start")
     if args_dict.get("dry_run"):
@@ -74,7 +125,9 @@ def build_args_vm_import(args_dict):
 
 def build_args_vm_clone(args_dict):
     """Construit la commande pour kvm-clone.sh."""
-    cmd = [str(KVM / "kvm-clone.sh"), args_dict["source_vm"], args_dict["new_vm_name"]]
+    cmd = [str(KVM / "kvm-clone.sh"),
+           validate_safe_name(args_dict["source_vm"], "source_vm"),
+           validate_safe_name(args_dict["new_vm_name"], "new_vm_name")]
     if args_dict.get("start"):
         cmd.append("--start")
     if args_dict.get("linked"):
@@ -88,16 +141,16 @@ def build_args_vm_clone_system(args_dict):
     """Construit la commande pour kvm-clone-system.sh."""
     cmd = [
         str(KVM / "kvm-clone-system.sh"),
-        "-n", args_dict.get("name", "neutron-clone"),
-        "-d", args_dict.get("disk_size", "60G"),
-        "-m", str(args_dict.get("memory", 8192)),
-        "-c", str(args_dict.get("cpus", 4)),
+        "-n", validate_safe_name(args_dict.get("name", "neutron-clone"), "name"),
+        "-d", validate_safe_name(args_dict.get("disk_size", "60G"), "disk_size"),
+        "-m", str(int(args_dict.get("memory", 8192))),
+        "-c", str(int(args_dict.get("cpus", 4))),
         "--yes",
     ]
     if args_dict.get("hostname"):
-        cmd += ["--hostname", args_dict["hostname"]]
+        cmd += ["--hostname", validate_safe_name(args_dict["hostname"], "hostname")]
     if args_dict.get("username"):
-        cmd += ["--username", args_dict["username"]]
+        cmd += ["--username", validate_safe_name(args_dict["username"], "username")]
     if args_dict.get("dry_run"):
         cmd.append("--dry-run")
     return cmd
@@ -105,21 +158,24 @@ def build_args_vm_clone_system(args_dict):
 
 def build_args_backup_create(args_dict):
     """Construit la commande pour backup-create.sh."""
-    cmd = [str(BACKUP / "backup-create.sh"), args_dict["type"]]
+    cmd = [str(BACKUP / "backup-create.sh"),
+           validate_safe_name(args_dict["type"], "type")]
     if args_dict.get("comment"):
-        cmd += [f"--comment={args_dict['comment']}"]
+        cmd += [f"--comment={validate_safe_text(args_dict['comment'], 'comment')}"]
     if args_dict.get("verify"):
         cmd.append("--verify")
     if args_dict.get("dry_run"):
         cmd.append("--dry-run")
     if args_dict.get("vm"):
-        cmd += [f"--vm={args_dict['vm']}"]
+        cmd += [f"--vm={validate_safe_name(args_dict['vm'], 'vm')}"]
     return cmd
 
 
 def build_args_backup_restore(args_dict):
     """Construit la commande pour backup-restore.sh."""
-    cmd = [str(BACKUP / "backup-restore.sh"), args_dict["type"], args_dict["identifier"]]
+    cmd = [str(BACKUP / "backup-restore.sh"),
+           validate_safe_name(args_dict["type"], "type"),
+           validate_safe_name(args_dict["identifier"], "identifier")]
     if args_dict.get("dry_run"):
         cmd.append("--dry-run")
     if args_dict.get("force"):
@@ -259,7 +315,10 @@ def run_direct(tool_short: str, arguments: dict, progress_file: str,
     if builder is None:
         return False, f"Outil ASYNC inconnu: {tool_short}"
 
-    cmd = builder(arguments)
+    try:
+        cmd = builder(arguments)
+    except (ValueError, KeyError) as e:
+        return False, f"Arguments invalides pour {tool_short}: {e}"
     print(f"[i] Execution directe: {' '.join(cmd)}", file=sys.stderr)
 
     env = {**os.environ, "LYRA_PROGRESS_FILE": progress_file}
