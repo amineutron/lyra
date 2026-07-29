@@ -54,6 +54,17 @@ EXEMPLES:
 "ok" → {"intent": "discussion"}
 "ca va" → {"intent": "discussion"}"""
 
+# Questions de connaissance explicites : TOUJOURS "info" (override LLM).
+# Evite que Llama 1b classe "c'est quoi vm_clone" comme "demande" -> fallback
+# "je n'ai pas compris". Teste AVANT les verbes d'action car une vraie question
+# peut contenir un verbe ("comment cloner une vm" reste une question).
+from ..core.types import EXPLICIT_KNOWLEDGE_PATTERNS
+
+_KNOWLEDGE_RE = re.compile(
+    "|".join(re.escape(p) for p in EXPLICIT_KNOWLEDGE_PATTERNS),
+    re.IGNORECASE
+)
+
 # Verbes qui indiquent TOUJOURS une action MCP (override LLM)
 _DEMANDE_VERBS_RE = re.compile(
     r'\b(verifie[rz]?|verif|clone[rz]?|duplique[rz]?|copie[rz]?|transfere[rz]?|execute[rz]?|exec'
@@ -103,6 +114,15 @@ class IntentClassifier:
         Returns:
             ClassificationResult avec l'intention detectee
         """
+        # Override regex: questions de connaissance explicites TOUJOURS "info"
+        # (prioritaire sur les verbes d'action: "comment cloner" = question)
+        if _KNOWLEDGE_RE.search(_ascii_lower(query)):
+            return ClassificationResult(
+                intent=Intent.INFO,
+                confidence=0.97,
+                raw_response="regex:knowledge_pattern"
+            )
+
         # Override regex: certains verbes d'action sont TOUJOURS "demande"
         # Evite que Llama 1b classe "verifie la VM" comme "info"
         # On normalise en ASCII pour matcher aussi les formes accentuees

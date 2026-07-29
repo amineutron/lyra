@@ -698,6 +698,7 @@ Lyra integre le MCP tracking pour suivre toutes ses operations longues (VM, back
 | vm_clone EPHAISTOS 0.5b args non extraits | pipeline.py | `_rule_based_detect()`: regex "clone X en Y" |
 | vm_copy RAG retourne vm_clone ("copie" dans enrichissement "clone") | pipeline.py | `_rule_based_detect()`: regex "copie FILE vers VM" |
 | vm_verify IntentClassifier dit "info" | intent_classifier.py | Regex override: verbes d'action toujours "demande" |
+| "c'est quoi vm_clone" classe "demande" -> fallback "je n'ai pas compris" | intent_classifier.py | Regex override _KNOWLEDGE_RE (EXPLICIT_KNOWLEDGE_PATTERNS) teste AVANT les verbes d'action |
 | vm_verify RAG retourne vm_clone | pipeline.py | `_rule_based_detect()`: regex "verifie VM" |
 | backup_status watch=True → MCP boucle infinie (timeout 124) | pipeline.py | `_rule_based_detect()`: status+backup → backup_status({}) sans watch |
 | vm_status listing global: vm_name='' → EXEC_ERROR | pipeline.py | `_rule_based_detect()`: "mes VMs/toutes" sans vm_name → vm_status({}) |
