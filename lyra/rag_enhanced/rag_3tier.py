@@ -14,14 +14,27 @@ from typing import Optional, Literal, Callable
 
 logger = logging.getLogger(__name__)
 
-# Import conditionnel ChromaDB
-try:
-    import chromadb
-    from chromadb.config import Settings
-    from sentence_transformers import SentenceTransformer
-    CHROMADB_AVAILABLE = True
-except ImportError:
-    CHROMADB_AVAILABLE = False
+# Import conditionnel ChromaDB — paresseux (~8s d'import torch inclus),
+# charge au premier initialize() pour ne pas penaliser le fast-path regles.
+chromadb = None
+Settings = None
+SentenceTransformer = None
+CHROMADB_AVAILABLE: Optional[bool] = None
+
+
+def _load_heavy_deps() -> None:
+    """Importe chromadb et sentence-transformers (une seule fois, au premier usage)."""
+    global chromadb, Settings, SentenceTransformer, CHROMADB_AVAILABLE
+    if CHROMADB_AVAILABLE is not None:
+        return
+    try:
+        import chromadb as _chromadb
+        from chromadb.config import Settings as _Settings
+        from sentence_transformers import SentenceTransformer as _ST
+        chromadb, Settings, SentenceTransformer = _chromadb, _Settings, _ST
+        CHROMADB_AVAILABLE = True
+    except ImportError:
+        CHROMADB_AVAILABLE = False
 
 
 class RAG3Tier:
@@ -58,7 +71,7 @@ class RAG3Tier:
         self.persist_directory = persist_directory
         self.embedding_model_name = embedding_model
 
-        self.client: Optional[chromadb.ClientAPI] = None
+        self.client: Optional["chromadb.ClientAPI"] = None
         self.registry_collection = None
         self.capabilities_collection = None
         self.parameters_collection = None
@@ -68,6 +81,7 @@ class RAG3Tier:
 
     def initialize(self):
         """Initialise ChromaDB et crée les 3 collections."""
+        _load_heavy_deps()
         if not CHROMADB_AVAILABLE:
             raise ImportError(
                 "chromadb et sentence-transformers requis. "

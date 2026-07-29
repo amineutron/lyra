@@ -1183,6 +1183,10 @@ def main():
                     return
                 _checks_done.set()   # check_models a fini de printer — la barre peut apparaitre
                 pipeline.initialize()
+                # Warm-up Ollama en mode interactif : charge EPHAISTOS + LYRA en VRAM
+                # pendant que l'utilisateur lit le banner (premiere requete sans cold-load)
+                if not one_shot:
+                    pipeline.preload_models()
         except Exception as e:
             _init_error[0] = e
             _checks_done.set()

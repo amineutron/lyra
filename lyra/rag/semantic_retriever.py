@@ -27,29 +27,45 @@ logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 # Note: chromadb et sentence-transformers sont optionnels
 # Installation: pip install chromadb sentence-transformers
+#
+# Imports paresseux : ces deux packages coutent ~8s d'import (torch inclus).
+# Ils ne sont charges qu'au premier initialize(), pour que le fast-path regles
+# (one-shot CLI sans RAG) n'en paie jamais le cout.
+chromadb = None
+Settings = None
+SentenceTransformer = None
+CHROMADB_AVAILABLE: Optional[bool] = None
+SENTENCE_TRANSFORMERS_AVAILABLE: Optional[bool] = None
 
-try:
-    import chromadb
-    from chromadb.config import Settings
-    CHROMADB_AVAILABLE = True
-except ImportError:
-    CHROMADB_AVAILABLE = False
 
-try:
+def _load_heavy_deps() -> None:
+    """Importe chromadb et sentence-transformers (une seule fois, au premier usage)."""
+    global chromadb, Settings, SentenceTransformer
+    global CHROMADB_AVAILABLE, SENTENCE_TRANSFORMERS_AVAILABLE
+    if CHROMADB_AVAILABLE is not None:
+        return
+
+    try:
+        import chromadb as _chromadb
+        from chromadb.config import Settings as _Settings
+        chromadb, Settings = _chromadb, _Settings
+        CHROMADB_AVAILABLE = True
+    except ImportError:
+        CHROMADB_AVAILABLE = False
+
     # Importer silencieusement (supprime le warning HF Hub)
     import sys
     from io import StringIO
     _stderr = sys.stderr
-    sys.stderr = StringIO()
-    from sentence_transformers import SentenceTransformer
-    sys.stderr = _stderr
-    SENTENCE_TRANSFORMERS_AVAILABLE = True
-except ImportError:
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
-except Exception:
-    # Restaurer stderr en cas d'erreur
-    sys.stderr = _stderr
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    try:
+        sys.stderr = StringIO()
+        from sentence_transformers import SentenceTransformer as _ST
+        SentenceTransformer = _ST
+        SENTENCE_TRANSFORMERS_AVAILABLE = True
+    except Exception:
+        SENTENCE_TRANSFORMERS_AVAILABLE = False
+    finally:
+        sys.stderr = _stderr
 
 
 @dataclass
@@ -84,7 +100,7 @@ class SemanticRetriever:
         self.collection_name = collection_name
         self.embedding_model_name = embedding_model
 
-        self._client: Optional[chromadb.ClientAPI] = None
+        self._client: Optional["chromadb.ClientAPI"] = None
         self._collection = None
         self._embedding_model = None
         # Cache dict : query_text -> embedding vector
@@ -92,7 +108,8 @@ class SemanticRetriever:
         self._embed_cache: dict = {}
 
     def _check_dependencies(self):
-        """Verifie que les dependances sont installees."""
+        """Verifie que les dependances sont installees (les charge si besoin)."""
+        _load_heavy_deps()
         if not CHROMADB_AVAILABLE:
             raise ImportError(
                 "chromadb n'est pas installe. "

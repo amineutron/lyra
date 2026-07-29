@@ -160,6 +160,10 @@ class EnhancedPipeline:
         
         self._initialized = True
 
+    def preload_models(self) -> None:
+        """Precharge les modeles Ollama en VRAM (delegue au pipeline V2)."""
+        self._pipeline_v2.preload_models()
+
     def initialize_fast(self):
         """Init minimale pour le fast path one-shot.
 

@@ -1104,6 +1104,20 @@ class Pipeline:
             return False
         return self._hestia.is_dangerous_tool(tool_name)
 
+    def preload_models(self) -> None:
+        """Precharge les modeles Ollama en VRAM (warm-up, best-effort).
+
+        Evite le cold-load a la premiere vraie requete en mode interactif.
+        Necessite OLLAMA_MAX_LOADED_MODELS >= 2 pour garder les deux modeles
+        residents simultanement.
+        """
+        if self._model_manager is None:
+            return
+        try:
+            self._model_manager.preload_models()
+        except Exception:
+            pass  # warm-up optionnel, jamais bloquant
+
     def get_metrics(self) -> dict:
         """Retourne les metriques du pipeline."""
         metrics = {}
