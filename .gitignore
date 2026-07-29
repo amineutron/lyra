@@ -91,7 +91,7 @@ config.yaml
 SESSION_ACTIVE.md
 
 # Model cache
-models/
+/models/
 *.onnx
 *.bin
 
