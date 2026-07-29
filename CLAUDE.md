@@ -271,8 +271,9 @@ lyra/
 ## Securite
 
 - **Confirmation obligatoire** pour toutes les actions MCP
-- **Actions dangereuses** (rouge): `vm_destroy`, `vm_stop --force`, `backup_restore`, `backup_clean`
+- **Actions dangereuses** (rouge, jamais auto-confirmees meme en `-y`): `vm_destroy`, `vm_stop`, `vm_exec`, `vm_clone_system`, `backup_restore`, `backup_clean` (source unique: `lyra/core/constants.py DANGEROUS_TOOLS`)
 - **Mode performance**: Skip confirmation pour domotique, JAMAIS pour VM/backup dangereux
+- **Validation format**: `vm_name`/chemins/commentaires valides par whitelist regex avant transmission aux scripts shell (`scripts/async_mcp_wrapper.py`)
 
 ## Flux Interactif - Liste des Outils MCP
 
