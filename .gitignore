@@ -107,4 +107,8 @@ demandes/
 # Debug artifacts
 .playwright-mcp/
 .claude-sync/
-secrets.yaml.bak
+secrets.yaml.bak*
+
+# Donnees d'usage runtime (jamais versionnees)
+data/session_history.db
+data/feedback.json

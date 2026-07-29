@@ -426,7 +426,7 @@ Terminal: "[+] [ASYNC] Operation vm_clone terminee avec succes!"
 ```yaml
 tv:
   host: "192.168.1.50"       # Philips 55OLED705/12
-  user: "***REMOVED***"
+  user: "..."
   pass: "..."                # 64 chars hex
 
 hue:

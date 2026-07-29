@@ -513,7 +513,7 @@ Dans `config.yaml` :
 tv:
   enabled: true
   host: "192.168.1.50"
-  user: "***REMOVED***"           # Genere par pairing pylips
+  user: "..."           # Genere par pairing pylips
   pass: "<64-hex-jointspace>"        # 64 chars hex
 
 # Philips Hue
