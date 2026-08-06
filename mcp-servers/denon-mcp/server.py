@@ -91,16 +91,16 @@ class DenonAVRController:
 
             return response.strip()
         except socket.timeout:
-            return "ERROR: Timeout - Denon may be off"
+            raise RuntimeError(
+                f"Denon injoignable ({self.host}:{self.port}) : timeout telnet - "
+                "l'ampli est probablement eteint ou debranche"
+            )
         except Exception as e:
-            return f"ERROR: {str(e)}"
+            raise RuntimeError(f"Denon telnet ({self.host}:{self.port}) : {e}")
 
     def get_volume(self) -> dict:
         """Retourne le volume actuel."""
         response = self._send_command("MV?")
-
-        if "ERROR" in response:
-            return {"error": response}
 
         # Parser MV245 -> 24.5, MV44 -> 44
         for line in response.split('\r'):
@@ -115,7 +115,7 @@ class DenonAVRController:
 
                 return {"current": volume, "min": 0, "max": 98}
 
-        return {"error": "Could not parse volume"}
+        raise RuntimeError(f"Reponse volume Denon illisible: {response!r}")
 
     def volume_set(self, level: int) -> str:
         """Regle le volume a un niveau specifique (0-98).
@@ -132,20 +132,13 @@ class DenonAVRController:
         # On utilise des entiers seulement
         response = self._send_command(f"MV{level:02d}")
 
-        if "ERROR" in response:
-            return f"Erreur: {response}"
-
         # Verifier que ca a marche
         time.sleep(0.2)
         check = self.get_volume()
-        if "error" not in check:
-            actual = check["current"]
-            if abs(actual - level) < 0.6:  # Tolerance 0.5
-                return f"Volume regle a {level}"
-            else:
-                return f"Volume partiellement regle (demande: {level}, actuel: {actual})"
-
-        return f"Volume regle a {level}"
+        actual = check["current"]
+        if abs(actual - level) < 0.6:  # Tolerance 0.5
+            return f"Volume regle a {level}"
+        return f"Volume partiellement regle (demande: {level}, actuel: {actual})"
 
     def volume_up(self, step: int = 1) -> str:
         """Augmente le volume.
@@ -162,9 +155,7 @@ class DenonAVRController:
 
         time.sleep(0.2)
         vol = self.get_volume()
-        if "error" not in vol:
-            return f"Volume: {vol['current']}"
-        return "Volume augmente"
+        return f"Volume: {vol['current']}"
 
     def volume_down(self, step: int = 1) -> str:
         """Baisse le volume.
@@ -181,46 +172,34 @@ class DenonAVRController:
 
         time.sleep(0.2)
         vol = self.get_volume()
-        if "error" not in vol:
-            return f"Volume: {vol['current']}"
-        return "Volume baisse"
+        return f"Volume: {vol['current']}"
 
     def mute_on(self) -> str:
         """Active le mute."""
-        response = self._send_command("MUON")
-        if "ERROR" not in response:
-            return "Mute active"
-        return f"Erreur: {response}"
+        self._send_command("MUON")
+        return "Mute active"
 
     def mute_off(self) -> str:
         """Desactive le mute."""
-        response = self._send_command("MUOFF")
-        if "ERROR" not in response:
-            return "Mute desactive"
-        return f"Erreur: {response}"
+        self._send_command("MUOFF")
+        return "Mute desactive"
 
     def mute_toggle(self) -> str:
         """Toggle le mute (lit l'etat courant, puis inverse)."""
         status = self._send_command("MU?")
-        if "ERROR" in status:
-            return f"Erreur lecture etat mute: {status}"
         if "MUON" in status:
             return self.mute_off()
         return self.mute_on()
 
     def power_on(self) -> str:
         """Allume le Denon."""
-        response = self._send_command("PWON")
-        if "ERROR" not in response:
-            return "Denon allume"
-        return f"Erreur: {response}"
+        self._send_command("PWON")
+        return "Denon allume"
 
     def power_off(self) -> str:
         """Eteint le Denon (standby)."""
-        response = self._send_command("PWSTANDBY")
-        if "ERROR" not in response:
-            return "Denon en standby"
-        return f"Erreur: {response}"
+        self._send_command("PWSTANDBY")
+        return "Denon en standby"
 
     def get_status(self) -> dict:
         """Retourne le statut complet du Denon."""
@@ -260,12 +239,10 @@ class DenonAVRController:
         source_cmd = source_map.get(source.lower())
         if source_cmd is None:
             valid = ", ".join(sorted(source_map.keys()))
-            return f"Source inconnue: {source!r}. Sources valides: {valid}"
+            raise ValueError(f"Source inconnue: {source!r}. Sources valides: {valid}")
 
-        response = self._send_command(f"SI{source_cmd}")
-        if "ERROR" not in response:
-            return f"Source changee: {source_cmd}"
-        return f"Erreur: {response}"
+        self._send_command(f"SI{source_cmd}")
+        return f"Source changee: {source_cmd}"
 
 
 # Initialiser le serveur MCP
@@ -380,38 +357,40 @@ async def list_tools() -> list[Tool]:
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
-    """Execute un outil."""
-    try:
-        if name == "volume_set":
-            level = arguments.get("level")
-            result = denon.volume_set(level)
-        elif name == "volume_up":
-            step = arguments.get("step", 1)
-            result = denon.volume_up(step)
-        elif name == "volume_down":
-            step = arguments.get("step", 1)
-            result = denon.volume_down(step)
-        elif name == "mute_on":
-            result = denon.mute_on()
-        elif name == "mute_off":
-            result = denon.mute_off()
-        elif name == "mute_toggle":
-            result = denon.mute_toggle()
-        elif name == "power_on":
-            result = denon.power_on()
-        elif name == "power_off":
-            result = denon.power_off()
-        elif name == "get_status":
-            result = json.dumps(denon.get_status(), indent=2)
-        elif name == "set_input":
-            source = arguments.get("source")
-            result = denon.set_input(source)
-        else:
-            result = f"Unknown tool: {name}"
+    """Execute un outil.
 
-        return [TextContent(type="text", text=result)]
-    except Exception as e:
-        return [TextContent(type="text", text=f"Error: {str(e)}")]
+    Les exceptions remontent au SDK MCP qui les convertit en isError=True :
+    ne PAS ajouter de try/except generique ici (sinon les erreurs passent
+    pour des succes cote client).
+    """
+    if name == "volume_set":
+        level = arguments.get("level")
+        result = denon.volume_set(level)
+    elif name == "volume_up":
+        step = arguments.get("step", 1)
+        result = denon.volume_up(step)
+    elif name == "volume_down":
+        step = arguments.get("step", 1)
+        result = denon.volume_down(step)
+    elif name == "mute_on":
+        result = denon.mute_on()
+    elif name == "mute_off":
+        result = denon.mute_off()
+    elif name == "mute_toggle":
+        result = denon.mute_toggle()
+    elif name == "power_on":
+        result = denon.power_on()
+    elif name == "power_off":
+        result = denon.power_off()
+    elif name == "get_status":
+        result = json.dumps(denon.get_status(), indent=2)
+    elif name == "set_input":
+        source = arguments.get("source")
+        result = denon.set_input(source)
+    else:
+        raise ValueError(f"Unknown tool: {name}")
+
+    return [TextContent(type="text", text=result)]
 
 
 async def main():

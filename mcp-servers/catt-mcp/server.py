@@ -192,7 +192,7 @@ class CattController:
                 return f"Lecture (Cast): {title_match.group(1)}"
             return f"Cast demarre: {video_id or url}"
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     _ALLOWED_SCHEMES = ("https://", "http://")
     _BLOCKED_HOSTS = ("localhost", "127.", "0.", "::1", "192.168.", "10.", "172.16.", "172.17.",
@@ -223,7 +223,7 @@ class CattController:
         if success:
             return f"Cast demarre: {url[:50]}..."
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def cast_stop(self) -> str:
         """Arrete le cast en cours."""
@@ -232,7 +232,7 @@ class CattController:
         if success:
             return "Cast arrete"
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def cast_pause(self) -> str:
         """Met en pause le cast."""
@@ -241,7 +241,7 @@ class CattController:
         if success:
             return "Pause"
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def cast_resume(self) -> str:
         """Reprend le cast."""
@@ -250,7 +250,7 @@ class CattController:
         if success:
             return "Lecture"
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def cast_volume(self, level: int) -> str:
         """Regle le volume du cast (0-100)."""
@@ -260,7 +260,7 @@ class CattController:
         if success:
             return f"Volume: {level}"
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def cast_seek(self, seconds: int) -> str:
         """Avance ou recule dans la video (en secondes, negatif pour reculer)."""
@@ -273,7 +273,7 @@ class CattController:
             direction = "Avance" if seconds >= 0 else "Recul"
             return f"{direction} de {abs(seconds)}s"
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def cast_status(self) -> str:
         """Retourne le statut du cast en cours."""
@@ -285,7 +285,7 @@ class CattController:
             # "No media" n'est pas une erreur, juste pas de cast
             if "No media" in output or "Idle" in output:
                 return "Aucun cast en cours"
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def cast_scan(self) -> str:
         """Scanne les devices disponibles."""
@@ -309,12 +309,12 @@ class CattController:
                         return "Devices:\n" + "\n".join(devices)
                 return "Aucun device trouve"
             else:
-                return f"Erreur: {result.stderr.strip()}"
+                raise RuntimeError(result.stderr.strip())
 
         except subprocess.TimeoutExpired:
             return "Timeout pendant le scan"
         except Exception as e:
-            return f"Erreur: {e}"
+            raise RuntimeError(str(e))
 
     def cast_info(self) -> str:
         """Retourne les infos du media en cours."""
@@ -323,7 +323,7 @@ class CattController:
         if success:
             return output or "Aucune info disponible"
         else:
-            return f"Erreur: {output}"
+            raise RuntimeError(output)
 
     def _get_firefox_window_title(self) -> Optional[str]:
         """Recupere le titre de la fenetre Firefox via Hyprland."""
@@ -433,7 +433,7 @@ class CattController:
         url, title_or_error = self._get_firefox_active_url()
 
         if url is None:
-            return f"Erreur: {title_or_error}"
+            raise RuntimeError(title_or_error)
 
         # Verifier si c'est une URL YouTube
         if 'youtube.com' in url or 'youtu.be' in url:
@@ -608,14 +608,14 @@ class CattController:
         log.append(f"Fenetre: {title[:50] if title else 'N/A'}...")
 
         if not url:
-            return "Erreur: Aucune video en cours sur Firefox (playerctl)"
+            raise RuntimeError("Aucune video en cours sur Firefox (playerctl)")
 
         if 'youtube.com' not in url and 'youtu.be' not in url:
-            return "Erreur: Dual cast supporte uniquement YouTube pour l'instant"
+            raise RuntimeError("Dual cast supporte uniquement YouTube pour l'instant")
 
         video_id = self._extract_video_id(url)
         if not video_id:
-            return "Erreur: Impossible d'extraire l'ID de la video"
+            raise RuntimeError("Impossible d'extraire l'ID de la video")
 
         # Recuperer la position actuelle de Firefox
         ff_status, ff_position = self._firefox_get_status()
@@ -629,7 +629,7 @@ class CattController:
         log.append(f"Lancement TV @{int(ff_position)}s...")
         success, tv_result = self._youtube_via_adb(url, start_time=int(ff_position))
         if not success:
-            return f"Erreur TV: {tv_result}"
+            raise RuntimeError(f"Erreur TV: {tv_result}")
         log.append(f"TV: {tv_result}")
 
         # 3. Demarrer le watcher pour sync bidirectionnelle
@@ -665,7 +665,7 @@ class CattController:
 
             return f"Watcher demarre (PID: {process.pid}, offset: {offset}s)"
         except Exception as e:
-            return f"Erreur watcher: {e}"
+            raise RuntimeError(f"Erreur watcher: {e}")
 
     def _stop_sync_watcher(self) -> str:
         """Arrete le watcher de synchronisation."""
@@ -681,7 +681,7 @@ class CattController:
                 pid_file.unlink()
                 return "Watcher deja arrete"
             except Exception as e:
-                return f"Erreur arret watcher: {e}"
+                raise RuntimeError(f"Erreur arret watcher: {e}")
         return "Pas de watcher actif"
 
     def _create_sync_watcher_script(self, script_path: Path):
@@ -1012,18 +1012,18 @@ if __name__ == "__main__":
         # Recuperer la position Firefox
         ff_status, ff_position = self._firefox_get_status()
         if ff_position is None:
-            return "Erreur: Impossible de lire la position Firefox"
+            raise RuntimeError("Impossible de lire la position Firefox")
 
         log.append(f"Position Firefox: {int(ff_position)}s")
 
         # Recuperer l'URL actuelle
         url, title = self._get_firefox_active_url()
         if url is None:
-            return f"Erreur: {title}"
+            raise RuntimeError(title)
 
         video_id = self._extract_video_id(url)
         if not video_id:
-            return "Erreur: Pas de video YouTube active"
+            raise RuntimeError("Pas de video YouTube active")
 
         # Relancer TV a la position Firefox
         log.append(f"Relance TV @{int(ff_position)}s...")
@@ -1071,7 +1071,7 @@ if __name__ == "__main__":
         # Recuperer la position Firefox
         ff_status, ff_position = self._firefox_get_status()
         if ff_position is None:
-            return "Erreur: Impossible de lire la position Firefox"
+            raise RuntimeError("Impossible de lire la position Firefox")
 
         # Calculer la nouvelle position TV
         tv_position = ff_position - offset
@@ -1083,11 +1083,11 @@ if __name__ == "__main__":
         # Recuperer l'URL actuelle
         url, title = self._get_firefox_active_url()
         if url is None:
-            return f"Erreur: {title}"
+            raise RuntimeError(title)
 
         video_id = self._extract_video_id(url)
         if not video_id:
-            return "Erreur: Pas de video YouTube active"
+            raise RuntimeError("Pas de video YouTube active")
 
         # Relancer TV a la position ajustee
         success, result = self._youtube_via_adb(url, start_time=max(0, int(tv_position)))
@@ -1240,50 +1240,47 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     global catt
 
     if catt is None:
-        return [TextContent(type="text", text="Erreur: catt non configure")]
+        raise RuntimeError("catt non configure (voir config.yaml, section catt)")
 
-    try:
-        if name == "cast_youtube":
-            url = arguments.get("url", "")
-            result = catt.cast_youtube(url)
-        elif name == "cast_url":
-            url = arguments.get("url", "")
-            result = catt.cast_url(url)
-        elif name == "cast_stop":
-            result = catt.cast_stop()
-        elif name == "cast_pause":
-            result = catt.cast_pause()
-        elif name == "cast_resume":
-            result = catt.cast_resume()
-        elif name == "cast_volume":
-            level = arguments.get("level", 50)
-            result = catt.cast_volume(level)
-        elif name == "cast_seek":
-            seconds = arguments.get("seconds", 0)
-            result = catt.cast_seek(seconds)
-        elif name == "cast_status":
-            result = catt.cast_status()
-        elif name == "cast_scan":
-            result = catt.cast_scan()
-        elif name == "cast_info":
-            result = catt.cast_info()
-        elif name == "cast_browser":
-            result = catt.cast_browser()
-        elif name == "cast_browser_dual":
-            result = catt.cast_browser_dual()
-        elif name == "cast_dual_resync":
-            result = catt.cast_dual_resync()
-        elif name == "cast_dual_stop":
-            result = catt.cast_dual_stop()
-        elif name == "cast_dual_offset":
-            offset = arguments.get("offset", 0)
-            result = catt.cast_dual_offset(offset)
-        else:
-            result = f"Outil inconnu: {name}"
+    if name == "cast_youtube":
+        url = arguments.get("url", "")
+        result = catt.cast_youtube(url)
+    elif name == "cast_url":
+        url = arguments.get("url", "")
+        result = catt.cast_url(url)
+    elif name == "cast_stop":
+        result = catt.cast_stop()
+    elif name == "cast_pause":
+        result = catt.cast_pause()
+    elif name == "cast_resume":
+        result = catt.cast_resume()
+    elif name == "cast_volume":
+        level = arguments.get("level", 50)
+        result = catt.cast_volume(level)
+    elif name == "cast_seek":
+        seconds = arguments.get("seconds", 0)
+        result = catt.cast_seek(seconds)
+    elif name == "cast_status":
+        result = catt.cast_status()
+    elif name == "cast_scan":
+        result = catt.cast_scan()
+    elif name == "cast_info":
+        result = catt.cast_info()
+    elif name == "cast_browser":
+        result = catt.cast_browser()
+    elif name == "cast_browser_dual":
+        result = catt.cast_browser_dual()
+    elif name == "cast_dual_resync":
+        result = catt.cast_dual_resync()
+    elif name == "cast_dual_stop":
+        result = catt.cast_dual_stop()
+    elif name == "cast_dual_offset":
+        offset = arguments.get("offset", 0)
+        result = catt.cast_dual_offset(offset)
+    else:
+        raise ValueError(f"Outil inconnu: {name}")
 
-        return [TextContent(type="text", text=result)]
-    except Exception as e:
-        return [TextContent(type="text", text=f"Erreur: {e}")]
+    return [TextContent(type="text", text=result)]
 
 
 async def main():

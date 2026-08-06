@@ -258,19 +258,13 @@ class MermaidMCPServer:
 
         # Si ni topic ni mermaid_code, erreur
         if not topic and not mermaid_code:
-            return [TextContent(
-                type="text",
-                text="❌ Erreur: Vous devez fournir soit 'topic' (pour génération auto) soit 'mermaid_code' (code manuel)."
-            )]
+            raise ValueError("Vous devez fournir soit 'topic' (pour génération auto) soit 'mermaid_code' (code manuel).")
 
         # Si topic fourni mais pas de code, générer automatiquement
         if topic and not mermaid_code:
             mermaid_code = self._generate_mermaid_for_topic(topic)
             if not mermaid_code:
-                return [TextContent(
-                    type="text",
-                    text=f"❌ Erreur: Impossible de générer un diagramme pour le sujet '{topic}'"
-                )]
+                raise ValueError(f"Impossible de générer un diagramme pour le sujet '{topic}'")
 
         title = args.get("title", topic if topic else "Diagramme Mermaid")
         subtitle = args.get("subtitle", "")
@@ -357,17 +351,11 @@ class MermaidMCPServer:
 
         if diagram_id == "last":
             if not self.last_generated_path:
-                return [TextContent(
-                    type="text",
-                    text="❌ Aucun diagramme généré récemment"
-                )]
+                raise ValueError("Aucun diagramme généré récemment")
             path = self.last_generated_path
         else:
             if diagram_id not in self.diagrams_cache:
-                return [TextContent(
-                    type="text",
-                    text=f"❌ Diagramme '{diagram_id}' introuvable. Utilisez list_diagrams pour voir les diagrammes disponibles."
-                )]
+                raise ValueError(f"Diagramme '{diagram_id}' introuvable. Utilisez list_diagrams pour voir les diagrammes disponibles.")
             path = self.diagrams_cache[diagram_id]
 
         # Ouvrir dans le navigateur

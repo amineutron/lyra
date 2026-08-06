@@ -156,7 +156,7 @@ def send_denon_command(host: str, port: int, command: str, timeout: int = 3) -> 
     import time
 
     if not host:
-        return "ERROR: Denon not configured"
+        raise RuntimeError("Denon non configure (config.yaml, section denon)")
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
@@ -169,9 +169,9 @@ def send_denon_command(host: str, port: int, command: str, timeout: int = 3) -> 
         sock.close()
         return response.strip()
     except socket.timeout:
-        return "ERROR: Timeout - Denon may be off"
+        raise RuntimeError(f"Denon injoignable ({host}:{port}) : timeout telnet - ampli probablement eteint")
     except Exception as e:
-        return f"ERROR: {str(e)}"
+        raise RuntimeError(f"Denon telnet ({host}:{port}) : {e}")
 
 
 class PhilipsTVController:
@@ -273,11 +273,11 @@ class PhilipsTVController:
                 send_magic_packet(self.mac)
                 return "Signal Wake-on-LAN envoye (attends 15-20s que la TV demarre)"
             except ImportError:
-                return "Erreur: wakeonlan non installe. Lance: pip install wakeonlan"
+                raise RuntimeError("wakeonlan non installe. Lance: pip install wakeonlan")
             except Exception as e:
-                return "Erreur WoL: {}".format(e)
+                raise RuntimeError(f"Wake-on-LAN: {e}")
 
-        return "Erreur: TV injoignable et aucune MAC configuree pour Wake-on-LAN."
+        raise RuntimeError("TV injoignable et aucune MAC configuree pour Wake-on-LAN")
 
     def power_off(self) -> str:
         """Eteint la TV (standby)."""
@@ -286,7 +286,7 @@ class PhilipsTVController:
         if "error" not in result:
             self._screen_muted = False  # Reset: au reveil l'ecran sera actif
             return "TV eteinte (standby)"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def _toggle_screen_mute(self) -> bool:
         """Appelle le toggle MUTE_SCREEN via JointSpace et retourne True si OK HTTP."""
@@ -369,7 +369,10 @@ class PhilipsTVController:
     def get_state(self) -> dict:
         """Retourne l'etat actuel de la TV."""
         self._init_pylips()
-        return self._api_call("powerstate")
+        result = self._api_call("powerstate")
+        if isinstance(result, dict) and "error" in result:
+            raise RuntimeError(f"TV injoignable: {result['error']}")
+        return result
 
     def volume_up(self, step: int = 5) -> str:
         """Augmente le volume de X (default 5).
@@ -384,7 +387,7 @@ class PhilipsTVController:
             time.sleep(0.3)
             # Lire le volume Denon
             response = send_denon_command(self.denon_host, self.denon_port, "MV?")
-            if "MV" in response and "ERROR" not in response:
+            if "MV" in response:
                 for line in response.split('\r'):
                     if line.startswith('MV') and not line.startswith('MVMAX'):
                         vol_str = line[2:]
@@ -401,12 +404,12 @@ class PhilipsTVController:
         self._init_pylips()
         current = self._api_call("audio/volume")
         if "error" in current:
-            return f"Erreur: {current.get('error', 'unknown')}"
+            raise RuntimeError(str(current.get("error", "unknown")))
         new_level = min(60, current.get("current", 20) + step)
         result = self._api_call("audio/volume", "POST", {"current": new_level, "muted": False})
         if "error" not in result:
             return f"Volume: {new_level}"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def volume_down(self, step: int = 5) -> str:
         """Baisse le volume de X (default 5).
@@ -421,7 +424,7 @@ class PhilipsTVController:
             time.sleep(0.3)
             # Lire le volume Denon
             response = send_denon_command(self.denon_host, self.denon_port, "MV?")
-            if "MV" in response and "ERROR" not in response:
+            if "MV" in response:
                 for line in response.split('\r'):
                     if line.startswith('MV') and not line.startswith('MVMAX'):
                         vol_str = line[2:]
@@ -438,12 +441,12 @@ class PhilipsTVController:
         self._init_pylips()
         current = self._api_call("audio/volume")
         if "error" in current:
-            return f"Erreur: {current.get('error', 'unknown')}"
+            raise RuntimeError(str(current.get("error", "unknown")))
         new_level = max(0, current.get("current", 20) - step)
         result = self._api_call("audio/volume", "POST", {"current": new_level, "muted": False})
         if "error" not in result:
             return f"Volume: {new_level}"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def volume_set(self, level: int) -> str:
         """Regle le volume a un niveau specifique (0-60 pour TV, 0-98 pour Denon).
@@ -455,14 +458,12 @@ class PhilipsTVController:
             level = max(0, min(98, level))  # Denon range: 0-98
             response = send_denon_command(self.denon_host, self.denon_port, f"MV{level:02d}")
 
-            if "ERROR" in response:
-                return f"Erreur Denon: {response}"
 
             # Verifier que ca a marche
             import time
             time.sleep(0.3)
             check = send_denon_command(self.denon_host, self.denon_port, "MV?")
-            if "MV" in check and "ERROR" not in check:
+            if "MV" in check:
                 for line in check.split('\r'):
                     if line.startswith('MV') and not line.startswith('MVMAX'):
                         vol_str = line[2:]
@@ -487,7 +488,7 @@ class PhilipsTVController:
         # Lire le volume actuel d'abord
         current = self._api_call("audio/volume")
         if "error" in current:
-            return f"Erreur lecture volume: {current.get('error', 'unknown')}"
+            raise RuntimeError(f"Lecture volume: {current.get('error', 'unknown')}")
 
         # Regler le nouveau volume
         result = self._api_call("audio/volume", "POST", {"current": level, "muted": False})
@@ -501,7 +502,7 @@ class PhilipsTVController:
                 else:
                     return f"Volume partiellement regle (demande: {level}, actuel: {actual_level})"
             return f"Volume regle a {level}"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def mute(self) -> str:
         """Coupe ou remet le son.
@@ -511,16 +512,14 @@ class PhilipsTVController:
         # Redirection HDMI ARC -> Denon
         if self.denon_host:
             response = send_denon_command(self.denon_host, self.denon_port, "MUON")
-            if "ERROR" not in response:
-                return "Mute Denon toggle"
-            return f"Erreur Denon: {response}"
+            return "Mute Denon toggle"
 
         # Fallback: API TV
         self._init_pylips()
         result = self._api_call("input/key", "POST", {"key": "Mute"})
         if "error" not in result:
             return "Mute toggle"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def ambilight_on(self) -> str:
         """Active l'Ambilight."""
@@ -528,7 +527,7 @@ class PhilipsTVController:
         result = self._api_call("ambilight/power", "POST", {"power": "On"})
         if "error" not in result:
             return "Ambilight active"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def ambilight_off(self) -> str:
         """Desactive l'Ambilight."""
@@ -536,7 +535,7 @@ class PhilipsTVController:
         result = self._api_call("ambilight/power", "POST", {"power": "Off"})
         if "error" not in result:
             return "Ambilight desactive"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def ambilight_mode(self, mode: str) -> str:
         """Change le mode Ambilight."""
@@ -558,7 +557,7 @@ class PhilipsTVController:
 
         if "error" not in result:
             return f"Ambilight mode: {mode}"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
     def list_apps(self) -> str:
         """Liste les applications disponibles."""
@@ -601,11 +600,11 @@ class PhilipsTVController:
             )
             if result.returncode == 0:
                 return f"App {app} lancee"
-            return f"Erreur ADB: {(result.stdout + result.stderr).strip()}"
+            raise RuntimeError(f"ADB: {(result.stdout + result.stderr).strip()}")
         except subprocess.TimeoutExpired:
-            return "Erreur: ADB timeout"
+            raise RuntimeError("ADB timeout")
         except Exception as e:
-            return f"Erreur: {e}"
+            raise RuntimeError(str(e))
 
     def youtube_video(self, video: str) -> str:
         """Lance YouTube sur une video specifique via ADB (utilise le compte connecte)."""
@@ -661,10 +660,10 @@ class PhilipsTVController:
                 # Si ADB echoue, fallback sur catt
                 if "error" in error.lower() or "unauthorized" in error.lower():
                     return self._youtube_video_catt(video)
-                return f"Erreur ADB: {error[:100]}"
+                raise RuntimeError(f"ADB: {error[:100]}")
 
         except subprocess.TimeoutExpired:
-            return "Erreur: timeout ADB"
+            raise RuntimeError("Timeout ADB")
         except Exception as e:
             # Fallback sur catt en cas d'erreur
             return self._youtube_video_catt(video)
@@ -677,7 +676,7 @@ class PhilipsTVController:
 
         catt_path = shutil.which("catt") or os.path.expanduser("~/.local/bin/catt")
         if not os.path.exists(catt_path):
-            return "Erreur: ni ADB ni catt disponibles"
+            raise RuntimeError("Ni ADB ni catt disponibles")
 
         video_id = video
         patterns = [
@@ -709,10 +708,10 @@ class PhilipsTVController:
                         return f"Lecture (Cast): {title_match.group(1)}"
                 return f"Video {video_id} (Cast, sans Premium)"
             else:
-                return f"Erreur catt: {result.stderr}"
+                raise RuntimeError(f"catt: {result.stderr}")
 
         except Exception as e:
-            return f"Erreur: {e}"
+            raise RuntimeError(str(e))
 
     _VALID_KEYS: frozenset = frozenset({
         "Home", "Back", "Play", "Pause", "Stop", "FastForward", "Rewind",
@@ -731,7 +730,7 @@ class PhilipsTVController:
         result = self._api_call("input/key", "POST", {"key": key})
         if "error" not in result:
             return f"Touche {key} envoyee"
-        return f"Erreur: {result.get('error', 'unknown')}"
+        raise RuntimeError(str(result.get("error", "unknown")))
 
 
 # Instance globale du serveur
@@ -893,55 +892,52 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     global tv
 
     if tv is None:
-        return [TextContent(type="text", text="Erreur: TV non configuree")]
+        raise RuntimeError("TV non configuree (config.yaml, section tv)")
 
-    try:
-        if name == "power_on":
-            result = tv.power_on()
-        elif name == "power_off":
-            result = tv.power_off()
-        elif name == "screen_off":
-            result = tv.screen_off()
-        elif name == "screen_on":
-            result = tv.screen_on()
-        elif name == "volume_up":
-            step = arguments.get("step", 5)
-            result = tv.volume_up(step)
-        elif name == "volume_down":
-            step = arguments.get("step", 5)
-            result = tv.volume_down(step)
-        elif name == "volume_set":
-            level = arguments.get("level", 20)
-            result = tv.volume_set(level)
-        elif name == "mute":
-            result = tv.mute()
-        elif name == "ambilight_on":
-            result = tv.ambilight_on()
-        elif name == "ambilight_off":
-            result = tv.ambilight_off()
-        elif name == "ambilight_mode":
-            mode = arguments.get("mode", "follow_video")
-            result = tv.ambilight_mode(mode)
-        elif name == "list_apps":
-            result = tv.list_apps()
-        elif name == "launch_app":
-            app_name = arguments.get("app", "")
-            result = tv.launch_app(app_name)
-        elif name == "youtube_video":
-            video = arguments.get("video", "")
-            result = tv.youtube_video(video)
-        elif name == "get_state":
-            state = tv.get_state()
-            result = json.dumps(state, indent=2)
-        elif name == "send_key":
-            key = arguments.get("key", "")
-            result = tv.send_key(key)
-        else:
-            result = f"Outil inconnu: {name}"
+    if name == "power_on":
+        result = tv.power_on()
+    elif name == "power_off":
+        result = tv.power_off()
+    elif name == "screen_off":
+        result = tv.screen_off()
+    elif name == "screen_on":
+        result = tv.screen_on()
+    elif name == "volume_up":
+        step = arguments.get("step", 5)
+        result = tv.volume_up(step)
+    elif name == "volume_down":
+        step = arguments.get("step", 5)
+        result = tv.volume_down(step)
+    elif name == "volume_set":
+        level = arguments.get("level", 20)
+        result = tv.volume_set(level)
+    elif name == "mute":
+        result = tv.mute()
+    elif name == "ambilight_on":
+        result = tv.ambilight_on()
+    elif name == "ambilight_off":
+        result = tv.ambilight_off()
+    elif name == "ambilight_mode":
+        mode = arguments.get("mode", "follow_video")
+        result = tv.ambilight_mode(mode)
+    elif name == "list_apps":
+        result = tv.list_apps()
+    elif name == "launch_app":
+        app_name = arguments.get("app", "")
+        result = tv.launch_app(app_name)
+    elif name == "youtube_video":
+        video = arguments.get("video", "")
+        result = tv.youtube_video(video)
+    elif name == "get_state":
+        state = tv.get_state()
+        result = json.dumps(state, indent=2)
+    elif name == "send_key":
+        key = arguments.get("key", "")
+        result = tv.send_key(key)
+    else:
+        raise ValueError(f"Outil inconnu: {name}")
 
-        return [TextContent(type="text", text=result)]
-    except Exception as e:
-        return [TextContent(type="text", text=f"Erreur: {e}")]
+    return [TextContent(type="text", text=result)]
 
 
 async def main():
