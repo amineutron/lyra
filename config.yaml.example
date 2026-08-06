@@ -50,6 +50,8 @@ stt:
 # =============================================================================
 tts:
   engine: piper
+  # Voix par defaut. Surchargee par ~/.lyra/settings.json (commande /setting).
+  # Voix installees dans models/ : upmc (jessica/pierre), siwis, tom, mls, gilles
   model: fr_FR-upmc-medium
   speaker_id: 0
   length_scale: 1.0

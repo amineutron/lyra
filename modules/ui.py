@@ -149,8 +149,33 @@ def print_tool_call(tool_name: str, arguments: dict, vm_state: dict = None):
     print(colored("=" * 50, Colors.DIM))
 
 
-def print_tool_result(result: str, success: bool = True):
-    """Affiche le resultat d'un outil."""
+def format_raw_error(raw: str, response: str = "", max_lines: int = 3,
+                     max_chars: int = 300) -> str:
+    """Prepare le detail technique d'une erreur pour affichage.
+
+    Garde les dernieres lignes non vides (la cause est en fin de stderr),
+    tronque a max_chars. Retourne "" si le detail n'apporte rien
+    (vide, ou deja contenu dans la reponse affichee).
+    """
+    detail = (raw or "").strip()
+    if not detail or detail in response:
+        return ""
+    lines = [line.strip() for line in detail.splitlines() if line.strip()]
+    detail = "\n".join(lines[-max_lines:])
+    if len(detail) > max_chars:
+        detail = "..." + detail[-max_chars:]
+    return detail
+
+
+def print_tool_result(result: str, success: bool = True, raw_error: str = None):
+    """Affiche le resultat d'un outil.
+
+    Args:
+        result: Texte a afficher (reponse LYRA ou resultat MCP)
+        success: Panneau vert (RESULTAT) ou rouge (ERREUR)
+        raw_error: Erreur technique brute (affichee en gris sous la
+                   reformulation LYRA, jamais prononcee en vocal)
+    """
     print()
     if success:
         print(colored("+" + "-" * 48 + "+", Colors.GREEN))
@@ -166,6 +191,13 @@ def print_tool_result(result: str, success: bool = True):
     # Indenter le resultat pour meilleure lisibilite
     for line in clean_result.split('\n'):
         print(f"  {line}")
+    if not success:
+        detail = format_raw_error(raw_error or "", response=result)
+        if detail:
+            print()
+            print(colored("  Detail technique :", Colors.DIM))
+            for line in detail.split('\n'):
+                print(colored(f"  {line}", Colors.DIM))
     print()
 
 
@@ -574,7 +606,7 @@ def live_input(prompt: str, task_manager=None, loading: "threading.Event | None"
 
     _STYLED_PROMPT = '\001\033[44;30m\002 Vous >> \001\033[0m\002'
     _mode_tag = f"  [{mode.upper()}]" if mode and mode != "default" else ""
-    _HINT_NORMAL   = f"{_mode_tag}  /help  Ctrl+C: quitte  "
+    _HINT_NORMAL   = f"{_mode_tag}  /help  /setting  Ctrl+C: quitte  "
     _HINT_LOADING  = "  chargement...  "
 
     def _get_failed():

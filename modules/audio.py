@@ -149,8 +149,13 @@ class TTS:
             speaker_id: ID du speaker (pour modeles multi-speaker)
             length_scale: Vitesse (1.0 = normal, < 1.0 = plus rapide)
         """
+        self._speaker_id = speaker_id
+        self._length_scale = length_scale
+        self._load_model(model_path)
+
+    def _load_model(self, model_path):
+        """Charge (ou recharge) le modele Piper et reconstruit la config."""
         from piper import PiperVoice
-        from piper.config import SynthesisConfig
 
         # Resoudre le chemin relatif
         model_path = Path(model_path)
@@ -158,13 +163,39 @@ class TTS:
             model_path = Path(__file__).parent.parent / model_path
 
         self.voice = PiperVoice.load(str(model_path))
+        self.model_path = model_path
         self.sample_rate = self.voice.config.sample_rate
+        self._rebuild_config()
 
-        # Configurer la synthese
+    def _rebuild_config(self):
+        """Reconstruit la SynthesisConfig (immutable: nouvel objet a chaque fois)."""
+        from piper.config import SynthesisConfig
+
         self.syn_config = SynthesisConfig(
-            speaker_id=speaker_id,
-            length_scale=length_scale
+            speaker_id=self._speaker_id,
+            length_scale=self._length_scale
         )
+
+    def set_voice(self, model_path, speaker_id: int = 0):
+        """Change de voix a chaud (recharge le modele si different).
+
+        Args:
+            model_path: Chemin vers le nouveau modele .onnx
+            speaker_id: Speaker du modele (multi-speaker)
+        """
+        self._speaker_id = speaker_id
+        new_path = Path(model_path)
+        if not new_path.is_absolute():
+            new_path = Path(__file__).parent.parent / new_path
+        if new_path != getattr(self, "model_path", None):
+            self._load_model(new_path)
+        else:
+            self._rebuild_config()
+
+    def set_speed(self, length_scale: float):
+        """Change la vitesse de parole a chaud (1.0 = normal, >1 = plus lent)."""
+        self._length_scale = length_scale
+        self._rebuild_config()
 
     def synthesize(self, text: str) -> np.ndarray:
         """
@@ -349,7 +380,9 @@ class VoiceInterface:
         tts_model: str = "models/fr_FR-upmc-medium.onnx",
         language: str = "fr",
         device: str = "cuda",
-        audio_config: Optional[AudioConfig] = None
+        audio_config: Optional[AudioConfig] = None,
+        tts_speaker_id: int = 0,
+        tts_length_scale: float = 1.0
     ):
         """
         Initialise l'interface vocale.
@@ -360,9 +393,15 @@ class VoiceInterface:
             language: Langue
             device: cuda ou cpu
             audio_config: Configuration audio
+            tts_speaker_id: Speaker du modele Piper (multi-speaker)
+            tts_length_scale: Vitesse de parole (1.0 = normal, >1 = plus lent)
         """
         self.stt = STT(model=stt_model, language=language, device=device)
-        self.tts = TTS(model_path=tts_model)
+        self.tts = TTS(
+            model_path=tts_model,
+            speaker_id=tts_speaker_id,
+            length_scale=tts_length_scale
+        )
         self.recorder = AudioRecorder(config=audio_config)
         self.config = audio_config or AudioConfig()
 

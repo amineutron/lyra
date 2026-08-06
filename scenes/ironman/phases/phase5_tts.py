@@ -124,11 +124,27 @@ class Phase5TTS:
                 from piper import PiperVoice
                 from piper.config import SynthesisConfig
 
-                model_path = Path(__file__).parent.parent.parent.parent / "models" / "fr_FR-upmc-medium.onnx"
+                # Voix choisie via /setting (fallback: upmc speaker 0)
+                models_dir = Path(__file__).parent.parent.parent.parent / "models"
+                model_name = "fr_FR-upmc-medium"
+                speaker_id = 0
+                try:
+                    from lyra.core.settings import UserSettings
+                    settings = UserSettings()
+                    model_name = settings.get("tts.model", model_name)
+                    speaker_id = int(settings.get("tts.speaker_id", speaker_id))
+                except Exception as e:
+                    logger.warning(f"Settings TTS non lus, voix par defaut: {e}")
+
+                model_path = models_dir / f"{model_name}.onnx"
+                if not model_path.exists():
+                    model_path = models_dir / "fr_FR-upmc-medium.onnx"
+                    speaker_id = 0
+
                 self._tts = {
                     "voice": PiperVoice.load(str(model_path)),
                     "config": SynthesisConfig(
-                        speaker_id=0,
+                        speaker_id=speaker_id,
                         length_scale=TTS_LENGTH_SCALE  # Plus lent pour style J.A.R.V.I.S.
                     )
                 }

@@ -775,9 +775,11 @@ def handle_action(
 
     has_error = _is_execution_error(exec_result)
     if exec_result.executed:
-        ui.print_tool_result(exec_result.response, success=not has_error)
+        ui.print_tool_result(exec_result.response, success=not has_error,
+                             raw_error=exec_result.error if has_error else None)
     else:
-        ui.print_tool_result(exec_result.response, success=False)
+        ui.print_tool_result(exec_result.response, success=False,
+                             raw_error=exec_result.error)
         has_error = True
 
     if has_error:
@@ -998,9 +1000,11 @@ def run_one_shot(
 
         has_error = _is_execution_error(exec_result)
         if exec_result.executed:
-            ui.print_tool_result(exec_result.response, success=not has_error)
+            ui.print_tool_result(exec_result.response, success=not has_error,
+                                 raw_error=exec_result.error if has_error else None)
         else:
-            ui.print_tool_result(exec_result.response, success=False)
+            ui.print_tool_result(exec_result.response, success=False,
+                                 raw_error=exec_result.error)
             has_error = True
 
         if has_error:
@@ -1102,8 +1106,10 @@ def main():
         ui.print_success("Verification terminee.")
         sys.exit(0)
 
-    # Mode
-    mode = "performance" if args.performance else "default"
+    # Mode : -p force performance, sinon reglage persiste (~/.lyra/settings.json)
+    from lyra.core.settings import UserSettings
+    user_settings = UserSettings()
+    mode = "performance" if args.performance else user_settings.active_mode()
 
     # Interface vocale (optionnel)
     vocal = args.vocal
@@ -1117,7 +1123,8 @@ def main():
 
             audio_cfg = cfg.get("audio", {})
             stt_cfg = cfg.get("stt", {})
-            tts_cfg = cfg.get("tts", {})
+            # Section tts de config.yaml + overrides utilisateur (/setting)
+            tts_cfg = user_settings.merged_tts(cfg.get("tts", {}))
 
             audio_config = AudioConfig(
                 sample_rate=audio_cfg.get("sample_rate", 16000),
@@ -1134,7 +1141,9 @@ def main():
                 tts_model=f"models/{tts_cfg.get('model', 'fr_FR-upmc-medium')}.onnx",
                 language=stt_cfg.get("language", "fr"),
                 device=stt_cfg.get("device", "cuda"),
-                audio_config=audio_config
+                audio_config=audio_config,
+                tts_speaker_id=int(tts_cfg.get("speaker_id", 0)),
+                tts_length_scale=float(tts_cfg.get("length_scale", 1.0))
             )
             ui.print_success("Interface vocale prete")
         except Exception as e:
@@ -1318,6 +1327,28 @@ def main():
             if vocal and voice:
                 voice.speak(msg)
 
+    # Menu /setting : machine a etats geree hors pipeline (les reponses "1",
+    # "2"... ne doivent pas passer par le RAG). Les callbacks hot-swap ne sont
+    # branches qu'en mode vocal ; sinon les reglages s'appliquent a la
+    # prochaine session vocale.
+    from lyra.core.settings_menu import SettingsCallbacks, SettingsMenu
+
+    def _set_mode(new_mode: str):
+        nonlocal mode
+        mode = new_mode
+
+    settings_menu = SettingsMenu(
+        settings=user_settings,
+        models_dir=Path(__file__).parent / "models",
+        callbacks=SettingsCallbacks(
+            apply_voice=(lambda p, sid: voice.tts.set_voice(p, sid)) if voice else None,
+            apply_speed=(lambda ls: voice.tts.set_speed(ls)) if voice else None,
+            preview=(lambda text: voice.speak(text)) if voice else None,
+            get_mode=lambda: mode,
+            set_mode=_set_mode,
+        ),
+    )
+
     # Boucle principale
     while True:
         try:
@@ -1360,6 +1391,70 @@ def main():
             if new_notifs:
                 ui.print_completed_task_notifications(new_notifs)
 
+            # Entree vide : valide seulement si une action est en attente
+            # (necessite le pipeline initialise ; pendant l'init, on ignore)
+            if not user_input:
+                if not _init_done.is_set():
+                    continue
+                session_obj = pipeline._pipeline_v2._session if hasattr(pipeline, '_pipeline_v2') else pipeline._session
+                if not session_obj.get_pending_action():
+                    continue
+
+            # Effacer les notifications apres le premier message utilisateur
+            task_manager.clear_notifications()
+
+            # --- Commandes internes rapides : traitees AVANT l'attente d'init ---
+            # (elles n'ont pas besoin du pipeline RAG ; /setting repond ainsi
+            # immediatement meme pendant le chargement des modeles)
+
+            # Menu /setting ouvert : il consomme l'entree jusqu'a fermeture
+            if settings_menu.active:
+                response = settings_menu.handle(user_input)
+                ui.print_lyra(response)
+                if vocal and voice and response.startswith("[+]"):
+                    voice.speak(response.splitlines()[0].lstrip("[+] "))
+                continue
+
+            # Commandes internes (acceptees avec ou sans prefixe "/")
+            cmd = user_input.lower().strip().lstrip("/")
+
+            if cmd in ("setting", "settings", "reglages", "parametres"):
+                if sys.stdin.isatty():
+                    # TUI interactif : fleches + Entree, Echap/Ctrl+C pour revenir
+                    from lyra.core.settings_tui import run_settings_tui
+                    run_settings_tui(settings_menu, println=ui.print_lyra)
+                else:
+                    # Fallback texte (pipe, one-shot, tests)
+                    ui.print_lyra(settings_menu.open())
+                continue
+
+            if cmd in ("quit", "stop", "exit", "q"):
+                msg = "Au revoir!"
+                print(f"\n{msg}")
+                if vocal and voice:
+                    voice.speak(msg)
+                break
+
+            if cmd in ("clearscreen", "cls"):
+                ui.clear_screen()
+                continue
+
+            if cmd == "mode":
+                ui.print_info(f"Mode actuel: {mode}")
+                continue
+
+            if cmd == "mode performance":
+                mode = "performance"
+                ui.print_success("Mode performance active")
+                continue
+
+            if cmd in ("mode default", "mode normal"):
+                mode = "default"
+                ui.print_success("Mode default active")
+                continue
+
+            # --- Fin des commandes rapides : la suite necessite le pipeline ---
+
             # Attendre fin init si l'utilisateur a soumis avant la fin du chargement
             if not _servers_shown:
                 if not _init_done.is_set():
@@ -1374,25 +1469,6 @@ def main():
                 ui.print_success(f"MCP: {', '.join(_srv_list)} ({len(_srv_list)} serveurs)")
                 _servers_shown = True
 
-            # Permettre entrée vide SEULEMENT si action en attente (pour accepter valeurs par défaut)
-            # EnhancedPipeline wrappe Pipeline V2, accéder via _pipeline_v2
-            session_obj = pipeline._pipeline_v2._session if hasattr(pipeline, '_pipeline_v2') else pipeline._session
-            if not user_input and not session_obj.get_pending_action():
-                continue
-
-            # Effacer les notifications apres le premier message utilisateur
-            task_manager.clear_notifications()
-
-            # Commandes internes
-            cmd = user_input.lower()
-
-            if cmd in ("quit", "stop", "exit", "q"):
-                msg = "Au revoir!"
-                print(f"\n{msg}")
-                if vocal and voice:
-                    voice.speak(msg)
-                break
-
             if cmd == "clear":
                 session.clear()
                 # EnhancedPipeline wrappe Pipeline V2, accéder via _pipeline_v2
@@ -1401,16 +1477,13 @@ def main():
                 ui.print_info("Session effacee.")
                 continue
 
-            if cmd in ("clearscreen", "cls"):
-                ui.clear_screen()
-                continue
-
             if cmd == "help":
                 print("""
-Commandes internes:
+Commandes internes (avec ou sans prefixe "/"):
   quit, stop, exit  - Quitter Lyra
   clear             - Effacer la session
   clearscreen       - Effacer l'ecran
+  /setting          - Reglages (voix TTS, vitesse, mode)
   mode              - Afficher le mode actif
   mode performance  - Activer le mode performance
   mode default      - Activer le mode default
@@ -1429,20 +1502,6 @@ Exemples:
                 # Lister tous les outils MCP via le pipeline
                 result = pipeline.process("quels outils disponibles ?")
                 ui.print_lyra(result.response)
-                continue
-
-            if cmd == "mode":
-                ui.print_info(f"Mode actuel: {mode}")
-                continue
-
-            if cmd == "mode performance":
-                mode = "performance"
-                ui.print_success("Mode performance active")
-                continue
-
-            if cmd in ("mode default", "mode normal"):
-                mode = "default"
-                ui.print_success("Mode default active")
                 continue
 
             # Traiter la requete via le pipeline RAG (avec callbacks progressif + RAG verbose)

@@ -346,7 +346,36 @@ Wrapper execute sequentiellement
 
 ## Commandes Internes
 
-`help`, `clear`, `clearscreen`, `quit`/`stop`, `mode`, `mode performance`, `mode default`
+`help`, `clear`, `clearscreen`, `quit`/`stop`, `mode`, `mode performance`, `mode default`, `/setting`
+
+Toutes les commandes internes sont acceptees avec ou sans prefixe `/`.
+
+## Reglages utilisateur (/setting)
+
+Menu interactif de reglages persistants (voix TTS, vitesse de parole, mode).
+
+- **Persistance** : `~/.lyra/settings.json`, fusionne PAR-DESSUS `config.yaml` au
+  demarrage (`lyra/core/settings.py UserSettings.merged_tts`). config.yaml n'est
+  jamais reecrit.
+- **TUI interactif** : `lyra/core/settings_tui.py` — navigation aux fleches,
+  Entree pour choisir, Echap (ou q, ou Ctrl+C) pour revenir puis fermer et
+  reprendre la saisie normale. Mode cbreak + lecture os.read sur le fd
+  (PAS sys.stdin.read : le buffering TextIO casserait la detection Echap
+  vs sequence fleche).
+- **Fallback texte** : si stdin n'est pas un TTY (pipe, tests), machine a
+  etats `lyra/core/settings_menu.py SettingsMenu` geree dans la boucle REPL
+  de `main_rag.py` (hors pipeline RAG — les reponses "1", "2"... ne passent
+  pas par le RAG). La logique metier (persistance + hot-swap) est partagee :
+  le TUI appelle `SettingsMenu.apply_*_choice()`.
+- **Voix disponibles** : scan automatique de `models/*.onnx.json` — ajouter une
+  voix Piper = la telecharger dans `models/` (`python -m piper.download_voices
+  fr_FR-xxx --download-dir models`), elle apparait dans le menu.
+- **Voix installees** : upmc (jessica/pierre), siwis, tom, mls (2 speakers),
+  gilles (low). Benchmark : `scripts/bench_tts.py` (toutes < 0.6s par phrase).
+- **Hot-swap** : en mode `--vocal`, `TTS.set_voice()`/`set_speed()`
+  (`modules/audio.py`) rechargent la voix sans redemarrage + apercu vocal.
+  En mode texte, le reglage s'applique a la prochaine session vocale.
+- La scene Iron Man (`phase5_tts.py`) suit la voix choisie (fallback upmc).
 
 ## Raccourcis
 

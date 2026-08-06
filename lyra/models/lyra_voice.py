@@ -747,12 +747,16 @@ SANS emoji."""
         else:
             # Instruction adaptative selon mode
             max_sentences_str = f"{self.max_sentences} phrases" if self.max_sentences > 1 else "1 phrase"
-            prompt = f"""Reformule cette erreur de maniere rassurante et simple.
+            prompt = f"""Annonce simplement que l'outil a echoue.
 
 OUTIL: {tool_name}
 ERREUR: {error}
 
-{"MENTIONNE qu'Hestia a rencontre un souci." if mention_hestia else ""}
+REGLES STRICTES:
+- Ne SPECULE PAS sur la cause, n'invente PAS d'explication ni de solution
+- Ne recopie pas le message d'erreur (il sera affiche a part)
+- Dis juste que {tool_name} a echoue et propose de reessayer ou verifier
+{"- MENTIONNE qu'Hestia a rencontre un souci" if mention_hestia else ""}
 
 Reformule en {max_sentences_str} (SANS emoji):"""
 
