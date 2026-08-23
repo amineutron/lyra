@@ -1,0 +1,8 @@
+[Unit]
+Description=Smoke test des serveurs MCP Lyra (metriques vers tracking)
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/amineutron/dev/lyra
+ExecStart=/home/amineutron/dev/lyra/.venv/bin/python scripts/smoke_mcps.py

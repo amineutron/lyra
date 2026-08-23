@@ -1,0 +1,9 @@
+[Unit]
+Description=Smoke MCP quotidien (08:45, avant le morning briefing)
+
+[Timer]
+OnCalendar=*-*-* 08:45
+Persistent=true
+
+[Install]
+WantedBy=timers.target

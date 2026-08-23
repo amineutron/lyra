@@ -117,3 +117,7 @@ data/feedback.json
 mcp-servers/pylips-mcp/
 mcp-servers/denon-mcp/
 mcp-servers/catt-mcp/
+mcp-servers/fedora-agents/
+mcp-servers/hue-mcp/
+.venv-installer/
+installer/app/frontend/node_modules/

@@ -1,0 +1,252 @@
+# Catalogue declaratif des MCPs installables par l'installeur Lyra.
+# Ajouter un MCP = ajouter une entree ici (aucun code a toucher).
+#
+# Placeholders disponibles dans dest/config/server/check :
+#   {lyra}  racine du clone lyra        {home}  home de l'utilisateur
+#   {<field.key>}  valeur saisie pour le champ correspondant
+#   {dest}  chemin d'installation du MCP (dans server/check uniquement)
+#
+# Les champs marques secret: true vont dans secrets.yaml (chmod 600),
+# JAMAIS dans config.yaml.
+
+mcps:
+  - id: fedora
+    name: fedora-agents
+    color: cyan
+    icon: "[F]"
+    short_desc: "VM KVM + Sauvegardes"
+    repo: "git@github.com:marouabah/fedora-agents.git"
+    dest: "{lyra}/mcp-servers/fedora-agents"
+    runtime: node
+    default_checked: true
+    long_desc: |
+      Controle les VMs KVM et les sauvegardes
+      Timeshift/Borg directement par la voix.
+    examples:
+      - "demarre preprod-01"
+      - "clone sandbox en test-01"
+      - "liste mes VMs"
+      - "cree un backup de dev-02"
+      - "snapshot avant la MAJ"
+    notes: |
+      Necessite fedora-setup installe sur la machine hote.
+      Recommande comme premier MCP.
+    fields: []
+    config: {}
+    server:
+      enabled: true
+      command: node
+      args: ["{dest}/dist/index.js"]
+      timeout: 120
+    check: null
+    extra_steps: [npm_build, sudoers]
+
+  - id: hue
+    name: hue-mcp
+    color: yellow
+    icon: "[H]"
+    short_desc: "Lumieres Philips Hue"
+    repo: "git@github.com:marouabah/hue-mcp.git"
+    dest: "{lyra}/mcp-servers/hue-mcp"
+    runtime: python
+    default_checked: false
+    long_desc: |
+      Pilote les lumieres Philips Hue
+      via le bridge local (port 80).
+    examples:
+      - "allume les lumieres"
+      - "ambiance cinema"
+      - "luminosite a 30%"
+      - "active la scene Sunset"
+      - "couleur rouge"
+    notes: |
+      Necessite un bridge Hue sur le reseau local.
+      Pairing requis : appuyer sur le bouton du bridge
+      pendant l'installation.
+    fields:
+      - key: bridge_ip
+        label: "IP du bridge Hue"
+        section: hue
+        secret: false
+    config:
+      hue:
+        bridge_ip: "{bridge_ip}"
+    server:
+      enabled: true
+      command: python3
+      args: ["{dest}/hue_server.py"]
+      env:
+        HUE_BRIDGE_IP: "{bridge_ip}"
+      timeout: 10
+      keep_alive: true
+    check:
+      type: http
+      url: "http://{bridge_ip}/api/config"
+    extra_steps: [hue_pairing]
+
+  - id: tv
+    name: pylips-mcp
+    color: magenta
+    icon: "[T]"
+    short_desc: "TV Philips OLED"
+    repo: "git@github.com:marouabah/pylips-mcp.git"
+    dest: "{lyra}/mcp-servers/pylips-mcp"
+    runtime: python
+    default_checked: false
+    long_desc: |
+      Controle la TV Philips via l'API
+      JointSpace (port 1926) + ADB.
+    examples:
+      - "allume la TV"
+      - "passe en HDMI 2"
+      - "lance Netflix"
+      - "active l'Ambilight"
+      - "coupe l'ecran"
+    notes: |
+      Necessite une Philips Android TV (2016+),
+      IP et credentials JointSpace.
+      Compatible 55OLED705/12 et similaires.
+    fields:
+      - key: host
+        label: "IP de la TV Philips"
+        section: tv
+        secret: false
+      - key: user
+        label: "Username JointSpace"
+        section: tv
+        secret: true
+      - key: pass
+        label: "Mot de passe JointSpace"
+        section: tv
+        secret: true
+      - key: mac
+        label: "Adresse MAC (Wake-on-LAN, optionnel)"
+        section: tv
+        secret: false
+        optional: true
+    config:
+      tv:
+        host: "{host}"
+        mac: "{mac}"
+        user: null
+        pass: null
+    server:
+      enabled: true
+      command: python
+      args: ["{dest}/server.py"]
+      timeout: 60
+      keep_alive: true
+    check:
+      type: tcp
+      host: "{host}"
+      port: 1925
+    extra_steps: []
+
+  - id: denon
+    name: denon-mcp
+    color: red
+    icon: "[D]"
+    short_desc: "Home Cinema Denon AVR"
+    repo: "git@github.com:marouabah/denon-mcp.git"
+    dest: "{lyra}/mcp-servers/denon-mcp"
+    runtime: python
+    default_checked: false
+    long_desc: |
+      Pilote l'amplificateur Denon AVR
+      via le protocole telnet (port 23).
+    examples:
+      - "volume a 44"
+      - "source Bluray"
+      - "soiree cinema"
+      - "coupe le son"
+      - "allume le Denon"
+    notes: |
+      Necessite un Denon/Marantz AVR accessible
+      sur le reseau local. Si connecte en HDMI ARC
+      a la TV, le volume TV est redirige vers Denon.
+    fields:
+      - key: host
+        label: "IP du Denon AVR"
+        section: denon
+        secret: false
+    config:
+      denon:
+        host: "{host}"
+        port: 23
+    server:
+      enabled: true
+      command: python3
+      args: ["{dest}/server.py"]
+      timeout: 10
+      keep_alive: true
+    check:
+      type: tcp
+      host: "{host}"
+      port: 23
+    extra_steps: []
+
+  - id: catt
+    name: catt-mcp
+    color: green
+    icon: "[C]"
+    short_desc: "Cast Chromecast/DLNA"
+    repo: "git@github.com:marouabah/catt-mcp.git"
+    dest: "{lyra}/mcp-servers/catt-mcp"
+    runtime: python
+    default_checked: false
+    long_desc: |
+      Caste des videos YouTube ou URLs
+      vers le Chromecast ou DLNA.
+    examples:
+      - "caste cette video sur la TV"
+      - "joue la playlist Jazz"
+      - "pause / reprends"
+      - "avance de 30 secondes"
+      - "scan les appareils"
+    notes: |
+      Necessite catt et yt-dlp (installes automatiquement).
+      Detecte les devices Chromecast sur le reseau.
+    fields:
+      - key: device
+        label: "Nom du device Chromecast"
+        section: catt
+        secret: false
+    config:
+      catt:
+        device: "{device}"
+    server:
+      enabled: true
+      command: python3
+      args: ["{dest}/server.py"]
+      timeout: 15
+      keep_alive: true
+    check: null
+    extra_steps: [pip_catt]
+
+  - id: tracking
+    name: tracking
+    color: blue
+    icon: "[K]"
+    short_desc: "Dashboard de suivi (local)"
+    repo: null
+    dest: null
+    runtime: none
+    default_checked: false
+    long_desc: |
+      Dashboard TUI de suivi des taches
+      longues en temps reel.
+    examples:
+      - "affiche le tracking"
+      - "taches en cours"
+      - "statut de la tache abc123"
+      - "supprime la tache xyz"
+    notes: |
+      Tourne en local sur 127.0.0.1:8765 (service dedie,
+      installe separement — cette entree est informative).
+    fields: []
+    config: {}
+    server: null
+    check:
+      type: http
+      url: "http://127.0.0.1:8765/health"
+    extra_steps: []

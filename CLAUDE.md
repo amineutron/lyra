@@ -166,6 +166,32 @@ Mode production (backup) : ~10.5 GB total
 
 Note: `--rag-enhanced` est toujours actif en mode RAG (hardcode dans run.sh). Ce n'est pas une option separee.
 
+## Installation (2026-08-23)
+
+L'installeur vit dans `installer/` (les anciens scripts de
+`fedora-setup/scripts/lyra-install/` sont DEPRECIES) :
+
+```bash
+./installer/install.sh            # TUI Rich (defaut)
+./installer/install.sh --app      # app graphique locale (127.0.0.1:9877/ui/)
+./installer/install.sh --demo     # simulation complete sans commande reelle
+```
+
+- **Core declaratif** (`installer/core/`, teste dans `tests/installer/`) :
+  catalogue MCPs en YAML (`catalog.yaml` — ajouter un MCP = une entree),
+  pipeline d'etapes, patch YAML in-process de config.yaml/secrets.yaml
+  (secrets JAMAIS dans config.yaml), installation du demon systemd.
+- **Deux frontaux** consommant le meme pipeline/events : TUI
+  (`installer/tui/`, ambiance neutroncore : palette or/rose, mascottes
+  ASCII de `installer/assets/mascots.json`) et app web
+  (`installer/app/`, backend stdlib port 9877, frontend React pre-builde
+  commite dans `app/backend/static/`, rebuild via `make installer-ui`).
+- **MCPs en repos prives separes** : `marouabah/{fedora-agents,hue-mcp,
+  pylips-mcp,denon-mcp,catt-mcp}`. Les dossiers `mcp-servers/{pylips,denon,
+  catt}-mcp/` sont des clones (gitignores par lyra) ; idem
+  `fedora-setup/scripts/agents/mcp-server` (clone de fedora-agents).
+  Les serveurs acceptent `LYRA_CONFIG` (chemin explicite du config.yaml).
+
 ## Project Structure
 
 ```
@@ -271,7 +297,7 @@ lyra/
 ## Securite
 
 - **Confirmation obligatoire** pour toutes les actions MCP
-- **Actions dangereuses** (rouge, jamais auto-confirmees meme en `-y`): `vm_destroy`, `vm_stop`, `vm_exec`, `vm_clone_system`, `backup_restore`, `backup_clean` (source unique: `lyra/core/constants.py DANGEROUS_TOOLS`)
+- **Actions dangereuses** (jamais auto-confirmees meme en `-y`): `vm_destroy`, `vm_stop`, `vm_exec`, `vm_clone_system`, `backup_restore`, `backup_clean` (source unique: `lyra/core/constants.py DANGEROUS_TOOLS`). Sous-ensemble DESTRUCTIVE_TOOLS (prompt rouge "ACTION DESTRUCTIVE"): destroy/backup_restore/backup_clean ; les autres ont un prompt ambre "ACTION SENSIBLE". Toujours comparer via is_dangerous_tool() (gere le prefixe serveur).
 - **Mode performance**: Skip confirmation pour domotique, JAMAIS pour VM/backup dangereux
 - **Validation format**: `vm_name`/chemins/commentaires valides par whitelist regex avant transmission aux scripts shell (`scripts/async_mcp_wrapper.py`)
 
@@ -343,6 +369,32 @@ Wrapper execute sequentiellement
 - **Hardware**: RTX 3080 Ti (12 Go VRAM)
 - **VRAM**: ~10.1 GB Qwen + ~0.5 GB Whisper
 - **Offline**: 100% local
+
+## Architecture Demon (2026-08-07)
+
+Lyra tourne en **demon resident** (`lyra/daemon/`) + clients legers (`lyra/client/`).
+
+- **Demon** : pipeline RAG chaud, sessions MCP ouvertes, multi-sessions
+  (SessionStore + ContextVar, `Pipeline.session_scope()`), une requete active
+  a la fois. Socket UNIX `~/.lyra/lyra.sock` (JSON-lines, full-duplex).
+  Service systemd user `lyra-daemon` (`install/lyra-daemon.service`,
+  Restart=always, PAS de NoNewPrivileges : sudo requis par virsh).
+- **Protocole** : la surface UIContext (9 callables) serialisee — 7 messages
+  `output`, 2 interactions `ask` (confirm/input) avec reponse `answer`.
+  `RemoteUI` (lyra/daemon/remote_ui.py) est la seule piece vue par lyra/.
+- **Clients** : `python -m lyra.client` route tout — one-shot et REPL via le
+  demon ; `--vocal`, `--legacy`, `--debug`, `--standalone` -> main_rag
+  historique. Demon mort -> relance auto (systemd puis spawn) + message
+  d'accueil facon Lyra avec la raison du crash (`lyra/daemon/state.py`) +
+  notification desktop. Fallback standalone si le demon refuse de demarrer.
+- **Etat** : `~/.lyra/daemon_state.json` (pid, statut, heartbeat 15s).
+- **Mesures** (bench `scripts/bench_daemon.py`) : one-shot pipeline complet
+  17.1s -> 1.3s ; REPL pret 20s -> 0.25s ; requete chaude ~0.3-1s.
+- **Pas encore via demon** : vocal (client standalone), correction "m"
+  interactive, messages M1 non-verbose. Le bandeau de taches du REPL client
+  lit le registre partage `~/.lyra/active_tasks.json`.
+- Debug : `journalctl --user -u lyra-daemon -f` ; sante :
+  `{"type":"health"}` sur le socket.
 
 ## Commandes Internes
 
@@ -752,7 +804,30 @@ Lyra integre le MCP tracking pour suivre toutes ses operations longues (VM, back
 | tv.power_on timeout 10s quand TV completement eteinte | server.py | Fix: connect_timeout=1.5 pour detection rapide + WoL (wakeonlan lib, MAC AA:BB:CC:DD:EE:FF). Sequence: check powerstate -> Standby key -> POST powerstate On -> WoL si injoignable. |
 | vm-import.sh df retourne 0 si POOL_DIR inexistant | vm-import.sh | Fix: traverser vers le premier parent existant avant df -BG. |
 | vm-import.sh tar tzf bloque sur archive 14GB (etape 1 a 10% pendant 3+ min) | vm-import.sh | Fix: remplacer tar tzf (lecture complete) par tar tzf \| head -20 (lecture partielle). |
+| power_on depuis veille profonde : WoL envoye puis abandon ("attends 15-20s") ; depuis demi-veille : re-WoL au lieu de l'API | mcp-servers/pylips-mcp/server.py | Sequence auto-suffisante : WoL -> poll joignabilite (25s) -> touche Standby -> POST powerstate On (idempotent) -> VERIFICATION etat reel avant de repondre. Timeout MCP tv 10s -> 60s. 11 tests unitaires (API simulee, 3 chemins). Note: la TV met >20s a quitter l'etat "On" apres une mise en veille (transition firmware). |
+| Ambilight "en blanc/violet" -> ambilight_on generique au lieu de la couleur | lyra/rules/tv.py | Meme regex fautif que hue (blanche?/violette?). Fix identique + tests paradigmatiques : CHAQUE cle des dicts couleurs est testee (26 formes). |
+| Index RAG : 5 outils mermaid.* fantomes dans les 4 collections | .chromadb | Serveur mermaid absent de config.yaml -> selection possible mais execution impossible. Purge (16 entrees). Pour reactiver : ajouter le serveur dans config.yaml puis reindexer. |
+| "met les lumieres en blanc" -> screen-manager.open_url(url=hue.turn_on_group) | lyra/rules/hue.py + .chromadb | Double cause: regex couleur "blanche?" ratait "blanc" (idem "violet") -> fallback RAG ; et 6 outils fantomes screen-manager.* dans lyra_mcp_specs_v2 (serveur supprime). Fix: regex blanc(?:he)?/violet(?:te)? + purge des fantomes de l'index. |
+| tv.power_on "wakeonlan non installe" via demon | install/lyra-daemon.service | Les MCP sont spawnes avec "command: python" ; sous systemd le PATH resolvait le python pyenv (sans wakeonlan) au lieu du venv. Fix: Environment=PATH avec .venv/bin en tete + platform-tools (adb). |
+| REPL demon : requetes silencieuses apres annulation (Ctrl+C pendant confirmation) | lyra/client/repl.py | Le cancel laissait le result tardif du demon dans le tampon -> toutes les requetes suivantes decalees d'un cran. Fix: toute annulation ferme et rouvre la connexion (flux propre garanti). Double Ctrl+C (<1.5s) quitte le REPL. |
 | tv.launch_app inoperant: JointSpace activities/launch retourne 200 mais n'ouvre pas les apps Android TV | pylips/tv_server.py | Fix: ADB `am start -n pkg/class` si class_name fourni, sinon `monkey -p pkg -c LEANBACK_LAUNCHER 1`. Note: dumpsys activity top montre toujours org.droidtv.playtv en fond — verifier le vrai focus via `dumpsys window \| grep mCurrentFocus`. |
+| vm_destroy "Echec de la suppression" via daemon : double cause | fedora-setup vm-destroy.sh | 1) confirmation interactive interne impossible en non-TTY -> garde [[ ! -t 0 ]] (la confirmation humaine a deja eu lieu cote Lyra) ; 2) virsh refuse un domaine avec snapshots -> --snapshots-metadata + stderr virsh remonte au lieu de &>/dev/null. |
+| Confirmation destructive illisible ("Je vais executer X. Tu confirmes?") | lyra/daemon/remote_ui.py | build_confirm_prompt() a 2 niveaux : "!! ACTION DESTRUCTIVE !!" (rouge) pour DESTRUCTIVE_TOOLS (destroy/backup_restore/backup_clean), "! ACTION SENSIBLE !" (ambre) pour le reste de DANGEROUS_TOOLS (vm_stop/vm_exec/vm_clone_system — rien n'est detruit). Le chat neutroncore rend rouge ou ambre selon le texte. Tests: tests/unit/test_confirm_prompt.py |
+| actions.py : "fedora.vm_clone_system" not in DANGEROUS_TOOLS (noms courts) -> is_dangerous=False -> reponse VIDE confirmait un outil dangereux | lyra/daemon/actions.py + core/constants.py | Helper is_dangerous_tool()/is_destructive_tool() normalisant le prefixe serveur (split(".")[-1]), utilise partout. Regression: test_prefixe_serveur_reconnu_dangereux |
+| Multi-tour clone systeme : "Test-vm" ou "le nom est X" jamais capte (EPHAISTOS 0.5b hallucine "snapshots preprod-12") + recap "VM source : None" | core/pipeline.py + rules/vm.py | Extraction DETERMINISTE extract_clone_system_name() dans _process_pending_action (nom brut, "le nom est X", "nomme-la X", "c'est X") — le LLM n'est plus consulte pour cet arg unique. Recap dedie clone_system ("ton PC -> nouvelle VM X"). Tests: tests/unit/test_clone_system_pending.py |
+| Clone systeme lance via chat : echec immediat silencieux + session tracking zombie "running 0%" | scripts/async_mcp_wrapper.py + daemon/server.py + kvm-clone-system.sh | Triple cause : 1) wrapper sans sudo -> check_root echoue (fix: finalize_cmd() prefixe sudo -n pour vm_clone_system/backup_*) ; 2) /tmp/kvm-clone-system-debug.log residu root + set -e -> mort ligne 43 (fix: fallback mktemp) ; 3) fin de tache detectee UNIQUEMENT si un REPL poll tasks_snapshot (fix: thread _watch_tasks 5s dans le daemon -> tracking complete/error garanti). Progression live: flag --tracking-id passe au script (sudo env_reset tue les variables). Tests: test_async_wrapper_cmd.py |
+| Clone systeme : 2 echecs "grub2-install keylayouts.mod ENOSPC" a 91% | kvm-clone-system.sh | Triple decouverte : 1) /home est un BIND MOUNT du NVMe -> --one-file-system ne copiait AUCUN home (passe rsync dediee ajoutee, patterns re-ancres /home/* -> /*) ; 2) exclusions light elargies (Steam 342G, vms, containerd, /usr/share/ollama, profils Chrome = cookies exploitables) + disque 80G defaut ; 3) VRAIE cause ENOSPC : partition /boot du clone 1G alors que l'hote a 884M dans /boot -> 2G. 3e run OK : 46G reels, VM bootee. |
+| Clone systeme 4e run : boote mais emergency mode "/dev/fedora_neutron00/root does not exist" | kvm-clone-system.sh + kvm-fix-boot.sh | rd.lvm.lv= est le PREMIER param de GRUB_CMDLINE_LINUX (pas d'espace devant) -> les sed " rd.lvm.lv" le rataient et grub2-mkconfig le reinjectait dans les BLS. Fix: patterns sans espace de tete + squeeze. Nouveau kvm-fix-boot.sh (nbd + mount p2 + purge BLS/grubenv via grub2-editenv, JAMAIS sed sur grubenv taille fixe) repare un clone existant sans re-cloner. Valide: VM boote, IP 192.168.122.x, login tty1 (l'hote n'a pas de DM — Hyprland au login). |
+| VM clonee VOLE l'identite tailscale de l'hote au boot (tailnet montre "electron-01" sur l'IP 100.x du PC, telephone coupe de neutroncore) | kvm-clone-system.sh + kvm-sanitize-vm.sh | /var/lib/tailscale (cle de noeud), cles hote SSH, machine-id et PSK WiFi NetworkManager partaient dans le clone. Fix: exclusions de BASE (pas seulement light) + machine-id blanchi dans l'adaptation. kvm-sanitize-vm.sh desinfecte un clone existant (nbd + mount p3). L'hote reprend son identite des que la VM s'arrete. |
+| Audit tests 2026-08-15 : 42 erreurs fixtures (pipeline._session/_ctx devenus des properties au refactor demon — integration+e2e casses depuis une semaine, invisibles car seul tests/unit/ tournait) | tests/integration + tests/e2e | Fixtures reecrites : _sessions["default"]=SessionMemory(...) + suppression des assignations _ctx (la property le reconstruit). 1021 tests verts. |
+| Outillage tests 2026-08-15 (2e passe) : Makefile (make test/smoke/campaign), scripts/smoke_mcps.py (spawn+initialize+tools/list par serveur MCP, latences, report tracking ; AJUSTABLE : ne teste que les serveurs de config.yaml, 0 serveur = exit 0, --only tv,hue pour un sous-ensemble, seuils via LYRA_SMOKE_TIMEOUT/LYRA_SMOKE_SLOW), timer lyra-mcp-smoke 08:45 quotidien | Makefile + scripts/smoke_mcps.py + install/lyra-mcp-smoke.* | 5/5 serveurs < 0.5s init. Cache embeddings module (_EMBEDDING_MODEL_CACHE) : suite 132s -> 112s. Tests preprod-09 reactives avec fedora-base. MCP fedora-agents : 9 tests zod (npm test), defaut disk 80G aligne. Flag start preserve dans le flux COW de vm_clone. Proxy tracking timeout 3->6s (502 sous IO). |
+| Campagne flaky : "etat des sauvegardes" puis "volume denon a 44" -> IntentClassifier KNOWLEDGE un run sur deux (ordres SANS VERBE -> Llama 1b aleatoire) | intent_classifier.py | _DEMANDE_VERBS_RE etendu : "etats? de/des/du + vm/machine/backup/sauvegarde" + noms de commande domotique (volume, luminosite, ambilight, sourdine — sans danger, _KNOWLEDGE_RE teste AVANT). Exit code campagne : PARTIAL tolere (outil correct, workflow interactif) — seuls FAIL et RULE_MISS font echouer le run. |
+| Campagne flaky (cause racine) : 12 requetes de la campagne n'etaient couvertes par AUCUN regex deterministe -> classification confiee au Llama 1b -> 1 echec ALEATOIRE par run, jamais la meme requete (etat des sauvegardes, volume denon a 44, purge les sauvegardes...) | intent_classifier.py + core/types.py | Audit exhaustif : script croisant TESTS de la campagne avec les 4 regex (smalltalk/knowledge/vm_question/demande) -> 12 trous identifies d'un coup. Verbes ajoutes (start/stop/efface/envoie/dashboard/restore/controle/purge/ouvre/joue) + "comment ca marche" ajoute aux EXPLICIT_KNOWLEDGE_PATTERNS (les questions restent des questions). Couverture: 0 requete livree au LLM. Preuve: 3 campagnes consecutives identiques (151/152, 0 FAIL). Tests: test_normalized_forms.py (25 formes + 6 questions temoin). |
+| Campagne one-shot 144->151/152 : "system-clone-final" declenchait vm_clone_system (gate mot isole + verbe clone requis) ; SlangNormalizer produit "statut"/"active le son"/"desactive le coupe le son" que backup/denon ne comprenaient pas ; IntentClassifier 1b flaky sur booter/coupe/monte/baisse (ajoutes au regex demande, deterministes) ; "clone X en Y et demarre" -> start:True | rules/vm.py, backup.py, denon.py, intent_classifier.py | Regressions: tests/unit/test_normalized_forms.py (15 tests). Le 1 PARTIAL restant est environnemental (la campagne clone preprod-01, VM fictive — le workflow valide l'existence reelle, comportement correct). |
+| "comment vas tu ?" -> demande -> fallback "je n'ai pas compris" | intent_classifier.py | _SMALLTALK_RE (salutations/politesse) teste en premier -> discussion. Tests: tests/unit/test_intent_overrides.py |
+| "c'est quoi arch-base" -> info -> hallucination LYRA (invente une description) | intent_classifier.py + rules/vm.py | _VM_QUESTION_RE (nom avec tirets, sans underscore) -> demande, teste AVANT knowledge ; regle "c'est quoi VMNAME" -> vm_status(detailed). Les noms d'outils (vm_clone) restent info. |
+| vm_start echoue "code 1" sans explication quand le disque externe est debranche | fedora-setup vm-start.sh | Pre-check du disque (virsh domblklist) : message explicite "disque externe non monte (/mnt/ext-backup)" + stderr virsh remonte. |
+| "met les lumieres en blanc" -> set_color_rgb({r,g,b}) : 4 erreurs Pydantic (light_id/red/green/blue requis) | lyra/rules/hue.py | La regle couleur envoyait des args {r,g,b} au mauvais outil (unitaire au lieu du groupe). Fix: hue.set_group_color_rgb avec {red,green,blue}. Regression: tests/unit/test_rules_hue_couleur.py. |
 
 ---
 

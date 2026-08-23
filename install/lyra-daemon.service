@@ -1,0 +1,35 @@
+# Lyra Daemon - pipeline RAG resident (modele: tracking-api.service)
+#
+# Installation :
+#   mkdir -p ~/.config/systemd/user
+#   cp install/lyra-daemon.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now lyra-daemon
+#
+# Logs : journalctl --user -u lyra-daemon -f
+
+[Unit]
+Description=Lyra Daemon (pipeline RAG resident)
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/amineutron/dev/lyra
+ExecStart=/home/amineutron/dev/lyra/.venv/bin/python -m lyra.daemon
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+Environment=HF_HUB_DISABLE_IMPLICIT_TOKEN=1
+Environment=TOKENIZERS_PARALLELISM=false
+# venv en tete du PATH : les serveurs MCP sont spawnes avec "command: python"
+# (config.yaml) et doivent resoudre le python du venv (wakeonlan, catt, ...).
+# platform-tools : adb requis par pylips (YouTube, screen_on/off).
+Environment=PATH=/home/amineutron/dev/lyra/.venv/bin:/home/amineutron/.local/bin:/usr/local/bin:/usr/bin:/bin:/mnt/nvme-storage/android-sdk/platform-tools
+# PAS de NoNewPrivileges : les scripts VM/backup utilisent sudo NOPASSWD
+# (virsh, kvm-*.sh) — NoNewPrivileges bloquerait l'elevation et vm_status
+# retournerait "Aucune VM trouvee".
+
+[Install]
+WantedBy=default.target
