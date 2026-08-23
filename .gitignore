@@ -112,3 +112,8 @@ secrets.yaml.bak*
 # Donnees d'usage runtime (jamais versionnees)
 data/session_history.db
 data/feedback.json
+
+# MCP servers extraits en repos dedies (marouabah/{pylips,denon,catt}-mcp)
+mcp-servers/pylips-mcp/
+mcp-servers/denon-mcp/
+mcp-servers/catt-mcp/
