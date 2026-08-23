@@ -26,7 +26,7 @@ from installer.core.osdetect import detect_current
 from installer.core.pipeline import build_pipeline, run_pipeline
 from installer.core.state import DEFAULT_LYRA_REPO, InstallState
 
-from . import boot, forms, menu
+from . import boot, forms, menu, mode_select
 from .mascot import MascotAnimator, pick_mascot
 from .model import UIModel
 from .popup import PopupPause, popup_header
@@ -188,6 +188,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Phase 1 : boot
     boot.run_boot(console)
 
+    # Phase 1.5 : choix du mode (terminal par defaut, bascule app possible)
+    mascot = pick_mascot(load_mascots())
+    if mode_select.select_mode(console, demo=args.demo,
+                               mascot=mascot) == mode_select.MODE_APP:
+        # Le processus devient le serveur de l'app graphique (memes args)
+        cmd = [sys.executable, "-m", "installer.app"]
+        if args.demo:
+            cmd.append("--demo")
+        import os
+        os.execv(sys.executable, cmd)
+
     # Phase 2 : selection MCPs
     catalog = load_catalog()
     selected_ids = menu.select_mcps(console, catalog, demo=args.demo)
@@ -218,8 +229,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         console.print(f"  [{DIM}]Installation annulee.[/]")
         return 0
 
-    # Phase 4 : installation animee
-    mascot = pick_mascot(load_mascots())
+    # Phase 4 : installation animee (meme mascotte que le choix de mode)
     ok, error = _run_install(console, state, selected, mascot)
 
     # Phase 5 : ecran final

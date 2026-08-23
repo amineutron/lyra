@@ -4,10 +4,12 @@ Point d'entree unique : `./installer/install.sh` (depuis un clone du repo).
 Deux frontaux consomment exactement le meme pipeline :
 
 - `--tui` (defaut) : installeur terminal Rich (boot ASCII, menu MCPs a
-  cocher aux fleches, mascotte, pipeline anime).
-- `--app` : installeur graphique local (design neutroncore) sur
-  `http://127.0.0.1:9877/ui/` — backend Python stdlib, frontend React
-  pre-builde et commite dans `app/backend/static/`.
+  cocher aux fleches, mascotte, pipeline anime). Apres le boot, un ecran
+  propose de rester en terminal ou de basculer vers l'app graphique
+  (le processus devient alors le serveur de l'app).
+- `--app` : lance directement l'installeur graphique local (design
+  neutroncore) sur `http://127.0.0.1:9877/ui/` — backend Python stdlib,
+  frontend React pre-builde et commite dans `app/backend/static/`.
 
 `--demo` simule tout le parcours sans executer une seule commande.
 
