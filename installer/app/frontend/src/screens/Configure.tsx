@@ -27,11 +27,11 @@ export function Configure({ mcps, previous, onBack, onContinue }: {
 }) {
   const withFields = mcps.filter((m) => m.fields.length > 0)
   const [values, setValues] = useState<DeviceConfig>(() => initialValues(withFields, previous))
-  const [touched, setTouched] = useState(false)
 
   const set = (mcpId: string, key: string, val: string) =>
     setValues((v) => ({ ...v, [mcpId]: { ...v[mcpId], [key]: val } }))
 
+  // Champ vide = "a configurer plus tard" : on avertit, on ne bloque pas.
   const missing: string[] = []
   for (const m of withFields) {
     for (const f of m.fields) {
@@ -42,17 +42,9 @@ export function Configure({ mcps, previous, onBack, onContinue }: {
   }
 
   const submit = () => {
-    setTouched(true)
-    if (missing.length > 0) return
-    // ne transmettre que les valeurs non vides (les optionnels vides sont omis)
-    const clean: DeviceConfig = {}
-    for (const [mcpId, fields] of Object.entries(values)) {
-      const kept = Object.fromEntries(
-        Object.entries(fields).filter(([, v]) => v.trim() !== ''),
-      )
-      if (Object.keys(kept).length > 0) clean[mcpId] = kept
-    }
-    onContinue(clean)
+    // transmettre toutes les cles (les vides restent vides dans config.yaml,
+    // a completer ensuite dans config.yaml / secrets.yaml)
+    onContinue(values)
   }
 
   if (withFields.length === 0) {
@@ -79,18 +71,20 @@ export function Configure({ mcps, previous, onBack, onContinue }: {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {m.fields.map((f) => {
                 const val = values[m.id]?.[f.key] ?? ''
-                const bad = touched && !f.optional && !val.trim()
                 return (
                   <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span className="mono" style={{ fontSize: 10.5, color: bad ? 'var(--crit)' : 'var(--faint)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                    <span className="mono" style={{ fontSize: 10.5, color: 'var(--faint)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
                       {f.label}
                       {f.optional && <span style={{ color: 'var(--faint)', textTransform: 'none' }}> (optionnel)</span>}
                       {f.secret && <span style={{ color: 'var(--rose)', textTransform: 'none' }}> · secret</span>}
                     </span>
-                    <div className="lyra-input" style={{ margin: 0, borderColor: bad ? 'var(--crit)' : undefined }}>
+                    {f.help && (
+                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>{f.help}</span>
+                    )}
+                    <div className="lyra-input" style={{ margin: 0 }}>
                       <input
                         type={f.secret ? 'password' : 'text'}
-                        placeholder={f.label}
+                        placeholder="laisser vide = configurer plus tard"
                         value={val}
                         aria-label={`${m.name} : ${f.label}`}
                         onChange={(e) => set(m.id, f.key, e.target.value)}
@@ -102,9 +96,13 @@ export function Configure({ mcps, previous, onBack, onContinue }: {
             </div>
           </Card>
         ))}
-        {touched && missing.length > 0 && (
-          <Chip tone="crit">champs requis manquants : {missing.join(', ')}</Chip>
+        {missing.length > 0 && (
+          <Chip tone="warn">a completer plus tard : {missing.join(', ')}</Chip>
         )}
+        <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+          Tout reste modifiable apres l'installation : ~/lyra/config.yaml
+          (adresses, devices) et ~/lyra/secrets.yaml (credentials).
+        </span>
         <div style={{ display: 'flex', gap: 10 }}>
           <Btn onClick={onBack}>retour</Btn>
           <Btn solid onClick={submit}>continuer</Btn>

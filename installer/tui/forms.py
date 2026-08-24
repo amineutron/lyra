@@ -37,13 +37,18 @@ def demo_device_config(selected: Sequence[McpDef]) -> dict[str, dict[str, str]]:
 
 
 def _ask_field(console: Console, mcp: McpDef, field: FieldDef) -> str:
-    default = field.default if (field.default or field.optional) else ...
-    kwargs: dict = {"password": field.secret, "console": console}
-    if default is not ...:
-        kwargs["default"] = default
+    if field.help:
+        console.print(f"  [{DIM}]{field.help}[/]")
     suffix = " (optionnel)" if field.optional else ""
-    return str(Prompt.ask(
-        f"  [bold {mcp.color}]{field.label}{suffix}[/]", **kwargs))
+    value = str(Prompt.ask(
+        f"  [bold {mcp.color}]{field.label}{suffix}[/]",
+        password=field.secret, console=console,
+        default=field.default or ""))
+    if not value.strip():
+        console.print(f"  [{DIM}]-> laisse vide : a renseigner plus tard "
+                      f"({'secrets.yaml' if field.secret else 'config.yaml'})[/]")
+    console.print()
+    return value
 
 
 def collect_device_config(console: Console, selected: Sequence[McpDef],
@@ -69,6 +74,11 @@ def collect_device_config(console: Console, selected: Sequence[McpDef],
             continue
         console.clear()
         popup_header(console, f"CONFIGURATION {mcp.name.upper()}", mcp.color)
+        console.print(f"  [{DIM}]Entree sans valeur = configurer plus tard. "
+                      f"Tout reste modifiable apres l'installation :[/]")
+        console.print(f"  [{DIM}]~/lyra/config.yaml (adresses, devices) · "
+                      f"~/lyra/secrets.yaml (credentials)[/]")
+        console.print()
         values: dict[str, str] = {}
         for field in mcp.fields:
             values[field.key] = _ask_field(console, mcp, field)

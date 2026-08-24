@@ -68,6 +68,10 @@ mcps:
         label: "IP du bridge Hue"
         section: hue
         secret: false
+        help: >-
+          App Philips Hue > Parametres > Mon bridge (i) ; ou depuis un
+          navigateur : https://discovery.meethue.com ; ou en shell :
+          avahi-browse -rt _hue._tcp
     config:
       hue:
         bridge_ip: "{bridge_ip}"
@@ -111,19 +115,31 @@ mcps:
         label: "IP de la TV Philips"
         section: tv
         secret: false
+        help: >-
+          Sur la TV : Parametres > Reseau > Voir la configuration reseau ;
+          ou scan du LAN : nmap -p 1926 --open 192.168.X.0/24
       - key: user
         label: "Username JointSpace"
         section: tv
         secret: true
+        help: >-
+          Genere lors du pairing JointSpace (ex: outil pylips --init).
+          Si Lyra a deja tourne ailleurs : repris de son secrets.yaml (tv.user)
       - key: pass
         label: "Mot de passe JointSpace"
         section: tv
         secret: true
+        help: >-
+          Genere avec le username lors du pairing (64 caracteres hex).
+          Deja present dans secrets.yaml (tv.pass) d'une install existante
       - key: mac
         label: "Adresse MAC (Wake-on-LAN, optionnel)"
         section: tv
         secret: false
         optional: true
+        help: >-
+          Sur la TV : Parametres > Reseau > Voir la configuration reseau
+          (adresse MAC). Sert au Wake-on-LAN quand la TV est eteinte
     config:
       tv:
         host: "{host}"
@@ -169,6 +185,9 @@ mcps:
         label: "IP du Denon AVR"
         section: denon
         secret: false
+        help: >-
+          Sur l'ampli : Menu > Reseau > Informations ; ou app Denon AVR
+          Remote > Parametres ; ou scan : nmap -p 23 --open 192.168.X.0/24
     config:
       denon:
         host: "{host}"
@@ -211,6 +230,9 @@ mcps:
         label: "Nom du device Chromecast"
         section: catt
         secret: false
+        help: >-
+          Nom exact affiche par `catt scan` (une fois l'install finie) ou
+          dans Google Home > ton appareil > Parametres > Informations
     config:
       catt:
         device: "{device}"

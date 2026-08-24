@@ -43,6 +43,11 @@ def run_pip(ctx: StepContext) -> None:
     pip = str(ctx.state.lyra_dir / ".venv" / "bin" / "pip")
     run([pip, "install"] + _PIP_CORE, ctx.emit,
         step_id=ctx.step_id, detail_fn=pip_detail)
+    # torch CPU (~200 Mo au lieu de ~2.5 Go CUDA) : requis au runtime par
+    # sentence-transformers — sans lui le RAG plante au chargement.
+    run([pip, "install", "torch", "--index-url",
+         "https://download.pytorch.org/whl/cpu"], ctx.emit,
+        step_id=ctx.step_id, detail_fn=pip_detail)
     run([pip, "install", "--no-deps", "sentence-transformers"], ctx.emit,
         step_id=ctx.step_id, detail_fn=pip_detail)
     run([pip, "install"] + _PIP_ST_DEPS, ctx.emit,

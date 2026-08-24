@@ -56,7 +56,8 @@ def serialize_mcp(mcp: McpDef) -> dict[str, Any]:
         "installable": mcp.installable, "default_checked": mcp.default_checked,
         "fields": [
             {"key": f.key, "label": f.label, "section": f.section,
-             "secret": f.secret, "optional": f.optional, "default": f.default}
+             "secret": f.secret, "optional": f.optional,
+             "default": f.default, "help": f.help}
             for f in mcp.fields
         ],
     }

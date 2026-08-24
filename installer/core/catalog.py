@@ -22,6 +22,7 @@ class FieldDef:
     secret: bool = False
     optional: bool = False
     default: str = ""
+    help: str = ""      # comment retrouver la valeur (affiche par les frontaux)
 
 
 @dataclass(frozen=True)
@@ -105,6 +106,7 @@ def load_catalog(path: Path = CATALOG_PATH) -> tuple[McpDef, ...]:
                     secret=bool(f.get("secret", False)),
                     optional=bool(f.get("optional", False)),
                     default=str(f.get("default", "")),
+                    help=str(f.get("help", "")).rstrip(),
                 )
                 for f in (mcp.get("fields") or ())
             ),

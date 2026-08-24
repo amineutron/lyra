@@ -22,16 +22,28 @@ def run_piper(ctx: StepContext) -> None:
     piper_bin = piper_dir / "piper" / "piper"
     if piper_bin.exists():
         ctx.emit(Output("Piper deja installe"))
+    else:
+        piper_dir.mkdir(parents=True, exist_ok=True)
+        archive = piper_dir / "piper.tar.gz"
+        run(["curl", "-fsSL", "-o", str(archive), _PIPER_URL],
+            ctx.emit, step_id=ctx.step_id)
+        run(["tar", "xzf", str(archive), "-C", str(piper_dir)],
+            ctx.emit, step_id=ctx.step_id)
+        archive.unlink(missing_ok=True)
+
+    # Lien global : verifie meme si le binaire existait deja. -sfn remplace
+    # un lien existant AU LIEU de descendre dedans (une vieille install
+    # laissait /usr/local/bin/piper pointer sur le DOSSIER ~/.local/piper/
+    # piper -> "same file" avec -sf).
+    import os
+    target = Path("/usr/local/bin/piper")
+    link_ok = (target.is_file() and os.access(target, os.X_OK)
+               and target.resolve() == piper_bin.resolve())
+    if link_ok:
+        ctx.emit(Output("Lien /usr/local/bin/piper deja correct"))
         return
-    piper_dir.mkdir(parents=True, exist_ok=True)
-    archive = piper_dir / "piper.tar.gz"
-    run(["curl", "-fsSL", "-o", str(archive), _PIPER_URL],
-        ctx.emit, step_id=ctx.step_id)
-    run(["tar", "xzf", str(archive), "-C", str(piper_dir)],
-        ctx.emit, step_id=ctx.step_id)
-    archive.unlink(missing_ok=True)
     if ctx.broker.confirm("Creer le lien /usr/local/bin/piper (sudo) ?", True):
-        run(["sudo", "ln", "-sf", str(piper_bin), "/usr/local/bin/piper"],
+        run(["sudo", "ln", "-sfn", str(piper_bin), "/usr/local/bin/piper"],
             ctx.emit, step_id=ctx.step_id)
 
 
