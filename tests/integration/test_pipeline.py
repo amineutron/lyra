@@ -44,21 +44,12 @@ def pipeline_with_mocks(mock_config):
 
     # Session memory reelle pour tester le multi-tour
     from lyra.rag.session_memory import SessionMemory
-    pipeline._session = SessionMemory(max_turns=10)
+    pipeline._sessions["default"] = SessionMemory(max_turns=10)
 
     pipeline._initialized = True
 
     # Creer WorkflowContext avec les mocks
     from lyra.core.workflows.context import WorkflowContext
-    pipeline._ctx = WorkflowContext(
-        hestia=pipeline._hestia,
-        lyra=pipeline._lyra,
-        ephaistos=pipeline._ephaistos,
-        session=pipeline._session,
-        tts_mode=False,
-        prepare_execution=None,
-        route_query=None,
-    )
 
     # Disable rule-based detect so EPHAISTOS mocks are used
     pipeline._rule_based_detect = lambda q: None

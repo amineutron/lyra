@@ -134,7 +134,7 @@ class TestSynonymExpander:
         assert result == query
 
     @pytest.mark.skipif(
-        True,
+        __import__("importlib.util", fromlist=["util"]).find_spec("pytest_benchmark") is None,
         reason="pytest-benchmark non installé (installer requirements-dev.txt)"
     )
     def test_expand_performance(self, benchmark):

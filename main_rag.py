@@ -94,44 +94,9 @@ def _colored_by_name(text: str, color: str) -> str:
 
 
 def _try_fast_path_rules(query: str):
-    """Tente de matcher la query via regles statiques SANS initialiser le RAG.
-
-    Applique la normalisation slang (pure Python, <1ms) puis teste les regles.
-    Si un match est trouve, retourne l'EphaistosAnalysis directement —
-    ce qui permet d'utiliser initialize_fast() et de skipper SentenceTransformer,
-    ChromaDB, IntentClassifier LLM et EPHAISTOS LLM.
-
-    Returns:
-        EphaistosAnalysis si regle matchee, None sinon
-    """
-    try:
-        from lyra.rules import detect
-        from lyra.core.formatters import enrich_optional_args
-
-        # Normalisation slang (pure Python, aucune dep lourde)
-        normalized = query
-        try:
-            from lyra.rag_enhanced.slang_normalizer import get_default_normalizer
-            normalized = get_default_normalizer().normalize(query)
-        except ImportError:
-            pass  # Module optionnel absent, continuer avec la query originale
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("slang_normalizer failed: %s", e)
-
-        # Tester query normalisee d'abord, puis originale si differente
-        candidates = [normalized, query] if normalized != query else [query]
-        for q in candidates:
-            analysis = detect(q)
-            if analysis is not None:
-                return enrich_optional_args(q, analysis)
-        return None
-    except ImportError:
-        pass  # Module rules absent, fallback sur le pipeline complet
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning("fast_path_rules failed: %s", e)
-    return None
+    """Delegue a lyra.core.fastpath (partage avec le demon)."""
+    from lyra.core.fastpath import try_fast_path_rules
+    return try_fast_path_rules(query)
 
 
 # DANGEROUS_TOOLS et PERFORMANCE_TOOLS importes depuis lyra.core.constants
@@ -921,6 +886,9 @@ def run_one_shot(
         qtype = result.query_type.value if hasattr(result.query_type, 'value') else str(result.query_type)
         print(f"  {ui.Colors.CYAN}[intent] {qtype}{ui.Colors.RESET}")
 
+    for warning in getattr(result, "warnings", []):
+        ui.print_warning(warning)
+
     # Cas 1: Question de connaissance -> reponse directe
     if result.query_type == QueryType.KNOWLEDGE:
         ui.print_lyra(result.response)
@@ -1515,6 +1483,9 @@ Exemples:
             )
             if not args.rag_enhanced:
                 ui.clear_thinking()
+
+            for warning in getattr(result, "warnings", []):
+                ui.print_warning(warning)
 
             # Mode DEBUG: Afficher details pipeline Enhanced
             if args.debug and args.rag_enhanced and hasattr(result, 'normalized_query'):

@@ -277,7 +277,7 @@ class HestiaExecutor:
         Returns:
             Message resultat
         """
-        registry_path = Path.home() / ".lyra" / "active_tasks.json"
+        from .background_tasks import REGISTRY_PATH as registry_path
         if not registry_path.exists():
             return "Aucune tache active trouvee."
 

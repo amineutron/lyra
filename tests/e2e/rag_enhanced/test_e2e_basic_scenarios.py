@@ -113,14 +113,7 @@ class TestScenario03_FeatureFlags:
 
         from lyra.core.workflows.context import WorkflowContext
         from lyra.rag.session_memory import SessionMemory
-        pipeline._pipeline_v2._session = SessionMemory(max_turns=10)
-        pipeline._pipeline_v2._ctx = WorkflowContext(
-            hestia=pipeline._pipeline_v2._hestia,
-            lyra=pipeline._pipeline_v2._lyra,
-            ephaistos=pipeline._pipeline_v2._ephaistos,
-            session=pipeline._pipeline_v2._session,
-            tts_mode=False,
-        )
+        pipeline._pipeline_v2._sessions["default"] = SessionMemory(max_turns=10)
 
         pipeline._pipeline_v2._initialized = True
 
@@ -193,16 +186,9 @@ class TestScenario05_BackwardCompatibility:
             pipeline._retriever.retrieve = Mock(return_value=[])
             pipeline._retriever.detect_query_type = Mock(return_value=QueryType.ACTION)
 
-            pipeline._session = SessionMemory(max_turns=10)
+            pipeline._sessions["default"] = SessionMemory(max_turns=10)
 
             from lyra.core.workflows.context import WorkflowContext
-            pipeline._ctx = WorkflowContext(
-                hestia=pipeline._hestia,
-                lyra=pipeline._lyra,
-                ephaistos=pipeline._ephaistos,
-                session=pipeline._session,
-                tts_mode=False,
-            )
             pipeline._initialized = True
 
         pipeline_v2._initialized = True

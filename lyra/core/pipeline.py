@@ -9,7 +9,15 @@ Orchestration complete du workflow RAG:
 5. HESTIA pour execution MCP
 """
 
+import contextvars
+from contextlib import contextmanager
 from typing import Optional
+
+# Session active pour la requete en cours (permet N sessions sur 1 pipeline,
+# utilise par le demon ; None -> session par defaut du pipeline)
+_current_session: contextvars.ContextVar = contextvars.ContextVar(
+    "lyra_current_session", default=None
+)
 
 from .config import RAGConfig
 from .types import (
@@ -90,7 +98,8 @@ class Pipeline:
         self._lyra: Optional[LyraVoice] = None
         self._intent_classifier: Optional[IntentClassifier] = None
         self._hestia: Optional[HestiaExecutor] = None
-        self._session: Optional[SessionMemory] = None
+        # Sessions de conversation (session_id -> SessionMemory)
+        self._sessions: dict[str, SessionMemory] = {}
 
     def initialize(self):
         """Initialise les composants du pipeline.
@@ -139,19 +148,8 @@ class Pipeline:
         self._lyra = LyraVoice(self._model_manager, tts_mode=self.tts_mode)
         self._intent_classifier = IntentClassifier(self._model_manager)
 
-        # Session memory
-        self._session = SessionMemory(max_turns=self.config.session.max_turns)
-
-        # Contexte partage pour les workflows metier
-        self._ctx = WorkflowContext(
-            hestia=self._hestia,
-            lyra=self._lyra,
-            ephaistos=self._ephaistos,
-            session=self._session,
-            tts_mode=self.tts_mode,
-            prepare_execution=self._prepare_execution,
-            route_query=self._route_query,
-        )
+        # Session memory par defaut (les autres sont creees a la demande)
+        self.get_session("default")
 
         self._initialized = True
 
@@ -186,11 +184,31 @@ class Pipeline:
             } if self.config.notion.enabled else None
         )
 
-        # Session memory
-        self._session = SessionMemory(max_turns=self.config.session.max_turns)
+        # Session memory par defaut (les autres sont creees a la demande)
+        self.get_session("default")
 
-        # Contexte partage (lyra present, ephaistos None)
-        self._ctx = WorkflowContext(
+        self._initialized = True
+
+    @property
+    def _session(self) -> Optional[SessionMemory]:
+        """Session active : celle du scope en cours, sinon la session par defaut.
+
+        Les ~30 sites internes self._session.x et les acces externes
+        (main_rag, EnhancedPipeline) restent inchanges grace a cette property.
+        """
+        scoped = _current_session.get()
+        if scoped is not None:
+            return scoped
+        return self._sessions.get("default")
+
+    @property
+    def _ctx(self) -> WorkflowContext:
+        """Contexte workflow reconstruit a chaque acces (dataclass leger).
+
+        La session qu'il embarque est celle du scope courant — indispensable
+        en multi-sessions (l'ancien _ctx figeait la session de l'init).
+        """
+        return WorkflowContext(
             hestia=self._hestia,
             lyra=self._lyra,
             ephaistos=self._ephaistos,
@@ -200,9 +218,37 @@ class Pipeline:
             route_query=self._route_query,
         )
 
-        self._initialized = True
+    def get_session(self, session_id: str = "default") -> SessionMemory:
+        """Retourne (et cree si besoin) la SessionMemory d'une session."""
+        if session_id not in self._sessions:
+            self._sessions[session_id] = SessionMemory(
+                max_turns=self.config.session.max_turns
+            )
+        return self._sessions[session_id]
 
-    def process_precomputed(self, query: str, analysis: "EphaistosAnalysis") -> PipelineResult:
+    @contextmanager
+    def session_scope(self, session_id: Optional[str] = None):
+        """Active une session pour la duree du bloc (ContextVar, thread-safe).
+
+        session_id=None : respecte le scope deja actif s'il existe (appels
+        imbriques process/execute_action DANS un scope), sinon "default".
+        """
+        if session_id is None and _current_session.get() is not None:
+            yield  # deja dans un scope : ne pas l'ecraser
+            return
+        token = _current_session.set(self.get_session(session_id or "default"))
+        try:
+            yield
+        finally:
+            _current_session.reset(token)
+
+    def process_precomputed(self, query: str, analysis: "EphaistosAnalysis",
+                            session_id: Optional[str] = None) -> PipelineResult:
+        """Traite une requete avec une analyse pre-calculee, dans le scope session."""
+        with self.session_scope(session_id):
+            return self._process_precomputed_impl(query, analysis)
+
+    def _process_precomputed_impl(self, query: str, analysis: "EphaistosAnalysis") -> PipelineResult:
         """Traite une requete avec une analyse pre-calculee (fast path one-shot).
 
         Skip IntentClassifier + RAG + EPHAISTOS.
@@ -256,7 +302,8 @@ class Pipeline:
         # Type de choix inconnu, traiter normalement
         return self._route_query(query)
 
-    def _route_query(self, query: str, callback: Optional[callable] = None) -> PipelineResult:
+    def _route_query(self, query: str, callback: Optional[callable] = None,
+                     rag_step_callback: Optional[callable] = None) -> PipelineResult:
         """Route une requete vers le bon handler.
 
         Utilise l'IntentClassifier (agent LYRA) pour determiner l'intention:
@@ -287,6 +334,9 @@ class Pipeline:
                 )
                 if ack:
                     callback("acknowledgement", ack)
+                    if rag_step_callback:
+                        # Canal unifie {"step", "data"} (protocole demon)
+                        rag_step_callback("acknowledgement", {"message": ack})
 
             if classification.intent == Intent.INFO:
                 return self._process_knowledge(query)
@@ -628,8 +678,17 @@ class Pipeline:
         _analysis_meta = {"source": _analysis_src, "confidence": analysis.confidence,
                           "reasoning": analysis.reasoning or ""}
 
+        # Message de confirmation special pour vm_clone_system (la source est
+        # l'hote — le recap vm_clone affichait "VM source : None")
+        if analysis.tool and analysis.tool.split(".")[-1] == "vm_clone_system":
+            confirm_msg = (
+                "📋 Clone systeme : ton PC -> nouvelle VM "
+                f"**{analysis.arguments.get('name', '?')}**\n"
+                "(mode leger par defaut : sans ~/dev, modeles IA ni secrets)\n\n"
+                "Je lance ?"
+            )
         # Message de confirmation special pour vm_clone
-        if analysis.tool and "vm_clone" in analysis.tool:
+        elif analysis.tool and "vm_clone" in analysis.tool:
             source_vm = analysis.arguments.get("source_vm") or analysis.arguments.get("source_vm_name")
             new_vm_name = analysis.arguments.get("new_vm_name")
 
@@ -684,6 +743,8 @@ class Pipeline:
         if not pending:
             # Pas d'action en attente, traiter normalement
             return self._process_action(query)
+
+        warnings: list[str] = []  # collectes ici, portes par le PipelineResult
 
         # Cas special: open_app sans ecran -> extraire l'ecran de la reponse utilisateur
         if pending.tool_name == "screen-manager.open_app" and "screen" in pending.missing_args:
@@ -743,6 +804,35 @@ class Pipeline:
             result = handle_vm_snapshot_pending(query, pending, self._ctx)
             if result is not None:
                 return result
+
+        # Cas special: clone systeme -> seul le nom manque, la source est
+        # toujours le PC hote. Extraction DETERMINISTE : le 0.5b hallucinait
+        # sur les reponses libres ("Test-vm" -> "snapshots de preprod-12").
+        if pending.tool_name and "vm_clone_system" in pending.tool_name:
+            from ..rules.vm import extract_clone_system_name
+            name = extract_clone_system_name(query)
+            if name:
+                updated = EphaistosAnalysis(
+                    tool=pending.tool_name,
+                    arguments={**pending.known_args, "name": name},
+                    missing_args=[],
+                    confidence=0.95,
+                    reasoning="nom extrait de la reponse utilisateur",
+                    raw_response=""
+                )
+                self._session.clear_pending_action()
+                return self._prepare_execution(updated, query)
+            question = ("Quel nom pour la nouvelle VM ? La source est ton PC — "
+                        "reponds juste le nom (ex: test-vm).")
+            self._session.set_pending_action(
+                tool_name=pending.tool_name,
+                known_args=pending.known_args,
+                missing_args=["name"],
+                clarification_question=question
+            )
+            self._session.add_turn(user_input=query, assistant_response=question)
+            return PipelineResult(response=question, query_type=QueryType.ACTION,
+                                  pending_args=["name"])
 
         # Extraire les nouveaux arguments avec EPHAISTOS
         if self._ephaistos is None:
@@ -862,11 +952,11 @@ class Pipeline:
                         new_snapshot_name = f"{vm_name}-snap-{timestamp}"
                         updated_analysis.arguments["snapshot_name"] = new_snapshot_name
 
-                        # Afficher warning (sera visible dans le recapitulatif)
-                        print()
-                        print(self._lyra._get_colored_text("⚠️  Le nom du snapshot ne peut pas être identique à la VM.", "yellow"))
-                        print(self._lyra._get_colored_text(f"Nom modifié automatiquement: {new_snapshot_name}", "cyan"))
-                        print()
+                        # Porte par le resultat, affiche par le client
+                        warnings.append(
+                            "Le nom du snapshot ne peut pas etre identique a la VM. "
+                            f"Nom modifie automatiquement: {new_snapshot_name}"
+                        )
 
         # Si encore des args manquants
         if updated_analysis.needs_clarification:
@@ -895,14 +985,25 @@ class Pipeline:
                 response=lyra_response.text,
                 query_type=QueryType.ACTION,
                 tool_call={"name": updated_analysis.tool, "arguments": updated_analysis.arguments},
-                pending_args=updated_analysis.missing_args
+                pending_args=updated_analysis.missing_args,
+                warnings=warnings
             )
 
         # Arguments complets -> clear pending et preparer execution
         self._session.clear_pending_action()
-        return self._prepare_execution(updated_analysis, query)
+        result = self._prepare_execution(updated_analysis, query)
+        result.warnings.extend(warnings)
+        return result
 
-    def process(self, query: str, callback: Optional[callable] = None) -> PipelineResult:
+    def process(self, query: str, callback: Optional[callable] = None,
+                rag_step_callback: Optional[callable] = None,
+                session_id: Optional[str] = None) -> PipelineResult:
+        """Traite une requete utilisateur dans le scope d'une session."""
+        with self.session_scope(session_id):
+            return self._process_impl(query, callback, rag_step_callback)
+
+    def _process_impl(self, query: str, callback: Optional[callable] = None,
+                      rag_step_callback: Optional[callable] = None) -> PipelineResult:
         """Traite une requete utilisateur.
 
         Args:
@@ -910,6 +1011,8 @@ class Pipeline:
             callback: Fonction callback optionnelle pour feedback progressif.
                      Signature: callback(step: str, message: str)
                      Steps possibles: "acknowledgement", "progress", "result"
+            rag_step_callback: Canal unifie (step: str, data: dict) — meme
+                     signature que EnhancedPipeline, utilise par le demon.
 
         Returns:
             PipelineResult avec la reponse
@@ -926,7 +1029,8 @@ class Pipeline:
             return self._process_pending_action(query)
 
         # Router vers le bon handler (avec callback)
-        return self._route_query(query, callback=callback)
+        return self._route_query(query, callback=callback,
+                                 rag_step_callback=rag_step_callback)
 
     # Outils de listing qui doivent retourner le resultat formate (pas de resume LYRA)
     LISTING_TOOLS = [
@@ -960,6 +1064,19 @@ class Pipeline:
         return format_listing_result(tool_name, content)
 
     def execute_action(
+        self,
+        tool_name: str,
+        arguments: dict,
+        user_query: str = "",
+        skip_lyra_format: bool = False,
+        session_id: Optional[str] = None
+    ) -> PipelineResult:
+        """Execute une action MCP via HESTIA, dans le scope d'une session."""
+        with self.session_scope(session_id):
+            return self._execute_action_impl(tool_name, arguments, user_query,
+                                             skip_lyra_format)
+
+    def _execute_action_impl(
         self,
         tool_name: str,
         arguments: dict,

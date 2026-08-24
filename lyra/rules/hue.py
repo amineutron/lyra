@@ -109,11 +109,14 @@ def detect(query: str):
         return make("hue.set_brightness", {"brightness": 50},
                     "rule: set_brightness low (relative)", 0.88)
 
-    # hue.set_color_rgb: "lumieres en rouge/bleu/..." ou "ambiance rouge/bleue/..."
-    m_rgb = re.search(r'\b(rouge|verte?|bleue?|violette?|orange|jaune|rose|blanche?|cyan)\b', q)
+    # hue.set_group_color_rgb: "lumieres en rouge/bleu/..." (pluriel/ambiance =
+    # tout le groupe). Arguments au format MCP complet (red/green/blue, PAS
+    # r/g/b : set_color_rgb exigeait light_id et plantait en validation).
+    m_rgb = re.search(r'\b(rouge|verte?|bleue?|violet(?:te)?|orange|jaune|rose|blanc(?:he)?|cyan)\b', q)
     if m_rgb and re.search(r'\b(?:lumieres?|lampes?|ambiance|atmosphere|couleur|mode)\b', q):
         rgb = _RGB_COLOR_MAP.get(m_rgb.group(1), (255, 255, 255))
-        return make("hue.set_color_rgb", {"r": rgb[0], "g": rgb[1], "b": rgb[2]},
-                    f"rule: set_color_rgb {m_rgb.group(1)}", 0.90)
+        return make("hue.set_group_color_rgb",
+                    {"red": rgb[0], "green": rgb[1], "blue": rgb[2]},
+                    f"rule: set_group_color_rgb {m_rgb.group(1)}", 0.90)
 
     return None

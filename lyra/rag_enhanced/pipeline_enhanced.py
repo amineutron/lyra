@@ -221,8 +221,10 @@ class EnhancedPipeline:
         if callback:
             self._pipeline_v2._callback = callback
 
-        # Déléguer à process_query
-        return self.process_query(user_input, session_id, rag_step_callback=rag_step_callback)
+        # Déléguer à process_query dans le scope de la session demandée
+        # (active le session_id, auparavant paramètre mort)
+        with self._pipeline_v2.session_scope(session_id):
+            return self.process_query(user_input, session_id, rag_step_callback=rag_step_callback)
 
     def process_query(
         self,
@@ -555,6 +557,7 @@ class EnhancedPipeline:
             pending_args=result_v2.pending_args,
             executed=result_v2.executed,
             error=result_v2.error,
+            warnings=result_v2.warnings,
             execution_result=result_v2.execution_result,
             # Enhanced fields
             normalized_query=normalized_query,
@@ -585,6 +588,7 @@ class EnhancedPipeline:
             pending_args=result_v2.pending_args,
             executed=result_v2.executed,
             error=result_v2.error,
+            warnings=result_v2.warnings,
             execution_result=result_v2.execution_result,
             # Enhanced fields (disabled)
             normalized_query=query,  # Inchangé

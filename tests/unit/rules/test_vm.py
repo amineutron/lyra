@@ -32,9 +32,10 @@ class TestVmCloneSystem:
         assert tool("clone system preprod-01 en backup-system") == "fedora.vm_clone_system"
 
     def test_args_extracted(self):
+        # Nouvelle semantique 2026-08-14 : la source d'un clone systeme est
+        # TOUJOURS le PC hote — seul le nom de la nouvelle VM compte.
         a = args("clone systeme preprod-01 en neutron-clone")
-        assert a.get("source_vm") == "preprod-01"
-        assert a.get("new_vm_name") == "neutron-clone"
+        assert a == {"name": "neutron-clone"}
 
 
 # ------------------------------------------------------------------ #

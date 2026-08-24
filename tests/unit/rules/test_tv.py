@@ -209,3 +209,26 @@ class TestNoMatch:
 
     def test_empty(self):
         assert tool("") is None
+
+
+# Regression 2026-08-11 : meme bug que hue (blanche?/violette? ratait les
+# masculins) — l'ambilight tombait sur ambilight_on au lieu de la couleur.
+class TestAmbilightCouleursMasculines:
+    def test_ambilight_blanc(self):
+        from lyra.rules import detect
+        r = detect("mets l ambilight en blanc")
+        assert r is not None and r.tool == "tv.ambilight_color"
+        assert r.arguments == {"r": 255, "g": 255, "b": 255}
+
+    def test_ambilight_violet(self):
+        from lyra.rules import detect
+        r = detect("ambilight en violet")
+        assert r is not None and r.tool == "tv.ambilight_color"
+
+    def test_paradigme_complet(self):
+        """Chaque cle du dictionnaire de couleurs doit declencher la regle."""
+        from lyra.rules import detect
+        from lyra.rules.tv import _AMBI_COLOR_MAP
+        for color in _AMBI_COLOR_MAP:
+            r = detect(f"ambilight en {color}")
+            assert r is not None and r.tool == "tv.ambilight_color", color

@@ -140,7 +140,7 @@ class TestScenario15_ComponentToggling:
                 pipeline._pipeline_v2._fusion.fuse = Mock(return_value=[])
 
                 from lyra.rag.session_memory import SessionMemory
-                pipeline._pipeline_v2._session = SessionMemory(max_turns=10)
+                pipeline._pipeline_v2._sessions["default"] = SessionMemory(max_turns=10)
                 pipeline._pipeline_v2._rule_based_detect = lambda q: None
 
                 pipeline._pipeline_v2._initialized = True

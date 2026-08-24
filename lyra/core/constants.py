@@ -19,6 +19,15 @@ DANGEROUS_TOOLS: frozenset[str] = frozenset({
     "vm_clone_system",
 })
 
+# Sous-ensemble REELLEMENT destructif (perte/ecrasement irreversible).
+# Les autres DANGEROUS sont "sensibles" : confirmation exigee mais pas de
+# destruction (vm_stop est reversible, vm_clone_system CREE une VM...).
+DESTRUCTIVE_TOOLS: frozenset[str] = frozenset({
+    "vm_destroy",
+    "backup_restore",
+    "backup_clean",
+})
+
 # Outils domotique executes sans confirmation en mode performance
 PERFORMANCE_TOOLS: frozenset[str] = frozenset({
     "tv.power_on", "tv.power_off", "tv.volume_up", "tv.volume_down",
@@ -36,3 +45,18 @@ PERFORMANCE_TOOLS: frozenset[str] = frozenset({
 VALID_TRACKING_FILTERS: frozenset[str] = frozenset({
     "lyra_task", "errors", "download", "machine", "movie", "free",
 })
+
+
+def is_dangerous_tool(tool_name: str) -> bool:
+    """Vrai si l'outil (prefixe serveur ou non) exige une confirmation.
+
+    Les sets ci-dessus contiennent des noms COURTS ; les appelants recoivent
+    souvent "fedora.vm_stop" — comparer sans normaliser laissait passer les
+    outils dangereux prefixes (regression 2026-08-14).
+    """
+    return tool_name.split(".")[-1] in DANGEROUS_TOOLS
+
+
+def is_destructive_tool(tool_name: str) -> bool:
+    """Vrai si l'outil detruit/ecrase des donnees (sous-ensemble rouge)."""
+    return tool_name.split(".")[-1] in DESTRUCTIVE_TOOLS

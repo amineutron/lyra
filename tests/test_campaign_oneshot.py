@@ -538,9 +538,13 @@ def main():
     # --- Rapport ---
     print_report(dry_results, one_results, fails_only=args.fails_only, no_color=args.no_color)
 
-    # Code retour: 0 si tout PASS, 1 sinon
-    all_pass = (dry_pass == len(TESTS)) and (one_pass == one_done)
-    sys.exit(0 if all_pass else 1)
+    # Code retour: 0 si aucun FAIL ni RULE_MISS. PARTIAL est tolere :
+    # l'outil detecte est correct mais le workflow est interactif (ex: choix
+    # COW du clone) — ce n'est pas un echec de detection.
+    one_bad = sum(1 for r in one_results
+                  if r and r.get("status") in (FAIL, RULE_MISS))
+    all_ok = (dry_pass == len(TESTS)) and one_bad == 0
+    sys.exit(0 if all_ok else 1)
 
 
 if __name__ == "__main__":

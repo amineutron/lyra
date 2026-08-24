@@ -104,7 +104,6 @@ class TestPipelineEnhancedBasic:
 class TestPipelineEnhancedCompat:
     """Tests de compatibilite backward."""
 
-    @pytest.mark.skip(reason="Necessite une VM 'preprod-09' sur la machine de test")
     def test_pipeline_backward_compat(self):
         """Enhanced(enabled=False) -> reponse identique a V2 pur."""
         from lyra.core.pipeline import Pipeline
@@ -119,7 +118,7 @@ class TestPipelineEnhancedCompat:
         pipeline_enhanced = EnhancedPipeline(config=rag_config, enabled=False)
         pipeline_enhanced.initialize()
 
-        query = "demarre preprod-09"
+        query = "demarre fedora-base"
         result_v2 = pipeline_v2.process(query)
         result_enhanced = pipeline_enhanced.process_query(query)
 
@@ -156,7 +155,7 @@ class TestPipelineEnhancedPerformance:
         )
         pipeline_enhanced.initialize()
 
-        query = "demarre preprod-09"
+        query = "demarre fedora-base"
 
         def bench_v2():
             return pipeline_v2.process_query(query)
@@ -227,7 +226,6 @@ class TestPipelineEnhancedRobustness:
 class TestPipelineEnhancedMultiTurn:
     """Tests multi-tours avec injection de contexte."""
 
-    @pytest.mark.skip(reason="Necessite une VM 'preprod-09' sur la machine de test")
     def test_pipeline_multi_turn(self):
         """3 tours consecutifs : le pipeline tient la session sans crasher.
 
@@ -241,10 +239,10 @@ class TestPipelineEnhancedMultiTurn:
         pipeline.initialize()
 
         # Tour 1 : Demarrer VM - vm_name doit etre extrait
-        result1 = pipeline.process_query("demarre preprod-09")
+        result1 = pipeline.process_query("demarre fedora-base")
         assert result1 is not None
         assert result1.tool_call is not None
-        assert "preprod-09" in str(result1.tool_call.get('arguments', {}))
+        assert "fedora-base" in str(result1.tool_call.get('arguments', {}))
         assert 'total_latency_ms' in result1.metrics
 
         # Tour 2 : Action suivante - le pipeline ne crashe pas

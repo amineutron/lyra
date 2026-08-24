@@ -143,7 +143,11 @@ def handle_cow_choice(
     # Path normal: vm_clone (VM deja arretee)
     analysis = EphaistosAnalysis(
         tool=pending.tool_name,
-        arguments={"source_vm": source_vm, "new_vm_name": new_vm_name, "linked": linked},
+        arguments={
+            **{k: v for k, v in pending.known_args.items()
+               if not k.startswith("_")},
+            "source_vm": source_vm, "new_vm_name": new_vm_name, "linked": linked,
+        },
         missing_args=[],
         confidence=1.0,
         reasoning=f"COW choice: linked={linked}",
@@ -380,6 +384,10 @@ def handle_vm_clone_workflow(
         ctx.session.set_pending_action(
             tool_name=analysis.tool,
             known_args={
+                # preserver les args deja extraits (ex: start=True de
+                # "clone X en Y et demarre" — perdus avant 2026-08-15)
+                **{k: v for k, v in analysis.arguments.items()
+                   if not k.startswith("_")},
                 "source_vm": source_vm,
                 "new_vm_name": new_vm_name,
                 META_COW_CHOICE_PENDING: True

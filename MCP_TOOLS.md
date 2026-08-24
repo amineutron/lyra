@@ -16,7 +16,7 @@ Liste complète des 85 outils MCP disponibles dans Lyra.
 | `vm_copy` | Copie des fichiers vers/depuis une VM | `vm_name` (string), `local_path` (string), `remote_path` (string) |
 | `vm_snapshot` | Crée un snapshot d'une VM | `vm_name` (string), `snapshot_name` (string) |
 | `vm_clone` | Clone une VM | `source_vm` (string), `new_vm_name` (string), `start` (bool, optionnel) |
-| `vm_clone_system` | Clone système complet | `source_vm` (string), `new_vm_name` (string) |
+| `vm_clone_system` | Clone le PC hote vers une VM (defaut: LEGER — interface/configs sans ~/dev, modeles IA ni secrets) | `name` (string), `full` (bool, optionnel: clone complet) |
 | `vm_verify` | Vérifie l'intégrité d'une VM | `vm_name` (string) |
 
 ### Backup Manager

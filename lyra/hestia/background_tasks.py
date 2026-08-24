@@ -5,6 +5,7 @@ Gere l'execution des operations longues en arriere-plan.
 """
 
 import subprocess
+import threading
 import time
 import json
 import os
@@ -18,6 +19,7 @@ from .tracking_client import TrackingClient
 
 
 REGISTRY_PATH = Path.home() / ".lyra" / "active_tasks.json"
+_REGISTRY_LOCK = threading.Lock()
 
 
 @dataclass
@@ -303,7 +305,15 @@ class BackgroundTaskManager:
                     pass
 
     def _save_registry(self):
-        """Sauvegarde les taches actives dans le registre persistant."""
+        """Sauvegarde les taches actives dans le registre persistant.
+
+        Protegee par un lock + ecriture atomique (tmp puis rename) :
+        plusieurs clients/threads peuvent declencher une sauvegarde.
+        """
+        with _REGISTRY_LOCK:
+            self._save_registry_unlocked()
+
+    def _save_registry_unlocked(self):
         try:
             REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
             data = []
@@ -319,7 +329,9 @@ class BackgroundTaskManager:
                         "pid_file": task.pid_file or "",
                         "tracking_id": task.tracking_id or "",
                     })
-            REGISTRY_PATH.write_text(json.dumps(data, indent=2))
+            tmp_path = REGISTRY_PATH.with_suffix(".json.tmp")
+            tmp_path.write_text(json.dumps(data, indent=2))
+            tmp_path.replace(REGISTRY_PATH)
         except Exception:
             pass
 

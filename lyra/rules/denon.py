@@ -26,14 +26,17 @@ def detect(query: str):
             not re.search(r'\b(?:volume|son|mute|sourdine)\b', q):
         return make("denon.power_off", {}, "rule: denon power_off", 0.93)
 
-    # power_on: "allume/demarre" (exclure si contexte mute)
+    # power_on: "allume/demarre" (exclure si contexte mute/son —
+    # SlangNormalizer transforme "unmute" en "active le son")
     if re.search(r'\b(?:allumes?|allumez|demarre[sz]?|active)\b', q) and \
-            not re.search(r'\b(?:mute|sourdine|silence|muet)\b', q):
+            not re.search(r'\b(?:mute|sourdine|silence|muet|son)\b', q):
         return make("denon.power_on", {}, "rule: denon power_on", 0.93)
 
-    # mute_off: "demute/unmute/reactive" ou "enleve/desactive le mute"
+    # mute_off: "demute/unmute/reactive", "enleve/desactive le mute" et les
+    # formes normalisees ("active le son", "desactive le coupe le son")
     if re.search(r'\b(?:demute|unmute|reactive)\b', q) or \
-            re.search(r'(?:enleve|desactive|remet)\s+(?:le\s+)?(?:mute|sourdine|silence)', q):
+            re.search(r'(?:enleve|desactive|remet[sz]?)\s+(?:le\s+|la\s+)?(?:mute|sourdine|silence|coupe\s+le\s+son|son)', q) or \
+            re.search(r'\bactive[rz]?\s+le\s+son\b', q):
         return make("denon.mute_off", {}, "rule: denon mute_off", 0.93)
 
     # mute_toggle: "toggle/bascule/inverse le mute" - AVANT mute_on!

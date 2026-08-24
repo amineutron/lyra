@@ -28,6 +28,7 @@ class PipelineResult:
     pending_args: list = field(default_factory=list)  # Args manquants
     executed: bool = False              # Action executee?
     error: Optional[str] = None
+    warnings: list = field(default_factory=list)  # Avertissements a afficher par le client
     execution_result: Optional["ExecutionResult"] = None
     analysis_meta: Optional[dict] = None  # {"source": "rule|ephaistos", "confidence": float, "reasoning": str}
 
@@ -87,7 +88,7 @@ ACTION_VERBS: list[str] = [
 # Ces patterns indiquent que l'utilisateur veut une explication, pas une action
 EXPLICIT_KNOWLEDGE_PATTERNS: list[str] = [
     "qu'est-ce que", "qu'est ce que", "c'est quoi", "c est quoi",
-    "comment fonctionne", "comment marche", "comment faire",
+    "comment fonctionne", "comment marche", "comment ca marche", "comment faire",
     "comment on", "comment je", "comment demarrer", "comment arreter",
     "comment cloner", "comment sauvegarder", "comment restaurer",
     "explique", "decris", "definition de", "a quoi sert",

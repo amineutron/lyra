@@ -46,6 +46,7 @@ if [[ "$*" == *"--legacy"* ]] || [[ "$*" == *"--v1"* ]]; then
     ARGS="${ARGS/--v1/}"
     exec python main.py $ARGS
 else
-    # Mode RAG Enhanced - defaut
-    exec python main_rag.py --rag-enhanced "$@"
+    # Client leger : one-shot via le demon (relance auto), sinon il
+    # delegue lui-meme a main_rag (interactif/vocal/--standalone)
+    exec python -m lyra.client "$@"
 fi

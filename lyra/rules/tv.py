@@ -21,7 +21,7 @@ def detect(query: str):
     q = normalize(query)
 
     # tv.sound_only: "son seul", "mode musique/audio" — pas besoin de "tv" dans la phrase
-    if re.search(r'\b(?:son\s+seul|mode\s+(?:musique|audio|son|radio)|musique\s+seul(?:ement)?)\b', q):
+    if re.search(r'\b(?:son\s+seul|mode\s+(?:musique|audio|son|radio)|musique\s+seul(?:e|ement)?)\b', q):
         return make("tv.sound_only", {}, "rule: tv sound_only", 0.97)
 
     # tv.screen_off: "coupe/eteins l'ecran/la dalle" — "dalle" et "ecran" suffisent
@@ -83,7 +83,7 @@ def detect(query: str):
     if re.search(r'\bambilight\b', q):
         if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|desactive[rz]?|coupe[rz]?|arrete[rz]?)\b', q):
             return make("tv.ambilight_off", {}, "rule: ambilight_off", 0.93)
-        m_ac = re.search(r'\b(rouge|verte?|bleue?|violette?|orange|jaune|rose|blanche?|cyan)\b', q)
+        m_ac = re.search(r'\b(rouge|verte?|bleue?|violet(?:te)?|orange|jaune|rose|blanc(?:he)?|cyan)\b', q)
         if m_ac:
             rgb = _AMBI_COLOR_MAP.get(m_ac.group(1), (255, 255, 255))
             return make("tv.ambilight_color", {"r": rgb[0], "g": rgb[1], "b": rgb[2]},

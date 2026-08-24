@@ -137,20 +137,11 @@ def enhanced_pipeline_with_mocks(mock_config, mock_ephaistos_response,
                 raw_response='{"intent": "demande"}'
             ))
 
-            pipeline._pipeline_v2._session = SessionMemory(max_turns=10)
+            pipeline._pipeline_v2._sessions["default"] = SessionMemory(max_turns=10)
             pipeline._pipeline_v2._rule_based_detect = lambda q: None
 
             # Creer WorkflowContext avec les mocks
             from lyra.core.workflows.context import WorkflowContext
-            pipeline._pipeline_v2._ctx = WorkflowContext(
-                hestia=pipeline._pipeline_v2._hestia,
-                lyra=pipeline._pipeline_v2._lyra,
-                ephaistos=pipeline._pipeline_v2._ephaistos,
-                session=pipeline._pipeline_v2._session,
-                tts_mode=False,
-                prepare_execution=None,
-                route_query=None,
-            )
 
             return pipeline
 

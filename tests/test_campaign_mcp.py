@@ -666,11 +666,11 @@ TESTS = [
 
     ("HUE/color", "couleur rouge",
      "mets les lumieres en rouge",
-     "hue.set_color_rgb", {}, {}),
+     "hue.set_group_color_rgb", {}, {}),
 
     ("HUE/color", "ambiance bleue",
      "mets une ambiance bleue",
-     "hue.set_color_rgb", {}, {}),
+     "hue.set_group_color_rgb", {}, {}),
 
     # ================================================================
     # HUE - scene

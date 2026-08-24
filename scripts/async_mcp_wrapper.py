@@ -142,7 +142,7 @@ def build_args_vm_clone_system(args_dict):
     cmd = [
         str(KVM / "kvm-clone-system.sh"),
         "-n", validate_safe_name(args_dict.get("name", "neutron-clone"), "name"),
-        "-d", validate_safe_name(args_dict.get("disk_size", "60G"), "disk_size"),
+        "-d", validate_safe_name(args_dict.get("disk_size", "80G"), "disk_size"),
         "-m", str(int(args_dict.get("memory", 8192))),
         "-c", str(int(args_dict.get("cpus", 4))),
         "--yes",
@@ -153,6 +153,8 @@ def build_args_vm_clone_system(args_dict):
         cmd += ["--username", validate_safe_name(args_dict["username"], "username")]
     if args_dict.get("dry_run"):
         cmd.append("--dry-run")
+    if args_dict.get("full"):
+        cmd.append("--full")  # clone complet ; par defaut le mode est leger
     return cmd
 
 
@@ -303,6 +305,24 @@ def _start_progress_poller(progress_file: str, tracking_id: str,
     return t
 
 
+# Scripts avec check_root : sudo -n obligatoire (sudoers NOPASSWD couvre ces
+# chemins). Sans lui, echec immediat en contexte daemon (regression 2026-08-14).
+_NEEDS_ROOT = frozenset({"vm_clone_system", "backup_create", "backup_restore"})
+
+
+def finalize_cmd(tool_short: str, cmd: list, tracking_id: str = "") -> list:
+    """Decore la commande d'un outil async : sudo + report tracking.
+
+    Le clone systeme reporte sa progression directement dans la session
+    tracking de Lyra (sudo env_reset supprime les variables -> flag CLI).
+    """
+    if tool_short in _NEEDS_ROOT:
+        cmd = ["sudo", "-n"] + cmd
+    if tool_short == "vm_clone_system" and tracking_id:
+        cmd = cmd + ["--tracking-id", tracking_id]
+    return cmd
+
+
 def run_direct(tool_short: str, arguments: dict, progress_file: str,
                tracking_id: str = "", tracking_api: str = "",
                done_file: str = "") -> tuple:
@@ -316,9 +336,10 @@ def run_direct(tool_short: str, arguments: dict, progress_file: str,
         return False, f"Outil ASYNC inconnu: {tool_short}"
 
     try:
-        cmd = builder(arguments)
+        cmd = finalize_cmd(tool_short, builder(arguments), tracking_id)
     except (ValueError, KeyError) as e:
         return False, f"Arguments invalides pour {tool_short}: {e}"
+
     print(f"[i] Execution directe: {' '.join(cmd)}", file=sys.stderr)
 
     env = {**os.environ, "LYRA_PROGRESS_FILE": progress_file}

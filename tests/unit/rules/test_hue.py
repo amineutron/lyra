@@ -156,21 +156,38 @@ class TestSetBrightness:
 
 class TestSetColorRgb:
     def test_lumieres_en_rouge(self):
-        assert tool("lumieres en rouge") == "hue.set_color_rgb"
+        assert tool("lumieres en rouge") == "hue.set_group_color_rgb"
 
     def test_ambiance_bleue(self):
-        assert tool("ambiance bleue") == "hue.set_color_rgb"
+        assert tool("ambiance bleue") == "hue.set_group_color_rgb"
 
     def test_rouge_rgb(self):
         a = args("lumieres en rouge")
-        assert a == {"r": 255, "g": 0, "b": 0}
+        assert a == {"red": 255, "green": 0, "blue": 0}
 
     def test_bleu_rgb(self):
         a = args("lumieres en bleu")
-        assert a == {"r": 0, "g": 0, "b": 255}
+        assert a == {"red": 0, "green": 0, "blue": 255}
 
     def test_couleur_orange(self):
-        assert tool("couleur orange") == "hue.set_color_rgb"
+        assert tool("couleur orange") == "hue.set_group_color_rgb"
+
+    # Regression 2026-08-11 : le regex "blanche?"/"violette?" ratait les
+    # formes masculines "blanc"/"violet" -> la requete tombait dans le RAG
+    # et EPHAISTOS proposait un outil fantome (screen-manager.open_url).
+    def test_blanc_masculin(self):
+        assert tool("met les lumieres en blanc") == "hue.set_group_color_rgb"
+        assert args("met les lumieres en blanc") == {"red": 255, "green": 255, "blue": 255}
+
+    def test_blanc_avec_pourcentage(self):
+        assert tool("mets les lumieres en blanc a 100%") == "hue.set_group_color_rgb"
+
+    def test_violet_masculin(self):
+        assert tool("lumieres en violet") == "hue.set_group_color_rgb"
+        assert args("lumieres en violet") == {"red": 128, "green": 0, "blue": 128}
+
+    def test_blanche_feminin_toujours_ok(self):
+        assert tool("ambiance blanche") == "hue.set_group_color_rgb"
 
 
 # ------------------------------------------------------------------ #
@@ -186,3 +203,12 @@ class TestNoMatch:
 
     def test_empty(self):
         assert tool("") is None
+
+
+    def test_paradigme_couleurs_complet(self):
+        """Chaque cle du dictionnaire de couleurs doit declencher la regle."""
+        from lyra.rules import detect
+        from lyra.rules.hue import _RGB_COLOR_MAP
+        for color in _RGB_COLOR_MAP:
+            r = detect(f"lumieres en {color}")
+            assert r is not None and r.tool == "hue.set_group_color_rgb", color

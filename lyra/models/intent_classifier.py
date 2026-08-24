@@ -65,16 +65,43 @@ _KNOWLEDGE_RE = re.compile(
     re.IGNORECASE
 )
 
+# Bavardage/politesse : TOUJOURS "discussion" (override LLM). Llama 1b classe
+# parfois "comment vas tu ?" en demande -> fallback "je n'ai pas compris".
+_SMALLTALK_RE = re.compile(
+    r"^\s*(?:salut|bonjour|bonsoir|coucou|hello|yo|merci(?:\s+\w+)?|ok(?:ay)?|super|parfait|top|cool"
+    r"|comment\s+vas?[- ]tu|comment\s+ca\s+va|ca\s+va(?:\s+bien)?|tu\s+vas\s+bien"
+    r"|quoi\s+de\s+neuf|bien\s+dormi|bonne\s+nuit|a\s+plus|bye|qui\s+es[- ]tu|t'?es\s+qui)\s*[!?.]*\s*$",
+    re.IGNORECASE,
+)
+
+# "c'est quoi <nom-de-vm>" : nom avec tirets (arch-base, electron-backup-test)
+# -> DEMANDE (vm_status) et non "info" qui ferait halluciner LYRA. Les noms
+# d'outils (vm_clone) contiennent un underscore et restent des questions info.
+_VM_QUESTION_RE = re.compile(
+    r"\b(?:c'?est\s+quoi|qu'?est[- ]ce\s+que?)\s+(?:la\s+vm\s+)?[a-z0-9]+(?:-[a-z0-9]+)+\b",
+    re.IGNORECASE,
+)
+
 # Verbes qui indiquent TOUJOURS une action MCP (override LLM)
 _DEMANDE_VERBS_RE = re.compile(
     r'\b(verifie[rz]?|verif|clone[rz]?|duplique[rz]?|copie[rz]?|transfere[rz]?|execute[rz]?|exec'
     r'|liste[rz]?|affiche[rz]?|montre[rz]?|donne[rz]?\s+moi|quelles?\s+sont'
     r'|status|statut|nettoie[rz]?|restaure[rz]?|allume[rz]?|eteins?|mute[rz]?|scan'
+    r'|boote?[rz]?|coupe[rz]?|unmute|demute|monte[rz]?|baisse[rz]?|augmente[rz]?|diminue[rz]?'
+    # ordres sans verbe ("volume denon a 44") : noms de commande domotique.
+    # Sans danger : les vraies questions matchent _KNOWLEDGE_RE AVANT ce regex.
+    r'|volume|luminosite|ambilight|sourdine'
+    # verbes d'action restants (audit exhaustif de la campagne 2026-08-15 :
+    # 12 requetes sans verbe reconnu tombaient sur le 1b -> 1 echec
+    # aleatoire par run, jamais le meme)
+    r'|start|stop|stoppe[rz]?|efface[rz]?|envoie[rz]?|envoyer|dashboard'
+    r'|restore[rz]?|controle[rz]?|purge[rz]?|ouvre[rz]?|ouvrir|joue[rz]?|jouer'
     r'|caste[rz]?|lance[rz]?|demarr[ea][rz]?|arre?t[ea][rz]?|supprim[ea][rz]?'
     r'|mets?|mett?re[sz]?|active[rz]?|applique[rz]?|toggle[rz]?|bascule[rz]?|etein[ts]?'
     r'|import[ea][rz]?|export[ea][rz]?|emballe[rz]?|charge[rz]?|snapshot[sz]?'
     r'|installe[rz]?\s+(?:la\s+)?vm|sauvegarde[rz]?'
-    r'|cre[ea][rz]?|etat\s+de\s+(?:la\s+)?(?:vm?|machine)|detruit?[sz]?'
+    r'|cre[ea][rz]?|detruit?[sz]?'
+    r'|etats?\s+(?:de|des|du)\s+(?:la\s+|les\s+|mes\s+|mon\s+)?(?:vms?|machines?|serveurs?|backups?|sauvegardes?)'
     r'|instantane[sz]?|capture[sz]?)\b',
     re.IGNORECASE
 )
@@ -114,6 +141,23 @@ class IntentClassifier:
         Returns:
             ClassificationResult avec l'intention detectee
         """
+        # Override regex: bavardage/politesse TOUJOURS "discussion"
+        if _SMALLTALK_RE.match(_ascii_lower(query)):
+            return ClassificationResult(
+                intent=Intent.DISCUSSION,
+                confidence=0.97,
+                raw_response="regex:smalltalk"
+            )
+
+        # Override regex: "c'est quoi <nom-de-vm>" = demande (vm_status),
+        # teste AVANT knowledge sinon LYRA hallucine une reponse
+        if _VM_QUESTION_RE.search(_ascii_lower(query)):
+            return ClassificationResult(
+                intent=Intent.DEMANDE,
+                confidence=0.97,
+                raw_response="regex:vm_question"
+            )
+
         # Override regex: questions de connaissance explicites TOUJOURS "info"
         # (prioritaire sur les verbes d'action: "comment cloner" = question)
         if _KNOWLEDGE_RE.search(_ascii_lower(query)):

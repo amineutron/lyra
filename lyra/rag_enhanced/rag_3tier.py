@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 chromadb = None
 Settings = None
 SentenceTransformer = None
+
+# Cache des modeles d'embeddings (charges une seule fois par processus)
+_EMBEDDING_MODEL_CACHE: dict = {}
 CHROMADB_AVAILABLE: Optional[bool] = None
 
 
@@ -110,17 +113,23 @@ class RAG3Tier:
             metadata={"hnsw:space": "cosine"}
         )
 
-        # Charger modele embeddings sans tqdm/logs verbeux
+        # Charger modele embeddings sans tqdm/logs verbeux.
+        # Cache module : le chargement coute ~3.5s CPU — les tests creaient
+        # une instance par test (9 tests x 3.7s) et le modele est immuable.
         import sys
         from contextlib import redirect_stderr
         from io import StringIO
         logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
         logging.getLogger("transformers").setLevel(logging.ERROR)
-        with redirect_stderr(StringIO()):
-            self.embedding_model = SentenceTransformer(
-                self.embedding_model_name,
-                device="cpu"
-            )
+        if self.embedding_model_name in _EMBEDDING_MODEL_CACHE:
+            self.embedding_model = _EMBEDDING_MODEL_CACHE[self.embedding_model_name]
+        else:
+            with redirect_stderr(StringIO()):
+                self.embedding_model = SentenceTransformer(
+                    self.embedding_model_name,
+                    device="cpu"
+                )
+            _EMBEDDING_MODEL_CACHE[self.embedding_model_name] = self.embedding_model
 
         logger.info("RAG3Tier: 3 collections créées")
 

@@ -8,7 +8,8 @@ from .base import normalize, make
 _VM_NAME_RE = r'([\w][\w.-]*(?:-\d+)?)'
 
 _VM_GENERIC = {'la', 'le', 'les', 'un', 'une', 'de', 'du', 'des', 'vm', 'machine',
-               'serveur', 'mon', 'ma', 'mes', 'cette', 'ce', 'sa', 'son', 'ses'}
+               'serveur', 'mon', 'ma', 'mes', 'cette', 'ce', 'sa', 'son', 'ses',
+               'tout', 'tous', 'toutes'}
 
 _VM_NOISE = {
     # Articles / determinants
@@ -65,17 +66,46 @@ def _extract_vm_name(phrase: str) -> Optional[str]:
 def detect(query: str):
     q = normalize(query)
 
-    # vm_clone_system: "clone systeme/system SOURCE en DEST"
-    # Doit venir AVANT vm_clone (qui exclut "system")
-    if re.search(r'\b(?:syst[eè]?me?|system)\b', q):
+    # vm_clone_system: la source est TOUJOURS le PC hote
+    # Doit venir AVANT vm_clone (qui exclut "system").
+    # Gate double : mot "systeme" ISOLE (pas "system-clone-final" — les
+    # lookarounds excluent le tiret) ET un verbe de clonage (sinon
+    # "exporte system-clone-final" devenait un clone systeme).
+    if re.search(r'(?<![\w-])(?:syst[eè]?me?|system)(?![\w-])', q) \
+            and re.search(r'\b(?:clone[rz]?|duplique[rz]?|copie[rz]?)\b', q):
+        # La SOURCE d'un clone systeme est TOUJOURS le PC hote : seul le nom
+        # de la nouvelle VM compte (arg MCP: name). Formes acceptees :
+        # Marqueur explicite d'abord ("en X" / "nomme X" / "appele X"), meme
+        # loin du mot "systeme" : "clone systeme preprod-01 en Y" -> Y est le
+        # nom voulu (l'ancienne phrase avec source, la source reste l'hote).
         m = re.search(
-            r'(?:clone[rz]?|duplique[rz]?)\s+(?:le\s+|la\s+)?(?:syst[eè]?me?\s+|system\s+)?([\w][\w.-]*)\s+en\s+([\w][\w.-]*)',
+            r'(?:syst[eè]?me?|system)\b.*?\b(?:en|nomm[ée]e?|appel[ée]e?)\s+([\w][\w.-]*)',
             q
         )
-        if m:
-            return make("fedora.vm_clone_system",
-                        {"source_vm": m.group(1), "new_vm_name": m.group(2)},
-                        "rule: clone systeme SOURCE en DEST", 0.95)
+        if not m:
+            # "clone systeme X" : le mot qui suit directement est le nom
+            m = re.search(
+                r'(?:clone[rz]?|duplique[rz]?)\s+(?:le\s+|la\s+|un\s+)?'
+                r'(?:syst[eè]?me?|system)\s+([\w][\w.-]*)',
+                q
+            )
+        if m and m.group(1) not in _VM_GENERIC:
+            return make("fedora.vm_clone_system", {"name": m.group(1)},
+                        "rule: clone systeme (hote) -> name", 0.95)
+        # "fait un clone systeme" sans nom -> interactif
+        if re.search(r'\b(?:clone[rz]?|duplique[rz]?|copie[rz]?)\b', q):
+            return make("fedora.vm_clone_system", {},
+                        "rule: clone systeme (interactif, nom manquant)",
+                        0.85, missing_args=["name"])
+
+    # "cree une vm" : pas d'outil vm_create — la creation passe par le clone
+    # d'un template. On route vers vm_clone en mode interactif (args manquants)
+    # plutot que de laisser le RAG proposer un outil "MCP" illisible.
+    if re.search(r"\bcre[ea][rz]?\b.{0,20}\b(?:vms?|machines?(?:\s+virtuelles?)?)\b", q) \
+            and not re.search(r"\b(?:snapshot|backup|sauvegarde|copie)\b", q):
+        return make("fedora.vm_clone", {},
+                    "rule: creer une vm -> clone d'un template (interactif)",
+                    0.85, missing_args=["source_vm", "new_vm_name"])
 
     # vm_clone: "clone/duplique SOURCE en DEST"
     if 'system' not in q and 'systeme' not in q:
@@ -84,8 +114,11 @@ def detect(query: str):
             q
         )
         if m:
-            return make("fedora.vm_clone",
-                        {"source_vm": m.group(1), "new_vm_name": m.group(2)},
+            args = {"source_vm": m.group(1), "new_vm_name": m.group(2)}
+            # "clone X en Y et demarre" -> demarrage apres clone
+            if re.search(r'\b(?:et\s+)?(?:demarre[sz]?|start|boote?[rz]?|lance[rz]?)\b(?!\S)', q[m.end():]):
+                args["start"] = True
+            return make("fedora.vm_clone", args,
                         "rule: clone SOURCE en DEST", 0.95)
 
     # vm_clone via "copie de VM": "fais une copie de fedora-base" -> clone sans dest specifiee
@@ -168,8 +201,10 @@ def detect(query: str):
         or re.search(r'\b(?:tv|tele(?:vision)?)\b', q)
     )
     if not _IS_STOP_DOMOTIQUE:
+        # etein(s|t|d|dre|ds) : toutes les fautes/variantes courantes d'"eteins"
+        # ("eteint neutron-template-05" partait en denon_volume via le RAG)
         m = re.search(
-            r'(?:arre?t[ea]?[rz]?|stopp[ea]?[rz]?|stop)\s+'
+            r'(?:arre?t[ea]?[rz]?|stopp[ea]?[rz]?|stop|etein(?:s|t|d|ds|dre)?)\s+'
             r'(?:de\s+)?(?:force\s+)?(?:(?:la|le)\s+)?(?:vm?\s+|machine(?:\s+virtuelle)?\s+|serveur\s+)?'
             + _VM_NAME_RE, q
         )
@@ -221,6 +256,17 @@ def detect(query: str):
             if re.search(r'\blive\b', q):
                 args["live"] = True
             return make("fedora.vm_snapshot", args, "rule: snapshot VMNAME", 0.92)
+
+    # vm_status: "c'est quoi arch-base" / "qu'est-ce que electron-backup-test"
+    # (nom avec tirets = objet concret -> status detaille, PAS une question de
+    # connaissance : LYRA hallucinait une reponse pour ces noms)
+    m = re.search(
+        r"\b(?:c'?est\s+quoi|qu'?est[- ]ce\s+que?)\s+(?:la\s+vm\s+)?([a-z0-9]+(?:-[a-z0-9]+)+)\b",
+        q,
+    )
+    if m:
+        return make("fedora.vm_status", {"vm_name": m.group(1), "detailed": True},
+                    "rule: c'est quoi VMNAME", 0.93)
 
     # vm_status (VM specifique): "status [detaille] de la vm VMNAME"
     m = re.search(
@@ -285,4 +331,40 @@ def detect(query: str):
             args["pool_dir"] = m_pool.group(1).strip()
         return make("fedora.vm_import", args, "rule: import archive.tar.gz", 0.93)
 
+    return None
+
+
+# Mots qui ne peuvent pas etre le nom d'une nouvelle VM dans une reponse libre
+_NAME_STOPWORDS = _VM_GENERIC | {
+    'oui', 'non', 'ok', 'pc', 'source', 'nom', 'hote', 'host', 'systeme',
+    'system', 'clone', 'nouvelle', 'nouveau',
+}
+
+
+def extract_clone_system_name(query: str) -> str | None:
+    """Nom de la nouvelle VM depuis une reponse libre (multi-tour pending).
+
+    La source d'un clone systeme est TOUJOURS le PC hote : la reponse peut
+    etre juste le nom ("test-vm"), ou une phrase ("le nom est test-vm",
+    "la source est mon pc et le nom est X"). Extraction deterministe —
+    le LLM 0.5b hallucinait sur ces reponses (regression 2026-08-14).
+    """
+    q = normalize(query).strip()
+    if not q:
+        return None
+    # "le nom (de la nouvelle vm/machine) est X"
+    m = re.search(
+        r"\bnom\b(?:\s+de\s+la\s+(?:nouvelle\s+)?(?:vm|machine))?"
+        r"\s*(?:est|sera|:)?\s+([\w][\w.-]*)", q)
+    if not m:
+        # "nomme-la X" / "appelle-la X"
+        m = re.search(r"\b(?:nomme|appelle)(?:-?la)?\s+([\w][\w.-]*)", q)
+    if not m:
+        # "c'est X" / "ce sera X" (reponse complete uniquement)
+        m = re.search(r"^(?:c'?est|ce\s+sera)\s+([\w][\w.-]*)\s*$", q)
+    if m and m.group(1) not in _NAME_STOPWORDS:
+        return m.group(1)
+    # Reponse reduite au nom lui-meme ("test-vm")
+    if re.fullmatch(r"[\w][\w.-]*", q) and q not in _NAME_STOPWORDS:
+        return q
     return None
