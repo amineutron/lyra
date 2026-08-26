@@ -29,8 +29,8 @@ mcps:
       - "cree un backup de dev-02"
       - "snapshot avant la MAJ"
     notes: |
-      Necessite fedora-setup installe sur la machine hote.
-      Recommande comme premier MCP.
+      Scripts VM/backup embarques, copies dans /usr/local/lib/lyra/scripts
+      (root) avec regles sudoers par script. Recommande comme premier MCP.
     fields: []
     config: {}
     server:

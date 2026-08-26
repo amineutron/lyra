@@ -320,9 +320,9 @@ _BACKUP_TYPE_RE = re.compile(r'^(timeshift|borg|rsync)$')
 _BACKUP_ID_RE = re.compile(r'^[a-zA-Z0-9_\-\.]{1,128}$')
 _INT_RE = re.compile(r'^\d{1,6}$')
 
-_FALLBACK_BASE_KVM = "/home/amineutron/dev/fedora-setup/scripts/kvm"
-_FALLBACK_BASE_VM = "/home/amineutron/dev/fedora-setup/scripts/agents/vm-controller"
-_FALLBACK_BASE_BK = "/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager"
+# Scripts systeme : /usr/local/lib/lyra/scripts (ou paths.scripts / LYRA_SCRIPTS_DIR),
+# voir lyra/core/paths.py. Resolu a l'appel pour respecter la config courante.
+from lyra.core.paths import backup_manager_dir, kvm_dir
 
 
 def _build_fallback_cmd(tool_name: str, arguments: dict) -> Optional[list]:
@@ -338,27 +338,31 @@ def _build_fallback_cmd(tool_name: str, arguments: dict) -> Optional[list]:
     btype = arguments.get("type", "timeshift")
     identifier = arguments.get("identifier", "")
 
+    kvm = kvm_dir()
+    bk = backup_manager_dir()
+
     if tool_name in ("vm_clone", "vm.clone"):
         if not (_VM_NAME_RE.match(src) and _VM_NAME_RE.match(dst)):
             return None
-        return [f"{_FALLBACK_BASE_KVM}/kvm-clone.sh", src, dst, "--start"]
+        return [str(kvm / "kvm-clone.sh"), src, dst, "--start"]
 
     if tool_name in ("vm_clone_system", "vm.clone_system"):
         if not (_VM_NAME_RE.match(name) and _INT_RE.match(memory) and _INT_RE.match(cpus)):
             return None
-        return [f"{_FALLBACK_BASE_VM}/vm-clone-system.sh", name,
+        return [str(kvm / "kvm-clone-system.sh"), "--hostname", name,
                 "--memory", memory, "--cpus", cpus]
 
     if tool_name in ("backup_create", "backup.create"):
         if not _BACKUP_TYPE_RE.match(btype):
             return None
-        return [f"{_FALLBACK_BASE_BK}/backup-manager.sh", "create", "--type", btype]
+        return [str(bk / "backup-create.sh"), btype]
 
     if tool_name in ("backup_restore", "backup.restore"):
         if not (_BACKUP_TYPE_RE.match(btype) and _BACKUP_ID_RE.match(identifier)):
             return None
-        return [f"{_FALLBACK_BASE_BK}/backup-manager.sh", "restore",
-                "--type", btype, "--identifier", identifier]
+        # --force : le fallback tourne sans TTY, la confirmation interactive
+        # bloquerait ; la confirmation utilisateur a deja eu lieu cote Lyra.
+        return [str(bk / "backup-restore.sh"), btype, identifier, "--force"]
 
     return None
 

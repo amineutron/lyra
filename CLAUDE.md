@@ -472,15 +472,22 @@ Architecture: n8n webhook → si echec → fallback subprocess avec callback.
 
 ### Configuration sudoers
 
-Pour les operations async sans mot de passe (`/etc/sudoers.d/lyra`):
+Genere par l'installeur (`installer/core/steps/mcps.py`, extra `sudoers`) dans
+`/etc/sudoers.d/lyra`, valide par `visudo -cf` avant activation. Les scripts de
+fedora-agents sont copies en `root:root 0755` dans `/usr/local/lib/lyra/scripts`
+et les regles visent UNIQUEMENT cette copie, script par script :
 ```bash
-amineutron ALL=(ALL) NOPASSWD: /home/amineutron/dev/fedora-setup/scripts/kvm/*.sh
-amineutron ALL=(ALL) NOPASSWD: /home/amineutron/dev/fedora-setup/scripts/agents/vm-controller/*.sh
-amineutron ALL=(ALL) NOPASSWD: /home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/*.sh
-amineutron ALL=(ALL) NOPASSWD: /usr/bin/virsh
-amineutron ALL=(ALL) NOPASSWD: /usr/bin/virt-clone
-amineutron ALL=(ALL) NOPASSWD: /usr/bin/qemu-img
+<user> ALL=(ALL) NOPASSWD: /usr/local/lib/lyra/scripts/agents/vm-controller/vm-start.sh
+<user> ALL=(ALL) NOPASSWD: /usr/local/lib/lyra/scripts/kvm/kvm-clone.sh
+...  (un par script d'entree, jamais common.sh ni les helpers _*)
+<user> ALL=(ALL) NOPASSWD: /usr/bin/virsh
+<user> ALL=(ALL) NOPASSWD: /usr/bin/virt-clone
+<user> ALL=(ALL) NOPASSWD: /usr/bin/qemu-img
 ```
+Interdit : glob (`*.sh`) ou chemin sous `/home` dans une regle NOPASSWD -- un
+dossier inscriptible par l'utilisateur equivaut a `NOPASSWD: ALL`. Le code
+applicatif (`main.py`, `modules/n8n.py`) resout les scripts via
+`lyra/core/paths.py` (`LYRA_SCRIPTS_DIR` > `paths.scripts` > defaut systeme).
 
 ### Exemple workflow async
 ```

@@ -42,6 +42,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent))
 
 from modules.llm import OllamaClient, LLMResponse
+from lyra.core.paths import backup_manager_dir, kvm_dir
 from modules.mcp import MCPClient, MCPManager, get_default_tools, get_all_default_tools
 from modules.n8n import N8nClient, N8nConfig, should_use_async, get_async_workflow, get_async_executor, send_discord_notification
 from modules import ui
@@ -866,7 +867,7 @@ class Lyra:
                                     if ssh_ready:
                                         # 3. Lancer verify-vm-clone.sh --verbose
                                         verify_result = subprocess.run(
-                                            ["/home/amineutron/dev/fedora-setup/scripts/kvm/verify-vm-clone.sh",
+                                            [str(kvm_dir() / "verify-vm-clone.sh"),
                                              "--vm", new_vm, "--verbose"],
                                             capture_output=True, text=True, timeout=180
                                         )
@@ -904,8 +905,8 @@ class Lyra:
                         else:
                             try:
                                 verify_result = subprocess.run(
-                                    ["/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh",
-                                     "verify", "--type", backup_type, "--deep"],
+                                    [str(backup_manager_dir() / "backup-verify.sh"),
+                                     backup_type, "--deep"],
                                     capture_output=True, text=True, timeout=300
                                 )
                                 verify_output = verify_result.stdout
@@ -923,8 +924,8 @@ class Lyra:
                         else:
                             try:
                                 verify_result = subprocess.run(
-                                    ["/home/amineutron/dev/fedora-setup/scripts/agents/backup-manager/backup-manager.sh",
-                                     "verify", "--type", backup_type, "--deep"],
+                                    [str(backup_manager_dir() / "backup-verify.sh"),
+                                     backup_type, "--deep"],
                                     capture_output=True, text=True, timeout=300
                                 )
                                 verify_output = verify_result.stdout

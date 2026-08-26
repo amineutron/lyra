@@ -19,6 +19,20 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
+def _print_incomplete_integrations_reminder() -> None:
+    """Rappel des MCPs incomplets (voir lyra/client/reminders.py) --
+    aussi affiche en one-shot, pas seulement en REPL, sinon un utilisateur
+    qui n'utilise jamais le mode interactif ne le voit jamais."""
+    try:
+        import yaml
+        from lyra.client.reminders import print_incomplete_integrations
+        with open(REPO_ROOT / "config.yaml") as f:
+            cfg = yaml.safe_load(f)
+        print_incomplete_integrations(cfg)
+    except Exception:
+        pass
+
+
 def _exec_standalone(argv: list[str]) -> None:
     """Remplace le process par le main_rag historique (fallback ou interactif)."""
     os.chdir(REPO_ROOT)
@@ -49,6 +63,7 @@ def run_oneshot_via_daemon(request: str, args: argparse.Namespace) -> int:
     if channel is None:
         return -1  # demon introuvable -> standalone
 
+    _print_incomplete_integrations_reminder()
     print(f"{ui.Colors.CYAN}LYRA{ui.Colors.RESET}  {request}", flush=True)
 
     mode = "performance" if args.performance else "default"

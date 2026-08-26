@@ -2,12 +2,16 @@
 
 Extras declares dans le catalogue (extra_steps) :
   npm_build    : npm install + npm run build (fedora-agents)
-  sudoers      : /etc/sudoers.d/lyra NOPASSWD (virsh, scripts KVM/backup)
+  sudoers      : copie root:root des scripts dans /usr/local/lib/lyra/scripts
+                 + /etc/sudoers.d/lyra NOPASSWD par script (visudo -cf)
   pip_catt     : outils catt + yt-dlp dans le venv
   hue_pairing  : pairing bouton du bridge (username+clientkey -> secrets)
 """
 from __future__ import annotations
 
+import getpass
+import subprocess
+import tempfile
 import time
 from pathlib import Path
 
@@ -59,39 +63,126 @@ def _install_mcp(ctx: StepContext, mcp: McpDef) -> None:
             run([pip, "install", "catt", "yt-dlp"], ctx.emit,
                 step_id=ctx.step_id, detail_fn=pip_detail)
         elif extra == "sudoers":
-            _write_sudoers(ctx)
+            targets = _install_system_scripts(ctx, dest / "scripts")
+            _write_sudoers(ctx, targets)
         elif extra == "hue_pairing":
             _hue_pairing(ctx, mcp)
 
 
-def _write_sudoers(ctx: StepContext) -> None:
-    """Regles NOPASSWD pour les scripts VM/backup (install-lyra-mcp.sh)."""
-    home = Path.home()
-    rules = "\n".join([
-        f"{home.name} ALL=(ALL) NOPASSWD: {home}/dev/fedora-setup/scripts/kvm/*.sh",
-        f"{home.name} ALL=(ALL) NOPASSWD: {home}/dev/fedora-setup/scripts/agents/vm-controller/*.sh",
-        f"{home.name} ALL=(ALL) NOPASSWD: {home}/dev/fedora-setup/scripts/agents/backup-manager/*.sh",
-        f"{home.name} ALL=(ALL) NOPASSWD: /usr/bin/virsh",
-        f"{home.name} ALL=(ALL) NOPASSWD: /usr/bin/virt-clone",
-        f"{home.name} ALL=(ALL) NOPASSWD: /usr/bin/qemu-img",
-    ]) + "\n"
+# --- Scripts systeme + sudoers -------------------------------------------
+#
+# Les scripts bash de fedora-agents (vm-controller, backup-manager, kvm) sont
+# copies en root:root 0755 dans SYSTEM_SCRIPTS_DIR, et SEULE cette copie est
+# citee dans /etc/sudoers.d/lyra, script par script. Jamais de glob, jamais
+# un chemin sous $HOME : un dossier inscriptible par l'utilisateur cite dans
+# une regle NOPASSWD equivaut a NOPASSWD: ALL (n'importe quel processus de son
+# uid y depose un .sh et obtient root).
 
-    if not ctx.broker.confirm(
-            f"Ecrire {_SUDOERS_PATH} (NOPASSWD virsh/scripts KVM, sudo) ?", True):
-        ctx.emit(Output("sudoers saute — les operations VM demanderont un mot de passe"))
-        return
-    import subprocess
+SYSTEM_SCRIPTS_DIR = Path("/usr/local/lib/lyra/scripts")
+SUDOERS_SUBDIRS = ("agents/vm-controller", "agents/backup-manager", "kvm")
+SUDOERS_BINARIES = ("/usr/bin/virsh", "/usr/bin/virt-clone", "/usr/bin/qemu-img")
+_GLOB_CHARS = set("*?[]")
+
+
+def _sudo(cmd: list[str], *, input: str | None = None,
+          timeout: int = 30) -> "subprocess.CompletedProcess[str]":
+    """sudo -n : echoue immediatement si le cache sudo n'est pas amorce
+    (voir sudoprime.py) au lieu d'attendre un mot de passe illisible."""
     try:
-        proc = subprocess.run(["sudo", "-n", "tee", _SUDOERS_PATH],
-                              input=rules, capture_output=True, text=True,
-                              timeout=30)
+        return subprocess.run(["sudo", "-n", *cmd], input=input,
+                              capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         raise RuntimeError(
-            "ecriture sudoers : sudo attend un mot de passe (cache expire) "
+            f"{cmd[0]} : sudo attend un mot de passe (cache expire) "
             "-- relance l'installeur")
+
+
+def _sudo_checked(cmd: list[str], what: str) -> None:
+    proc = _sudo(cmd)
     if proc.returncode != 0:
-        raise RuntimeError(f"echec ecriture sudoers : {proc.stderr.strip()}")
-    run(["sudo", "chmod", "440", _SUDOERS_PATH], ctx.emit, step_id=ctx.step_id)
+        raise RuntimeError(f"echec {what} : {proc.stderr.strip() or proc.stdout.strip()}")
+
+
+def sudoers_targets(src: Path, system_dir: Path = SYSTEM_SCRIPTS_DIR) -> list[Path]:
+    """Scripts d'entree (dans SUDOERS_SUBDIRS) -> chemins de la copie systeme.
+
+    Exclus : common.sh (source, pas execute) et les helpers prefixes '_'.
+    Logique pure, testable sans sudo.
+    """
+    targets: list[Path] = []
+    for sub in SUDOERS_SUBDIRS:
+        d = src / sub
+        if not d.is_dir():
+            continue
+        for f in sorted(d.glob("*.sh")):
+            if f.name == "common.sh" or f.name.startswith("_"):
+                continue
+            targets.append(system_dir / sub / f.name)
+    return targets
+
+
+def build_sudoers_rules(user: str, targets: list[Path],
+                        binaries: tuple[str, ...] = SUDOERS_BINARIES) -> str:
+    """Une regle NOPASSWD par chemin absolu, sans aucun glob. Logique pure."""
+    lines = []
+    for t in [*targets, *map(Path, binaries)]:
+        p = str(t)
+        if not p.startswith("/") or _GLOB_CHARS & set(p) or any(c.isspace() for c in p):
+            raise ValueError(f"chemin sudoers refuse : {p!r}")
+        lines.append(f"{user} ALL=(ALL) NOPASSWD: {p}")
+    header = ("# Genere par l'installeur Lyra -- regles par script, copie systeme "
+              "root:root uniquement. Ne pas ajouter de glob ni de chemin sous /home.\n")
+    return header + "\n".join(lines) + "\n"
+
+
+def _install_system_scripts(ctx: StepContext, src: Path) -> list[Path]:
+    """Copie src/ (scripts/ du clone fedora-agents) vers SYSTEM_SCRIPTS_DIR
+    en root:root, 0755 pour les .sh, 0644 pour le reste."""
+    if not src.is_dir():
+        raise RuntimeError(f"scripts introuvables : {src} (fedora-agents trop ancien ?)")
+    ctx.emit(Output(f"Installation des scripts dans {SYSTEM_SCRIPTS_DIR} (root:root)"))
+    _sudo_checked(["install", "-d", "-o", "root", "-g", "root", "-m", "0755",
+                   str(SYSTEM_SCRIPTS_DIR)], "creation du dossier systeme")
+    n = 0
+    for path in sorted(src.rglob("*")):
+        rel = path.relative_to(src)
+        dest = SYSTEM_SCRIPTS_DIR / rel
+        if path.is_dir():
+            _sudo_checked(["install", "-d", "-o", "root", "-g", "root", "-m", "0755",
+                           str(dest)], f"creation de {dest}")
+        elif path.is_file():
+            mode = "0755" if path.suffix == ".sh" else "0644"
+            _sudo_checked(["install", "-o", "root", "-g", "root", "-m", mode,
+                           str(path), str(dest)], f"copie de {rel}")
+            n += 1
+    ctx.emit(Output(f"{n} fichiers installes"))
+    return sudoers_targets(src)
+
+
+def _write_sudoers(ctx: StepContext, targets: list[Path]) -> None:
+    """Ecrit /etc/sudoers.d/lyra : validation visudo -cf AVANT activation."""
+    rules = build_sudoers_rules(getpass.getuser(), targets)
+
+    if not ctx.broker.confirm(
+            f"Ecrire {_SUDOERS_PATH} ({len(targets)} scripts systeme + virsh, "
+            "NOPASSWD, sans glob) ?", True):
+        ctx.emit(Output("sudoers saute — les operations VM demanderont un mot de passe"))
+        return
+
+    with tempfile.NamedTemporaryFile("w", suffix=".sudoers", delete=False) as tmp:
+        tmp.write(rules)
+        tmp_path = tmp.name
+    try:
+        check = _sudo(["visudo", "-cf", tmp_path])
+        if check.returncode != 0:
+            raise RuntimeError(
+                "sudoers invalide, fichier NON installe : "
+                f"{check.stderr.strip() or check.stdout.strip()}")
+        _sudo_checked(["install", "-o", "root", "-g", "root", "-m", "0440",
+                       tmp_path, _SUDOERS_PATH], "installation de " + _SUDOERS_PATH)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+    ctx.emit(Output(f"{_SUDOERS_PATH} ecrit et valide (visudo -cf)"))
 
 
 def _hue_pairing(ctx: StepContext, mcp: McpDef, total: int = 30) -> None:

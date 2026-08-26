@@ -18,30 +18,12 @@ import time
 from pathlib import Path
 
 from lyra.client.launcher import ensure_daemon
+from lyra.client.reminders import print_incomplete_integrations
 from lyra.client.render import answer_ask, render_output, render_progress
 from lyra.daemon.protocol import ChannelClosed, LineChannel
 from modules import ui
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
-
-def _print_incomplete_integrations(cfg: dict) -> None:
-    """Rappel des MCPs selectionnes a l'install mais restes incomplets
-    (device injoignable, paquet casse...). Ecrit par installer/core/steps/
-    config.py dans config.yaml (cle incomplete_integrations), jamais
-    bloquant pour Lyra elle-meme."""
-    incomplete = cfg.get("incomplete_integrations") or []
-    if not incomplete:
-        return
-    print(f"{ui.Colors.YELLOW}[!] Integrations incompletes :{ui.Colors.RESET}")
-    for item in incomplete:
-        label = item.get("label", item.get("id", "?"))
-        reason = item.get("reason", "raison inconnue")
-        print(f"{ui.Colors.YELLOW}    - {label} : {reason}{ui.Colors.RESET}")
-    print(f"{ui.Colors.YELLOW}    Cette partie ne fonctionnera pas tant que "
-          f"non configuree. Relance ./installer/install.sh pour la "
-          f"reconfigurer, ou complete config.yaml/secrets.yaml a la "
-          f"main.{ui.Colors.RESET}")
 
 
 def _print_banner() -> None:
@@ -55,7 +37,7 @@ def _print_banner() -> None:
         print_banner(mode="enhanced",
                      ephaistos_model=models.get("ephaistos", {}).get("name", "?"),
                      lyra_model=models.get("lyra", {}).get("name", "?"))
-        _print_incomplete_integrations(cfg)
+        print_incomplete_integrations(cfg)
     except Exception:
         print(f"{ui.Colors.CYAN}LYRA (demon){ui.Colors.RESET}")
 

@@ -65,8 +65,8 @@ class SessionConfig:
 class TrackingConfig:
     """Configuration du client tracking HTTP."""
     api_url: str = "http://127.0.0.1:8765"
-    server_script: str = "/home/amineutron/dev/MCP/tracking/server.py"
-    venv_python: str = "/home/amineutron/dev/MCP/tracking/.venv/bin/python"
+    server_script: str = str(Path.home() / "dev" / "MCP" / "tracking" / "server.py")
+    venv_python: str = str(Path.home() / "dev" / "MCP" / "tracking" / ".venv" / "bin" / "python")
 
 
 @dataclass
@@ -185,8 +185,8 @@ class RAGConfig:
             t = data["tracking"]
             config.tracking = TrackingConfig(
                 api_url=t.get("api_url", "http://127.0.0.1:8765"),
-                server_script=t.get("server_script", "/home/amineutron/dev/MCP/tracking/server.py"),
-                venv_python=t.get("venv_python", "/home/amineutron/dev/MCP/tracking/.venv/bin/python"),
+                server_script=t.get("server_script", TrackingConfig().server_script),
+                venv_python=t.get("venv_python", TrackingConfig().venv_python),
             )
 
         # RAG Enhanced config (optionnel)

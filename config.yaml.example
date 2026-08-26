@@ -68,7 +68,7 @@ mcp:
       enabled: true
       command: node
       args:
-        - /chemin/vers/fedora-setup/scripts/agents/mcp-server/dist/index.js
+        - mcp-servers/fedora-agents/dist/index.js   # clone par l'installeur
       timeout: 120
 
     tv:
@@ -201,6 +201,9 @@ paths:
   prompts: prompts/
   logs: logs/
   cache: .cache/
+  # Scripts systeme (vm-controller, backup-manager, kvm) installes root:root
+  # par l'installeur. Surcharge possible par LYRA_SCRIPTS_DIR.
+  scripts: /usr/local/lib/lyra/scripts
 
 # =============================================================================
 # RAG Configuration

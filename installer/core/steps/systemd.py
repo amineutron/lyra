@@ -66,18 +66,24 @@ def run_step(ctx: StepContext) -> None:
     # Client leger : executable dans ~/.local/bin (marche dans tous les
     # shells, meme non-interactifs/non-bash -- une alias .bashrc seule
     # echoue silencieusement en sh/dash ou en shell non-interactif).
+    # PYTHONPATH (pas juste `cd`) : "python -m lyra.client" resout le
+    # paquet via sys.path[0] = cwd de l'appelant, jamais garanti egal a
+    # {lyra} -- observe : "No module named lyra.client" en lancant lyra
+    # depuis n'importe quel autre repertoire (home, ~/dev...).
     local_bin = Path.home() / ".local" / "bin"
     local_bin.mkdir(parents=True, exist_ok=True)
     shim = local_bin / "lyra"
     shim.write_text(
-        f"#!/bin/sh\nexec \"{lyra}/.venv/bin/python\" -m lyra.client \"$@\"\n",
+        f"#!/bin/sh\nexec env PYTHONPATH=\"{lyra}\" "
+        f"\"{lyra}/.venv/bin/python\" -m lyra.client \"$@\"\n",
         encoding="utf-8")
     shim.chmod(0o755)
     ctx.emit(Output(f"Executable 'lyra' installe dans {shim}"))
 
     # Alias .bashrc en complement (confort bash interactif)
     bashrc = Path.home() / ".bashrc"
-    alias = f"\nalias lyra='{lyra}/.venv/bin/python -m lyra.client'\n"
+    alias = (f"\nalias lyra='PYTHONPATH=\"{lyra}\" "
+             f"{lyra}/.venv/bin/python -m lyra.client'\n")
     text = bashrc.read_text(encoding="utf-8") if bashrc.exists() else ""
     if "alias lyra=" not in text:
         with open(bashrc, "a", encoding="utf-8") as f:

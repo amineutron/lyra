@@ -70,7 +70,9 @@ Une entree YAML dans `core/catalog.yaml` suffit : id, repo (prive
 marouabah/...), dest, runtime (python|node), fields (les champs `secret:
 true` vont dans secrets.yaml chmod 600, jamais dans config.yaml),
 config/server (blocs injectes dans config.yaml), check (http|tcp),
-extra_steps (npm_build, sudoers, hue_pairing, pip_catt). Les deux
+extra_steps (npm_build, sudoers, hue_pairing, pip_catt). `sudoers` copie
+`<dest>/scripts` en root:root dans /usr/local/lib/lyra/scripts puis ecrit
+/etc/sudoers.d/lyra (une regle par script, visudo -cf, jamais de glob). Les deux
 frontaux et les tests le prennent en compte automatiquement.
 
 ## Garanties
