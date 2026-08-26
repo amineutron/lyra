@@ -175,14 +175,14 @@ Catalogue déclaratif (`installer/core/catalog.yaml`), sélectionnable à l'inst
 
 | MCP | Rôle | Dépôt |
 |---|---|---|
-| `fedora-agents` | VMs KVM + backups (17 outils) | privé |
-| `hue-mcp` | Lumières Philips Hue | privé |
-| `pylips-mcp` | TV Philips (JointSpace + ADB) | privé |
-| `denon-mcp` | Home cinéma Denon AVR (telnet) | privé |
-| `catt-mcp` | Cast Chromecast/YouTube | privé |
+| `fedora-agents` | VMs KVM + backups (17 outils) | public |
+| `hue-mcp` | Lumières Philips Hue | public |
+| `pylips-mcp` | TV Philips (JointSpace + ADB) | public |
+| `denon-mcp` | Home cinéma Denon AVR (telnet) | public |
+| `catt-mcp` | Cast Chromecast/YouTube | public |
 | `tracking` | Suivi des opérations longues | intégré |
 
-Ces dépôts MCP sont personnels et privés — le cœur de Lyra (dialogue, RAG, démon, mode texte) fonctionne très bien avec **zéro MCP sélectionné**, testé aujourd'hui même. Envie d'écrire ton propre serveur MCP pour ta propre domotique ? Une entrée YAML dans `catalog.yaml` suffit (voir `installer/README.md`).
+Ces dépôts MCP sont publics mais taillés pour ma domotique — le cœur de Lyra (dialogue, RAG, démon, mode texte) fonctionne très bien avec **zéro MCP sélectionné**, testé aujourd'hui même. Envie d'écrire ton propre serveur MCP pour ta propre domotique ? Une entrée YAML dans `catalog.yaml` suffit (voir `installer/README.md`).
 
 ## Sécurité
 

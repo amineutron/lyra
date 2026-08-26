@@ -186,7 +186,7 @@ L'installeur vit dans `installer/` (les anciens scripts de
   ASCII de `installer/assets/mascots.json`) et app web
   (`installer/app/`, backend stdlib port 9877, frontend React pre-builde
   commite dans `app/backend/static/`, rebuild via `make installer-ui`).
-- **MCPs en repos prives separes** : `marouabah/{fedora-agents,hue-mcp,
+- **MCPs en repos publics separes** : `marouabah/{fedora-agents,hue-mcp,
   pylips-mcp,denon-mcp,catt-mcp}`. Les dossiers `mcp-servers/{pylips,denon,
   catt}-mcp/` sont des clones (gitignores par lyra) ; idem
   `fedora-setup/scripts/agents/mcp-server` (clone de fedora-agents).
