@@ -13,6 +13,36 @@ Deux frontaux consomment exactement le meme pipeline :
 
 `--demo` simule tout le parcours sans executer une seule commande.
 
+## Pipeline
+
+Ordre reel des etapes (`installer/core/pipeline.py:build_pipeline`), verifie
+en conditions reelles sur Fedora/Ubuntu/Arch. `post` (reindexation RAG)
+tourne **avant** `daemon` : le demon charge lui aussi ChromaDB au demarrage,
+et les deux en concurrence sur un repertoire tout neuf provoquaient une
+course (schema sqlite cree deux fois) -- observee et corrigee.
+
+```mermaid
+flowchart LR
+    SYS["system<br/>paquets distro"] --> CLONE["clone<br/>repo Lyra (SSH -> PAT si besoin)"]
+    CLONE --> VENV["venv<br/>python -m venv"]
+    VENV --> PIP["pip<br/>chromadb, torch cpu,<br/>sentence-transformers..."]
+    PIP --> PIPER["piper<br/>lien /usr/local/bin/piper"]
+    PIPER --> VOICE["voice<br/>voix fr_FR-upmc-medium"]
+    VOICE --> OLLAMA["ollama<br/>client (meme en mode distant)"]
+    OLLAMA --> MODELS["models<br/>pull qwen2.5-coder:0.5b<br/>+ llama3.2:1b"]
+    MODELS --> MCPS["MCP selectionnes<br/>(0 a N, clone + install)"]
+    MCPS --> CONFIG["config<br/>config.yaml / secrets.yaml"]
+    CONFIG --> POST["post<br/>reindexation RAG (ChromaDB)"]
+    POST --> DAEMON["daemon<br/>lyra-daemon (systemd user)"]
+```
+
+Les repos MCP prives (`fedora-agents`, `hue-mcp`, `pylips-mcp`...) partagent
+le meme fallback d'authentification que le clone du repo principal
+(`core/gitauth.py resolve_repo_url`) : SSH testee en premier (et le succes
+alimente `known_hosts`), sinon un Personal Access Token est demande **une
+seule fois par run** et reutilise pour tous les MCPs prives suivants --
+jamais ecrit sur disque.
+
 ## Architecture
 
 ```

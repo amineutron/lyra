@@ -802,6 +802,16 @@ def main():
     semantic.clear()
     keyword.clear()
 
+    if not documents:
+        # Aucun MCP selectionne/joignable : rien a indexer. ChromaDB refuse
+        # un add() avec une liste d'embeddings vide -- s'arreter proprement
+        # plutot que de laisser remonter la ValueError.
+        print("\n[i] Aucun outil MCP disponible, index laisse vide.")
+        print("\n" + "=" * 80)
+        print("RÉINDEXATION TERMINÉE")
+        print("=" * 80)
+        return
+
     # Indexer
     print("[*] Indexation dans ChromaDB (semantic)...")
     semantic.add_documents(documents, metadatas, ids)

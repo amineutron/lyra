@@ -15,18 +15,18 @@ _PACKAGES = {
         "python3", "python3-pip", "python3-devel", "git", "curl", "wget",
         "nodejs", "npm", "ffmpeg", "portaudio", "portaudio-devel",
         "gcc", "gcc-c++", "make", "cmake", "alsa-lib", "alsa-lib-devel",
-        "espeak-ng",
+        "espeak-ng", "zstd",
     ],
     "debian": [
         "python3", "python3-venv", "python3-dev", "python3-pip", "git",
         "curl", "wget", "nodejs", "npm", "ffmpeg", "portaudio19-dev",
         "libportaudio2", "gcc", "g++", "make", "cmake", "build-essential",
-        "libssl-dev", "alsa-utils", "espeak-ng",
+        "libssl-dev", "alsa-utils", "espeak-ng", "zstd",
     ],
     "arch": [
         "python", "python-pip", "git", "curl", "wget", "nodejs", "npm",
         "ffmpeg", "portaudio", "gcc", "make", "cmake", "base-devel",
-        "alsa-utils", "espeak-ng",
+        "alsa-utils", "espeak-ng", "zstd",
     ],
 }
 

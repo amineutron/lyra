@@ -33,7 +33,7 @@ def test_ordre_des_etapes(catalog):
     steps = build_pipeline(_state(), selected)
     ids = [s.id for s in steps]
     assert ids[:2] == ["system", "clone"]
-    assert ids[-3:] == ["config", "daemon", "post"]
+    assert ids[-3:] == ["config", "post", "daemon"]
     assert "mcp_fedora" in ids and "mcp_hue" in ids
     assert ids.index("mcp_fedora") < ids.index("config")
 
@@ -82,6 +82,32 @@ def test_erreur_arret_propre():
     assert not any(sid == "c" for sid, _ in changes)   # c jamais lance
     result = [e for e in events if isinstance(e, Result)][0]
     assert not result.ok and "explosion" in result.error
+
+
+def test_etape_optionnelle_echoue_sans_avorter_le_pipeline():
+    """Regression : un MCP mal configure (IP manquante, paquet casse...)
+    ne doit pas empecher le reste de l'installation (Lyra elle-meme) de
+    se terminer. L'echec est note dans state.incomplete_mcps pour le
+    rappel au demarrage du client (voir config.py + repl.py)."""
+    def boom(_ctx):
+        raise RuntimeError("IP du bridge Hue manquante")
+    steps = (StepDef("a", "A", lambda _c: None),
+             StepDef("mcp_hue", "MCP hue-mcp", boom, optional=True),
+             StepDef("c", "C", lambda _c: None))
+    events = []
+    state = _state(demo=False)
+    ok = run_pipeline(state, (), lambda e: events.append(e),
+                      _auto_broker(events), pipeline=steps)
+    assert ok
+    changes = [(e.step_id, e.status) for e in events
+               if isinstance(e, StepChange)]
+    assert ("mcp_hue", "err") in changes
+    assert ("c", "run") in changes   # l'etape suivante a bien continue
+    results = [e for e in events if isinstance(e, Result)]
+    assert len(results) == 1 and results[0].ok
+    assert state.incomplete_mcps == [
+        {"id": "mcp_hue", "label": "MCP hue-mcp",
+         "reason": "IP du bridge Hue manquante"}]
 
 
 def test_broker_question_reponse():

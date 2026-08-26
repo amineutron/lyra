@@ -22,6 +22,9 @@ class InstallState:
     skip_models: bool = False
     demo: bool = False                  # simulation : aucune commande reelle
     install_smoke_timer: bool = False
+    # MCPs optionnels dont l'etape a echoue (device manquant, paquet casse...)
+    # -> ecrit dans config.yaml, lu par lyra/client au demarrage pour rappel.
+    incomplete_mcps: list = field(default_factory=list)
 
     def with_(self, **kwargs: Any) -> "InstallState":
         return replace(self, **kwargs)

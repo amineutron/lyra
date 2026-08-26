@@ -22,19 +22,16 @@ def _append_once(path: Path, marker: str, block: str) -> bool:
 
 def run_ollama(ctx: StepContext) -> None:
     host = ctx.state.ollama_host
-    if host:
-        bashrc = Path.home() / ".bashrc"
-        added = _append_once(bashrc, "OLLAMA_HOST=",
-                             f"\nexport OLLAMA_HOST={host}:11434\n")
-        ctx.emit(Output(f"Ollama distant : {host}:11434"
-                        + (" (export ajoute au .bashrc)" if added else "")))
-        return
 
+    # Le binaire client 'ollama' est requis meme en mode distant : 'ollama
+    # pull' s'appuie dessus pour parler au serveur via OLLAMA_HOST.
     if shutil.which("ollama"):
         ctx.emit(Output("Ollama deja installe"))
     else:
-        ok = ctx.broker.confirm(
-            "Installer Ollama (script officiel ollama.ai, sudo) ?", True)
+        prompt = ("Installer le client Ollama (script officiel ollama.ai, "
+                  "sudo) pour parler au serveur distant ?" if host else
+                  "Installer Ollama (script officiel ollama.ai, sudo) ?")
+        ok = ctx.broker.confirm(prompt, True)
         if not ok:
             raise RuntimeError("Ollama requis (ou relancer avec --ollama-host)")
         # Seul usage shell=True du projet : le script officiel s'installe
@@ -47,6 +44,15 @@ def run_ollama(ctx: StepContext) -> None:
             ctx.emit(Output(line))
         if proc.returncode != 0:
             raise RuntimeError("echec installation Ollama")
+
+    if host:
+        bashrc = Path.home() / ".bashrc"
+        added = _append_once(bashrc, "OLLAMA_HOST=",
+                             f"\nexport OLLAMA_HOST={host}:11434\n")
+        ctx.emit(Output(f"Ollama distant : {host}:11434"
+                        + (" (export ajoute au .bashrc)" if added else "")))
+        return
+
     run(["sudo", "systemctl", "enable", "--now", "ollama"],
         ctx.emit, step_id=ctx.step_id, check=False)
 

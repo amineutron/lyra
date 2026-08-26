@@ -23,6 +23,9 @@ def run_step(ctx: StepContext) -> None:
     )
     assert_no_secrets(config, ctx.mcps)
 
+    if ctx.state.incomplete_mcps:
+        config["incomplete_integrations"] = list(ctx.state.incomplete_mcps)
+
     config_path = lyra / "config.yaml"
     backup = backup_if_exists(config_path)
     if backup:

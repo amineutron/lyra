@@ -25,6 +25,7 @@ from installer.core.events import Ask, AskBroker
 from installer.core.osdetect import detect_current
 from installer.core.pipeline import build_pipeline, run_pipeline
 from installer.core.state import DEFAULT_LYRA_REPO, InstallState
+from installer.core.sudoprime import ensure_sudo_cached
 
 from . import boot, forms, menu, mode_select
 from .mascot import MascotAnimator, pick_mascot
@@ -228,6 +229,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if not _recap_and_confirm(console, state, selected):
         console.print(f"  [{DIM}]Installation annulee.[/]")
         return 0
+
+    # Amorce sudo AVANT Rich Live : le pipeline tourne ensuite dans un
+    # thread arriere-plan sans terminal interactif pour un mot de passe.
+    if not args.demo:
+        console.print(f"\n  [{DIM}]Mot de passe sudo (paquets systeme, "
+                      f"regles NOPASSWD)...[/]")
+        if not ensure_sudo_cached(demo=args.demo):
+            console.print(f"\n  [{BAD}]Mot de passe sudo requis pour "
+                          f"installer.[/]")
+            return 1
 
     # Phase 4 : installation animee (meme mascotte que le choix de mode)
     ok, error = _run_install(console, state, selected, mascot)

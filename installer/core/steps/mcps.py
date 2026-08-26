@@ -15,6 +15,7 @@ import requests
 
 from ..catalog import McpDef
 from ..events import Output, Progress
+from ..gitauth import resolve_repo_url
 from ..pipeline import StepContext, StepFn
 from ..runner import pip_detail, run
 
@@ -37,7 +38,8 @@ def _install_mcp(ctx: StepContext, mcp: McpDef) -> None:
             step_id=ctx.step_id, check=False)
     else:
         dest.parent.mkdir(parents=True, exist_ok=True)
-        run(["git", "clone", "--depth=1", mcp.repo, str(dest)], ctx.emit,
+        repo_url = resolve_repo_url(ctx, mcp.repo)
+        run(["git", "clone", "--depth=1", repo_url, str(dest)], ctx.emit,
             step_id=ctx.step_id)
 
     pip = str(ctx.state.lyra_dir / ".venv" / "bin" / "pip")
@@ -79,8 +81,14 @@ def _write_sudoers(ctx: StepContext) -> None:
         ctx.emit(Output("sudoers saute — les operations VM demanderont un mot de passe"))
         return
     import subprocess
-    proc = subprocess.run(["sudo", "tee", _SUDOERS_PATH],
-                          input=rules, capture_output=True, text=True)
+    try:
+        proc = subprocess.run(["sudo", "-n", "tee", _SUDOERS_PATH],
+                              input=rules, capture_output=True, text=True,
+                              timeout=30)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(
+            "ecriture sudoers : sudo attend un mot de passe (cache expire) "
+            "-- relance l'installeur")
     if proc.returncode != 0:
         raise RuntimeError(f"echec ecriture sudoers : {proc.stderr.strip()}")
     run(["sudo", "chmod", "440", _SUDOERS_PATH], ctx.emit, step_id=ctx.step_id)

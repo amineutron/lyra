@@ -5,6 +5,7 @@ Utilise ChromaDB avec embeddings pour la recherche semantique.
 """
 
 import os
+import time
 import warnings
 import logging
 from typing import Optional
@@ -125,11 +126,26 @@ class SemanticRetriever:
         """Initialise ChromaDB et charge le modele d'embeddings."""
         self._check_dependencies()
 
-        # Client ChromaDB persistant
-        self._client = chromadb.PersistentClient(
-            path=self.persist_directory,
-            settings=Settings(anonymized_telemetry=False)
-        )
+        # Client ChromaDB persistant. Sur un repertoire tout neuf, deux
+        # process qui appellent PersistentClient() en meme temps (ex: le
+        # demon lyra-daemon qui demarre pendant que reindex_mcp_rag_*.py
+        # tourne) peuvent tous les deux tenter de creer le schema sqlite --
+        # l'un des deux recoit "table collections already exists" alors que
+        # la base est en realite prete. Retry une fois, l'etat est bon des
+        # que l'autre process a fini sa creation.
+        try:
+            self._client = chromadb.PersistentClient(
+                path=self.persist_directory,
+                settings=Settings(anonymized_telemetry=False)
+            )
+        except chromadb.errors.InternalError as exc:
+            if "already exists" not in str(exc):
+                raise
+            time.sleep(0.5)
+            self._client = chromadb.PersistentClient(
+                path=self.persist_directory,
+                settings=Settings(anonymized_telemetry=False)
+            )
 
         # Charger ou creer la collection
         self._collection = self._client.get_or_create_collection(

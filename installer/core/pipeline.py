@@ -38,6 +38,10 @@ class StepDef:
     label: str
     fn: StepFn
     condition: Callable[[InstallState], bool] = lambda _s: True
+    # Un MCP mal configure (device injoignable, IP manquante...) ou dont le
+    # paquet echoue a s'installer ne doit pas empecher Lyra elle-meme de
+    # s'installer : l'etape est notee en erreur mais le pipeline continue.
+    optional: bool = False
 
 
 def build_pipeline(state: InstallState, selected: tuple[McpDef, ...]) -> tuple[StepDef, ...]:
@@ -62,13 +66,19 @@ def build_pipeline(state: InstallState, selected: tuple[McpDef, ...]) -> tuple[S
             continue
         steps.append(StepDef(
             f"mcp_{mcp.id}", f"MCP {mcp.name}",
-            mcps.make_step(mcp),
+            mcps.make_step(mcp), optional=True,
         ))
 
     steps += [
         StepDef("config", "Configuration", config.run_step),
-        StepDef("daemon", "Demon Lyra (systemd)", systemd.run_step),
+        # post (reindexation ChromaDB) AVANT daemon : lyra-daemon charge lui
+        # aussi le RAG/ChromaDB au demarrage. Si le demon est deja actif
+        # pendant que post initialise le meme repertoire chromadb tout
+        # neuf, deux process se disputent la creation du schema sqlite --
+        # observe en pratique (InternalError puis AttributeError differents
+        # selon le timing). Reindexer d'abord elimine la course a la racine.
         StepDef("post", "Verifications finales", post.run_step),
+        StepDef("daemon", "Demon Lyra (systemd)", systemd.run_step),
     ]
     return tuple(steps)
 
@@ -93,6 +103,13 @@ def run_pipeline(state: InstallState, selected: tuple[McpDef, ...],
                 step.fn(ctx.with_step(step.id))
         except Exception as exc:  # noqa: BLE001 — une erreur = arret propre
             emit(StepChange(step.id, "err", detail=str(exc)))
+            if step.optional:
+                # MCP mal configure/casse : Lyra elle-meme doit rester
+                # installable. Note pour le rappel au demarrage de l'app
+                # (config.py lit incomplete_mcps, repl.py l'affiche).
+                state.incomplete_mcps.append(
+                    {"id": step.id, "label": step.label, "reason": str(exc)})
+                continue
             emit(Result(ok=False, error=f"{step.label} : {exc}"))
             return False
         emit(StepChange(step.id, "ok", elapsed=time.monotonic() - t0))

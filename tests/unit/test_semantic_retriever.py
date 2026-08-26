@@ -6,10 +6,13 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 # Skip si dependencies non installees
 pytest.importorskip("chromadb")
 pytest.importorskip("sentence_transformers")
+
+import chromadb
 
 from lyra.rag.semantic_retriever import SemanticRetriever, SemanticResult
 
@@ -159,6 +162,58 @@ class TestSemanticRetriever:
         assert results[0].metadata["name"] == "test"
         assert results[0].metadata["category"] == "cat"
         assert results[0].metadata["custom"] == "value"
+
+    def test_initialize_retries_on_concurrent_table_creation(self, temp_db):
+        """Regression : deux process (ex: lyra-daemon + reindex_mcp_rag_*.py)
+        qui appellent PersistentClient() en meme temps sur un repertoire
+        chromadb tout neuf peuvent tous les deux tenter de creer le schema
+        sqlite -- l'un recoit 'table collections already exists' alors que
+        la base est en realite prete. initialize() doit retenter une fois
+        au lieu de laisser planter l'appelant."""
+        retriever = SemanticRetriever(
+            persist_directory=temp_db,
+            collection_name="test_retry"
+        )
+
+        real_client = chromadb.PersistentClient(
+            path=temp_db, settings=chromadb.config.Settings(anonymized_telemetry=False)
+        )
+
+        # Force le chargement paresseux avant de patcher, sinon le module
+        # semantic_retriever n'a pas encore d'attribut chromadb a patcher.
+        retriever._check_dependencies()
+
+        with patch(
+            "lyra.rag.semantic_retriever.chromadb.PersistentClient",
+            side_effect=[
+                chromadb.errors.InternalError(
+                    "error returned from database: (code: 1) "
+                    "table collections already exists"
+                ),
+                real_client,
+            ],
+        ) as mock_client:
+            retriever.initialize()
+
+        assert mock_client.call_count == 2
+        assert retriever._client is real_client
+        assert retriever._collection is not None
+
+    def test_initialize_reraises_other_internal_errors(self, temp_db):
+        """Une InternalError sans rapport avec la course de creation ne doit
+        pas etre avalee par le retry."""
+        retriever = SemanticRetriever(
+            persist_directory=temp_db,
+            collection_name="test_other_error"
+        )
+        retriever._check_dependencies()
+
+        with patch(
+            "lyra.rag.semantic_retriever.chromadb.PersistentClient",
+            side_effect=chromadb.errors.InternalError("disk I/O error"),
+        ):
+            with pytest.raises(chromadb.errors.InternalError, match="disk I/O error"):
+                retriever.initialize()
 
 
 if __name__ == "__main__":
