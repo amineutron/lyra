@@ -15,5 +15,5 @@ mypy>=1.0.0  # Type checking
 coverage>=7.0.0
 
 # Utilitaires
-ipython>=8.0.0  # REPL amélioré
+ipython>=9.17.1  # REPL amélioré
 ipdb>=0.13.0    # Debugger
