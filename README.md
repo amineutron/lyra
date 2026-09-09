@@ -14,6 +14,10 @@ Née comme copilote pour gérer un homelab (KVM, backups, domotique), Lyra s'app
 
 Enregistrée sur le démon réel avec [`docs/demo/record.sh`](docs/demo/record.sh) : une requête de lecture, puis « supprime la vm test-vm » que Lyra propose comme action destructive et annule quand on répond non.
 
+![Fin d'installation : l'animation d'accueil vérifie chaque dépendance, serveur MCP et service, puis annonce que tous les systèmes sont nominaux](docs/assets/lyra-intro.gif)
+
+L'animation jouée à la fin de `install.sh` (`intro/lyra_intro.sh`) : elle sonde la vraie installation (runtime, GPU, modèles Ollama, serveurs MCP, sudoers, alias, service de suivi). Régénérée avec [`docs/demo/record_intro.sh`](docs/demo/record_intro.sh).
+
 ## Un aperçu
 
 Lyra a une petite sœur web : neutroncore, un hub PWA qui permet de discuter avec elle depuis le navigateur (mobile compris), avec le même thème visuel — palette or/rose "réacteur" reprise directement dans l'installeur en ligne de commande.
