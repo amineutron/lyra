@@ -47,11 +47,11 @@ class ModelConfig:
 class ModelsConfig:
     """Configuration des modeles."""
     ephaistos: ModelConfig = field(default_factory=lambda: ModelConfig(
-        name="qwen2.5-coder:7b",
+        name="qwen2.5-coder:0.5b",
         temperature=0.1
     ))
     lyra: ModelConfig = field(default_factory=lambda: ModelConfig(
-        name="llama3.2:3b",
+        name="llama3.2:1b",
         temperature=0.5
     ))
 
@@ -155,14 +155,14 @@ class RAGConfig:
             if "ephaistos" in models_data:
                 eph = models_data["ephaistos"]
                 config.models.ephaistos = ModelConfig(
-                    name=eph.get("name", "qwen2.5-coder:7b"),
+                    name=eph.get("name", "qwen2.5-coder:0.5b"),
                     temperature=eph.get("temperature", 0.1)
                 )
 
             if "lyra" in models_data:
                 lyra = models_data["lyra"]
                 config.models.lyra = ModelConfig(
-                    name=lyra.get("name", "llama3.2:3b"),
+                    name=lyra.get("name", "llama3.2:1b"),
                     temperature=lyra.get("temperature", 0.5)
                 )
 
