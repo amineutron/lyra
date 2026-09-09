@@ -1,123 +1,63 @@
-# Byte-compiled / optimized / DLL files
+# ---------- Python ----------
 __pycache__/
 *.py[cod]
-*$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
+build/
+dist/
+.eggs/
+.venv/
+.venv-installer/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
 htmlcov/
-.tox/
-.nox/
 .coverage
 .coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
 
-# Translations
-*.mo
-*.pot
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# Lyra specific
-*.wav
-*.mp3
-*.ogg
-logs/
-*.log
-reports/*.json
-.secrets
-secrets.yaml
+# ---------- Configuration et secrets (jamais versionnes) ----------
 config.yaml
-*.png
-
-# ChromaDB (index local, ne pas versionner)
-.chromadb/
-
-# Artefacts session
-SESSION_ACTIVE.md
-
-# Model cache
-/models/
-*.onnx
-*.bin
-
-# Piper TTS voices (download separately)
-voices/
-
-# Planning / WIP personnel (ne pas versionner)
-lyra-v1-CDC
-readme
-to-synthese/
-demandes/
-
-# Debug artifacts
-.playwright-mcp/
-.claude-sync/
+secrets.yaml
 secrets.yaml.bak*
+.env
 
-# Donnees d'usage runtime (jamais versionnees)
+# ---------- Donnees et modeles generes a l'execution ----------
+data/chromadb/
+data/chroma_db/
 data/session_history.db
 data/feedback.json
+*.sqlite3
+models/
+voices/
+*.onnx
+*.onnx.json
 
-# MCP servers extraits en repos dedies (marouabah/{pylips,denon,catt}-mcp)
+# ---------- Rapports et sorties de tests (regenerables) ----------
+tests/*_report.txt
+tests/*_report.pdf
+tests/debug/
+*.log
+
+# ---------- Caches des animations (intro Manim) ----------
+intro/media/**/partial_movie_files/
+intro/media/**/Tex/
+intro/media/**/texts/
+
+# ---------- Serveurs MCP developpes dans leurs propres depots ----------
 mcp-servers/pylips-mcp/
 mcp-servers/denon-mcp/
 mcp-servers/catt-mcp/
 mcp-servers/fedora-agents/
 mcp-servers/hue-mcp/
-.venv-installer/
+
+# ---------- Interface d'installation ----------
 installer/app/frontend/node_modules/
+
+# ---------- Notes de travail et outils locaux ----------
+.claude-sync/
+.playwright-mcp/
+to-synthese/
+demandes/
+lyra-v1-CDC
+readme
