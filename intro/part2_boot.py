@@ -34,7 +34,7 @@ INSTALL_STEPS = [
 MCP_SERVERS = [
     ("fedora-agents",  "Gestionnaire VM KVM + Sauvegardes",  0.4),
     ("pylips-mcp",     "Philips 55OLED705/12",               0.3),
-    ("hue-mcp",        "Pont Hue @ 192.168.1.51",            0.3),
+    ("hue-mcp",        "Pont Philips Hue",            0.3),
     ("denon-mcp",      "AVR-X1700H DAB",                     0.3),
 ]
 

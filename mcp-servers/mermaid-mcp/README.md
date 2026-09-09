@@ -37,7 +37,7 @@ Ajouter dans `~/.config/claude-code/mcp_settings.json` :
   "mcpServers": {
     "mermaid": {
       "command": "python",
-      "args": ["/home/amineutron/dev/lyra/mcp-servers/mermaid-mcp/server.py"],
+      "args": ["/chemin/vers/lyra/mcp-servers/mermaid-mcp/server.py"],
       "env": {}
     }
   }
@@ -440,7 +440,7 @@ Par défaut : `/tmp/mermaid_mcp/`
 
 Modifier dans `server.py` :
 ```python
-output_path = Path(f"/home/amineutron/dev/lyra/diagrams/{diagram_id}.html")
+output_path = Path(f"<dossier lyra>/diagrams/{diagram_id}.html")
 ```
 
 ---
@@ -522,7 +522,7 @@ pip install mcp
 python --version  # 3.10+
 
 # Tester manuellement
-cd /home/amineutron/dev/lyra/mcp-servers/mermaid-mcp
+cd <dossier lyra>/mcp-servers/mermaid-mcp
 python server.py
 ```
 
@@ -553,9 +553,9 @@ Utiliser `validate_diagram` pour identifier les problèmes :
 
 ## 📚 Ressources
 
-- **Guide des bonnes pratiques** : `/home/amineutron/dev/lyra/docs/MERMAID_BEST_PRACTICES.md`
-- **Template HTML** : `/home/amineutron/dev/lyra/docs/mermaid_template.html`
-- **MermaidViewer Python** : `/home/amineutron/dev/lyra/lyra/utils/mermaid_viewer.py`
+- **Guide des bonnes pratiques** : `docs/MERMAID_BEST_PRACTICES.md` (dans le dépôt lyra)
+- **Template HTML** : `<dossier lyra>/docs/mermaid_template.html`
+- **MermaidViewer Python** : `<dossier lyra>/lyra/utils/mermaid_viewer.py`
 - **Mermaid Live Editor** : https://mermaid.live
 - **Documentation Mermaid** : https://mermaid.js.org
 

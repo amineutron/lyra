@@ -21,7 +21,7 @@ scenes/ironman/
 ## Lancement rapide
 
 ```bash
-cd /home/amineutron/dev/lyra
+cd <dossier lyra>
 
 # Suite principale
 python3 -m pytest scenes/ironman/tests/ -v
@@ -60,7 +60,7 @@ Les tests tests_phase3/4/5.py utilisent des imports relatifs.
 Lancer depuis la racine Lyra:
 
 ```bash
-cd /home/amineutron/dev/lyra
+cd <dossier lyra>
 python3 -m pytest scenes/ironman/tests/ -v
 ```
 

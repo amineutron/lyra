@@ -149,7 +149,7 @@ L'orchestrateur arrete `hue_beat` a la fin de cette phase.
 ### Lancer la scene complete
 
 ```bash
-cd /home/amineutron/dev/lyra
+cd <dossier lyra>
 .venv/bin/python -m scenes.ironman.run_scene        # confirmation interactive
 .venv/bin/python -m scenes.ironman.run_scene -y     # sans confirmation
 ```
@@ -186,7 +186,7 @@ orchestrator.run_phases([2, 3])               # sous-scene impact+buildup
 ## Tests
 
 ```bash
-cd /home/amineutron/dev/lyra
+cd <dossier lyra>
 .venv/bin/python -m pytest scenes/ironman/ -v                 # tout
 .venv/bin/python -m pytest scenes/ironman/phases/ -v          # phases seules
 .venv/bin/python -m pytest scenes/ironman/phases/test_phase2.py -v
@@ -201,12 +201,12 @@ par-dessus. Ne jamais mettre de vraies cles dans un fichier versionne.
 
 ```yaml
 tv:
-  host: "192.168.1.50"
+  host: "192.0.2.50"
   user: "<user>"
   pass: "<64-hex depuis pairing JointSpace>"
 
 hue:
-  bridge_ip: "192.168.1.51"
+  bridge_ip: "192.0.2.51"
   username: "<cle API Hue>"
 
 catt:

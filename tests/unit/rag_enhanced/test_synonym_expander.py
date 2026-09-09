@@ -202,10 +202,10 @@ class TestSynonymExpanderEdgeCases:
     def test_numbers(self):
         """Test : Nombres préservés"""
         expander = SynonymExpander()
-        result = expander.expand("vm 192.168.0.1")
+        result = expander.expand("vm 192.0.2.1")
 
         # IP préservée
-        assert "192.168.0.1" in result
+        assert "192.0.2.1" in result
 
     def test_case_preservation(self):
         """Test : Casse du texte original préservée"""

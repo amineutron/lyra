@@ -8,7 +8,8 @@ TEMPLATE = (Path(__file__).resolve().parents[2] / "install" / "lyra-daemon.servi
 
 def test_chemins_substitues():
     out = render_service(TEMPLATE, "/opt/lyra", "/home/bob")
-    assert "/home/amineutron/dev/lyra" not in out
+    assert "@LYRA_DIR@" not in out and "@HOME@" not in out
+    assert "/home/bob" in out
     assert "WorkingDirectory=/opt/lyra" in out
     assert "ExecStart=/opt/lyra/.venv/bin/python -m lyra.daemon" in out
 

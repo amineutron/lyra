@@ -19,6 +19,6 @@ jobs:
       - run: uv sync --frozen --extra dev --python 3.12
       - name: Inventaire des licences (THIRD_PARTY_LICENSES.md doit être à jour)
         run: |
-          uv run --frozen pip-licenses --format=markdown --with-urls --order=license > /tmp/tpl.md
+          uv run --frozen pip-licenses --format=markdown --with-urls --order=license | awk '!seen[$0]++' > /tmp/tpl.md
           if ! diff -q <(tail -n +3 THIRD_PARTY_LICENSES.md) /tmp/tpl.md >/dev/null; then
             echo "THIRD_PARTY_LICENSES.md est périmé : regénérez-le avec make licenses"; diff <(tail -n +3 THIRD_PARTY_LICENSES.md) /tmp/tpl.md | head -20; exit 1; fi

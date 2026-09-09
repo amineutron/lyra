@@ -71,7 +71,7 @@ Liste complète des 85 outils MCP disponibles dans Lyra.
 
 ---
 
-## HUE (24 outils) - Philips Hue Bridge @ 192.168.1.51
+## HUE (24 outils) - Philips Hue Bridge
 
 ### Lumières individuelles
 
@@ -157,7 +157,7 @@ Device : **55OLED705/12** (Chromecast/DLNA)
 
 ---
 
-## DENON (10 outils) - Home Cinema AVR-X1700H DAB @ 192.168.1.52
+## DENON (10 outils) - Home Cinema AVR-X1700H DAB
 
 **IMPORTANT:** Les commandes `tv.volume_*` sont automatiquement redirigées vers le Denon quand HDMI ARC est actif.
 

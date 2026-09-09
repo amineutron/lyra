@@ -23,4 +23,6 @@ installer-ui: ## Rebuild le frontend de l'app d'installation (commite dans app/b
 
 # Inventaire des licences des dependances (verifie en CI)
 licenses:
-	{ echo "# Licences des dépendances tierces"; echo; uv run --frozen pip-licenses --format=markdown --with-urls --order=license; } > THIRD_PARTY_LICENSES.md
+	# Même environnement que la CI (extra dev, Python 3.12, venv dédié) pour un inventaire reproductible.
+	UV_PROJECT_ENVIRONMENT=.venv-licenses uv sync --frozen --extra dev --python 3.12 -q
+	{ echo "# Licences des dépendances tierces"; echo; UV_PROJECT_ENVIRONMENT=.venv-licenses uv run --frozen pip-licenses --format=markdown --with-urls --order=license | awk '!seen[$$0]++'; } > THIRD_PARTY_LICENSES.md

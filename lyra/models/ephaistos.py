@@ -127,10 +127,10 @@ Specs: vm_export(vm_name: string, mode?: enum(classic, exam) = "classic", output
 Reponse:
 {"tool": "vm_export", "arguments": {"vm_name": "preprod-01", "mode": "exam"}, "missing_args": [], "confidence": 0.95, "reasoning": "mode exam: conserve comptes/privileges, sanitarise machine-id/SSH/reseau/logs"}
 
-Requete: "importe la VM depuis /home/amineutron/vm-exports/preprod-01-export.tar.gz"
+Requete: "importe la VM depuis ~/vm-exports/preprod-01-export.tar.gz"
 Specs: vm_import(archive_path: string, new_name?: string, start?: boolean)
 Reponse:
-{"tool": "vm_import", "arguments": {"archive_path": "/home/amineutron/vm-exports/preprod-01-export.tar.gz"}, "missing_args": [], "confidence": 0.93, "reasoning": "import archive tar.gz, nom auto depuis l archive"}
+{"tool": "vm_import", "arguments": {"archive_path": "~/vm-exports/preprod-01-export.tar.gz"}, "missing_args": [], "confidence": 0.93, "reasoning": "import archive tar.gz, nom auto depuis l archive"}
 
 Requete: "importe /tmp/vm.tar.gz sous le nom test-import"
 Specs: vm_import(archive_path: string, new_name?: string, start?: boolean)
