@@ -4,15 +4,16 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "lyra"
-version = "1.0.0"
+version = "1.1.0"
 description = "Local voice-controlled DevOps assistant (French) with RAG pipeline"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "amineutron" }]
 requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

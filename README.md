@@ -217,4 +217,6 @@ tts:
 
 ## Licence
 
-[MIT](LICENSE)
+Lyra est publiée sous **AGPL-3.0** depuis la version 1.1.0 (les versions jusqu'à 1.0.0 restent MIT). Utilisation, étude, modification et redistribution libres à condition de publier vos modifications sous la même licence, y compris en usage réseau. Pour intégrer Lyra dans un produit fermé ou obtenir un support contractuel, une [licence commerciale](COMMERCIAL-LICENSE.md) est proposée. Les contributions sont soumises au [CLA](CLA.md).
+
+La synthèse vocale repose sur [Piper](https://github.com/rhasspy/piper) (GPL-3.0), installé séparément par l'installeur : les deux licences sont compatibles, votre code reste sous AGPL.
