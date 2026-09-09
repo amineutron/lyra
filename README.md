@@ -1,14 +1,16 @@
 # Lyra
 
+[![Tests](https://github.com/amineutron/lyra/actions/workflows/tests.yml/badge.svg)](https://github.com/amineutron/lyra/actions/workflows/tests.yml) [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+
 Assistant vocal DevOps **100% local** — pas d'API cloud, pas de facture. Tu lui parles (ou tu lui écris) en français, il gère tes VMs, tes backups, ta TV, tes lumières. Tout tourne sur ta machine : LLM via Ollama, reconnaissance vocale, synthèse vocale.
 
 Née comme copilote pour gérer un homelab (KVM, backups, domotique), Lyra s'appuie sur un pipeline RAG à 3 niveaux + un routage à base de règles pour éviter d'interroger un LLM à chaque requête triviale — résultat : des réponses en dessous de la seconde une fois le démon chaud.
 
 ## Un aperçu
 
-Lyra a une petite sœur web : [neutroncore.app](docs/assets/neutroncore-app.jpg), un hub PWA qui permet de discuter avec elle depuis le navigateur (mobile compris), avec le même thème visuel — palette or/rose "réacteur" reprise directement dans l'installeur en ligne de commande.
+Lyra a une petite sœur web : neutroncore, un hub PWA qui permet de discuter avec elle depuis le navigateur (mobile compris), avec le même thème visuel — palette or/rose "réacteur" reprise directement dans l'installeur en ligne de commande.
 
-![neutroncore.app](docs/assets/neutroncore-app.jpg)
+!neutroncore
 
 ## Fonctionnalités
 
@@ -45,11 +47,11 @@ Executer ? [T]out / [1] par 1 / [n]on : t
 ## Démarrage rapide
 
 ```bash
-git clone git@github.com:marouabah/lyra.git && cd lyra
+git clone https://github.com/amineutron/lyra.git && cd lyra
 ./installer/install.sh
 ```
 
-L'installeur (TUI Rich interactif, ou `--app` pour une version graphique locale) détecte ta distro (Fedora/Debian/Arch), installe les dépendances système, crée le venv, télécharge Piper + une voix française, installe le client Ollama et pull deux modèles légers par défaut — **`qwen2.5-coder:0.5b`** et **`llama3.2:1b`**, environ **4 Go de VRAM** au total. Ça tourne sans GPU dédié : `--ollama-host <ip>` pointe vers une machine distante qui héberge Ollama (validé aujourd'hui en conditions réelles sur 3 VMs Fedora/Ubuntu/Arch sans aucun GPU).
+L'installeur (TUI Rich interactif, ou `--app` pour une version graphique locale) détecte ta distro (Fedora/Debian/Arch), installe les dépendances système, crée le venv, télécharge Piper + une voix française, installe le client Ollama et pull deux modèles légers par défaut — **`qwen2.5-coder:0.5b`** et **`llama3.2:1b`**, environ **4 Go de VRAM** au total. Ça tourne sans GPU dédié : `--ollama-host <ip>` pointe vers une machine distante qui héberge Ollama (validé le 2026-08-24 en conditions réelles sur 3 VMs Fedora, Ubuntu et Arch sans GPU : voir [docs/VM_INSTALL_TESTS.md](docs/VM_INSTALL_TESTS.md)).
 
 Aucune commande à copier-coller à la main pour les permissions sudo — l'installeur génère lui-même les règles `sudoers` pour ton utilisateur, pas un nom codé en dur.
 
@@ -140,7 +142,7 @@ flowchart LR
 
 ## Les mascottes et les divinités — la direction artistique
 
-Lyra emprunte sa palette (or `#f6c177`, rose `#eb6f92`, "thème réacteur") à [neutroncore.app](docs/assets/neutroncore-app.jpg) — les deux partagent la même identité visuelle. Ce n'est pas juste un logo : la ligne de commande hérite du même soin.
+Lyra emprunte sa palette (or `#f6c177`, rose `#eb6f92`, "thème réacteur") à neutroncore — les deux partagent la même identité visuelle. Ce n'est pas juste un logo : la ligne de commande hérite du même soin.
 
 **Les modèles portent des noms de divinités grecques, pas par hasard :**
 - **HESTIA** — déesse du foyer, gardienne de la maison. Dans le code : *"Elle exécute les tâches domestiques (MCP) avec soin."* C'est elle qui parle aux serveurs MCP et garde la maison (le homelab) en ordre.
@@ -182,7 +184,7 @@ Catalogue déclaratif (`installer/core/catalog.yaml`), sélectionnable à l'inst
 | `catt-mcp` | Cast Chromecast/YouTube | public |
 | `tracking` | Suivi des opérations longues | intégré |
 
-Ces dépôts MCP sont publics mais taillés pour ma domotique — le cœur de Lyra (dialogue, RAG, démon, mode texte) fonctionne très bien avec **zéro MCP sélectionné**, testé aujourd'hui même. Envie d'écrire ton propre serveur MCP pour ta propre domotique ? Une entrée YAML dans `catalog.yaml` suffit (voir `installer/README.md`).
+Ces dépôts MCP sont publics mais taillés pour ma domotique — le cœur de Lyra (dialogue, RAG, démon, mode texte) fonctionne très bien avec **zéro MCP sélectionné** (testé le 2026-08-24, même protocole). Envie d'écrire ton propre serveur MCP pour ta propre domotique ? Une entrée YAML dans `catalog.yaml` suffit (voir `installer/README.md`).
 
 ## Sécurité
 

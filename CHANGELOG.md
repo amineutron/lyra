@@ -1,5 +1,18 @@
 # Changelog - Lyra
 
+## [1.1.0] - 2026-09-09
+
+### Changed
+- License: AGPL-3.0-or-later with a commercial license option and a CLA (versions up to 1.0.0 remain MIT).
+- README: HTTPS clone URL, status badges, dated claims, no more reference to a web domain.
+- CLAUDE.md condensed to what an agent needs.
+
+### Removed
+- Generated artifacts (empty ChromaDB databases, test reports, Manim caches), the self-referencing `lyra/run.sh` symlink that broke CI, and workshop files (Claude Code prompts, session notes, n8n exports, divergent documentation copy), now archived privately.
+
+### Fixed
+- CI: the pip cache step no longer fails on a symlink loop.
+
 ## [v1.1.0 - Pipeline modulaire complet] - 2026-03-10
 
 ### Refactoring - Decomposition de pipeline.py en modules separes (7 missions)
