@@ -4,19 +4,17 @@ Background Task Manager for HESTIA.
 Gere l'execution des operations longues en arriere-plan.
 """
 
-import subprocess
-import threading
-import time
 import json
 import os
 import signal
-from typing import Optional, Dict, List
-from dataclasses import dataclass, field
+import subprocess
+import threading
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, List, Optional
 
 from .tracking_client import TrackingClient
-
 
 REGISTRY_PATH = Path.home() / ".lyra" / "active_tasks.json"
 _REGISTRY_LOCK = threading.Lock()

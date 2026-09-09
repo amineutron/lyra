@@ -15,8 +15,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from installer.core.steps.mcps import (
-    SYSTEM_SCRIPTS_DIR, _install_system_scripts, _write_sudoers,
-    build_sudoers_rules, sudoers_targets,
+    SYSTEM_SCRIPTS_DIR,
+    _install_system_scripts,
+    _write_sudoers,
+    build_sudoers_rules,
+    sudoers_targets,
 )
 
 

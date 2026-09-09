@@ -6,10 +6,9 @@ de recherche semantique et keyword.
 """
 
 from dataclasses import dataclass
-from typing import Union
 
-from .semantic_retriever import SemanticResult
 from .keyword_retriever import KeywordResult
+from .semantic_retriever import SemanticResult
 
 
 @dataclass

@@ -3,7 +3,6 @@ mode REPL -- un utilisateur qui n'utilise que le one-shot (`lyra -y "..."`,
 le mode documente dans CLAUDE.md pour les tests rapides) ne le voyait
 jamais. _print_incomplete_integrations_reminder() est maintenant appele
 aussi dans run_oneshot_via_daemon()."""
-from pathlib import Path
 from unittest.mock import patch
 
 import yaml

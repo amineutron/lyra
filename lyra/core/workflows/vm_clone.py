@@ -14,9 +14,9 @@ import re
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from ..types import QueryType, PipelineResult
-from ..validation import get_existing_vm_names, get_vm_state
 from ...rag.session_memory import META_COW_CHOICE_PENDING, META_STOP_CHOICE_PENDING
+from ..types import PipelineResult, QueryType
+from ..validation import get_existing_vm_names, get_vm_state
 
 if TYPE_CHECKING:
     from ...models.ephaistos import EphaistosAnalysis

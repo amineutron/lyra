@@ -8,13 +8,13 @@ avant execution d'outils MCP.
 import re
 from typing import TYPE_CHECKING, Optional
 
-from .types import PipelineResult, QueryType
 from ..rag.session_memory import CHOICE_VM_START_CONFIRM
+from .types import PipelineResult, QueryType
 
 if TYPE_CHECKING:
     from ..hestia.executor import HestiaExecutor
-    from ..rag.session_memory import SessionMemory
     from ..models._analysis import EphaistosAnalysis
+    from ..rag.session_memory import SessionMemory
 
 
 # Outils qui necessitent que la VM existe avant execution

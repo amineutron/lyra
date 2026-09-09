@@ -14,18 +14,18 @@ Usage:
     python scripts/reindex_mcp_rag_optimized.py
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 # Ajouter le répertoire parent au path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lyra.core.config import RAGConfig
-from lyra.rag.semantic_retriever import SemanticRetriever
-from lyra.rag.keyword_retriever import KeywordRetriever
-from lyra.hestia.executor import HestiaExecutor
 import yaml
+
+from lyra.hestia.executor import HestiaExecutor
+from lyra.rag.keyword_retriever import KeywordRetriever
+from lyra.rag.semantic_retriever import SemanticRetriever
 
 # Charger le dictionnaire de synonymes
 SYNONYM_MAPPINGS = None
@@ -840,7 +840,7 @@ def main():
             r = results[0]
             print(f"    ✓ Score: {r.score:.3f} - Tool: {r.metadata.get('name', 'N/A')}")
         else:
-            print(f"    ✗ Aucun résultat")
+            print("    ✗ Aucun résultat")
 
     print("\n" + "=" * 80)
     print("RÉINDEXATION TERMINÉE")

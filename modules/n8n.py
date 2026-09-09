@@ -8,21 +8,19 @@ Si n8n n'est pas disponible ou les webhooks ne sont pas actifs,
 utilise un fallback subprocess pour executer en arriere-plan.
 """
 
-import os
-import re
 import json
+import re
 import subprocess
 import threading
-import time
-from typing import Optional, Callable
 from dataclasses import dataclass
+from typing import Callable, Optional
 
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
-    import urllib.request
     import urllib.error
+    import urllib.request
     HAS_REQUESTS = False
 
 
@@ -227,7 +225,7 @@ class N8nClient:
                 data = json.loads(response.read().decode())
                 return data.get("data", [])
 
-        except Exception as e:
+        except Exception:
             return []
 
     def format_executions(self, executions: list) -> str:
@@ -429,7 +427,7 @@ class AsyncExecutor:
 
         return N8nResult(
             success=True,
-            message=f"Tache lancee en arriere-plan (fallback mode)",
+            message="Tache lancee en arriere-plan (fallback mode)",
             execution_id=task_id
         )
 

@@ -23,7 +23,6 @@ from async_mcp_wrapper import (  # noqa: E402
     validate_safe_text,
 )
 
-
 # ---- validate_safe_name ----
 
 @pytest.mark.parametrize("value", [

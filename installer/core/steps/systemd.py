@@ -13,7 +13,7 @@ from ..events import Output
 from ..pipeline import StepContext
 from ..runner import run
 
-_DEV_LYRA = "/home/amineutron/dev/lyra"
+_DEV_LYRA = "@LYRA_DIR@"  # marqueur des unites livrees dans install/
 
 
 def render_service(template: str, lyra_dir: str, home: str) -> str:
@@ -30,7 +30,7 @@ def render_service(template: str, lyra_dir: str, home: str) -> str:
                     parts.append(adb_dir)
             line = "Environment=PATH=" + ":".join(parts)
         else:
-            line = line.replace(_DEV_LYRA, lyra_dir)
+            line = line.replace(_DEV_LYRA, lyra_dir).replace("@HOME@", home)
         lines.append(line)
     return "\n".join(lines) + "\n"
 
@@ -57,7 +57,7 @@ def run_step(ctx: StepContext) -> None:
             src = lyra / "install" / name
             if src.exists():
                 (unit_dir / name).write_text(
-                    src.read_text(encoding="utf-8").replace(_DEV_LYRA, str(lyra)),
+                    src.read_text(encoding="utf-8").replace(_DEV_LYRA, str(lyra)).replace("@HOME@", str(Path.home())),
                     encoding="utf-8")
         run(["systemctl", "--user", "daemon-reload"], ctx.emit, step_id=ctx.step_id)
         run(["systemctl", "--user", "enable", "--now", "lyra-mcp-smoke.timer"],

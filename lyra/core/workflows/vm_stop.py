@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..types import QueryType, PipelineResult
 from ...rag.session_memory import META_COW_CHOICE_PENDING
+from ..types import PipelineResult, QueryType
 
 if TYPE_CHECKING:
     from ...rag.session_memory import PendingAction

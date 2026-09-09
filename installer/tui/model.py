@@ -11,8 +11,7 @@ import threading
 from collections import deque
 from dataclasses import dataclass
 
-from installer.core.events import (Ask, Event, Output, Progress, Result,
-                                   StepChange)
+from installer.core.events import Ask, Event, Output, Progress, Result, StepChange
 from installer.core.pipeline import StepDef
 
 LOG_MAX = 5

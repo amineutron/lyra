@@ -1,15 +1,15 @@
 """Fixtures communes pour tests E2E RAG Enhanced."""
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from pathlib import Path
+from unittest.mock import Mock, patch
 
-from lyra.rag_enhanced import EnhancedPipeline, EnhancedPipelineResult
+import pytest
+
 from lyra.core.config import RAGConfig
-from lyra.core.pipeline import QueryType, PipelineResult
+from lyra.core.pipeline import QueryType
+from lyra.hestia.executor import ExecutionResult
 from lyra.models.ephaistos import EphaistosAnalysis
 from lyra.models.lyra_voice import LyraResponse
-from lyra.hestia.executor import ExecutionResult
+from lyra.rag_enhanced import EnhancedPipeline
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ def enhanced_pipeline_with_mocks(mock_config, mock_ephaistos_response,
             pipeline.initialize()
 
             # Mocks V2 poses APRES initialize() pour ne pas etre ecrases
-            from lyra.models.intent_classifier import Intent, ClassificationResult
+            from lyra.models.intent_classifier import ClassificationResult, Intent
             from lyra.rag.session_memory import SessionMemory
 
             pipeline._pipeline_v2._ephaistos = Mock()
@@ -141,7 +141,6 @@ def enhanced_pipeline_with_mocks(mock_config, mock_ephaistos_response,
             pipeline._pipeline_v2._rule_based_detect = lambda q: None
 
             # Creer WorkflowContext avec les mocks
-            from lyra.core.workflows.context import WorkflowContext
 
             return pipeline
 

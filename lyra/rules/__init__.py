@@ -8,13 +8,13 @@ Premier match gagne.
 from typing import Optional
 
 from .backup import detect as _backup
-from .vm import detect as _vm
-from .tracking import detect as _tracking
-from .hue import detect as _hue
-from .tv import detect as _tv
 from .denon import detect as _denon
-from .screen_manager import detect as _screen_manager
+from .hue import detect as _hue
 from .ironman import detect as _ironman
+from .screen_manager import detect as _screen_manager
+from .tracking import detect as _tracking
+from .tv import detect as _tv
+from .vm import detect as _vm
 
 # Ordre critique - meme logique que l'ancien _rule_based_detect()
 _REGISTRY = [

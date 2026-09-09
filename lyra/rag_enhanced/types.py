@@ -4,8 +4,8 @@ Types communs pour le système RAG Enhanced.
 Définit les TypedDict et Enums utilisés à travers les modules RAG Enhanced.
 """
 
-from typing import TypedDict, Literal, Optional
 from enum import Enum
+from typing import Literal, Optional, TypedDict
 
 
 class ConfidenceLevel(Enum):

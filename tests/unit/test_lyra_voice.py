@@ -2,10 +2,12 @@
 Tests unitaires pour LyraVoice.
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
-from lyra.models.lyra_voice import LyraVoice, LyraResponse, LYRA_SYSTEM_PROMPT_TTS as LYRA_SYSTEM_PROMPT
+import pytest
+
+from lyra.models.lyra_voice import LYRA_SYSTEM_PROMPT_TTS as LYRA_SYSTEM_PROMPT
+from lyra.models.lyra_voice import LyraResponse, LyraVoice
 from lyra.models.model_manager import ModelManager, ModelResponse
 
 

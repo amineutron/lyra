@@ -9,10 +9,10 @@ Components:
 - SessionMemory: Contexte multi-tour avec actions en attente
 """
 
-from .semantic_retriever import SemanticRetriever
-from .keyword_retriever import KeywordRetriever
 from .fusion import RRFFusion
 from .indexer import MCPIndexer
+from .keyword_retriever import KeywordRetriever
+from .semantic_retriever import SemanticRetriever
 from .session_memory import SessionMemory
 
 __all__ = [

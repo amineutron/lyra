@@ -4,7 +4,6 @@ Générateur de visualiseur HTML pour diagrammes Mermaid.
 Utilise un template pour créer des pages HTML interactives.
 """
 
-import os
 import webbrowser
 from pathlib import Path
 from typing import Optional

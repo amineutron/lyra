@@ -1,9 +1,8 @@
 """Regles de detection pour les outils BACKUP (fedora.backup_*)."""
 
 import re
-from typing import Optional
 
-from .base import normalize, make
+from .base import make, normalize
 
 _BACKUP_RE = r'\b(?:backup|backups|sauvegarde|sauvegardes)\b'
 _GENERIC = {'de', 'du', 'des', 'la', 'le', 'les', 'un', 'une', 'tous', 'toutes', 'tout'}

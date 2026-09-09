@@ -2,7 +2,7 @@
 
 import re
 
-from .base import normalize, make
+from .base import make, normalize
 
 # Verbes d'affichage/ouverture - large spectre naturel
 _DISPLAY_VERBS = (

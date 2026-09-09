@@ -16,16 +16,15 @@ Duree: 7 secondes
 """
 
 import logging
-import os
 import subprocess
 import time
 from pathlib import Path
 from typing import Tuple
 
 import requests
-from requests.auth import HTTPDigestAuth
 import urllib3
 import yaml
+from requests.auth import HTTPDigestAuth
 
 logger = logging.getLogger(__name__)
 

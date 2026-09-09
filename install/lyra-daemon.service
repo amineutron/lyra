@@ -14,8 +14,8 @@ After=default.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/amineutron/dev/lyra
-ExecStart=/home/amineutron/dev/lyra/.venv/bin/python -m lyra.daemon
+WorkingDirectory=@LYRA_DIR@
+ExecStart=@LYRA_DIR@/.venv/bin/python -m lyra.daemon
 Restart=always
 RestartSec=3
 StandardOutput=journal
@@ -26,7 +26,7 @@ Environment=TOKENIZERS_PARALLELISM=false
 # venv en tete du PATH : les serveurs MCP sont spawnes avec "command: python"
 # (config.yaml) et doivent resoudre le python du venv (wakeonlan, catt, ...).
 # platform-tools : adb requis par pylips (YouTube, screen_on/off).
-Environment=PATH=/home/amineutron/dev/lyra/.venv/bin:/home/amineutron/.local/bin:/usr/local/bin:/usr/bin:/bin:/mnt/nvme-storage/android-sdk/platform-tools
+Environment=PATH=@LYRA_DIR@/.venv/bin:@HOME@/.local/bin:/usr/local/bin:/usr/bin:/bin
 # PAS de NoNewPrivileges : les scripts VM/backup utilisent sudo NOPASSWD
 # (virsh, kvm-*.sh) — NoNewPrivileges bloquerait l'elevation et vm_status
 # retournerait "Aucune VM trouvee".

@@ -4,12 +4,12 @@ Lyra RAG - Semantic Retriever.
 Utilise ChromaDB avec embeddings pour la recherche semantique.
 """
 
+import logging
 import os
 import time
 import warnings
-import logging
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
 
 # Supprimer TOUS les warnings HuggingFace AVANT import
 os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
@@ -155,7 +155,6 @@ class SemanticRetriever:
 
         # Charger le modele d'embeddings (silencieux)
         import logging
-        import sys
         from contextlib import redirect_stderr
         from io import StringIO
 

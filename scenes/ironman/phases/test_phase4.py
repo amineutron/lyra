@@ -3,18 +3,17 @@ Tests pour Phase 4 - Transition & Stabilisation
 """
 
 import time
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
 import pytest
 
 from .phase4_transition import (
-    Phase4Transition,
     DURATION,
-    SLOWDOWN_BEATS,
     FADE_START,
     MUSIC_STOP,
+    SLOWDOWN_BEATS,
     STABLE_BRIGHTNESS,
-    FLASH_DURATION,
-    rgb_to_xy,
+    Phase4Transition,
 )
 
 

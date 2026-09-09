@@ -2,15 +2,12 @@
 Tests unitaires pour HestiaExecutor.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import Mock, patch
 
-from lyra.hestia.executor import (
-    HestiaExecutor,
-    ExecutionContext,
-    ExecutionResult
-)
+import pytest
+
+from lyra.hestia.executor import ExecutionContext, ExecutionResult, HestiaExecutor
 from modules.mcp import MCPResult
 
 

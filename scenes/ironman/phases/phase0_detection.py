@@ -10,17 +10,16 @@ Duree: <2 secondes
 
 import json
 import logging
-import re
 import unicodedata
-import urllib3
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import requests
-from requests.auth import HTTPDigestAuth
+import urllib3
 import yaml
+from requests.auth import HTTPDigestAuth
 
 # Disable SSL warnings for TV API (self-signed cert)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -154,7 +153,7 @@ class Phase0Detection:
             return False, msg
 
         except requests.exceptions.ConnectionError as e:
-            msg = f"TV Philips non disponible (connexion refusee)"
+            msg = "TV Philips non disponible (connexion refusee)"
             logger.warning(f"{msg}: {e}")
             return False, msg
 
@@ -205,7 +204,7 @@ class Phase0Detection:
             return False, msg
 
         except requests.exceptions.ConnectionError as e:
-            msg = f"Bridge Hue non disponible (connexion refusee)"
+            msg = "Bridge Hue non disponible (connexion refusee)"
             logger.warning(f"{msg}: {e}")
             return False, msg
 

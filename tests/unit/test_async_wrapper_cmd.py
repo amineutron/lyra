@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 
-from async_mcp_wrapper import finalize_cmd, build_args_vm_clone_system
+from async_mcp_wrapper import build_args_vm_clone_system, finalize_cmd
 
 
 def test_clone_system_sudo_et_tracking():

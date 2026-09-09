@@ -4,9 +4,10 @@ Lyra RAG - MCP Indexer.
 Parse et indexe les specifications MCP depuis les fichiers TypeScript.
 """
 
+import os
 import re
-from pathlib import Path
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 
@@ -69,10 +70,14 @@ class MCPIndexer:
     """
 
     # Sources par defaut
+    # Sources TypeScript du serveur fedora-agents : dossier src/ indique par LYRA_MCP_SPECS_DIR
+    # (defaut : ../fedora-agents/src a cote du depot lyra)
+    _SPECS_DIR = os.environ.get(
+        "LYRA_MCP_SPECS_DIR", str(Path(__file__).resolve().parents[2].parent / "fedora-agents" / "src"))
     DEFAULT_SOURCES = [
-        "/home/amineutron/dev/fedora-setup/scripts/agents/mcp-server/src/tools/vm-controller.ts",
-        "/home/amineutron/dev/fedora-setup/scripts/agents/mcp-server/src/tools/backup-manager.ts",
-        "/home/amineutron/dev/fedora-setup/scripts/agents/mcp-server/src/utils/validation.ts",
+        f"{_SPECS_DIR}/tools/vm-controller.ts",
+        f"{_SPECS_DIR}/tools/backup-manager.ts",
+        f"{_SPECS_DIR}/utils/validation.ts",
     ]
 
     def __init__(self):

@@ -16,13 +16,12 @@ Usage:
 
 import sys
 import time
-import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lyra.core.pipeline import Pipeline
 from lyra.core.config import RAGConfig
+from lyra.core.pipeline import Pipeline
 
 # ============================================================
 # Cas de test: les RULE_MISS attendus (TV, HUE complexe, CATT)

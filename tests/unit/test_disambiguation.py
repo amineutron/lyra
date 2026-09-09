@@ -1,14 +1,12 @@
 """Tests unitaires pour les helpers de disambiguation (pipeline.py)."""
 
 import sys
-from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from lyra.core.pipeline import _extract_disambiguation_candidates, _build_disambiguation_question
-
+from lyra.core.pipeline import _build_disambiguation_question, _extract_disambiguation_candidates
 
 # ---------------------------------------------------------------------------
 # Stub FusedResult pour eviter les imports lourds

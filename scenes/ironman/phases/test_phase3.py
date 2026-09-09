@@ -1,15 +1,18 @@
 import os
 import time
 from unittest.mock import Mock, patch
+
 import pytest
+
 from .phase3_buildup import (
-    Phase3Buildup,
-    PHASE_DURATION,
-    FLASH_DURATION,
     BLUE_ARC_REACTOR_RGB,
+    FLASH_DURATION,
+    PHASE_DURATION,
     RED_INTENSE_RGB,
+    Phase3Buildup,
     rgb_to_xy,
 )
+
 
 class TestPhase3Buildup:
     @pytest.fixture

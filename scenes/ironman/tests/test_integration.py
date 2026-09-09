@@ -1,9 +1,12 @@
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from scenes.ironman.orchestrator import IronManOrchestrator, SceneState
+
 
 @pytest.fixture
 def config_mock():

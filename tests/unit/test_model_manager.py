@@ -2,12 +2,13 @@
 Tests unitaires pour ModelManager.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import httpx
+from unittest.mock import MagicMock, Mock, patch
 
+import httpx
+import pytest
+
+from lyra.core.config import RAGConfig
 from lyra.models.model_manager import ModelManager, ModelResponse
-from lyra.core.config import RAGConfig, ModelsConfig, ModelConfig
 
 
 class TestModelResponse:

@@ -1,11 +1,14 @@
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import requests
+from unittest.mock import Mock, patch
+
 import pytest
+import requests
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from scenes.ironman.orchestrator import IronManOrchestrator, SceneState
 from scenes.ironman.phases.phase0_detection import Phase0Detection
+
 
 @pytest.fixture
 def config_mock():

@@ -9,11 +9,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..types import QueryType, PipelineResult
 from ...rag.session_memory import CHOICE_VM_START_CONFIRM
+from ..types import PipelineResult, QueryType
 
 if TYPE_CHECKING:
-    from ...models.ephaistos import EphaistosAnalysis
     from ...rag.session_memory import PendingChoice
     from .context import WorkflowContext
 

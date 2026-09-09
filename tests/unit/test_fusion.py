@@ -4,9 +4,9 @@ Tests unitaires pour RRF Fusion.
 
 import pytest
 
-from lyra.rag.fusion import RRFFusion, FusedResult
-from lyra.rag.semantic_retriever import SemanticResult
+from lyra.rag.fusion import FusedResult, RRFFusion
 from lyra.rag.keyword_retriever import KeywordResult
+from lyra.rag.semantic_retriever import SemanticResult
 
 
 class TestRRFFusion:

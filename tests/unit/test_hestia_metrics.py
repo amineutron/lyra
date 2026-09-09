@@ -2,11 +2,11 @@
 Tests unitaires pour MetricsCollector.
 """
 
-import pytest
 from datetime import datetime
-from time import sleep
 
-from lyra.hestia.metrics import MetricsCollector, ExecutionMetric
+import pytest
+
+from lyra.hestia.metrics import ExecutionMetric, MetricsCollector
 
 
 class TestExecutionMetric:

@@ -8,14 +8,14 @@ Usage:
 
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
 # Add parent dir to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from pc_screens import PCScreenController, ARM_DELAY_S
+from pc_screens import ARM_DELAY_S, PCScreenController
 
 
 class TestDisabled:

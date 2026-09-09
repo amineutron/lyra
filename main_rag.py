@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 """
 Lyra RAG - Point d'entree principal.
 
@@ -17,38 +18,42 @@ Architecture:
     USER INPUT -> RAG -> EPHAISTOS -> [clarification?] -> LYRA -> HESTIA -> LYRA -> OUTPUT
 """
 
+import argparse
 import sys
 import threading
-import argparse
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 # Ajouter le package lyra au path
 sys.path.insert(0, str(Path(__file__).parent))
 
+import yaml
+
 from lyra.core.config import RAGConfig
-from lyra.core.constants import DANGEROUS_TOOLS, PERFORMANCE_TOOLS, VALID_TRACKING_FILTERS
+from lyra.core.constants import DANGEROUS_TOOLS, PERFORMANCE_TOOLS
+
 # QueryType et PipelineResult importes depuis types.py (pas de torch/sentence_transformers)
 # Pipeline importe dans main() apres le banner pour ne pas bloquer le demarrage
-from lyra.core.types import QueryType, PipelineResult
-from lyra.core.workflows.context import UIContext, ExecContext
+from lyra.core.types import PipelineResult, QueryType
+from lyra.core.workflows.context import ExecContext, UIContext
 from lyra.core.workflows.vm_clone_exec import handle_vm_clone_with_stop
 from lyra.core.workflows.vm_snapshot_exec import handle_snapshot_restore_with_safety
+from lyra.hestia.background_tasks import BackgroundTaskManager
 from lyra.models.model_manager import ModelManager
 from lyra.rag.session_memory import SessionMemory
-from lyra.hestia.background_tasks import BackgroundTaskManager
 from lyra.utils.error_log import (
-    ERROR_LOG_DIR,
-    write_error_log,
-    lyra_error_message as _lyra_error_message_fn,
     is_execution_error as _is_execution_error_fn,
+)
+from lyra.utils.error_log import (
+    lyra_error_message as _lyra_error_message_fn,
+)
+from lyra.utils.error_log import (
+    write_error_log,
 )
 
 # Import du module UI existant pour la compatibilite
 from modules import ui
 from modules.n8n import send_discord_notification
-import yaml
 
 
 def _lyra_error_message(log_path: Path) -> str:
@@ -1084,7 +1089,7 @@ def main():
     voice = None
     if vocal:
         try:
-            from modules.audio import VoiceInterface, AudioConfig
+            from modules.audio import AudioConfig, VoiceInterface
 
             with open("config.yaml") as f:
                 cfg = yaml.safe_load(f)
@@ -1495,11 +1500,11 @@ Exemples:
 
                 # Étape 1: Slang Normalization
                 if result.normalized_query and result.normalized_query != user_input:
-                    print(f"[1] Slang Normalization:")
+                    print("[1] Slang Normalization:")
                     print(f"    Input:  '{user_input}'")
                     print(f"    Output: '{result.normalized_query}'")
                 else:
-                    print(f"[1] Slang Normalization: (inchangé)")
+                    print("[1] Slang Normalization: (inchangé)")
 
                 # Étape 2: Synonym Expansion
                 if result.expanded_query and result.expanded_query != (result.normalized_query or user_input):
@@ -1509,44 +1514,44 @@ Exemples:
                     print(f"[2] Synonym Expansion: +{added} tokens")
                     print(f"    '{result.expanded_query[:80]}...'")
                 else:
-                    print(f"[2] Synonym Expansion: (inchangé)")
+                    print("[2] Synonym Expansion: (inchangé)")
 
                 # Étape 3: RAG Retrieval
                 if hasattr(result, 'rag_score') and result.rag_score is not None:
-                    print(f"[3] RAG Retrieval:")
+                    print("[3] RAG Retrieval:")
                     print(f"    Score: {result.rag_score:.3f}")
                     if hasattr(result, 'rag_source') and result.rag_source:
                         print(f"    Source: {result.rag_source}")
 
                 # Étape 4: Confidence Cascade
                 if hasattr(result, 'cascade_action') and result.cascade_action:
-                    print(f"[4] Confidence Cascade:")
+                    print("[4] Confidence Cascade:")
                     print(f"    Action: {result.cascade_action}")
                     if result.rag_score:
                         if result.rag_score > 0.85:
-                            print(f"    Level: HIGH (>0.85)")
+                            print("    Level: HIGH (>0.85)")
                         elif result.rag_score >= 0.60:
-                            print(f"    Level: MEDIUM (0.60-0.85)")
+                            print("    Level: MEDIUM (0.60-0.85)")
                         else:
-                            print(f"    Level: LOW (<0.60)")
+                            print("    Level: LOW (<0.60)")
 
                 # Étape 5: Context Injection
                 if hasattr(result, 'should_inject_context'):
                     if result.should_inject_context:
-                        print(f"[5] Context Injection: OUI")
+                        print("[5] Context Injection: OUI")
                     else:
-                        print(f"[5] Context Injection: NON")
+                        print("[5] Context Injection: NON")
 
                 # Étape 6: Tool Call Final
                 if result.tool_call:
-                    print(f"[6] Tool Final:")
+                    print("[6] Tool Final:")
                     print(f"    Name: {result.tool_call.get('name', 'N/A')}")
                     if result.tool_call.get('arguments'):
                         print(f"    Args: {result.tool_call['arguments']}")
 
                 # Métriques de performance
                 if hasattr(result, 'metrics') and result.metrics:
-                    print(f"\n📊 Performance Metrics:")
+                    print("\n📊 Performance Metrics:")
                     total = 0
                     for key, value in result.metrics.items():
                         if '_ms' in key and isinstance(value, (int, float)):

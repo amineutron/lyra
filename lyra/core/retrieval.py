@@ -10,19 +10,19 @@ from __future__ import annotations
 import sys
 from typing import Optional
 
-from .config import RAGConfig
-from .types import (
-    QueryType,
-    CATEGORY_KEYWORDS,
-    TOOL_TYPE_KEYWORDS,
-    ACTION_VERBS,
-    EXPLICIT_KNOWLEDGE_PATTERNS,
-    ACTION_ENTITIES,
-)
-from .menus import LIST_VERBS
-from ..rag.semantic_retriever import SemanticRetriever
+from ..rag.fusion import FusedResult, RRFFusion
 from ..rag.keyword_retriever import KeywordRetriever
-from ..rag.fusion import RRFFusion, FusedResult
+from ..rag.semantic_retriever import SemanticRetriever
+from .config import RAGConfig
+from .menus import LIST_VERBS
+from .types import (
+    ACTION_ENTITIES,
+    ACTION_VERBS,
+    CATEGORY_KEYWORDS,
+    EXPLICIT_KNOWLEDGE_PATTERNS,
+    TOOL_TYPE_KEYWORDS,
+    QueryType,
+)
 
 
 class Retriever:

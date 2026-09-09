@@ -20,8 +20,20 @@ from rich.text import Text
 from installer.core.catalog import McpDef
 
 from .model import Snapshot, StepView
-from .theme import (BAD, DIM, GOLD, GOOD, MUTED, ROSE, RUN, SPINNER_FRAMES,
-                    TEXT, TITLE, TITLE_DIM, WARN)
+from .theme import (
+    BAD,
+    DIM,
+    GOLD,
+    GOOD,
+    MUTED,
+    ROSE,
+    RUN,
+    SPINNER_FRAMES,
+    TEXT,
+    TITLE,
+    TITLE_DIM,
+    WARN,
+)
 
 _PIPE_COMPACT_THRESHOLD = 8
 

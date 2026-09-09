@@ -350,10 +350,10 @@ def create_lyra_architecture_diagram():
         open_browser=True
     )
 
-    print(f"\n✅ Diagramme généré avec succès!")
+    print("\n✅ Diagramme généré avec succès!")
     print(f"📁 Fichier: {output_path}")
-    print(f"🌐 Ouvert dans le navigateur")
-    print(f"\n💡 Conseil: Utilisez les boutons pour exporter en SVG/PNG")
+    print("🌐 Ouvert dans le navigateur")
+    print("\n💡 Conseil: Utilisez les boutons pour exporter en SVG/PNG")
 
 
 if __name__ == "__main__":

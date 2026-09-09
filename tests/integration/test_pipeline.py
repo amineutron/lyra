@@ -10,15 +10,15 @@ Ces tests verifient le workflow complet:
 6. Multi-tour avec session memory
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from dataclasses import dataclass
+from unittest.mock import Mock
 
-from lyra.core.pipeline import Pipeline, PipelineResult, QueryType
+import pytest
+
 from lyra.core.config import RAGConfig
+from lyra.core.pipeline import Pipeline, QueryType
+from lyra.hestia.executor import ExecutionResult
 from lyra.models.ephaistos import EphaistosAnalysis
 from lyra.models.lyra_voice import LyraResponse
-from lyra.hestia.executor import ExecutionResult
 
 
 @pytest.fixture
@@ -49,15 +49,15 @@ def pipeline_with_mocks(mock_config):
     pipeline._initialized = True
 
     # Creer WorkflowContext avec les mocks
-    from lyra.core.workflows.context import WorkflowContext
 
     # Disable rule-based detect so EPHAISTOS mocks are used
     pipeline._rule_based_detect = lambda q: None
 
     # Configure HESTIA mock for VM status calls used in vm_clone workflow
     # Use DEFAULT to fall through to return_value for non-vm_status calls
-    from lyra.hestia.executor import ExecutionResult
     from unittest.mock import DEFAULT as MOCK_DEFAULT
+
+    from lyra.hestia.executor import ExecutionResult
     def _mock_hestia_execute(tool_name, arguments=None, **kwargs):
         arguments = arguments or {}
         if "vm_status" in tool_name and not arguments.get("vm_name"):

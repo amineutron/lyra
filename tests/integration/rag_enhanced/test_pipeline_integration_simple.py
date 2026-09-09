@@ -4,9 +4,7 @@ Tests d'intégration simplifiés pour EnhancedPipeline.
 Tests basiques pour valider import et initialisation.
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestImportAndInit:
@@ -15,14 +13,14 @@ class TestImportAndInit:
     def test_import_enhanced_pipeline(self):
         """Import EnhancedPipeline réussit"""
         from lyra.rag_enhanced import EnhancedPipeline, EnhancedPipelineResult
-        
+
         assert EnhancedPipeline is not None
         assert EnhancedPipelineResult is not None
 
     def test_create_enhanced_pipeline_disabled(self):
         """Créer pipeline avec enhanced=False"""
         from lyra.rag_enhanced import EnhancedPipeline
-        
+
         pipeline = EnhancedPipeline(enabled=False)
         assert pipeline is not None
         assert pipeline.enabled is False
@@ -30,7 +28,7 @@ class TestImportAndInit:
     def test_create_enhanced_pipeline_enabled(self):
         """Créer pipeline avec enhanced=True"""
         from lyra.rag_enhanced import EnhancedPipeline
-        
+
         pipeline = EnhancedPipeline(enabled=True)
         assert pipeline is not None
         assert pipeline.enabled is True
@@ -38,9 +36,9 @@ class TestImportAndInit:
     def test_pipeline_has_components(self):
         """Pipeline a les composants attendus"""
         from lyra.rag_enhanced import EnhancedPipeline
-        
+
         pipeline = EnhancedPipeline(enabled=True)
-        
+
         # Composants (lazy-loaded, None avant initialize)
         assert hasattr(pipeline, '_slang_normalizer')
         assert hasattr(pipeline, '_synonym_expander')
@@ -96,9 +94,9 @@ class TestEnhancedPipelineResult:
 
     def test_enhanced_result_creation(self):
         """Créer un EnhancedPipelineResult"""
-        from lyra.rag_enhanced import EnhancedPipelineResult
         from lyra.core.pipeline import QueryType
-        
+        from lyra.rag_enhanced import EnhancedPipelineResult
+
         result = EnhancedPipelineResult(
             response="Test response",
             query_type=QueryType.ACTION,
@@ -109,7 +107,7 @@ class TestEnhancedPipelineResult:
             feedback_recorded=True,
             metrics={'total_latency_ms': 42.0}
         )
-        
+
         assert result.response == "Test response"
         assert result.normalized_query == "test normalized"
         assert result.expanded_query == "test expanded"

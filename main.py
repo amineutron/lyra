@@ -10,9 +10,10 @@ Usage:
     python main.py --model qwen2.5-coder:14b
 """
 
-import sys
 import os
 import re
+import sys
+
 
 # Configurer LD_LIBRARY_PATH pour les libs CUDA (faster-whisper)
 # Doit etre fait AVANT l'import de faster_whisper
@@ -32,22 +33,28 @@ def _setup_cuda_libs():
         os.environ["LD_LIBRARY_PATH"] = f"{new_paths}:{current_ld_path}" if current_ld_path else new_paths
 
 _setup_cuda_libs()
-import time
 import argparse
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 
 # Ajouter le dossier modules au path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from modules.llm import OllamaClient, LLMResponse
 from lyra.core.paths import backup_manager_dir, kvm_dir
-from modules.mcp import MCPClient, MCPManager, get_default_tools, get_all_default_tools
-from modules.n8n import N8nClient, N8nConfig, should_use_async, get_async_workflow, get_async_executor, send_discord_notification
 from modules import ui
+from modules.llm import LLMResponse, OllamaClient
+from modules.mcp import MCPClient, MCPManager, get_all_default_tools
+from modules.n8n import (
+    N8nClient,
+    N8nConfig,
+    get_async_executor,
+    get_async_workflow,
+    send_discord_notification,
+    should_use_async,
+)
 from modules.ui import setup_readline
-
 
 _VM_NAME_RE = re.compile(r'^[a-zA-Z0-9_\-]{1,64}$')
 _BACKUP_TYPE_RE = re.compile(r'^(timeshift|borg|rsync)$')
@@ -216,7 +223,8 @@ class Lyra:
         """Initialise l'interface vocale."""
         try:
             import yaml
-            from modules.audio import VoiceInterface, AudioConfig
+
+            from modules.audio import AudioConfig, VoiceInterface
 
             # Charger la config depuis config.yaml
             config_path = Path(__file__).parent / "config.yaml"
@@ -686,7 +694,6 @@ class Lyra:
         Returns:
             Resume des actions executees
         """
-        from modules.llm import ToolCall
 
         # Afficher la todo list
         print()
@@ -742,7 +749,7 @@ class Lyra:
                     # Utiliser _call_mcp_tool pour router vers le bon serveur (Phase 5.4)
                     result = self._call_mcp_tool(tc.name, tc.arguments)
                     if result.success:
-                        ui.print_success(f"  -> OK")
+                        ui.print_success("  -> OK")
                         results.append(f"{vm_name}: OK")
                     else:
                         ui.print_error(f"  -> Erreur: {result.error}")
@@ -783,7 +790,7 @@ class Lyra:
         result = self.n8n.trigger_workflow(workflow, data)
 
         if result.success:
-            msg = f"Operation lancee en arriere-plan via n8n. Tu recevras une notification Discord."
+            msg = "Operation lancee en arriere-plan via n8n. Tu recevras une notification Discord."
             ui.print_success(msg)
 
             if self.vocal and self.voice:

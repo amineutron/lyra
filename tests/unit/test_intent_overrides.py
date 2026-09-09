@@ -4,7 +4,12 @@
 """
 import pytest
 
-from lyra.models.intent_classifier import _SMALLTALK_RE, _VM_QUESTION_RE, _KNOWLEDGE_RE, _ascii_lower
+from lyra.models.intent_classifier import (
+    _KNOWLEDGE_RE,
+    _SMALLTALK_RE,
+    _VM_QUESTION_RE,
+    _ascii_lower,
+)
 from lyra.rules.vm import detect
 
 

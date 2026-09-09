@@ -46,8 +46,7 @@ class StepDef:
 
 def build_pipeline(state: InstallState, selected: tuple[McpDef, ...]) -> tuple[StepDef, ...]:
     """Construit la liste ordonnee des etapes selon l'etat."""
-    from .steps import (clone, config, mcps, ollama, packages, piper, post,
-                        systemd, venv)
+    from .steps import clone, config, mcps, ollama, packages, piper, post, systemd, venv
 
     steps: list[StepDef] = [
         StepDef("system", "Paquets systeme", packages.run_step),

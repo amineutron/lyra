@@ -4,10 +4,11 @@ Lyra RAG - Configuration centralisee.
 Charge et valide la configuration RAG depuis config.yaml.
 """
 
-import yaml
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from pathlib import Path
+from typing import Any, Optional
+
+import yaml
 
 
 @dataclass

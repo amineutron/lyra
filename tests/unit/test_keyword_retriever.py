@@ -7,7 +7,7 @@ import pytest
 # Skip si BM25 non installe
 pytest.importorskip("rank_bm25")
 
-from lyra.rag.keyword_retriever import KeywordRetriever, KeywordResult
+from lyra.rag.keyword_retriever import KeywordRetriever
 
 
 class TestKeywordRetriever:

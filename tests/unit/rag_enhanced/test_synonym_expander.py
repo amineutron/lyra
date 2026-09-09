@@ -4,17 +4,11 @@ Tests unitaires pour le SynonymExpander.
 SESSION 3 (P2) - RAG Enhanced
 """
 
-import json
 import time
-from pathlib import Path
 
 import pytest
 
 from lyra.rag_enhanced.synonym_expander import SynonymExpander
-from lyra.rag_enhanced.constants import (
-    SYNONYM_MAX_PER_KEYWORD,
-    SYNONYM_MAX_TOKENS_ADDED,
-)
 
 
 class TestSynonymExpander:

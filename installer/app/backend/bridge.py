@@ -12,9 +12,9 @@ import threading
 from dataclasses import asdict
 from typing import Any, Optional
 
-from ...core.events import AskBroker, Ask, Event, Output, Progress, Result, StepChange
-from ...core.pipeline import StepDef, build_pipeline, run_pipeline
 from ...core.catalog import McpDef
+from ...core.events import Ask, AskBroker, Event, Output, Progress, Result, StepChange
+from ...core.pipeline import StepDef, build_pipeline, run_pipeline
 from ...core.state import InstallState
 
 

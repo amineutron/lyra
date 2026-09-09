@@ -7,8 +7,6 @@ SESSION 6 (P5) - Modification M1
 import sys
 from unittest.mock import MagicMock
 
-import pytest
-
 # Mock ModelManager avant import LyraVoice (evite imports lourds/circulaires)
 if 'lyra.models.model_manager' not in sys.modules:
     mock_mm = MagicMock()

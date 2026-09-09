@@ -20,3 +20,7 @@ test-all: test smoke campaign
 
 installer-ui: ## Rebuild le frontend de l'app d'installation (commite dans app/backend/static)
 	cd installer/app/frontend && npm install && npm run build
+
+# Inventaire des licences des dependances (verifie en CI)
+licenses:
+	{ echo "# Licences des dépendances tierces"; echo; uv run --frozen pip-licenses --format=markdown --with-urls --order=license; } > THIRD_PARTY_LICENSES.md

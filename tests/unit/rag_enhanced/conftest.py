@@ -2,8 +2,8 @@
 Fixtures pytest pour les tests RAG Enhanced.
 """
 
+
 import pytest
-from pathlib import Path
 
 
 @pytest.fixture

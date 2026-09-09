@@ -5,17 +5,17 @@ Module Python pur pour l'execution MCP.
 Wrap le MCPManager existant avec logging optionnel.
 """
 
-import logging
-import sys
-import time
-import subprocess
 import json
+import logging
 import os
 import signal
-from typing import Optional
+import subprocess
+import sys
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # Import du MCPManager existant
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
@@ -24,7 +24,6 @@ from modules.mcp import MCPManager, MCPResult
 from .metrics import MetricsCollector
 from .notion_logger import NotionLogger
 from .tracking_client import TrackingClient
-
 
 # Operations longues executees en arriere-plan
 ASYNC_TOOLS = {
@@ -112,8 +111,8 @@ class HestiaExecutor:
         tracking_cfg = config.get("tracking", {})
         self._tracking = TrackingClient(
             api_url=tracking_cfg.get("api_url", "http://127.0.0.1:8765"),
-            server_script=tracking_cfg.get("server_script", "/home/amineutron/dev/MCP/tracking/server.py"),
-            venv_python=tracking_cfg.get("venv_python", "/home/amineutron/dev/MCP/tracking/.venv/bin/python"),
+            server_script=tracking_cfg.get("server_script") or os.environ.get("TRACKING_SERVER_SCRIPT", ""),
+            venv_python=tracking_cfg.get("venv_python") or os.environ.get("TRACKING_VENV_PYTHON", ""),
         )
 
         # Metriques

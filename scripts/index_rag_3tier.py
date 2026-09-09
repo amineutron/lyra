@@ -24,10 +24,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import chromadb
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
 
-
-CHROMADB_PATH = "/home/amineutron/dev/lyra/.chromadb"
+CHROMADB_PATH = str(Path(__file__).resolve().parents[1] / ".chromadb")
 SOURCE_COLLECTION = "lyra_mcp_specs_v2"
 
 # Description humaine par serveur
@@ -325,7 +323,7 @@ def main():
 
     # Verifier stats
     stats = rag.get_stats()
-    print(f"\n[+] Collections v3 indexees:")
+    print("\n[+] Collections v3 indexees:")
     print(f"    registry_v3     : {stats['registry_count']} docs")
     print(f"    capabilities_v3 : {stats['capabilities_count']} docs")
     print(f"    parameters_v3   : {stats['parameters_count']} docs")

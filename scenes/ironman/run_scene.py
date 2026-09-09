@@ -3,7 +3,7 @@
 Script de lancement de la scene Iron Man.
 
 Usage:
-    cd /home/amineutron/dev/lyra
+    cd <dossier lyra>
     source .venv/bin/activate
 
     python -m scenes.ironman.run_scene                  # Scene complete (~33s)
@@ -23,16 +23,16 @@ Notes sous-scenes:
       rallumage auto a 60s est arme en secours.
 """
 
+import argparse
 import logging
 import sys
-import argparse
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from scenes.ironman import IronManOrchestrator
-from scenes.ironman.metrics import load_runs, format_comparison
+from scenes.ironman.metrics import format_comparison, load_runs
 
 # Rallumage auto des ecrans PC en mode test/sous-scene (secours)
 TEST_PC_AUTO_WAKE_S = 60

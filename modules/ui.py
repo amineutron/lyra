@@ -4,17 +4,13 @@ Lyra V1 - Interface Utilisateur
 Gere l'affichage et les interactions utilisateur (confirmation, etc.).
 """
 
-import sys
 import os
 import readline
 import shutil
+import sys
 import threading
-import time
 from datetime import datetime
-from typing import Optional
-from dataclasses import dataclass
 from pathlib import Path
-
 
 # Etat du bandeau : None = auto (collapsed si >2 taches), True/False = force
 _tasks_expanded: list = [None]
@@ -366,7 +362,6 @@ def clear_thinking():
 
 def clear_screen():
     """Efface le terminal."""
-    import os
     os.system('clear' if os.name != 'nt' else 'cls')
 
 

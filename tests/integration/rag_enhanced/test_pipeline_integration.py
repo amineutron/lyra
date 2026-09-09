@@ -8,8 +8,9 @@ Pour les tests sans LLM : voir test_pipeline_integration_simple.py
 Pour les tests E2E mockes : voir tests/e2e/rag_enhanced/
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config.yaml"
 
@@ -17,6 +18,7 @@ CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config.yaml"
 def load_enhanced_config():
     """Charge la RAGEnhancedConfig depuis config.yaml (comme en prod)."""
     import yaml
+
     from lyra.rag_enhanced.config import RAGEnhancedConfig
     with open(CONFIG_PATH) as f:
         cfg = yaml.safe_load(f)
@@ -106,9 +108,9 @@ class TestPipelineEnhancedCompat:
 
     def test_pipeline_backward_compat(self):
         """Enhanced(enabled=False) -> reponse identique a V2 pur."""
+        from lyra.core.config import RAGConfig
         from lyra.core.pipeline import Pipeline
         from lyra.rag_enhanced.pipeline_enhanced import EnhancedPipeline
-        from lyra.core.config import RAGConfig
 
         rag_config = RAGConfig.from_yaml(CONFIG_PATH)
 
@@ -138,9 +140,9 @@ class TestPipelineEnhancedPerformance:
 
     def test_pipeline_performance(self, benchmark):
         """Overhead Enhanced vs V2 pur - objectif <50ms."""
+        from lyra.core.config import RAGConfig
         from lyra.core.pipeline import Pipeline
         from lyra.rag_enhanced.pipeline_enhanced import EnhancedPipeline
-        from lyra.core.config import RAGConfig
 
         rag_config = RAGConfig.from_yaml(CONFIG_PATH)
         enhanced_config = load_enhanced_config()

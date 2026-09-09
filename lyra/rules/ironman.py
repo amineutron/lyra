@@ -1,7 +1,8 @@
 """Regles de detection pour la scene Iron Man."""
 
 import re
-from .base import normalize, make
+
+from .base import make, normalize
 
 # Triggers exacts (normalises: minuscules, sans accents)
 _TRIGGERS_EXACT = [

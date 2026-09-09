@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from lyra.models.intent_classifier import IntentClassifier, Intent
+from lyra.models.intent_classifier import Intent, IntentClassifier
 
 
 @pytest.fixture

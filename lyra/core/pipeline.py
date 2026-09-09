@@ -19,52 +19,58 @@ _current_session: contextvars.ContextVar = contextvars.ContextVar(
     "lyra_current_session", default=None
 )
 
+from ..hestia.executor import ExecutionContext, HestiaExecutor
+from ..models.ephaistos import Ephaistos, EphaistosAnalysis
+from ..models.intent_classifier import Intent, IntentClassifier
+from ..models.lyra_voice import LyraResponse, LyraVoice
+from ..models.model_manager import ModelManager
+from ..rag.session_memory import (
+    CHOICE_SERVER_SELECTION,
+    CHOICE_TOOL_DISAMBIGUATION,
+    CHOICE_VM_START_CONFIRM,
+    META_COW_CHOICE_PENDING,
+    META_CUSTOM_EXPORT_STEP,
+    META_STOP_CHOICE_PENDING,
+    PendingAction,
+    PendingChoice,
+    SessionMemory,
+)
+from ..utils.toon import toon_encode_specs
 from .config import RAGConfig
-from .types import (
-    QueryType,
-    PipelineResult,
-)
-from .menus import (
-    is_list_tools_query,
-    process_tools_query_step1,
-    handle_server_selection,
-)
-from .retrieval import Retriever
 from .formatters import (
     enrich_description,
     enrich_optional_args,
     format_listing_result,
 )
+from .menus import (
+    handle_server_selection,
+    is_list_tools_query,
+    process_tools_query_step1,
+)
+from .retrieval import Retriever
+from .types import (
+    PipelineResult,
+    QueryType,
+)
 from .validation import (
     VM_TOOLS_NEED_EXISTING,
-    VM_TOOLS_REQUIRE_VM_NAME,
     VM_TOOLS_REQUIRE_RUNNING,
+    VM_TOOLS_REQUIRE_VM_NAME,
     VM_TOOLS_SHOW_STATE,
     get_existing_vm_names,
     get_vm_state,
     validate_vm_existence,
 )
 from .workflows.context import WorkflowContext
-from .workflows.vm_start import handle_vm_start_confirm
-from .workflows.vm_stop import handle_vm_stop_choice
+from .workflows.vm_clone import handle_cow_choice, handle_vm_clone_workflow, suggest_vm_name
+from .workflows.vm_export import handle_custom_export_step, handle_vm_export_custom_workflow
 from .workflows.vm_snapshot import (
     handle_vm_snapshot_create_workflow,
     handle_vm_snapshot_list_workflow,
     handle_vm_snapshot_pending,
 )
-from .workflows.vm_clone import suggest_vm_name, handle_cow_choice, handle_vm_clone_workflow
-from .workflows.vm_export import handle_vm_export_custom_workflow, handle_custom_export_step
-from ..rag.session_memory import (
-    SessionMemory, PendingAction, PendingChoice,
-    CHOICE_VM_START_CONFIRM, CHOICE_SERVER_SELECTION, CHOICE_TOOL_DISAMBIGUATION,
-    META_COW_CHOICE_PENDING, META_STOP_CHOICE_PENDING, META_CUSTOM_EXPORT_STEP,
-)
-from ..models.model_manager import ModelManager
-from ..models.ephaistos import Ephaistos, EphaistosAnalysis
-from ..models.lyra_voice import LyraVoice, LyraResponse
-from ..models.intent_classifier import IntentClassifier, Intent
-from ..hestia.executor import HestiaExecutor, ExecutionContext, ExecutionResult
-from ..utils.toon import toon_encode_specs
+from .workflows.vm_start import handle_vm_start_confirm
+from .workflows.vm_stop import handle_vm_stop_choice
 
 
 class Pipeline:
@@ -748,8 +754,8 @@ class Pipeline:
 
         # Cas special: open_app sans ecran -> extraire l'ecran de la reponse utilisateur
         if pending.tool_name == "screen-manager.open_app" and "screen" in pending.missing_args:
-            from ..rules.screen_manager import _extract_screen_dest
             from ..rules.base import normalize
+            from ..rules.screen_manager import _extract_screen_dest
             q = normalize(query)
             screen = _extract_screen_dest(q)
             if not screen:

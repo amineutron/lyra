@@ -7,26 +7,22 @@ Usage:
 """
 
 import sys
-import time
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 import requests
 
 # Add parent dir to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
 from phase2_impact import (
-    Phase2Impact,
-    rgb_to_xy,
-    YOUTUBE_VIDEO_ID,
-    FLASH_DURATION,
-    BLUE_TRANSITION,
+    BLUE_ARC_REACTOR_RGB,
     PHASE_DURATION,
     WHITE_RGB,
-    BLUE_ARC_REACTOR_RGB,
+    Phase2Impact,
+    rgb_to_xy,
 )
-
 
 # =============================================================================
 # Tests rgb_to_xy

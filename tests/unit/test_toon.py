@@ -2,16 +2,15 @@
 Tests unitaires pour le module TOON.
 """
 
-import pytest
 from dataclasses import dataclass
 from typing import Optional
 
 from lyra.utils.toon import (
-    toon_encode,
-    toon_encode_specs,
-    toon_encode_history,
-    parse_spec,
     _quote_value,
+    parse_spec,
+    toon_encode,
+    toon_encode_history,
+    toon_encode_specs,
 )
 
 

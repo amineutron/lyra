@@ -7,17 +7,17 @@ Phase 5 ajoute le MCPManager pour gerer plusieurs serveurs MCP avec prefixage.
 Phase 5.4 ajoute MCPSessionClient pour les serveurs MCP async (Python).
 """
 
-from lyra.core.paths import DEFAULT_FEDORA_MCP_SERVER
 import json
-import subprocess
 import os
+import subprocess
 import sys
 import threading
-import queue
 import time
-from typing import Optional
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
+
+from lyra.core.paths import DEFAULT_FEDORA_MCP_SERVER
 
 
 @dataclass

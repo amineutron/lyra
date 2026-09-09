@@ -7,17 +7,16 @@ Usage:
 """
 
 import sys
-import time
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 import requests
 
 # Add parent dir to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from phase1_blackout import Phase1Blackout, BLACKOUT_DURATION, MAX_EXTINCTION_LATENCY_MS
-
+from phase1_blackout import BLACKOUT_DURATION, MAX_EXTINCTION_LATENCY_MS, Phase1Blackout
 
 # =============================================================================
 # Tests _turn_off_lights

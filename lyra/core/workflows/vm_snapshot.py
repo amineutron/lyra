@@ -12,7 +12,7 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Optional
 
-from ..types import QueryType, PipelineResult
+from ..types import PipelineResult, QueryType
 from ..validation import get_existing_vm_names
 
 if TYPE_CHECKING:

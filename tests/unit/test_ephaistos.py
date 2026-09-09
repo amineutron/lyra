@@ -2,10 +2,11 @@
 Tests unitaires pour EPHAISTOS.
 """
 
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-from lyra.models.ephaistos import Ephaistos, EphaistosAnalysis, EPHAISTOS_SYSTEM_PROMPT
+import pytest
+
+from lyra.models.ephaistos import EPHAISTOS_SYSTEM_PROMPT, Ephaistos, EphaistosAnalysis
 from lyra.models.model_manager import ModelManager, ModelResponse
 
 

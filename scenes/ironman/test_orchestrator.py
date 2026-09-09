@@ -3,7 +3,8 @@ Tests pour l'Orchestrateur Iron Man
 """
 
 import time
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
 import pytest
 
 from .orchestrator import IronManOrchestrator, SceneState

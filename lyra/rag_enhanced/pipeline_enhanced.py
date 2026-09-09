@@ -13,20 +13,20 @@ Enrichit le pipeline V2 avec :
 """
 
 import time
-from typing import Optional, Callable
 from dataclasses import dataclass, field
+from typing import Callable, Optional
 
-from ..core.pipeline import Pipeline, PipelineResult, QueryType
 from ..core.config import RAGConfig
+from ..core.pipeline import Pipeline, PipelineResult
+from .confidence_cascader import get_confidence_cascader
 
 # Imports RAG Enhanced
 from .config import RAGEnhancedConfig
+from .context_injector import get_context_injector
+from .feedback_loop import get_feedback_loop
+from .rag_3tier import get_rag_3tier
 from .slang_normalizer import get_default_normalizer
 from .synonym_expander import get_synonym_expander
-from .context_injector import get_context_injector
-from .rag_3tier import get_rag_3tier
-from .confidence_cascader import get_confidence_cascader, CascadeAction
-from .feedback_loop import get_feedback_loop
 
 
 @dataclass
@@ -87,7 +87,7 @@ class EnhancedPipeline:
         >>> result = pipeline.process_query("start preprod-09")
         >>> print(result.normalized_query)  # "démarre preprod-09"
     """
-    
+
     def __init__(
         self,
         config: Optional[RAGConfig] = None,
@@ -107,15 +107,15 @@ class EnhancedPipeline:
         if config is None:
             from pathlib import Path
             config = RAGConfig.from_yaml(Path("config.yaml"))
-        
+
         self.config = config
         self.enhanced_config = enhanced_config or RAGEnhancedConfig()
         self.enabled = enabled
         self.tts_mode = tts_mode
-        
+
         # Pipeline V2 sous-jacent
         self._pipeline_v2 = Pipeline(config=config, tts_mode=tts_mode)
-        
+
         # Composants RAG Enhanced (lazy-loaded)
         self._slang_normalizer = None
         self._synonym_expander = None
@@ -123,41 +123,41 @@ class EnhancedPipeline:
         self._rag_3tier = None
         self._confidence_cascader = None
         self._feedback_loop = None
-        
+
         self._initialized = False
-    
+
     def initialize(self):
         """Initialise le pipeline et les composants."""
         if self._initialized:
             return
-        
+
         # Initialiser V2
         self._pipeline_v2.initialize()
-        
+
         # Initialiser composants RAG Enhanced si enabled
         if self.enabled:
             # Slang Normalizer
             if self.enhanced_config.slang_normalizer.enabled:
                 self._slang_normalizer = get_default_normalizer()
-            
+
             # Synonym Expander
             if self.enhanced_config.synonym_expander.enabled:
                 self._synonym_expander = get_synonym_expander()
-            
+
             # Context Injector
             if self.enhanced_config.context_injector.enabled:
                 self._context_injector = get_context_injector()
-            
+
             # RAG 3-Tier (optionnel, remplace semantic V2)
             if self.enhanced_config.rag_3tier.enabled:
                 self._rag_3tier = get_rag_3tier()
                 self._rag_3tier.initialize()
-            
+
             # Confidence Cascader (utilise seuils du feedback_loop)
             if self.enhanced_config.feedback_loop.enabled:
                 self._confidence_cascader = get_confidence_cascader()
                 self._feedback_loop = get_feedback_loop()
-        
+
         self._initialized = True
 
     def preload_models(self) -> None:
@@ -245,7 +245,7 @@ class EnhancedPipeline:
         """
         if not self._initialized:
             self.initialize()
-        
+
         start_time = time.time()
         metrics = {}
 
@@ -277,7 +277,7 @@ class EnhancedPipeline:
             t0 = time.time()
             normalized_query = self._slang_normalizer.normalize(query)
             metrics['slang_latency_ms'] = (time.time() - t0) * 1000
-        
+
         # === ÉTAPE 2 : Synonym Expander ===
         expanded_query = normalized_query
         if self._synonym_expander:
@@ -342,7 +342,7 @@ class EnhancedPipeline:
         rag_source = "v2_fallback"
         rag_score = 0.0
         rag_results = []
-        
+
         if self._rag_3tier:
             # Utiliser RAG 3-Tier (avec callback verbose M1)
             t0 = time.time()
@@ -434,7 +434,7 @@ class EnhancedPipeline:
                         "tool": top_name,
                         "candidates": candidates
                     })
-        
+
         # === ÉTAPE 4 : Confidence Cascader ===
         cascade_action = "execute"  # Default
         confidence_level = "high"   # Default
@@ -451,7 +451,7 @@ class EnhancedPipeline:
             cascade_action = cascade_result['action'].value
             confidence_level = cascade_result.get('confidence_level', 'high')
             should_inject_context = cascade_result['should_inject_context']
-        
+
         # === ÉTAPE 5 : Context Injector (si MEDIUM + gap faible) ===
         # Utiliser normalized_query au lieu de expanded_query pour éviter faux positifs
         # Les synonymes ont déjà servi pour le RAG, on n'en a plus besoin pour le routing
@@ -476,7 +476,7 @@ class EnhancedPipeline:
             if query_for_pipeline != normalized_query:
                 context_injected = True
                 enriched_query = query_for_pipeline
-        
+
         # === Callback "before_llm" : message LYRA avant EPHAISTOS (Fix 2) ===
         # Permet d'afficher un message de progression avant le long appel LLM
         if rag_step_callback and rag_results:
@@ -525,7 +525,7 @@ class EnhancedPipeline:
             result_v2 = self._pipeline_v2._process_action(query_for_pipeline, precomputed_specs=precomputed_specs)
 
         metrics['v2_pipeline_latency_ms'] = (time.time() - t0) * 1000
-        
+
         # === ÉTAPE 7 : Feedback Loop ===
         feedback_recorded = False
         if self._feedback_loop:
@@ -542,7 +542,7 @@ class EnhancedPipeline:
             )
             feedback_recorded = True
             metrics['feedback_latency_ms'] = (time.time() - t0) * 1000
-        
+
         # === MÉTRIQUES FINALES ===
         metrics['total_latency_ms'] = (time.time() - start_time) * 1000
 
@@ -573,7 +573,7 @@ class EnhancedPipeline:
             feedback_recorded=feedback_recorded,
             metrics=metrics
         )
-    
+
     def _wrap_v2_result(
         self,
         result_v2: PipelineResult,
@@ -600,7 +600,7 @@ class EnhancedPipeline:
             feedback_recorded=False,
             metrics=metrics
         )
-    
+
     def reload_config(self, new_config: RAGEnhancedConfig):
         """Recharge la configuration enhanced.
         
@@ -608,34 +608,34 @@ class EnhancedPipeline:
             new_config: Nouvelle configuration
         """
         self.enhanced_config = new_config
-        
+
         # Réinitialiser composants si nécessaire
         # Note: Pour un hot reload complet, il faudrait réinitialiser
         # tous les composants avec la nouvelle config
         # Pour simplifier, on met juste à jour la référence
         # Les composants utiliseront la nouvelle config au prochain appel
-        
+
         # Slang Normalizer
         if new_config.slang_normalizer.enabled != (self._slang_normalizer is not None):
             if new_config.slang_normalizer.enabled:
                 self._slang_normalizer = get_default_normalizer()
             else:
                 self._slang_normalizer = None
-        
+
         # Synonym Expander
         if new_config.synonym_expander.enabled != (self._synonym_expander is not None):
             if new_config.synonym_expander.enabled:
                 self._synonym_expander = get_synonym_expander()
             else:
                 self._synonym_expander = None
-        
+
         # Context Injector
         if new_config.context_injector.enabled != (self._context_injector is not None):
             if new_config.context_injector.enabled:
                 self._context_injector = get_context_injector()
             else:
                 self._context_injector = None
-        
+
         # RAG 3-Tier
         if new_config.rag_3tier.enabled != (self._rag_3tier is not None):
             if new_config.rag_3tier.enabled:
@@ -643,7 +643,7 @@ class EnhancedPipeline:
                 self._rag_3tier.initialize()
             else:
                 self._rag_3tier = None
-        
+
         # Confidence Cascader + Feedback Loop (liés)
         if new_config.feedback_loop.enabled != (self._feedback_loop is not None):
             if new_config.feedback_loop.enabled:

@@ -17,7 +17,6 @@ Usage:
 
 import sys
 import unicodedata
-import re
 from pathlib import Path
 
 # Ajouter le repertoire racine au path
@@ -307,13 +306,13 @@ TESTS = [
     # FEDORA - vm_import
     # ================================================================
     ("FEDORA/vm_import", "importe archive",
-     "importe /home/amineutron/vm-exports/preprod-01-export-20260227-classic.tar.gz",
-     "fedora.vm_import", {"archive_path": "/home/amineutron/vm-exports/preprod-01-export-20260227-classic.tar.gz"}, {}),
+     "importe /home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz",
+     "fedora.vm_import", {"archive_path": "/home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz"}, {}),
 
     ("FEDORA/vm_import", "importe avec nouveau nom",
-     "importe /home/amineutron/vm-exports/preprod-01-export-20260227-classic.tar.gz sous le nom test-import",
+     "importe /home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz sous le nom test-import",
      "fedora.vm_import",
-     {"archive_path": "/home/amineutron/vm-exports/preprod-01-export-20260227-classic.tar.gz", "new_name": "test-import"},
+     {"archive_path": "/home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz", "new_name": "test-import"},
      {}),
 
     ("FEDORA/vm_import", "charge VM",
@@ -711,7 +710,7 @@ TESTS = [
      "fedora.vm_export", {"vm_name": "system-clone-final", "mode": "exam"}, {}),
 
     ("EDGE/args", "import avec renommage",
-     "importe /home/amineutron/vm-exports/test.tar.gz sous le nom ma-vm",
+     "importe /home/user/vm-exports/test.tar.gz sous le nom ma-vm",
      "fedora.vm_import", {"new_name": "ma-vm"}, {}),
 
     ("EDGE/args", "vm_status global vs specifique",
@@ -723,8 +722,8 @@ TESTS = [
      None, {}, {}),  # doit demander clarification
 
     ("EDGE/args", "copie chemin complexe",
-     "copie /home/amineutron/projet/config.json vers sandbox-02",
-     "fedora.vm_copy", {"source": "/home/amineutron/projet/config.json", "vm_name": "sandbox-02"}, {}),
+     "copie /home/user/projet/config.json vers sandbox-02",
+     "fedora.vm_copy", {"source": "/home/user/projet/config.json", "vm_name": "sandbox-02"}, {}),
 
     ("EDGE/args", "exec commande avec espaces",
      "execute apt-get update sur preprod-01",

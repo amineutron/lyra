@@ -16,7 +16,7 @@ from installer.core.steps import systemd
 
 FEDORA = parse_os_release('ID=fedora\nPRETTY_NAME="Fedora 43"\n')
 REAL_TEMPLATE = Path(
-    "/home/amineutron/dev/lyra/install/lyra-daemon.service").read_text()
+    Path(__file__).resolve().parents[2] / "install" / "lyra-daemon.service").read_text()
 
 
 @pytest.fixture

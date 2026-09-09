@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .types import QueryType, PipelineResult, SERVER_DESCRIPTIONS
 from ..rag.session_memory import CHOICE_SERVER_SELECTION
+from .types import SERVER_DESCRIPTIONS, PipelineResult, QueryType
 
 if TYPE_CHECKING:
     from .workflows.context import WorkflowContext

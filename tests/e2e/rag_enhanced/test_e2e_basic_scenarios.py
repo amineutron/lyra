@@ -16,11 +16,10 @@ Les tests mockent Ollama et MCP execution, mais testent les composants
 RAG Enhanced réels (Slang, Synonym, Context, Cascader, Feedback).
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
-from lyra.rag_enhanced import EnhancedPipeline, EnhancedPipelineResult
 from lyra.core.pipeline import QueryType
+from lyra.rag_enhanced import EnhancedPipeline
 
 
 class TestScenario01_SlangNormalizer:
@@ -111,7 +110,6 @@ class TestScenario03_FeatureFlags:
         pipeline._pipeline_v2._retriever.retrieve = Mock(return_value=[])
         pipeline._pipeline_v2._retriever.detect_query_type = Mock(return_value=QueryType.ACTION)
 
-        from lyra.core.workflows.context import WorkflowContext
         from lyra.rag.session_memory import SessionMemory
         pipeline._pipeline_v2._sessions["default"] = SessionMemory(max_turns=10)
 
@@ -188,7 +186,6 @@ class TestScenario05_BackwardCompatibility:
 
             pipeline._sessions["default"] = SessionMemory(max_turns=10)
 
-            from lyra.core.workflows.context import WorkflowContext
             pipeline._initialized = True
 
         pipeline_v2._initialized = True

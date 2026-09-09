@@ -8,9 +8,7 @@ Contains the core modules for the voice assistant:
 - audio: STT/TTS (faster-whisper + Piper)
 """
 
-from . import llm
-from . import mcp
-from . import ui
+from . import llm, mcp, ui
 
 # Audio est importe a la demande pour eviter de charger les modeles inutilement
 # from . import audio

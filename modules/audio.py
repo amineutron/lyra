@@ -4,22 +4,18 @@ Lyra V1 - Module Audio (STT/TTS)
 Gere la capture vocale (faster-whisper) et la synthese (Piper).
 """
 
-import io
 import os
-import sys
-import wave
 import queue
-import threading
-import warnings
+import sys
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Optional
+
 import numpy as np
 
 # Note: Les "Exception ignored" de sounddevice sont geres via suppress_stderr()
-
 import sounddevice as sd
-from pathlib import Path
-from typing import Optional, Callable
-from dataclasses import dataclass
-from contextlib import contextmanager
 
 
 @contextmanager

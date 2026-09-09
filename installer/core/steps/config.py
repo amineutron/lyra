@@ -3,8 +3,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..configpatch import (assert_no_secrets, backup_if_exists, build_config,
-                           build_secrets, write_yaml)
+from ..configpatch import (
+    assert_no_secrets,
+    backup_if_exists,
+    build_config,
+    build_secrets,
+    write_yaml,
+)
 from ..events import Output
 from ..pipeline import StepContext
 

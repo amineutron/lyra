@@ -12,8 +12,8 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from ..types import QueryType, PipelineResult
 from ...rag.session_memory import META_CUSTOM_EXPORT_STEP
+from ..types import PipelineResult, QueryType
 
 if TYPE_CHECKING:
     from ...rag.session_memory import PendingAction
@@ -229,10 +229,10 @@ def handle_custom_export_step(
     # Tous les groupes parcourus
     if "user-account" in ops:
         question = (
-            f"**Firstboot**\n"
-            f"Les comptes utilisateurs seront effaces. Installer le script de\n"
-            f"configuration au premier demarrage (demande user + mot de passe) ?\n"
-            f"[O/n]"
+            "**Firstboot**\n"
+            "Les comptes utilisateurs seront effaces. Installer le script de\n"
+            "configuration au premier demarrage (demande user + mot de passe) ?\n"
+            "[O/n]"
         )
         ctx.session.set_pending_action(
             tool_name="fedora.vm_export",

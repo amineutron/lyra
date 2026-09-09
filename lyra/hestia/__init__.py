@@ -8,8 +8,8 @@ Components:
 """
 
 from .executor import HestiaExecutor
-from .notion_logger import NotionLogger
 from .metrics import MetricsCollector
+from .notion_logger import NotionLogger
 
 __all__ = [
     "HestiaExecutor",

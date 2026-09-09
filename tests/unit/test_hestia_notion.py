@@ -2,10 +2,10 @@
 Tests unitaires pour NotionLogger.
 """
 
-import pytest
 import sys
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from lyra.hestia.executor import ExecutionContext
 
@@ -51,6 +51,7 @@ class TestNotionLogger:
         with patch.dict(sys.modules, {'notion_client': mock_notion_client}):
             # Re-importer le module pour qu'il utilise le mock
             import importlib
+
             import lyra.hestia.notion_logger as notion_module
             importlib.reload(notion_module)
 
@@ -297,6 +298,7 @@ class TestNotionLoggerIntegration:
 
         with patch.dict(sys.modules, {'notion_client': mock_notion_client}):
             import importlib
+
             import lyra.hestia.notion_logger as notion_module
             importlib.reload(notion_module)
 

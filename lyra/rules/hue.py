@@ -1,9 +1,8 @@
 """Regles de detection pour les outils HUE (Philips Hue)."""
 
 import re
-from typing import Optional
 
-from .base import normalize, make
+from .base import make, normalize
 
 _RGB_COLOR_MAP = {
     "rouge": (255, 0, 0), "vert": (0, 255, 0), "verte": (0, 255, 0),

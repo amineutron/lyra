@@ -5,7 +5,6 @@ SESSION 4 (P3) - RAG Enhanced
 """
 
 import time
-from pathlib import Path
 
 import pytest
 

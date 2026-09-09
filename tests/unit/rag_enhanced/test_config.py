@@ -2,20 +2,20 @@
 Tests unitaires pour la configuration RAG Enhanced.
 """
 
+
 import pytest
 import yaml
-from pathlib import Path
+
 from lyra.rag_enhanced.config import (
+    ContextInjectorConfig,
+    FeedbackLoopConfig,
+    RAG3TierConfig,
     RAGEnhancedConfig,
     SlangNormalizerConfig,
     SynonymExpanderConfig,
-    ContextInjectorConfig,
-    RAG3TierConfig,
-    FeedbackLoopConfig,
-    MetricsConfig,
 )
-from lyra.rag_enhanced.types import QueryContext, RAGResult, ConfidenceLevel, CascadeAction
-from lyra.rag_enhanced.constants import SLANG_MAX_PATTERNS, CONFIDENCE_HIGH
+from lyra.rag_enhanced.constants import CONFIDENCE_HIGH, SLANG_MAX_PATTERNS
+from lyra.rag_enhanced.types import CascadeAction, ConfidenceLevel, QueryContext, RAGResult
 
 
 def test_load_rag_enhanced_config(sample_config_dict):
@@ -186,15 +186,14 @@ def test_types_enums():
 def test_constants():
     """Test des constantes."""
     from lyra.rag_enhanced.constants import (
-        CONFIDENCE_HIGH,
-        CONFIDENCE_MEDIUM,
         CONFIDENCE_LOW,
+        CONFIDENCE_MEDIUM,
+        CONTEXT_DEFAULT_WINDOW,
+        CONTEXT_FIFO_LIMIT,
+        CONTEXT_MAX_WINDOW,
         SLANG_MAX_PATTERNS,
         SYNONYM_MAX_PER_KEYWORD,
         SYNONYM_MAX_TOKENS_ADDED,
-        CONTEXT_DEFAULT_WINDOW,
-        CONTEXT_MAX_WINDOW,
-        CONTEXT_FIFO_LIMIT,
     )
 
     # Seuils confiance (M2 - mis a jour)

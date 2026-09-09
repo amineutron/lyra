@@ -28,11 +28,10 @@ Notes:
   - Requiert Ollama actif avec les modeles configures dans config.yaml
 """
 
+import argparse
 import sys
 import time
-import argparse
 from pathlib import Path
-from dataclasses import dataclass
 from typing import Optional
 
 # --- Path setup ---
@@ -40,7 +39,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).parent))
 
-from test_campaign_mcp import TESTS, normalize, tool_matches, check_args
+from test_campaign_mcp import TESTS, check_args, normalize, tool_matches
 
 # --- Constantes statut ---
 PASS      = "PASS"
@@ -144,6 +143,7 @@ def _mock_vm_calls(pipeline):
     et eteintes.
     """
     import types
+
     import lyra.core.workflows.vm_clone as _wf_clone
     import lyra.core.workflows.vm_snapshot as _wf_snapshot
 
@@ -181,6 +181,7 @@ def init_pipeline():
         Exception si l'init echoue (modele manquant, etc.)
     """
     import yaml
+
     from lyra.core.config import RAGConfig
 
     config_path = ROOT / "config.yaml"

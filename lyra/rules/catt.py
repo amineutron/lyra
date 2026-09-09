@@ -1,9 +1,8 @@
 """Regles de detection pour les outils CATT (Chromecast)."""
 
 import re
-from typing import Optional
 
-from .base import normalize, make
+from .base import make, normalize
 
 _YOUTUBE_URL_RE = r'https?://(?:www\.)?(?:youtube\.com/watch\S*|youtu\.be/[\w-]+)'
 

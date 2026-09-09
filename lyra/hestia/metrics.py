@@ -4,10 +4,9 @@ Lyra HESTIA - Metrics Collector.
 Collecte de metriques in-memory pour les executions MCP.
 """
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict
-from typing import Optional
 
 
 @dataclass

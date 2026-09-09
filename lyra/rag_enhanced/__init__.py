@@ -10,34 +10,32 @@ Enrichit le pipeline RAG V2 avec :
 - Confidence Cascader : Seuils de confiance (0.85/0.60)
 """
 
-from .types import (
-    ConfidenceLevel,
-    CascadeAction,
-    QueryContext,
-    RAGResult,
-    FeedbackEntry,
-)
-
 from .config import (
+    ContextInjectorConfig,
+    FeedbackLoopConfig,
+    MetricsConfig,
+    RAG3TierConfig,
     RAGEnhancedConfig,
     SlangNormalizerConfig,
     SynonymExpanderConfig,
-    ContextInjectorConfig,
-    RAG3TierConfig,
-    FeedbackLoopConfig,
-    MetricsConfig,
 )
-
 from .constants import (
     CONFIDENCE_HIGH,
-    CONFIDENCE_MEDIUM,
     CONFIDENCE_LOW,
+    CONFIDENCE_MEDIUM,
+    CONTEXT_DEFAULT_WINDOW,
+    CONTEXT_FIFO_LIMIT,
+    CONTEXT_MAX_WINDOW,
     SLANG_MAX_PATTERNS,
     SYNONYM_MAX_PER_KEYWORD,
     SYNONYM_MAX_TOKENS_ADDED,
-    CONTEXT_DEFAULT_WINDOW,
-    CONTEXT_MAX_WINDOW,
-    CONTEXT_FIFO_LIMIT,
+)
+from .types import (
+    CascadeAction,
+    ConfidenceLevel,
+    FeedbackEntry,
+    QueryContext,
+    RAGResult,
 )
 
 # Composants (SESSION 2+)
@@ -77,8 +75,8 @@ except ImportError:
 
 # SESSION 6
 try:
-    from .feedback_loop import FeedbackLoop, get_feedback_loop
     from .confidence_cascader import ConfidenceCascader, get_confidence_cascader
+    from .feedback_loop import FeedbackLoop, get_feedback_loop
 except ImportError:
     # Pas encore implémenté
     FeedbackLoop = None

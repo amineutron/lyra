@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-name = "lyra"
-version = "1.1.0"
+name = "lyra-assistant"
+version = "1.2.0"
 description = "Local voice-controlled DevOps assistant (French) with RAG pipeline"
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
@@ -18,6 +18,42 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
+dependencies = [
+    "faster-whisper>=0.10.0",
+    "piper-tts>=1.2.0",
+    "ollama>=0.1.0",
+    "pyyaml>=6.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-dotenv>=1.0",
+    "sounddevice>=0.4.6",
+    "numpy>=1.24.0",
+    "httpx>=0.25.0",
+    "pexpect>=4.8.0",
+    "rich>=13.0.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+# Accélération GPU NVIDIA pour faster-whisper : optionnelle, jamais imposée
+gpu = ["nvidia-cublas-cu12>=12.0.0", "nvidia-cudnn-cu12>=9.0.0"]
+cpu = []
+dev = ["pytest>=8", "pytest-asyncio>=0.21", "pytest-cov>=4", "ruff>=0.5", "mypy>=1.0", "pip-licenses>=5", "pyyaml>=6.0"]
+
+[project.urls]
+Homepage = "https://github.com/amineutron/lyra"
+Repository = "https://github.com/amineutron/lyra"
+Issues = "https://github.com/amineutron/lyra/issues"
+Changelog = "https://github.com/amineutron/lyra/blob/main/CHANGELOG.md"
+
+[project.scripts]
+lyra = "lyra.client.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["lyra", "modules"]
+
+[tool.hatch.build.targets.sdist]
+include = ["lyra/", "modules/", "installer/", "scripts/", "prompts/system_prompt.txt", "config.yaml.example", "secrets.yaml.example", "README.md", "LICENSE", "COMMERCIAL-LICENSE.md", "CLA.md", "CHANGELOG.md", "tests/"]
 
 [tool.ruff]
 line-length = 100

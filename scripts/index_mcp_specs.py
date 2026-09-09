@@ -12,6 +12,7 @@ Usage:
 """
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
@@ -19,14 +20,13 @@ from pathlib import Path
 # Ajouter le repertoire parent au path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lyra.rag.semantic_retriever import SemanticRetriever
-from lyra.rag.keyword_retriever import KeywordRetriever
 from lyra.rag.fusion import RRFFusion
 from lyra.rag.indexer import MCPToolSpec
-
+from lyra.rag.keyword_retriever import KeywordRetriever
+from lyra.rag.semantic_retriever import SemanticRetriever
 
 # Chemins des sources TypeScript
-MCP_SERVER_PATH = Path("/home/amineutron/dev/fedora-setup/scripts/agents/mcp-server/src")
+MCP_SERVER_PATH = Path(os.environ.get("LYRA_MCP_SPECS_DIR", Path(__file__).resolve().parents[2] / "fedora-agents" / "src"))
 SOURCES = {
     "vm": MCP_SERVER_PATH / "tools" / "vm-controller.ts",
     "backup": MCP_SERVER_PATH / "tools" / "backup-manager.ts",
@@ -309,7 +309,7 @@ def index_specs(clear: bool = False) -> tuple[SemanticRetriever, KeywordRetrieve
 
     # Creer les retrievers
     semantic = SemanticRetriever(
-        persist_directory="/home/amineutron/dev/lyra/.chromadb",
+        persist_directory=str(Path(__file__).resolve().parents[1] / ".chromadb"),
         collection_name="lyra_mcp_specs"
     )
     keyword = KeywordRetriever()

@@ -1,29 +1,24 @@
 name: Tests
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 jobs:
-  unit-tests:
+  ci:
+    uses: amineutron/.github/.github/workflows/python-ci.yml@main
+    with:
+      python-versions: '["3.11", "3.12"]'
+      test-command: "uv run --frozen python -m pytest tests/unit tests/installer -q -p no:cacheprovider"
+      lint: false   # 231 avertissements ruff historiques : rendu bloquant en v1.3 (voir ROADMAP)
+  licences-tierces:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen --extra dev --python 3.12
+      - name: Inventaire des licences (THIRD_PARTY_LICENSES.md doit être à jour)
         run: |
-          pip install pytest
-          pip install -r requirements.txt 2>/dev/null || true
-
-      - name: Run unit tests (rules)
-        run: |
-          python3 -m pytest tests/unit/rules/ -v --tb=short
+          uv run --frozen pip-licenses --format=markdown --with-urls --order=license > /tmp/tpl.md
+          if ! diff -q <(tail -n +3 THIRD_PARTY_LICENSES.md) /tmp/tpl.md >/dev/null; then
+            echo "THIRD_PARTY_LICENSES.md est périmé : regénérez-le avec make licenses"; diff <(tail -n +3 THIRD_PARTY_LICENSES.md) /tmp/tpl.md | head -20; exit 1; fi

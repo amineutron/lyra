@@ -1,9 +1,8 @@
 """Regles de detection pour les outils DENON AVR (denon.*)."""
 
 import re
-from typing import Optional
 
-from .base import normalize, make
+from .base import make, normalize
 
 _DENON_INPUT_MAP = [
     (r'\b(?:bluray|blu.ray|bd)\b', "BD"),

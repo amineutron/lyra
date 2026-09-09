@@ -25,6 +25,7 @@ def _print_incomplete_integrations_reminder() -> None:
     qui n'utilise jamais le mode interactif ne le voit jamais."""
     try:
         import yaml
+
         from lyra.client.reminders import print_incomplete_integrations
         with open(REPO_ROOT / "config.yaml") as f:
             cfg = yaml.safe_load(f)

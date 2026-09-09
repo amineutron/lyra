@@ -3,7 +3,7 @@ from pathlib import Path
 
 from installer.core.steps.systemd import render_service
 
-TEMPLATE = Path("/home/amineutron/dev/lyra/install/lyra-daemon.service").read_text()
+TEMPLATE = (Path(__file__).resolve().parents[2] / "install" / "lyra-daemon.service").read_text()
 
 
 def test_chemins_substitues():

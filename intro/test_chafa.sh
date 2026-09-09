@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Test rendu chafa sur la video Manim generee (lecture frame par frame)
 
-VIDEO="/home/amineutron/dev/lyra/intro/media/videos/part3_manim/1080p60/LyraIntro.mp4"
+VIDEO="$(dirname "$0")/media/videos/part3_manim/1080p60/LyraIntro.mp4"
 
 if [ ! -f "$VIDEO" ]; then
     echo "Video introuvable : $VIDEO"

@@ -7,9 +7,10 @@ Scénarios avancés testant :
 - Cas complexes multi-étapes
 """
 
-import pytest
 import time
 from unittest.mock import Mock
+
+import pytest
 
 from lyra.rag_enhanced import EnhancedPipeline
 

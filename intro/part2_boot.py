@@ -2,11 +2,12 @@
 """
 Lyra Intro - Partie 2 : Sequence d'installation / boot style JARVIS (FR)
 """
-import time
 import sys
+import time
+
+from rich.align import Align
 from rich.console import Console
 from rich.text import Text
-from rich.align import Align
 
 console = Console()
 

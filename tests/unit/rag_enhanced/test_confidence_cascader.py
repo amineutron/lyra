@@ -4,7 +4,6 @@ Tests unitaires pour ConfidenceCascader.
 SESSION 6 (P5) - RAG Enhanced
 """
 
-import pytest
 from lyra.rag_enhanced.confidence_cascader import ConfidenceCascader
 from lyra.rag_enhanced.types import CascadeAction
 

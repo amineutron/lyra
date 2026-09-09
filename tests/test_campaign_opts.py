@@ -20,13 +20,12 @@ Usage:
 
 import sys
 import time
-import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lyra.core.pipeline import Pipeline
 from lyra.core.config import RAGConfig
+from lyra.core.pipeline import Pipeline
 
 # ============================================================
 # Format: (categorie, description, query, expected_tool,
@@ -193,14 +192,14 @@ TESTS_OPTS = [
     # vm_import - start / dry_run
     # ================================================================
     ("FEDORA/vm_import", "import et demarre",
-     "importe /home/amineutron/vm-exports/test.tar.gz et demarre la vm apres",
+     "importe /home/user/vm-exports/test.tar.gz et demarre la vm apres",
      "fedora.vm_import",
-     {"archive_path": "/home/amineutron/vm-exports/test.tar.gz", "start": True}, {}),
+     {"archive_path": "/home/user/vm-exports/test.tar.gz", "start": True}, {}),
 
     ("FEDORA/vm_import", "import dry_run",
-     "importe /home/amineutron/vm-exports/test.tar.gz en dry-run pour tester",
+     "importe /home/user/vm-exports/test.tar.gz en dry-run pour tester",
      "fedora.vm_import",
-     {"archive_path": "/home/amineutron/vm-exports/test.tar.gz", "dry_run": True}, {}),
+     {"archive_path": "/home/user/vm-exports/test.tar.gz", "dry_run": True}, {}),
 
     # ================================================================
     # backup_list - type / detailed

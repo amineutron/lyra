@@ -5,8 +5,8 @@ Logging optionnel vers Notion pour tracer les executions.
 """
 
 import sys
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
 # Note: Le client Notion est optionnel
 try:

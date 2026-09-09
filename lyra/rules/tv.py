@@ -1,9 +1,8 @@
 """Regles de detection pour les outils TV Philips (tv.*)."""
 
 import re
-from typing import Optional
 
-from .base import normalize, make
+from .base import make, normalize
 
 _TV_KW = r'\b(?:tv|t[eé]l[eé](?:vision)?)\b'
 _APP_NAMES = r'\b(?:netflix|youtube|spotify|prime|disney|plex|arte|twitch|tubi|dazn)\b'

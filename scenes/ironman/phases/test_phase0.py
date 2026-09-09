@@ -8,25 +8,21 @@ Usage:
 """
 
 import json
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-import requests
-
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+import requests
 
 # Add parent dir to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
 from phase0_detection import (
     Phase0Detection,
-    normalize_text,
-    TRIGGERS,
-    ROLLBACK_FILE,
     load_rollback_state,
+    normalize_text,
 )
-
 
 # =============================================================================
 # Tests normalize_text

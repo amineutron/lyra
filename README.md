@@ -2,9 +2,17 @@
 
 [![Tests](https://github.com/amineutron/lyra/actions/workflows/tests.yml/badge.svg)](https://github.com/amineutron/lyra/actions/workflows/tests.yml) [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 
-Assistant vocal DevOps **100% local** — pas d'API cloud, pas de facture. Tu lui parles (ou tu lui écris) en français, il gère tes VMs, tes backups, ta TV, tes lumières. Tout tourne sur ta machine : LLM via Ollama, reconnaissance vocale, synthèse vocale.
+**English summary.** Lyra is a voice-driven DevOps assistant that runs locally by default: Ollama models, faster-whisper speech-to-text, Piper text-to-speech, a three-tier RAG over MCP tool specs, and a resident daemon with text, voice and web clients. It drives KVM virtual machines, backups and home devices through MCP servers, and never runs a sensitive action without a human confirmation. AGPL-3.0 with a commercial option; French-first interface. What is captured and what leaves the machine: [docs/DATA_FLOWS.md](docs/DATA_FLOWS.md).
+
+Assistant vocal DevOps **local par défaut** — pas d'API cloud, pas de facture, sorties réseau optionnelles et [listées](docs/DATA_FLOWS.md). Tu lui parles (ou tu lui écris) en français, il gère tes VMs, tes backups, ta TV, tes lumières. Tout tourne sur ta machine : LLM via Ollama, reconnaissance vocale, synthèse vocale.
 
 Née comme copilote pour gérer un homelab (KVM, backups, domotique), Lyra s'appuie sur un pipeline RAG à 3 niveaux + un routage à base de règles pour éviter d'interroger un LLM à chaque requête triviale — résultat : des réponses en dessous de la seconde une fois le démon chaud.
+
+## Démo, en vrai
+
+![Lyra en mode texte : liste des VMs, puis refus d'une suppression sans confirmation](docs/assets/lyra-demo.gif)
+
+Enregistrée sur le démon réel avec [`docs/demo/record.sh`](docs/demo/record.sh) : une requête de lecture, puis « supprime la vm test-vm » que Lyra propose comme action destructive et annule quand on répond non.
 
 ## Un aperçu
 
@@ -44,6 +52,19 @@ Executer ? [T]out / [1] par 1 / [n]on : t
 [+] Todo list terminee: 2/2 actions
 ```
 
+## Prérequis
+
+| Composant | Minimum | Confortable |
+|---|---|---|
+| Système | Fedora 42, Ubuntu 24.04 ou Arch (testés en VM, [protocole](docs/VM_INSTALL_TESTS.md)) | idem |
+| Python | 3.11 | 3.12 |
+| RAM | 8 Go | 16 Go |
+| GPU | aucun : les modèles par défaut (`qwen2.5-coder:0.5b`, `llama3.2:1b`) tournent sur CPU ou sur un Ollama distant (`--ollama-host`) | NVIDIA avec 4 Go de VRAM (`pip install ".[gpu]"` pour faster-whisper sur CUDA) |
+| Disque | 3 Go (modèles, voix, dépendances) | 10 Go avec les modèles « production » 7b et 3b |
+| Audio | micro et sortie son pour le mode vocal ; rien pour le mode texte | |
+
+Les valeurs par défaut sont volontairement petites ; les modèles plus gros sont commentés dans `config.yaml.example`.
+
 ## Démarrage rapide
 
 ```bash
@@ -51,7 +72,7 @@ git clone https://github.com/amineutron/lyra.git && cd lyra
 ./installer/install.sh
 ```
 
-L'installeur (TUI Rich interactif, ou `--app` pour une version graphique locale) détecte ta distro (Fedora/Debian/Arch), installe les dépendances système, crée le venv, télécharge Piper + une voix française, installe le client Ollama et pull deux modèles légers par défaut — **`qwen2.5-coder:0.5b`** et **`llama3.2:1b`**, environ **4 Go de VRAM** au total. Ça tourne sans GPU dédié : `--ollama-host <ip>` pointe vers une machine distante qui héberge Ollama (validé le 2026-08-24 en conditions réelles sur 3 VMs Fedora, Ubuntu et Arch sans GPU : voir [docs/VM_INSTALL_TESTS.md](docs/VM_INSTALL_TESTS.md)).
+L'installeur (TUI Rich interactif, ou `--app` pour une version graphique locale) détecte ta distro (Fedora/Debian/Arch), installe les dépendances système, crée le venv, télécharge Piper + une voix française, installe le client Ollama et pull deux modèles légers par défaut — **`qwen2.5-coder:0.5b`** (Apache-2.0) et **`llama3.2:1b`** (« Built with Llama », [licence](docs/licenses/LLAMA-3.2-COMMUNITY-LICENSE.txt)), environ **4 Go de VRAM** au total. Les voix Piper et leurs licences sont listées dans [VOICES.md](VOICES.md). Ça tourne sans GPU dédié : `--ollama-host <ip>` pointe vers une machine distante qui héberge Ollama (validé le 2026-08-24 en conditions réelles sur 3 VMs Fedora, Ubuntu et Arch sans GPU : voir [docs/VM_INSTALL_TESTS.md](docs/VM_INSTALL_TESTS.md)).
 
 Aucune commande à copier-coller à la main pour les permissions sudo — l'installeur génère lui-même les règles `sudoers` pour ton utilisateur, pas un nom codé en dur.
 
@@ -161,15 +182,15 @@ Une mascotte est piquée au hasard dans la famille correspondante à chaque éta
 
 | Mesure | Valeur |
 |---|---|
-| Tests unitaires | **975** verts (`pytest tests/unit/`) |
-| Pipeline one-shot (démon chaud) | 17.1s → **1.3s** |
-| REPL prêt | 20s → **0.25s** |
+| Tests unitaires et installeur | **1 004** verts ([CI](https://github.com/amineutron/lyra/actions/workflows/tests.yml), `uv run pytest tests/unit tests/installer`) |
+| Pipeline one-shot (démon chaud) | 17.1s → **1.3s** ([`scripts/bench_daemon.py`](scripts/bench_daemon.py), mesure du 2026-08 sur RTX 3080 Ti) |
+| REPL prêt | 20s → **0.25s** ([`scripts/bench_daemon.py`](scripts/bench_daemon.py)) |
 | Requête chaude (démon déjà lancé) | **0.3–1s** |
 | VRAM (mode expérimental, actuel) | **~4 Go** (0.5b + 1b + embeddings) |
 | VRAM (mode production, backup) | ~10.5 Go (7b + 3b + embeddings) |
-| Outils MCP disponibles | **85**, répartis sur 6 intégrations |
-| TTS (Piper, toutes voix) | **< 0.6s** par phrase |
-| Installeur validé en réel | Fedora, Ubuntu, Arch — sans GPU |
+| Outils MCP disponibles | **85**, répartis sur 6 intégrations ([MCP_TOOLS.md](MCP_TOOLS.md)) |
+| TTS (Piper, toutes voix) | **< 0.6s** par phrase ([`scripts/bench_tts.py`](scripts/bench_tts.py)) |
+| Installeur validé en réel | Fedora, Ubuntu, Arch — sans GPU ([protocole et résultats](docs/VM_INSTALL_TESTS.md)) |
 
 ## Intégrations MCP
 
@@ -186,13 +207,19 @@ Catalogue déclaratif (`installer/core/catalog.yaml`), sélectionnable à l'inst
 
 Ces dépôts MCP sont publics mais taillés pour ma domotique — le cœur de Lyra (dialogue, RAG, démon, mode texte) fonctionne très bien avec **zéro MCP sélectionné** (testé le 2026-08-24, même protocole). Envie d'écrire ton propre serveur MCP pour ta propre domotique ? Une entrée YAML dans `catalog.yaml` suffit (voir `installer/README.md`).
 
-## Sécurité
+## Sécurité : ce que le code garantit
 
-- **Human-in-the-loop** : confirmation obligatoire avant toute action, jamais auto-confirmée en mode performance pour VM/backup
-- **Read-first** : vérification de l'état réel avant d'agir
-- **Actions destructives signalées en rouge** : `vm_destroy`, `backup_restore`, `backup_clean`
-- **100 % local** : aucune donnée envoyée à un service tiers, aucune clé API cloud requise
-- **Secrets jamais dans `config.yaml`** : credentials TV, pairing Hue, tokens GitHub temporaires — tout passe par `secrets.yaml` (chmod 600) ou reste en mémoire le temps du run
+| Garantie | Où dans le code | Test |
+|---|---|---|
+| Confirmation humaine avant toute action ; les outils dangereux ne sont jamais auto-confirmés, même en mode performance | [`lyra/core/constants.py`](lyra/core/constants.py) (`DANGEROUS_TOOLS`, `DESTRUCTIVE_TOOLS`), [`lyra/daemon/actions.py`](lyra/daemon/actions.py) (`_should_skip_confirmation`) | [`tests/unit/test_confirm_prompt.py`](tests/unit/test_confirm_prompt.py) |
+| Arguments validés par liste blanche avant tout script shell (noms de VM, chemins, commentaires) | [`scripts/async_mcp_wrapper.py`](scripts/async_mcp_wrapper.py), [`lyra/core/validation.py`](lyra/core/validation.py) | [`tests/unit/test_async_wrapper_validation.py`](tests/unit/test_async_wrapper_validation.py) |
+| Lecture de l'état réel avant d'agir (read-first) | [`lyra/core/validation.py`](lyra/core/validation.py) (`validate_vm_existence`) | [`tests/unit/rules/`](tests/unit/rules/) |
+| Scripts privilégiés copiés en root et autorisés un par un dans `sudoers.d`, jamais de sudo global | [`installer/core/steps/mcps.py`](installer/core/steps/mcps.py) | [`tests/installer/test_mcps_sudoers.py`](tests/installer/test_mcps_sudoers.py) |
+| Secrets hors de `config.yaml` (fichier `secrets.yaml` en 0600, jeton GitHub jamais écrit sur disque) | [`secrets.yaml.example`](secrets.yaml.example), [`installer/core/gitauth.py`](installer/core/gitauth.py) | [`tests/installer/test_gitauth.py`](tests/installer/test_gitauth.py) |
+| Aucun chemin personnel ni adresse privée dans le dépôt | garde-fou CI ([workflow](.github/workflows/tests.yml)) | [`tests/unit/test_paths.py`](tests/unit/test_paths.py) |
+| Local par défaut : aucune sortie réseau sans configuration explicite | [`docs/DATA_FLOWS.md`](docs/DATA_FLOWS.md) | vérification par `grep` décrite dans le document |
+
+Signaler une faille : [politique de sécurité](https://github.com/amineutron/.github/blob/main/SECURITY.md).
 
 ## Configuration
 
@@ -216,6 +243,22 @@ stt:
 tts:
   model: fr_FR-upmc-medium
 ```
+
+## Contribuer
+
+La feuille de route est dans [ROADMAP.md](ROADMAP.md) et les [issues](https://github.com/amineutron/lyra/issues) ; les règles dans [CONTRIBUTING](https://github.com/amineutron/.github/blob/main/CONTRIBUTING.md) et le [CLA](CLA.md).
+
+## Part of the Lyra ecosystem
+
+| Dépôt | Rôle |
+|---|---|
+| [fedora-agents](https://github.com/amineutron/fedora-agents) | MCP : machines virtuelles KVM et sauvegardes |
+| [mcp-tracking](https://github.com/amineutron/mcp-tracking) | MCP + API + tableau de bord des tâches longues |
+| [neutroncore](https://github.com/amineutron/neutroncore) | hub PWA du homelab |
+| [hue-mcp](https://github.com/amineutron/hue-mcp) | MCP Philips Hue (fork de ThomasRohde/hue-mcp) |
+| [pylips-mcp](https://github.com/amineutron/pylips-mcp) | MCP TV Philips |
+| [denon-mcp](https://github.com/amineutron/denon-mcp) | MCP ampli Denon |
+| [catt-mcp](https://github.com/amineutron/catt-mcp) | MCP Chromecast et DLNA |
 
 ## Licence
 

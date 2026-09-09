@@ -3,7 +3,7 @@
 import re
 from typing import Optional
 
-from .base import normalize, make
+from .base import make, normalize
 
 _VM_NAME_RE = r'([\w][\w.-]*(?:-\d+)?)'
 

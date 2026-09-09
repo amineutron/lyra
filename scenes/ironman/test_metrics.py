@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from .metrics import SceneMetrics, load_runs, format_comparison, MAX_RUNS
+from .metrics import MAX_RUNS, SceneMetrics, format_comparison, load_runs
 
 
 @pytest.fixture

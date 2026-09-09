@@ -4,13 +4,14 @@ Generateur PDF du rapport de campagne de tests MCP.
 Utilise fpdf2.
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
 
-from fpdf import FPDF
 from datetime import datetime
 
+from fpdf import FPDF
 
 REPORT_PATH = os.path.join(os.path.dirname(__file__), 'test_campaign_report.txt')
 PDF_PATH = os.path.join(os.path.dirname(__file__), 'test_campaign_report.pdf')

@@ -10,8 +10,8 @@ import logging
 import time
 from typing import Optional
 
-from .types import CascadeAction
 from .constants import CONFIDENCE_HIGH, CONFIDENCE_MEDIUM
+from .types import CascadeAction
 
 logger = logging.getLogger(__name__)
 

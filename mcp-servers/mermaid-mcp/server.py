@@ -10,9 +10,7 @@ Fonctionnalités:
 """
 
 import asyncio
-import json
 import sys
-import tempfile
 import webbrowser
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -23,9 +21,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from lyra.utils.mermaid_viewer import MermaidViewer
 
 try:
-    from mcp.server import Server
-    from mcp.types import Tool, TextContent
     import mcp.server.stdio
+    from mcp.server import Server
+    from mcp.types import TextContent, Tool
 except ImportError:
     print("Erreur: mcp package non installé. Installez avec: pip install mcp", file=sys.stderr)
     sys.exit(1)

@@ -3,8 +3,7 @@ import re
 
 import pytest
 
-from installer.core.catalog import (CatalogError, load_catalog,
-                                    resolve_placeholders)
+from installer.core.catalog import CatalogError, load_catalog, resolve_placeholders
 
 
 @pytest.fixture(scope="module")

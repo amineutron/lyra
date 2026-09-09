@@ -5,10 +5,14 @@ import pytest
 import yaml
 
 from installer.core.catalog import load_catalog
-from installer.core.configpatch import (assert_no_secrets, backup_if_exists,
-                                        build_config, build_secrets)
+from installer.core.configpatch import (
+    assert_no_secrets,
+    backup_if_exists,
+    build_config,
+    build_secrets,
+)
 
-EXAMPLE = Path("/home/amineutron/dev/lyra/config.yaml.example").read_text()
+EXAMPLE = (Path(__file__).resolve().parents[2] / "config.yaml.example").read_text()
 MAPPING = {"lyra": "/opt/lyra", "home": "/home/test"}
 
 

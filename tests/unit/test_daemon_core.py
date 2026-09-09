@@ -10,7 +10,6 @@ from lyra.daemon import state as daemon_state
 from lyra.daemon.protocol import ChannelClosed, LineChannel
 from lyra.daemon.remote_ui import RemoteUI, RequestCancelled
 
-
 # ---------------------------------------------------------------------------
 # Helpers : paire de canaux connectes en memoire
 # ---------------------------------------------------------------------------

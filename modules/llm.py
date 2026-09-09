@@ -6,9 +6,10 @@ Gere la communication avec Ollama et le parsing des tool calls.
 
 import json
 import re
-import httpx
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
+
+import httpx
 
 
 @dataclass

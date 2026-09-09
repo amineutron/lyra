@@ -2,11 +2,14 @@ import sys
 import time
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from scenes.ironman.orchestrator import IronManOrchestrator, SceneState
-from scenes.ironman.phases.phase1_blackout import Phase1Blackout
 from scenes.ironman.phases.phase0_detection import Phase0Detection
+from scenes.ironman.phases.phase1_blackout import Phase1Blackout
+
 
 @pytest.fixture
 def config_mock():
@@ -68,7 +71,6 @@ class TestTimingPrecision:
 
 class TestLatencyLights:
     def test_hue_command_latency_simulated(self):
-        import requests
         with patch.object(Phase1Blackout, "_load_config", return_value={"hue": {"bridge_ip": "192.168.1.51", "username": "u"}}):
             phase1 = Phase1Blackout()
         with patch("requests.put") as mock_put:
@@ -129,8 +131,8 @@ class TestTimingConstants:
 
     def test_total_scene_within_bounds(self):
         from scenes.ironman.phases.phase1_blackout import BLACKOUT_DURATION
-        from scenes.ironman.phases.phase4_transition import DURATION as PHASE4_DUR
         from scenes.ironman.phases.phase3_buildup import PHASE_DURATION
+        from scenes.ironman.phases.phase4_transition import DURATION as PHASE4_DUR
         total_min = BLACKOUT_DURATION + PHASE_DURATION + PHASE4_DUR
         assert total_min < 40.0
 

@@ -2,18 +2,17 @@
 Tests pour Phase 5 - TTS J.A.R.V.I.S.
 """
 
-import time
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
 import pytest
 
 from .phase5_tts import (
-    Phase5TTS,
     PHRASES,
     PULSE_BRIGHTNESS_HIGH,
     PULSE_BRIGHTNESS_LOW,
     PULSE_DURATION,
     TTS_LENGTH_SCALE,
-    rgb_to_xy,
+    Phase5TTS,
 )
 
 

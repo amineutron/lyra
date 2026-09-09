@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Iron Man Scene E2E Tests
 echo "Starting E2E"
-LYRA=/home/amineutron/dev/lyra
+LYRA="${LYRA_DIR:-$(cd "$(dirname "$0")/../../../.." && pwd)}"
 PASS=0; FAIL=0
 pass() { echo "[PASS] $1"; PASS=$((PASS+1)); }
 fail() { echo "[FAIL] $1"; FAIL=$((FAIL+1)); }

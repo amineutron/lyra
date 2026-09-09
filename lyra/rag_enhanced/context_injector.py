@@ -7,8 +7,8 @@ SESSION 4 (P3)
 """
 
 import logging
-from typing import Optional
 from collections import Counter
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 

@@ -5,22 +5,20 @@ Charge et valide la configuration du système RAG Enhanced depuis config.yaml.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
-from pathlib import Path
 
 from .constants import (
+    CONFIDENCE_HIGH,
+    CONFIDENCE_LOW,
+    CONTEXT_CACHE_TTL,
+    CONTEXT_DEFAULT_WINDOW,
+    CONTEXT_FIFO_LIMIT,
+    CONTEXT_MAX_WINDOW,
+    FEEDBACK_AUTO_THRESHOLD,
+    FEEDBACK_SUGGESTION_THRESHOLD,
+    RAG_3TIER_COLLECTIONS,
     SLANG_MAX_PATTERNS,
     SYNONYM_MAX_PER_KEYWORD,
     SYNONYM_MAX_TOKENS_ADDED,
-    CONTEXT_DEFAULT_WINDOW,
-    CONTEXT_MAX_WINDOW,
-    CONTEXT_FIFO_LIMIT,
-    CONTEXT_CACHE_TTL,
-    CONFIDENCE_HIGH,
-    CONFIDENCE_LOW,
-    FEEDBACK_SUGGESTION_THRESHOLD,
-    FEEDBACK_AUTO_THRESHOLD,
-    RAG_3TIER_COLLECTIONS,
 )
 
 

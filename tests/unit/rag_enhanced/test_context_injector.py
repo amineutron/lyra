@@ -5,7 +5,6 @@ SESSION 4 (P3) - RAG Enhanced
 Mis a jour pour API SessionMemory (sans SQLite).
 """
 
-import pytest
 
 from lyra.rag_enhanced.context_injector import ContextInjector
 

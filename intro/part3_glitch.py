@@ -2,10 +2,10 @@
 """
 Lyra Intro - Transition glitch entre le boot screen et la video d'activation.
 """
+import os
+import random
 import sys
 import time
-import random
-import os
 
 GLITCH_CHARS = "!@#$%^&*<>?/|\\[]{}~`01"
 COLS = os.get_terminal_size().columns

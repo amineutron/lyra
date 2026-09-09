@@ -15,14 +15,13 @@ Duree: 3.0 secondes exactement
 
 import logging
 import time
-import urllib3
-from typing import Tuple
+from pathlib import Path
+from typing import Optional, Tuple
 
 import requests
-from requests.auth import HTTPDigestAuth
+import urllib3
 import yaml
-from pathlib import Path
-from typing import Optional
+from requests.auth import HTTPDigestAuth
 
 try:
     from .pc_screens import PCScreenController

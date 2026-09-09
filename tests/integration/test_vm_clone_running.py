@@ -5,16 +5,16 @@ Verifie que la detection de VM en cours d'execution fonctionne
 dans le workflow multi-tour (clarification step-by-step).
 """
 
-import pytest
 from unittest.mock import Mock
-from dataclasses import dataclass
 
-from lyra.core.pipeline import Pipeline
+import pytest
+
 from lyra.core.config import RAGConfig
-from lyra.models.ephaistos import EphaistosAnalysis
-from lyra.models.lyra_voice import LyraResponse
-from lyra.models.intent_classifier import Intent, ClassificationResult
+from lyra.core.pipeline import Pipeline
 from lyra.hestia.executor import ExecutionResult
+from lyra.models.ephaistos import EphaistosAnalysis
+from lyra.models.intent_classifier import ClassificationResult, Intent
+from lyra.models.lyra_voice import LyraResponse
 
 
 @pytest.fixture
@@ -49,7 +49,6 @@ def pipeline_with_mocks():
     pipeline._initialized = True
 
     # Creer WorkflowContext avec les mocks
-    from lyra.core.workflows.context import WorkflowContext
 
     return pipeline
 
@@ -141,7 +140,7 @@ def test_vm_clone_running_detection_multiturn(pipeline_with_mocks):
     assert "preprod-01" in result1.response.lower(), "Tour 1: devrait suggerer preprod-01"
     assert result1.pending_args, "Tour 1: devrait avoir pending args"
 
-    print(f"\n✅ TOUR 1: Typo detectee")
+    print("\n✅ TOUR 1: Typo detectee")
     print(f"   Response: {result1.response[:100]}...")
 
     # ============================================================
@@ -172,7 +171,7 @@ def test_vm_clone_running_detection_multiturn(pipeline_with_mocks):
     assert "nom" in result2.response.lower() or "clone" in result2.response.lower(), \
         "Tour 2: devrait demander le nom destination"
 
-    print(f"\n✅ TOUR 2: Demande nom destination")
+    print("\n✅ TOUR 2: Demande nom destination")
     print(f"   Response: {result2.response[:100]}...")
 
     # ============================================================
@@ -238,9 +237,9 @@ def test_vm_clone_running_detection_multiturn(pipeline_with_mocks):
         f"CRITICAL: Les 3 options ne sont pas toutes presentes!\n" \
         f"Response: {result3.response[:300]}"
 
-    print(f"\n✅ ✅ ✅ TEST REUSSI ✅ ✅ ✅")
-    print(f"\nLa detection de VM running fonctionne correctement!")
-    print(f"Le menu avec 3 options s'affiche comme attendu.")
+    print("\n✅ ✅ ✅ TEST REUSSI ✅ ✅ ✅")
+    print("\nLa detection de VM running fonctionne correctement!")
+    print("Le menu avec 3 options s'affiche comme attendu.")
     print(f"\nPhrases trouvees: {found}")
 
 
@@ -303,5 +302,5 @@ def test_vm_clone_stopped_vm_no_menu(pipeline_with_mocks):
     assert "en cours d'exécution" not in result.response.lower(), \
         "Ne devrait PAS indiquer que la VM est running si elle est arretee"
 
-    print(f"\n✅ TEST REUSSI: Pas de menu pour VM arretee")
+    print("\n✅ TEST REUSSI: Pas de menu pour VM arretee")
     print(f"   Response: {result.response[:150]}...")

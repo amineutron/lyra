@@ -6,23 +6,23 @@ Lance un outil MCP (directement via script shell pour les outils ASYNC_TOOLS,
 ou via MCPManager pour les autres) et envoie une notification Discord a la fin.
 """
 
-import sys
-import json
 import argparse
+import json
 import os
 import subprocess
+import sys
 import threading
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 # Ajouter le repertoire parent au path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from modules.n8n import send_discord_notification
 import yaml
 
+from modules.n8n import send_discord_notification
 
 # Chemins de base vers les scripts shell
 FEDORA_BASE = Path.home() / "dev/fedora-setup/scripts"

@@ -6,8 +6,8 @@ Utilise BM25 pour la recherche par mots-cles.
 
 import re
 import unicodedata
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
 
 # Note: rank_bm25 est optionnel
 # Installation: pip install rank-bm25

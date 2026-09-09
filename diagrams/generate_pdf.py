@@ -4,8 +4,11 @@ Génère un PDF à partir du HTML avec rendu JavaScript (Mermaid)
 Format A4 paysage pour meilleure lisibilité des diagrammes
 """
 import asyncio
-from playwright.async_api import async_playwright
 import sys
+from pathlib import Path
+
+from playwright.async_api import async_playwright
+
 
 async def generate_pdf(html_path: str, pdf_path: str):
     async with async_playwright() as p:
@@ -39,8 +42,8 @@ async def generate_pdf(html_path: str, pdf_path: str):
         print(f"✅ PDF généré avec succès: {pdf_path}")
 
 if __name__ == "__main__":
-    html_file = "/home/amineutron/dev/lyra/diagrams/mcp-fedora-tools-reference.html"
-    pdf_file = "/home/amineutron/dev/lyra/diagrams/mcp-fedora-reference-complete.pdf"
+    html_file = str(Path(__file__).resolve().parent / "mcp-fedora-tools-reference.html")
+    pdf_file = str(Path(__file__).resolve().parent / "mcp-fedora-reference-complete.pdf")
 
     if len(sys.argv) > 1:
         html_file = sys.argv[1]

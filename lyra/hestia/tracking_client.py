@@ -18,8 +18,8 @@ class TrackingClient:
     """Client HTTP vers l'API tracking (api.py sur 127.0.0.1:8765)."""
 
     def __init__(self, api_url: str = "http://127.0.0.1:8765",
-                 server_script: str = "/home/amineutron/dev/MCP/tracking/server.py",
-                 venv_python: str = "/home/amineutron/dev/MCP/tracking/.venv/bin/python"):
+                 server_script: str = "",
+                 venv_python: str = ""):
         self._base = api_url.rstrip("/")
         self._server_script = server_script
         self._venv_python = venv_python

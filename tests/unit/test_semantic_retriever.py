@@ -2,11 +2,11 @@
 Tests unitaires pour SemanticRetriever.
 """
 
-import pytest
-import tempfile
 import shutil
-from pathlib import Path
+import tempfile
 from unittest.mock import patch
+
+import pytest
 
 # Skip si dependencies non installees
 pytest.importorskip("chromadb")
@@ -14,7 +14,7 @@ pytest.importorskip("sentence_transformers")
 
 import chromadb
 
-from lyra.rag.semantic_retriever import SemanticRetriever, SemanticResult
+from lyra.rag.semantic_retriever import SemanticResult, SemanticRetriever
 
 
 class TestSemanticRetriever:

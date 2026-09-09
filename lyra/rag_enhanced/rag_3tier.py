@@ -10,7 +10,7 @@ SESSION 5 (P4)
 """
 
 import logging
-from typing import Optional, Literal, Callable
+from typing import Callable, Literal, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,6 @@ class RAG3Tier:
         # Charger modele embeddings sans tqdm/logs verbeux.
         # Cache module : le chargement coute ~3.5s CPU — les tests creaient
         # une instance par test (9 tests x 3.7s) et le modele est immuable.
-        import sys
         from contextlib import redirect_stderr
         from io import StringIO
         logging.getLogger("sentence_transformers").setLevel(logging.ERROR)

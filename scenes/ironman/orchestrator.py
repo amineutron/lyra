@@ -21,7 +21,6 @@ Usage:
         pass
 """
 
-import json
 import logging
 import os
 import signal
@@ -32,12 +31,13 @@ import time
 import traceback
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional, Callable, Dict, Any
+from typing import Any, Callable, Dict, Optional
 
 import requests
-from requests.auth import HTTPDigestAuth
 import yaml
+from requests.auth import HTTPDigestAuth
 
+from .metrics import SceneMetrics
 from .phases import (
     Phase0Detection,
     Phase1Blackout,
@@ -46,10 +46,9 @@ from .phases import (
     Phase4Transition,
     Phase5TTS,
 )
-from .phases.phase0_detection import load_rollback_state, ROLLBACK_FILE
-from .phases.phase2_impact import YOUTUBE_VIDEO_ID
 from .phases.music_anticipator import MusicAnticipator
-from .metrics import SceneMetrics
+from .phases.phase0_detection import load_rollback_state
+from .phases.phase2_impact import YOUTUBE_VIDEO_ID
 
 try:
     from lyra.hestia.tracking_client import TrackingClient
@@ -58,7 +57,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-HUE_BEAT_PY = Path("/home/amineutron/dev/ironman-hue/hue_beat.py")
+HUE_BEAT_PY = Path(os.environ.get("HUE_BEAT_PATH", "hue_beat.py"))  # projet ironman-hue
 HUE_BEAT_PID_FILE = Path("/tmp/ironman_hue.pid")
 HUE_BEAT_LOG_FILE = Path("/tmp/lyra_hue_beat.log")
 LYRA_VENV_PYTHON = Path(__file__).parent.parent.parent / ".venv" / "bin" / "python3"

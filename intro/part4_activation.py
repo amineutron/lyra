@@ -4,8 +4,8 @@ Concept : 6 modules s'allument un par un, envoient un flux vers le centre,
 LYRA emerge de la convergence de tous les flux.
 Rendu : manim -pqh part4_activation.py LyraActivation
 """
-from manim import *
 import numpy as np
+from manim import *
 
 
 class LyraActivation(Scene):

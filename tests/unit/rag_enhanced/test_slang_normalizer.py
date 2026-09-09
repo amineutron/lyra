@@ -2,10 +2,9 @@
 Tests unitaires pour le Slang Normalizer.
 """
 
-import pytest
-import json
 import time
-from pathlib import Path
+
+import pytest
 
 from lyra.rag_enhanced.slang_normalizer import SlangNormalizer
 

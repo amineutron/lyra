@@ -4,9 +4,6 @@ Tests unitaires pour FeedbackLoop.
 SESSION 6 (P5) - RAG Enhanced
 """
 
-import pytest
-import time
-from pathlib import Path
 
 
 class TestFeedbackLoop:

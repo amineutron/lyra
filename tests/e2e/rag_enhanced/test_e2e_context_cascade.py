@@ -7,11 +7,7 @@ Scénarios 7-10 testent :
 - Gestion ambiguïté et fallback
 """
 
-import pytest
 from unittest.mock import Mock
-
-from lyra.rag_enhanced import EnhancedPipeline
-from lyra.core.pipeline import QueryType
 
 
 class TestScenario08_ContextInjection:
