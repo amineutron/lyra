@@ -16,4 +16,4 @@ coverage>=7.0.0
 
 # Utilitaires
 ipython>=8.0.0  # REPL amélioré
-ipdb>=0.13.0    # Debugger
+ipdb>=0.13.13    # Debugger
