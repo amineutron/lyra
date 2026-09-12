@@ -16,6 +16,7 @@ import pytest
 
 from installer.core.steps.mcps import (
     SYSTEM_SCRIPTS_DIR,
+    _ensure_libvirt_group,
     _install_system_scripts,
     _write_sudoers,
     build_sudoers_rules,
@@ -73,8 +74,9 @@ def test_cibles_sudoers_uniquement_scripts_d_entree(scripts_tree):
 
 def test_regles_sans_glob_ni_home(scripts_tree):
     rules = build_sudoers_rules("alice", sudoers_targets(scripts_tree))
-    body = [l for l in rules.splitlines() if l and not l.startswith("#")]
-    assert len(body) == 4 + 3  # scripts + virsh, virt-clone, qemu-img
+    body = [line for line in rules.splitlines() if line and not line.startswith("#")]
+    assert len(body) == 4  # scripts seulement : plus de NOPASSWD sur virsh, virt-clone, qemu-img
+    assert not any("/usr/bin/" in line for line in body), "binaire libvirt en NOPASSWD = root"
     for line in body:
         assert line.startswith("alice ALL=(ALL) NOPASSWD: /")
         path = line.split("NOPASSWD: ")[1]
@@ -158,3 +160,28 @@ def test_copie_systeme_root_et_modes(scripts_tree):
 def test_source_absente_erreur_explicite(tmp_path):
     with pytest.raises(RuntimeError, match="introuvables"):
         _install_system_scripts(_FakeCtx(), tmp_path / "nope")
+
+
+# --- groupe libvirt (virsh sans sudo) ------------------------------------------
+
+def test_libvirt_deja_membre_ne_lance_rien():
+    ctx = _FakeCtx()
+    with patch("subprocess.run") as mock_run, \
+         patch("installer.core.steps.mcps.getpass.getuser", return_value="alice"):
+        _ensure_libvirt_group(ctx, groups_fn=lambda user: {"alice", "wheel", "libvirt"})
+    assert not mock_run.called
+
+
+def test_libvirt_ajout_via_sudo_n_usermod():
+    ctx = _FakeCtx()
+    with patch("subprocess.run", side_effect=_ok) as mock_run, \
+         patch("installer.core.steps.mcps.getpass.getuser", return_value="alice"):
+        _ensure_libvirt_group(ctx, groups_fn=lambda user: {"alice"})
+    assert [c.args[0] for c in mock_run.call_args_list] == [["sudo", "-n", "usermod", "-aG", "libvirt", "alice"]]
+
+
+def test_libvirt_refus_utilisateur_n_ajoute_rien():
+    with patch("subprocess.run") as mock_run, \
+         patch("installer.core.steps.mcps.getpass.getuser", return_value="alice"):
+        _ensure_libvirt_group(_FakeCtx(answer=False), groups_fn=lambda user: set())
+    assert not mock_run.called

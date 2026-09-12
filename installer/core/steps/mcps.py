@@ -4,12 +4,15 @@ Extras declares dans le catalogue (extra_steps) :
   npm_build    : npm install + npm run build (fedora-agents)
   sudoers      : copie root:root des scripts dans /usr/local/lib/lyra/scripts
                  + /etc/sudoers.d/lyra NOPASSWD par script (visudo -cf)
+                 + utilisateur dans le groupe libvirt (virsh sans sudo)
   pip_catt     : outils catt + yt-dlp dans le venv
   hue_pairing  : pairing bouton du bridge (username+clientkey -> secrets)
 """
 from __future__ import annotations
 
 import getpass
+import grp
+import pwd
 import subprocess
 import tempfile
 import time
@@ -24,6 +27,7 @@ from ..pipeline import StepContext, StepFn
 from ..runner import pip_detail, run
 
 _SUDOERS_PATH = "/etc/sudoers.d/lyra"
+LIBVIRT_GROUP = "libvirt"
 
 
 def make_step(mcp: McpDef) -> StepFn:
@@ -65,6 +69,7 @@ def _install_mcp(ctx: StepContext, mcp: McpDef) -> None:
         elif extra == "sudoers":
             targets = _install_system_scripts(ctx, dest / "scripts")
             _write_sudoers(ctx, targets)
+            _ensure_libvirt_group(ctx)
         elif extra == "hue_pairing":
             _hue_pairing(ctx, mcp)
 
@@ -80,7 +85,9 @@ def _install_mcp(ctx: StepContext, mcp: McpDef) -> None:
 
 SYSTEM_SCRIPTS_DIR = Path("/usr/local/lib/lyra/scripts")
 SUDOERS_SUBDIRS = ("agents/vm-controller", "agents/backup-manager", "kvm")
-SUDOERS_BINARIES = ("/usr/bin/virsh", "/usr/bin/virt-clone", "/usr/bin/qemu-img")
+# Aucun binaire en NOPASSWD : une regle sur virsh, virt-clone ou qemu-img equivaut a root
+# (un domaine peut monter le disque de l'hote). libvirt passe par le groupe libvirt (polkit).
+SUDOERS_BINARIES: tuple[str, ...] = ()
 _GLOB_CHARS = set("*?[]")
 
 
@@ -164,7 +171,7 @@ def _write_sudoers(ctx: StepContext, targets: list[Path]) -> None:
     rules = build_sudoers_rules(getpass.getuser(), targets)
 
     if not ctx.broker.confirm(
-            f"Ecrire {_SUDOERS_PATH} ({len(targets)} scripts systeme + virsh, "
+            f"Ecrire {_SUDOERS_PATH} ({len(targets)} scripts systeme, "
             "NOPASSWD, sans glob) ?", True):
         ctx.emit(Output("sudoers saute — les operations VM demanderont un mot de passe"))
         return
@@ -183,6 +190,30 @@ def _write_sudoers(ctx: StepContext, targets: list[Path]) -> None:
     finally:
         Path(tmp_path).unlink(missing_ok=True)
     ctx.emit(Output(f"{_SUDOERS_PATH} ecrit et valide (visudo -cf)"))
+
+
+def user_groups(user: str) -> set[str]:
+    """Groupes (secondaires et principal) d'un utilisateur, lus dans la base systeme."""
+    names = {g.gr_name for g in grp.getgrall() if user in g.gr_mem}
+    try:
+        names.add(grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name)
+    except KeyError:
+        pass
+    return names
+
+
+def _ensure_libvirt_group(ctx: StepContext, groups_fn=user_groups) -> None:
+    """virsh sans sudo : l'utilisateur rejoint le groupe libvirt (polkit autorise qemu:///system)."""
+    user = getpass.getuser()
+    if LIBVIRT_GROUP in groups_fn(user):
+        ctx.emit(Output(f"{user} est deja dans le groupe {LIBVIRT_GROUP}"))
+        return
+    if not ctx.broker.confirm(
+            f"Ajouter {user} au groupe {LIBVIRT_GROUP} (pilotage des VMs sans sudo) ?", True):
+        ctx.emit(Output(f"groupe {LIBVIRT_GROUP} saute — les outils VM sans sudo echoueront"))
+        return
+    _sudo_checked(["usermod", "-aG", LIBVIRT_GROUP, user], f"ajout de {user} au groupe {LIBVIRT_GROUP}")
+    ctx.emit(Output(f"{user} ajoute au groupe {LIBVIRT_GROUP} : se reconnecter pour l'activer"))
 
 
 def _hue_pairing(ctx: StepContext, mcp: McpDef, total: int = 30) -> None:
