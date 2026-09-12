@@ -69,6 +69,8 @@ Executer ? [T]out / [1] par 1 / [n]on : t
 
 Les valeurs par défaut sont volontairement petites ; les modèles plus gros sont commentés dans `config.yaml.example`.
 
+Installation sans carte graphique vérifiée le 2026-09-13 : `pip install .` dans un conteneur `python:3.12-slim` n'installe aucun paquet `nvidia-*` (48 paquets, faster-whisper sur CPU via ctranslate2) et `lyra --help` répond.
+
 ## Démarrage rapide
 
 ```bash
