@@ -14,8 +14,8 @@ jobs:
   licences-tierces:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --frozen --extra dev --python 3.12
       - name: Inventaire des licences (THIRD_PARTY_LICENSES.md doit être à jour)
         run: |
