@@ -17,10 +17,10 @@ docs/
 
 ```bash
 cd /home/amineutron/dev/lyra
-python docs/exemple_mermaid_fancy.py
+python docs/dev/exemple_mermaid_fancy.py
 ```
 
-✅ Génère automatiquement `docs/architecture_lyra_v2_fancy.html` et l'ouvre dans le navigateur
+✅ Génère automatiquement `docs/dev/architecture_lyra_v2_fancy.html` et l'ouvre dans le navigateur
 
 ### Option 2: Créer ton propre diagramme
 
@@ -28,7 +28,7 @@ python docs/exemple_mermaid_fancy.py
 from lyra.utils.mermaid_viewer import MermaidViewer
 
 # Initialiser avec le template fancy
-viewer = MermaidViewer(template_path="docs/mermaid_template_fancy.html")
+viewer = MermaidViewer(template_path="docs/dev/mermaid_template_fancy.html")
 
 # Code Mermaid (TOUJOURS utiliser graph LR pour horizontal!)
 mermaid_code = """
@@ -236,8 +236,8 @@ graph LR
 
 ### Le fichier HTML est vide
 
-1. Vérifier que le template existe: `ls docs/mermaid_template_fancy.html`
-2. Vérifier les permissions: `chmod +r docs/mermaid_template_fancy.html`
+1. Vérifier que le template existe: `ls docs/dev/mermaid_template_fancy.html`
+2. Vérifier les permissions: `chmod +r docs/dev/mermaid_template_fancy.html`
 
 ### Le navigateur ne s'ouvre pas
 

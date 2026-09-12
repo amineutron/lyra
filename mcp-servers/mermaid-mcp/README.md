@@ -422,16 +422,16 @@ Chaque diagramme généré inclut **3 boutons d'export** dans le viewer HTML :
 
 ### Personnaliser le template HTML
 
-Le serveur utilise le template dans `docs/mermaid_template.html`. Vous pouvez le personnaliser :
+Le serveur utilise le template dans `docs/dev/mermaid_template.html`. Vous pouvez le personnaliser :
 
 ```bash
-cp docs/mermaid_template.html docs/my_template.html
+cp docs/dev/mermaid_template.html docs/dev/my_template.html
 # Modifier my_template.html...
 ```
 
 Puis modifier `server.py` :
 ```python
-self.viewer = MermaidViewer(template_path="docs/my_template.html")
+self.viewer = MermaidViewer(template_path="docs/dev/my_template.html")
 ```
 
 ### Changer le dossier de sortie
@@ -553,8 +553,8 @@ Utiliser `validate_diagram` pour identifier les problèmes :
 
 ## 📚 Ressources
 
-- **Guide des bonnes pratiques** : `docs/MERMAID_BEST_PRACTICES.md` (dans le dépôt lyra)
-- **Template HTML** : `<dossier lyra>/docs/mermaid_template.html`
+- **Guide des bonnes pratiques** : `docs/dev/MERMAID_BEST_PRACTICES.md` (dans le dépôt lyra)
+- **Template HTML** : `<dossier lyra>/docs/dev/mermaid_template.html`
 - **MermaidViewer Python** : `<dossier lyra>/lyra/utils/mermaid_viewer.py`
 - **Mermaid Live Editor** : https://mermaid.live
 - **Documentation Mermaid** : https://mermaid.js.org

@@ -20,8 +20,8 @@ class MermaidViewer:
             template_path: Chemin vers le template HTML (optionnel)
         """
         if template_path is None:
-            # Template par défaut dans docs/
-            template_path = Path(__file__).parent.parent.parent / "docs" / "mermaid_template.html"
+            # Template par défaut dans docs/dev/
+            template_path = Path(__file__).parent.parent.parent / "docs" / "dev" / "mermaid_template.html"
 
         self.template_path = Path(template_path)
 
@@ -183,7 +183,7 @@ graph LR
     # Générer
     viewer.generate(
         mermaid_code=mermaid_code,
-        output_path="docs/exemple_mermaid.html",
+        output_path="docs/dev/exemple_mermaid.html",
         title="Exemple Mermaid",
         subtitle="Généré automatiquement",
         extra_content=extra_content,

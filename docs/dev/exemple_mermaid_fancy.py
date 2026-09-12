@@ -3,7 +3,7 @@
 Exemple d'utilisation du template fancy pour générer le diagramme Lyra.
 
 Usage:
-    python docs/exemple_mermaid_fancy.py
+    python docs/dev/exemple_mermaid_fancy.py
 """
 
 import sys
@@ -341,7 +341,7 @@ def create_lyra_architecture_diagram():
     # Générer le fichier HTML
     output_path = viewer.generate(
         mermaid_code=mermaid_code,
-        output_path="docs/architecture_lyra_v2_fancy.html",
+        output_path="docs/dev/architecture_lyra_v2_fancy.html",
         title="🚀 Architecture Lyra V2 RAG",
         subtitle="Assistant Vocal DevOps Local - 100% Offline",
         theme="dark",

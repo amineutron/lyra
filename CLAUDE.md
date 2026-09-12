@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guide de travail pour un agent de code sur Lyra. Version condensée : l'architecture détaillée est dans `docs/`, les outils MCP dans `MCP_TOOLS.md`.
+Guide de travail pour un agent de code sur Lyra. Version condensée : l'architecture détaillée est dans `docs/`, les outils MCP dans `docs/user/MCP_TOOLS.md`.
 
 ## Ce qu'est Lyra
 
@@ -39,7 +39,7 @@ make campaign            # campagnes MCP et LLM (longues, rapports générés da
 python3 -m pytest tests/unit/rules -q   # ce que lance la CI GitHub
 ```
 
-Installation : `python3 installer/install.py` (TUI) ou `--app` (interface web locale) ; voir `installer/README.md` et `docs/VM_INSTALL_TESTS.md`.
+Installation : `python3 installer/install.py` (TUI) ou `--app` (interface web locale) ; voir `installer/README.md` et `docs/user/VM_INSTALL_TESTS.md`.
 
 ## Structure
 
@@ -52,7 +52,7 @@ scenes/ironman/  scène cinéma pilotée par la voix (optionnelle)
 intro/           animation d'intro (Manim, chafa)
 prompts/         system_prompt.txt (utilisé par main.py)
 tests/           unit/, integration/, installer/, campagnes
-docs/            architecture, RAG enhanced, protocole de test en VM
+docs/            user/ (flux de données, outils MCP, tests en VM), dev/ (architecture, RAG), archive/ (notes de phases)
 ```
 
 ## Sécurité : ce que le code garantit

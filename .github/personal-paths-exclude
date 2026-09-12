@@ -1,6 +1,6 @@
 # Dossiers ignorés par le garde-fou « aucun chemin personnel » de la CI (amineutron/.github).
 # scenes/ironman : scène de démonstration avec les adresses de l'installation d'origine figées dans le code,
 #                  à rendre configurable (issue lyra#7).
-# diagrams       : pages HTML générées par mermaid-mcp, régénérées à la demande.
+# diagrams       : pages HTML générées par mermaid-mcp (docs/dev/diagrams), régénérées à la demande.
 ironman
 diagrams

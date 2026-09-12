@@ -6,7 +6,7 @@ Système de template pour générer des visualiseurs HTML interactifs à partir 
 
 | Fichier | Description |
 |---------|-------------|
-| `docs/mermaid_template.html` | Template HTML avec placeholders |
+| `docs/dev/mermaid_template.html` | Template HTML avec placeholders |
 | `lyra/utils/mermaid_viewer.py` | Classe Python pour générer les HTML |
 | `scripts/mermaid_render.py` | CLI pour utilisation rapide |
 
@@ -163,17 +163,17 @@ def visualize_architecture():
 
 ## 🎨 Template personnalisé
 
-Tu peux créer ton propre template en copiant `docs/mermaid_template.html` :
+Tu peux créer ton propre template en copiant `docs/dev/mermaid_template.html` :
 
 ```bash
-cp docs/mermaid_template.html docs/my_template.html
+cp docs/dev/mermaid_template.html docs/dev/my_template.html
 # Modifier my_template.html...
 ```
 
 Puis l'utiliser :
 
 ```python
-viewer = MermaidViewer(template_path="docs/my_template.html")
+viewer = MermaidViewer(template_path="docs/dev/my_template.html")
 viewer.generate(...)
 ```
 
@@ -240,7 +240,7 @@ En sortie :
 ## 💡 Exemples
 
 Voir les exemples dans :
-- `docs/architecture_viewer.html` (Architecture Lyra complète)
+- `docs/dev/architecture_viewer.html` (Architecture Lyra complète)
 - `lyra/utils/mermaid_viewer.py` (fonction `main()`)
 
 ---
