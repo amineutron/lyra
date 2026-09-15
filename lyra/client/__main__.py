@@ -12,11 +12,28 @@ Codes de sortie identiques a run_one_shot : 0=ok, 1=erreur, 2=annule, 3=args.
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import os
 import sys
+import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+PACKAGE_NAME = "lyra-assistant"
+
+
+def _package_version() -> str:
+    """Version installee du paquet ; depuis les sources, lue dans pyproject.toml."""
+    try:
+        return importlib.metadata.version(PACKAGE_NAME)
+    except importlib.metadata.PackageNotFoundError:
+        pass
+    try:
+        with open(REPO_ROOT / "pyproject.toml", "rb") as f:
+            version = tomllib.load(f)["project"]["version"]
+    except (OSError, tomllib.TOMLDecodeError, KeyError):
+        version = "unknown"
+    return f"{version} (sources)"
 
 
 def _print_incomplete_integrations_reminder() -> None:
@@ -117,6 +134,8 @@ def run_oneshot_via_daemon(request: str, args: argparse.Namespace) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Lyra client", add_help=True)
+    parser.add_argument("--version", action="version",
+                        version=f"{PACKAGE_NAME} {_package_version()}")
     parser.add_argument("request", nargs="?", default=None)
     parser.add_argument("--vocal", action="store_true")
     parser.add_argument("-p", "--performance", action="store_true")

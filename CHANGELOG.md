@@ -1,5 +1,10 @@
 # Changelog - Lyra
 
+## [Unreleased]
+
+### Added
+- `lyra --version` prints the installed `lyra-assistant` version, or the pyproject version when run from sources (#15).
+
 ## [1.2.0] - 2026-09-10
 
 ### Added
