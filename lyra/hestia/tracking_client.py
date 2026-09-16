@@ -14,18 +14,24 @@ import urllib.request
 from typing import Optional
 
 
-class TrackingClient:
-    """Client HTTP vers l'API tracking (api.py sur 127.0.0.1:8765)."""
-
 def _tracking_token() -> str:
     """Jeton local de l'API tracking (issue #40) : fichier 0600 ecrit par api.py au demarrage."""
     import os
     from pathlib import Path as _P
-    runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
-    try:
-        return _P(runtime, "tracking", "token").read_text().strip()
-    except OSError:
-        return ""
+    for candidate in (os.environ.get("TRACKING_TOKEN_FILE"),
+                      "/run/tracking/token",
+                      f"{os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}'}/tracking/token"):
+        if not candidate:
+            continue
+        try:
+            return _P(candidate).read_text().strip()
+        except OSError:
+            continue
+    return ""
+
+
+class TrackingClient:
+    """Client HTTP vers l'API tracking (api.py sur 127.0.0.1:8765)."""
 
     def __init__(self, api_url: str = "http://127.0.0.1:8765",
                  server_script: str = "",
