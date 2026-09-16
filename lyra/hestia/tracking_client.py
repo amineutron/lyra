@@ -17,6 +17,16 @@ from typing import Optional
 class TrackingClient:
     """Client HTTP vers l'API tracking (api.py sur 127.0.0.1:8765)."""
 
+def _tracking_token() -> str:
+    """Jeton local de l'API tracking (issue #40) : fichier 0600 ecrit par api.py au demarrage."""
+    import os
+    from pathlib import Path as _P
+    runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    try:
+        return _P(runtime, "tracking", "token").read_text().strip()
+    except OSError:
+        return ""
+
     def __init__(self, api_url: str = "http://127.0.0.1:8765",
                  server_script: str = "",
                  venv_python: str = ""):
@@ -35,7 +45,8 @@ class TrackingClient:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
             url, data=data, method=method,
-            headers={"Content-Type": "application/json"} if data else {}
+            headers={"Content-Type": "application/json",
+                     "Authorization": f"Bearer {_tracking_token()}"} if data else {}
         )
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
