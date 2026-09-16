@@ -16,7 +16,7 @@ docs/
 ### Option 1: Utiliser l'exemple Lyra
 
 ```bash
-cd /home/amineutron/dev/lyra
+cd ~/dev/lyra   # depuis votre clone du depot
 python docs/dev/exemple_mermaid_fancy.py
 ```
 

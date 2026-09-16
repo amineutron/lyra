@@ -155,7 +155,7 @@ class Phase5TTS:
 
     def _set_hue_brightness(self, brightness: int, transition_time: int = 0) -> bool:
         """Change le brightness du groupe Hue 81."""
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         if not username:

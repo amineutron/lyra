@@ -139,7 +139,7 @@ class Phase2Impact:
         Returns:
             True si succes
         """
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         if not username:
@@ -211,7 +211,7 @@ class Phase2Impact:
         Returns:
             True si succes ou deja allumee
         """
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"https://{host}:1926/6/powerstate"
         payload = {"powerstate": "On"}
 
@@ -275,7 +275,7 @@ class Phase2Impact:
         Returns:
             True si succes
         """
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"https://{host}:1926/6/ambilight/currentconfiguration"
 
         payload = {

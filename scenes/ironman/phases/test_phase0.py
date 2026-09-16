@@ -138,7 +138,7 @@ class TestTVAvailability:
     @pytest.fixture
     def phase0(self):
         with patch.object(Phase0Detection, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50'}
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase0Detection()
 
@@ -186,7 +186,7 @@ class TestHueAvailability:
     def phase0(self):
         with patch.object(Phase0Detection, '_load_config', return_value={
             'hue': {
-                'bridge_ip': '192.168.1.51',
+                'bridge_ip': '203.0.113.51',
                 'username': 'testuser123'
             }
         }):
@@ -195,7 +195,7 @@ class TestHueAvailability:
     @pytest.fixture
     def phase0_no_username(self):
         with patch.object(Phase0Detection, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51'}
+            'hue': {'bridge_ip': '203.0.113.51'}
         }):
             return Phase0Detection()
 
@@ -254,8 +254,8 @@ class TestSaveState:
     @pytest.fixture
     def phase0(self):
         with patch.object(Phase0Detection, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'},
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'},
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase0Detection()
 
@@ -309,8 +309,8 @@ class TestValidateAndPrepare:
     @pytest.fixture
     def phase0(self):
         with patch.object(Phase0Detection, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50'},
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'tv': {'host': '203.0.113.50'},
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase0Detection()
 

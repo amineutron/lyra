@@ -13,8 +13,8 @@ from scenes.ironman.phases.phase0_detection import Phase0Detection
 @pytest.fixture
 def config_mock():
     return {
-        "hue": {"bridge_ip": "192.168.1.51", "username": "test-user"},
-        "tv": {"host": "192.168.1.50", "user": "u", "pass": "p"},
+        "hue": {"bridge_ip": "203.0.113.51", "username": "test-user"},
+        "tv": {"host": "203.0.113.50", "user": "u", "pass": "p"},
     }
 
 @pytest.fixture
@@ -69,7 +69,7 @@ class TestTVOfflineGraceful:
         assert orchestrator.state == SceneState.IDLE
 
     def test_tv_offline_message_clear(self):
-        with patch.object(Phase0Detection, "_load_config", return_value={"tv": {"host": "192.168.1.50"}, "hue": {"bridge_ip": "192.168.1.51", "username": "u"}}):
+        with patch.object(Phase0Detection, "_load_config", return_value={"tv": {"host": "203.0.113.50"}, "hue": {"bridge_ip": "203.0.113.51", "username": "u"}}):
             phase0 = Phase0Detection()
         with patch("requests.get") as mock_get:
             mock_get.side_effect = requests.exceptions.ConnectionError()
@@ -78,7 +78,7 @@ class TestTVOfflineGraceful:
         assert len(msg) > 0
 
     def test_tv_offline_phase0_check_fails(self):
-        with patch.object(Phase0Detection, "_load_config", return_value={"tv": {"host": "192.168.1.50"}}):
+        with patch.object(Phase0Detection, "_load_config", return_value={"tv": {"host": "203.0.113.50"}}):
             phase0 = Phase0Detection()
         with patch("requests.get") as mock_get:
             mock_get.side_effect = requests.exceptions.Timeout()
@@ -99,7 +99,7 @@ class TestHueOfflineAbort:
         assert orchestrator.state == SceneState.IDLE
 
     def test_hue_offline_message(self):
-        with patch.object(Phase0Detection, "_load_config", return_value={"hue": {"bridge_ip": "192.168.1.51", "username": "u"}}):
+        with patch.object(Phase0Detection, "_load_config", return_value={"hue": {"bridge_ip": "203.0.113.51", "username": "u"}}):
             phase0 = Phase0Detection()
         with patch("requests.get") as mock_get:
             mock_get.side_effect = requests.exceptions.ConnectionError()

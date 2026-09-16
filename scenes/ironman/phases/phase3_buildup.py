@@ -217,7 +217,7 @@ class Phase3Buildup:
     def _set_hue_group_state(self, brightness: int, rgb: Tuple[int, int, int],
                              transition_time: int = 0) -> bool:
         """Change l'etat du groupe Hue 81."""
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         if not username:
@@ -354,7 +354,7 @@ class Phase3Buildup:
         """
         import shutil
         adb = shutil.which("adb")
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         if not adb:
             return None
         try:

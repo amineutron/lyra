@@ -11,6 +11,25 @@ jobs:
       python-versions: '["3.11", "3.12"]'
       test-command: "uv run --frozen python -m pytest tests/unit tests/installer -q -p no:cacheprovider"
       lint: false   # 231 avertissements ruff historiques : rendu bloquant en v1.3 (voir ROADMAP)
+  fuite-chemins-personnels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Aucun chemin personnel hors docs/archive
+        run: |
+          MOTIF="/home/"
+          MATCHES=$(grep -rIl "$MOTIF" . \
+            --exclude-dir=.git \
+            --exclude-dir=.venv \
+            --exclude-dir=node_modules \
+            --exclude=tests.yml \
+            | grep -v '^\./docs/archive/' || true)
+          if [ -n "$MATCHES" ]; then
+            echo "Chemins personnels trouves hors docs/archive (voir issue #7) :"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "OK : aucun chemin personnel hors docs/archive."
   licences-tierces:
     runs-on: ubuntu-latest
     steps:
