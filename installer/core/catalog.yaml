@@ -15,7 +15,7 @@ mcps:
     color: cyan
     icon: "[F]"
     short_desc: "VM KVM + Sauvegardes"
-    repo: "git@github.com:marouabah/fedora-agents.git"
+    repo: "git@github.com:amineutron/fedora-agents.git"
     dest: "{lyra}/mcp-servers/fedora-agents"
     runtime: node
     default_checked: true
@@ -46,7 +46,7 @@ mcps:
     color: yellow
     icon: "[H]"
     short_desc: "Lumieres Philips Hue"
-    repo: "git@github.com:marouabah/hue-mcp.git"
+    repo: "git@github.com:amineutron/hue-mcp.git"
     dest: "{lyra}/mcp-servers/hue-mcp"
     runtime: python
     default_checked: false
@@ -93,7 +93,7 @@ mcps:
     color: magenta
     icon: "[T]"
     short_desc: "TV Philips OLED"
-    repo: "git@github.com:marouabah/pylips-mcp.git"
+    repo: "git@github.com:amineutron/pylips-mcp.git"
     dest: "{lyra}/mcp-servers/pylips-mcp"
     runtime: python
     default_checked: false
@@ -163,7 +163,7 @@ mcps:
     color: red
     icon: "[D]"
     short_desc: "Home Cinema Denon AVR"
-    repo: "git@github.com:marouabah/denon-mcp.git"
+    repo: "git@github.com:amineutron/denon-mcp.git"
     dest: "{lyra}/mcp-servers/denon-mcp"
     runtime: python
     default_checked: false
@@ -209,7 +209,7 @@ mcps:
     color: green
     icon: "[C]"
     short_desc: "Cast Chromecast/DLNA"
-    repo: "git@github.com:marouabah/catt-mcp.git"
+    repo: "git@github.com:amineutron/catt-mcp.git"
     dest: "{lyra}/mcp-servers/catt-mcp"
     runtime: python
     default_checked: false
