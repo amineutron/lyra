@@ -13,7 +13,7 @@ from installer.core.configpatch import (
 )
 
 EXAMPLE = (Path(__file__).resolve().parents[2] / "config.yaml.example").read_text()
-MAPPING = {"lyra": "/opt/lyra", "home": "/home/test"}
+MAPPING = {"lyra": "/opt/lyra", "home": "/srv/test-home"}
 
 
 @pytest.fixture(scope="module")

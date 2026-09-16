@@ -19,11 +19,11 @@ class TestIronManOrchestrator:
         with patch.object(IronManOrchestrator, '_load_config') as mock_config:
             mock_config.return_value = {
                 "hue": {
-                    "bridge_ip": "192.168.1.51",
+                    "bridge_ip": "203.0.113.51",
                     "username": "test-user-123"
                 },
                 "tv": {
-                    "host": "192.168.1.50",
+                    "host": "203.0.113.50",
                     "user": "test-user",
                     "pass": "test-pass"
                 }
@@ -277,8 +277,8 @@ class TestRunPhases:
     def orchestrator(self):
         with patch.object(IronManOrchestrator, '_load_config') as mock_config:
             mock_config.return_value = {
-                "hue": {"bridge_ip": "192.168.1.51", "username": "test-user"},
-                "tv": {"host": "192.168.1.50", "user": "u", "pass": "p"},
+                "hue": {"bridge_ip": "203.0.113.51", "username": "test-user"},
+                "tv": {"host": "203.0.113.50", "user": "u", "pass": "p"},
             }
             orch = IronManOrchestrator()
 
@@ -357,8 +357,8 @@ class TestMusicAnticipation:
     def _orch(self, anticipate: bool):
         with patch.object(IronManOrchestrator, '_load_config') as mock_config:
             mock_config.return_value = {
-                "hue": {"bridge_ip": "192.168.1.51", "username": "u"},
-                "tv": {"host": "192.168.1.50", "user": "u", "pass": "p"},
+                "hue": {"bridge_ip": "203.0.113.51", "username": "u"},
+                "tv": {"host": "203.0.113.50", "user": "u", "pass": "p"},
                 "scenes": {"ironman": {"anticipate_music": anticipate}},
             }
             orch = IronManOrchestrator()

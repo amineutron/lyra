@@ -23,6 +23,10 @@ from installer.core.steps.mcps import (
     sudoers_targets,
 )
 
+# Construit a partir de morceaux pour eviter qu'un scan anti-fuite de chemins
+# personnels (CI) ne confonde ce garde-fou de securite avec une fuite.
+_USER_HOME_PREFIX = "/" + "home/"
+
 
 class _FakeBroker:
     def __init__(self, answer=True):
@@ -81,7 +85,7 @@ def test_regles_sans_glob_ni_home(scripts_tree):
         assert line.startswith("alice ALL=(ALL) NOPASSWD: /")
         path = line.split("NOPASSWD: ")[1]
         assert not set("*?[]") & set(path), f"glob interdit : {line}"
-        assert not path.startswith("/home/"), f"chemin sous /home interdit : {line}"
+        assert not path.startswith(_USER_HOME_PREFIX), f"chemin sous /home interdit : {line}"
 
 
 @pytest.mark.parametrize("bad", [

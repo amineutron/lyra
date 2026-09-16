@@ -65,7 +65,7 @@ class TestFlashWhite:
     @pytest.fixture
     def phase2(self):
         with patch.object(Phase2Impact, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase2Impact()
 
@@ -104,7 +104,7 @@ class TestTransitionBlue:
     @pytest.fixture
     def phase2(self):
         with patch.object(Phase2Impact, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase2Impact()
 
@@ -137,7 +137,7 @@ class TestPowerOnTV:
     @pytest.fixture
     def phase2(self):
         with patch.object(Phase2Impact, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'}
         }):
             return Phase2Impact()
 
@@ -173,7 +173,7 @@ class TestLaunchYouTube:
     @pytest.fixture
     def phase2(self):
         with patch.object(Phase2Impact, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50'}
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase2Impact()
 
@@ -222,7 +222,7 @@ class TestActivateAmbilight:
     @pytest.fixture
     def phase2(self):
         with patch.object(Phase2Impact, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'}
         }):
             return Phase2Impact()
 
@@ -251,8 +251,8 @@ class TestExecute:
     @pytest.fixture
     def phase2(self):
         with patch.object(Phase2Impact, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'},
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'},
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase2Impact()
 
@@ -335,8 +335,8 @@ class TestExecuteAnticipated:
     @pytest.fixture
     def phase2(self):
         with patch.object(Phase2Impact, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase2Impact()
 

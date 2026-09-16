@@ -25,7 +25,7 @@ class TestPhase5TTS:
         with patch.object(Phase5TTS, '_load_config') as mock_config:
             mock_config.return_value = {
                 "hue": {
-                    "bridge_ip": "192.168.1.51",
+                    "bridge_ip": "203.0.113.51",
                     "username": "test-user-123"
                 }
             }

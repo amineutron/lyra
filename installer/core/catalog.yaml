@@ -117,7 +117,7 @@ mcps:
         secret: false
         help: >-
           Sur la TV : Parametres > Reseau > Voir la configuration reseau ;
-          ou scan du LAN : nmap -p 1926 --open 192.168.X.0/24
+          ou scan du LAN : nmap -p 1926 --open 203.0.113.0/24
       - key: user
         label: "Username JointSpace"
         section: tv
@@ -187,7 +187,7 @@ mcps:
         secret: false
         help: >-
           Sur l'ampli : Menu > Reseau > Informations ; ou app Denon AVR
-          Remote > Parametres ; ou scan : nmap -p 23 --open 192.168.X.0/24
+          Remote > Parametres ; ou scan : nmap -p 23 --open 203.0.113.0/24
     config:
       denon:
         host: "{host}"

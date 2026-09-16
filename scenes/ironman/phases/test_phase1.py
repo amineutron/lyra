@@ -28,7 +28,7 @@ class TestTurnOffLights:
     @pytest.fixture
     def phase1(self):
         with patch.object(Phase1Blackout, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase1Blackout()
 
@@ -61,7 +61,7 @@ class TestTurnOffLights:
     def test_lights_off_no_username(self):
         """Configuration Hue manquante."""
         with patch.object(Phase1Blackout, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51'}  # pas de username
+            'hue': {'bridge_ip': '203.0.113.51'}  # pas de username
         }):
             phase1 = Phase1Blackout()
             success, latency = phase1._turn_off_lights()
@@ -90,7 +90,7 @@ class TestTurnOffTV:
     @pytest.fixture
     def phase1(self):
         with patch.object(Phase1Blackout, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'}
         }):
             return Phase1Blackout()
 
@@ -154,8 +154,8 @@ class TestExecute:
     @pytest.fixture
     def phase1(self):
         with patch.object(Phase1Blackout, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'},
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'},
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase1Blackout()
 
@@ -240,8 +240,8 @@ class TestPerformance:
     @pytest.fixture
     def phase1(self):
         with patch.object(Phase1Blackout, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'},
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'},
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase1Blackout()
 
@@ -273,8 +273,8 @@ class TestExecuteSkipTv:
     @pytest.fixture
     def phase1(self):
         with patch.object(Phase1Blackout, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase1Blackout()
 
@@ -312,8 +312,8 @@ class TestTurnOffAmbilight:
     @pytest.fixture
     def phase1(self):
         with patch.object(Phase1Blackout, '_load_config', return_value={
-            'tv': {'host': '192.168.1.50', 'user': 'test', 'pass': 'pass'},
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'}
+            'tv': {'host': '203.0.113.50', 'user': 'test', 'pass': 'pass'},
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'}
         }):
             return Phase1Blackout()
 

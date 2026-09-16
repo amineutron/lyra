@@ -128,7 +128,7 @@ class Phase4Transition:
     def _set_hue_group_state(self, brightness: int, rgb: Tuple[int, int, int],
                              transition_time: int = 0) -> bool:
         """Change l'etat du groupe Hue 81."""
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         if not username:
@@ -153,7 +153,7 @@ class Phase4Transition:
 
     def _set_hue_brightness(self, brightness: int, transition_time: int = 0) -> bool:
         """Change uniquement le brightness du groupe Hue 81."""
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         if not username:
@@ -238,7 +238,7 @@ class Phase4Transition:
         Returns:
             True si musique arretee
         """
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
 
         # Methode 1: Pause YouTube via ADB
         if self._send_pause_adb(host):
@@ -288,7 +288,7 @@ class Phase4Transition:
 
     def _set_volume(self, level: int) -> bool:
         """Regle le volume TV."""
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"https://{host}:1926/6/audio/volume"
 
         payload = {"current": level, "muted": level == 0}
@@ -305,7 +305,7 @@ class Phase4Transition:
 
     def _power_off_tv(self) -> bool:
         """Eteint la TV."""
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"https://{host}:1926/6/powerstate"
 
         payload = {"powerstate": "Standby"}
