@@ -27,6 +27,9 @@ class MCPTool:
     description: str
     parameters: dict = field(default_factory=dict)
     server: Optional[str] = None  # Serveur source (Phase 5)
+    # ToolAnnotations MCP telles que renvoyees par le serveur (destructiveHint,
+    # readOnlyHint, idempotentHint, openWorldHint). Vide si le serveur n'en pose pas.
+    annotations: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -107,7 +110,8 @@ class MCPClient:
             tools.append(MCPTool(
                 name=tool_data.get("name", ""),
                 description=tool_data.get("description", ""),
-                parameters=tool_data.get("inputSchema", {})
+                parameters=tool_data.get("inputSchema", {}),
+                annotations=tool_data.get("annotations") or {}
             ))
 
         self._tools_cache = tools
@@ -281,6 +285,7 @@ class MCPManager:
                         "name": f"{server_name}.{tool.name}",
                         "description": tool.description,
                         "parameters": tool.parameters,
+                        "annotations": tool.annotations,
                         "_server": server_name
                     })
             except Exception as e:
@@ -569,7 +574,8 @@ class MCPSessionClient:
                 name=tool_data.get("name", ""),
                 description=tool_data.get("description", ""),
                 parameters=tool_data.get("inputSchema", {}),
-                server=self.name
+                server=self.name,
+                annotations=tool_data.get("annotations") or {}
             ))
 
         self._tools_cache = tools

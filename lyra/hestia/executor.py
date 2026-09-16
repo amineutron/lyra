@@ -402,8 +402,8 @@ class HestiaExecutor:
     def is_dangerous_tool(self, tool_name: str) -> bool:
         """Verifie si un outil est dangereux.
 
-        Delegue a la source unique de verite (lyra.core.constants.DANGEROUS_TOOLS)
-        pour eviter toute divergence entre les listes.
+        Deux sources : la liste statique (lyra.core.constants.DANGEROUS_TOOLS)
+        et l'annotation MCP destructiveHint renvoyee par le serveur.
 
         Args:
             tool_name: Nom de l'outil
@@ -413,7 +413,38 @@ class HestiaExecutor:
         """
         from lyra.core.constants import DANGEROUS_TOOLS
         base_name = tool_name.split(".")[-1] if "." in tool_name else tool_name
-        return base_name in DANGEROUS_TOOLS
+        if base_name in DANGEROUS_TOOLS:
+            return True
+        return self._is_annotated_destructive(tool_name)
+
+    def _is_annotated_destructive(self, tool_name: str) -> bool:
+        """Vrai si le serveur MCP annote lui-meme cet outil comme destructif.
+
+        Permet a un serveur tiers d'exiger une confirmation sans que son outil
+        soit ajoute a constants.py. Toute anomalie (serveur muet, format
+        inattendu) retombe sur False : c'est la liste statique qui tranche.
+        """
+        try:
+            tools = self.mcp_manager.get_all_tools()
+        except Exception:
+            return False
+        if not isinstance(tools, list):
+            return False
+
+        base_name = tool_name.split(".")[-1]
+        for tool in tools:
+            if not isinstance(tool, dict):
+                continue
+            name = tool.get("name", "")
+            if name != tool_name and name.split(".")[-1] != base_name:
+                continue
+            annotations = tool.get("annotations") or {}
+            if not isinstance(annotations, dict):
+                continue
+            # camelCase dans le JSON MCP, snake_case cote SDK Python
+            if annotations.get("destructiveHint") or annotations.get("destructive_hint"):
+                return True
+        return False
 
     def is_async_tool(self, tool_name: str) -> bool:
         """Verifie si un outil doit etre execute en arriere-plan.

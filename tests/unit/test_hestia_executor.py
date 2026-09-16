@@ -288,6 +288,30 @@ class TestHestiaExecutor:
         assert executor.is_dangerous_tool("fedora.backup_clean") is True
         assert executor.is_dangerous_tool("fedora.vm_start") is False
 
+    def test_is_dangerous_tool_from_annotation(self, executor, mock_mcp_manager):
+        """Un outil annote destructiveHint par son serveur exige la confirmation,
+        sans figurer dans constants.DANGEROUS_TOOLS (issue #39)."""
+        from lyra.core.constants import DANGEROUS_TOOLS
+        assert "wipe_everything" not in DANGEROUS_TOOLS
+
+        mock_mcp_manager.get_all_tools.return_value = [
+            {"name": "tiers.wipe_everything", "description": "efface tout",
+             "parameters": {}, "annotations": {"destructiveHint": True}, "_server": "tiers"},
+            {"name": "tiers.read_state", "description": "lit l'etat",
+             "parameters": {}, "annotations": {"readOnlyHint": True}, "_server": "tiers"},
+        ]
+
+        assert executor.is_dangerous_tool("tiers.wipe_everything") is True
+        assert executor.is_dangerous_tool("wipe_everything") is True
+        assert executor.is_dangerous_tool("tiers.read_state") is False
+
+    def test_is_dangerous_tool_annotation_absente(self, executor, mock_mcp_manager):
+        """Un serveur qui n'annote rien ne rend aucun outil dangereux par surprise."""
+        mock_mcp_manager.get_all_tools.return_value = [
+            {"name": "tiers.ping", "description": "ping", "parameters": {}, "_server": "tiers"},
+        ]
+        assert executor.is_dangerous_tool("tiers.ping") is False
+
     def test_close(self, executor, mock_mcp_manager):
         """Test de fermeture."""
         executor.close()

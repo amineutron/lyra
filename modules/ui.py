@@ -215,7 +215,8 @@ def print_assistant(message: str):
     print_lyra(message)
 
 
-def confirm_action(tool_name: str, arguments: dict, vocal_mode: bool = False, voice=None):
+def confirm_action(tool_name: str, arguments: dict, vocal_mode: bool = False, voice=None,
+                   dangerous: bool | None = None):
     """Demande confirmation pour executer une action.
 
     Args:
@@ -229,14 +230,14 @@ def confirm_action(tool_name: str, arguments: dict, vocal_mode: bool = False, vo
         False si l'utilisateur annule
         "modify" si l'utilisateur veut modifier les arguments
     """
-    # Importer depuis la source unique de verite
-    try:
-        sys.path.insert(0, str(Path(__file__).parent.parent))
-        from lyra.core.constants import DANGEROUS_TOOLS as _DANGEROUS_TOOLS
-    except ImportError:
-        _DANGEROUS_TOOLS = frozenset({"vm_destroy", "vm_stop", "backup_restore", "backup_clean", "vm_clone_system"})
+    # Source unique de verite : aucune liste d'outils n'est recopiee ici.
+    # `dangerous` est le verdict de l'appelant, qui connait les annotations MCP
+    # du serveur ; sans lui, on retombe sur la liste statique (qui normalise
+    # deja le prefixe serveur, ex. "fedora.vm_destroy").
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from lyra.core.constants import is_dangerous_tool as _is_dangerous_tool
 
-    is_dangerous = tool_name in _DANGEROUS_TOOLS
+    is_dangerous = dangerous if dangerous is not None else _is_dangerous_tool(tool_name)
 
     if is_dangerous:
         print(colored("\n  ⚠️  ACTION POTENTIELLEMENT DESTRUCTIVE", Colors.BG_RED + Colors.WHITE + Colors.BOLD))
