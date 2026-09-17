@@ -547,18 +547,21 @@ class Pipeline:
         if analysis.tool and 'backup_status' in analysis.tool:
             analysis.arguments.pop('watch', None)
 
-        # Post-traiter le nom de l'outil pour ajouter le préfixe serveur si manquant
-        # EPHAISTOS retourne "vm_clone" mais on veut "fedora.vm_clone"
-        if analysis.tool and '.' not in analysis.tool:
-            # Chercher le nom complet dans les metadata des specs RAG
-            for r in fused:
-                meta = r.metadata if isinstance(r.metadata, dict) else {}
-                tool_name = meta.get('name', '')
-                # Vérifier si le nom court correspond (ex: "vm_clone" dans "fedora.vm_clone")
-                if tool_name.endswith('.' + analysis.tool) or tool_name == analysis.tool:
-                    # Utiliser le nom complet
-                    analysis.tool = tool_name
-                    break
+        # Resoudre le nom de l'outil contre les specs remontees : completer le
+        # prefixe serveur manquant ("vm_clone" -> "fedora.vm_clone") et rejeter
+        # un nom qu'aucune spec ne porte, plutot que de proposer une action vide.
+        if analysis.tool and not analysis.no_match:
+            resolu = _resoudre_nom_outil(analysis.tool, fused)
+            if resolu:
+                analysis.tool = resolu
+            elif '.' not in analysis.tool and _noms_outils_disponibles(fused):
+                # Nom court introuvable parmi des candidats CONNUS : EPHAISTOS
+                # l'a invente, on le dit au lieu de faire confirmer du vide.
+                # Sans candidats (RAG mocke, specs precalculees passees
+                # autrement), on ne peut rien conclure : on laisse passer.
+                # no_match est une property derivee (tool is None) : c'est en
+                # annulant l'outil qu'on la rend vraie, pas en l'assignant.
+                analysis.tool = None
 
         # Cas 1: Aucun outil ne correspond
         if analysis.no_match:
@@ -1268,6 +1271,45 @@ class Pipeline:
 # ---------------------------------------------------------------------------
 # Helpers disambiguation
 # ---------------------------------------------------------------------------
+
+def _noms_outils_disponibles(fused: list) -> list[str]:
+    """Noms complets des outils portes par les specs remontees.
+
+    Les deux generations d'index ne nomment pas la cle pareil : l'index v2
+    ecrit "name", le RAG 3-tier ecrit "tool_name". Ne lire que "name" revenait
+    a ne jamais rien trouver en mode enhanced, qui est pourtant le mode par
+    defaut de run.sh (issue #20).
+    """
+    noms = []
+    for r in fused or []:
+        meta = getattr(r, "metadata", None)
+        if not isinstance(meta, dict):
+            meta = r.get("metadata", {}) if isinstance(r, dict) else {}
+        nom = (meta or {}).get("name") or (meta or {}).get("tool_name") or ""
+        if nom:
+            noms.append(nom)
+    return noms
+
+
+def _resoudre_nom_outil(tool: str, fused: list):
+    """Nom complet de l'outil, ou None si aucune spec remontee ne le porte.
+
+    EPHAISTOS renvoie souvent un nom court ("vm_clone" pour "fedora.vm_clone")
+    qu'il faut prefixer, et parfois un nom qu'il invente : "stop_cast" au lieu
+    de "cast_stop", ou simplement le premier mot de la requete ("baisse").
+    Sans verification, ce nom traversait jusqu'a la demande de confirmation,
+    qui s'affichait vide : "Je vais executer . Tu confirmes ?".
+    """
+    if not tool:
+        return None
+    disponibles = _noms_outils_disponibles(fused)
+    if tool in disponibles:
+        return tool
+    for nom in disponibles:
+        if nom.endswith("." + tool):
+            return nom
+    return None
+
 
 def _extract_disambiguation_candidates(fused: list) -> list[dict]:
     """Extrait les top candidats de disambiguation (un par serveur)."""
