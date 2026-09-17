@@ -28,8 +28,10 @@ data/chroma_db/
 data/session_history.db
 data/feedback.json
 *.sqlite3
-models/
-voices/
+# Ancre a la racine : sans le slash initial, la regle masquait aussi
+# le paquet de code lyra/models/ (ephaistos, model_manager...).
+/models/
+/voices/
 *.onnx
 *.onnx.json
 
