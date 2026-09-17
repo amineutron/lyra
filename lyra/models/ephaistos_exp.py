@@ -74,6 +74,23 @@ par ADB). La consigne indice_url nomme "url", et "http" donne un point a
 cast_url dans carte_mots.
 
 - mots_url : quand l'URL est YouTube, "http" ne cible que "youtube".
+
+Jeu « hors regles » (51 formulations inedites, 2026-09-18) : 13/51 avec la
+configuration retenue, le bon outil jamais remonte pour 20 cas. Les mots
+d'equipement du langage courant ("ampli", "chromecast", "leds", "synchro")
+n'apparaissent ni dans les noms d'outils ni dans les documents.
+
+- carte_equipements : dans carte_mots, ces mots designent le serveur ou la
+  famille d'outils (ampli -> denon, chromecast -> cast, leds -> ambilight,
+  synchro -> beat, machine -> vm, sauvegardes -> backup).
+- mots_relatifs : "moins" -> down/off, "plus" -> up ("un peu moins fort la
+  tele" allait a volume_up ; "fort" ne visait que brightness).
+- expansion : la requete passee au RAG est enrichie par le SynonymExpander,
+  comme en production (le banc appelait cascade_search sur la requete brute),
+  avec un repli sans accent : le dictionnaire dit "télé", le STT dit "tele".
+- lexique : synonymes d'equipement absents du dictionnaire (ampli -> denon,
+  chromecast -> cast, leds -> ambilight, synchro -> beat...), ajoutes a
+  l'expansion. Implique expansion.
 """
 
 from __future__ import annotations
@@ -89,6 +106,7 @@ VARIANTES = (
     "couleurs", "exemple_par_spec", "poids_rares", "top5_direct",
     "exemple_proche", "signature", "consigne_onoff", "deux_exemples",
     "mots_url",
+    "carte_equipements", "mots_relatifs", "expansion", "lexique",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -152,6 +170,27 @@ MOTS_CIBLES: dict[str, tuple[str, ...]] = {
     "netflix": ("app",),
     "application": ("app",),
     "appli": ("app",),
+}
+
+# Mots du langage courant -> serveur ou famille d'outils (variante carte_equipements)
+MOTS_EQUIPEMENTS: dict[str, tuple[str, ...]] = {
+    "ampli": ("denon",), "amplificateur": ("denon",), "denon": ("denon",),
+    "chromecast": ("cast", "catt"), "cast": ("cast", "catt"),
+    "leds": ("ambilight",), "led": ("ambilight",),
+    "synchro": ("beat",), "synchronisation": ("beat",),
+    "machine": ("vm",), "vm": ("vm",), "serveur": ("vm",),
+    "sauvegarde": ("backup",), "sauvegardes": ("backup",), "backup": ("backup",),
+    "lampe": ("light",), "lumiere": ("light", "group"), "lumieres": ("group",),
+    "scene": ("scene",), "ambiance": ("scene", "color"),
+    "telecommande": ("key",), "touche": ("key",),
+    "applis": ("apps",), "applications": ("apps",),
+    "ecran": ("screen",), "image": ("screen",),
+}
+
+# Quantite relative -> direction (variante mots_relatifs)
+MOTS_RELATIFS: dict[str, tuple[str, ...]] = {
+    "moins": ("down", "off"), "plus": ("up",),
+    "baisse": ("down",), "monte": ("up",),
 }
 
 _RRF_K = 60
@@ -251,29 +290,41 @@ def url_youtube(requete: str) -> bool:
 
 
 def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
-               cibler_youtube: bool = False) -> int:
+               cibler_youtube: bool = False, equipements: bool = False,
+               relatifs: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
-    une URL YouTube ne donne plus de point aux outils "url" generiques.
+    une URL YouTube ne donne plus de point aux outils "url" generiques. Avec
+    equipements et relatifs, les tables MOTS_EQUIPEMENTS et MOTS_RELATIFS
+    s'ajoutent (le "moins" de "moins fort" annule la cible brightness de "fort").
     """
     tokens = tokens_outil(nom_outil)
     youtube = cibler_youtube and url_youtube(requete)
+    mots = normaliser(requete)
     score = 0
-    for mot in normaliser(requete):
+    for mot in mots:
         cibles = MOTS_CIBLES.get(mot)
         if youtube and mot in ("http", "https"):
             cibles = ("youtube",)
+        if relatifs and mot in ("fort", "forte", "fortes") and "moins" in mots:
+            cibles = None
+        if equipements and mot in MOTS_EQUIPEMENTS:
+            cibles = tuple(cibles or ()) + MOTS_EQUIPEMENTS[mot]
+        if relatifs and mot in MOTS_RELATIFS:
+            cibles = tuple(cibles or ()) + MOTS_RELATIFS[mot]
         if cibles and any(c in tokens for c in cibles):
             score += 2 if (poids_rares and mot in MOTS_RARES) else 1
     return score
 
 
 def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
-               cibler_youtube: bool = False) -> list[str]:
+               cibler_youtube: bool = False, equipements: bool = False,
+               relatifs: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
-                  key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares, cibler_youtube),
+                  key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares,
+                                           cibler_youtube, equipements, relatifs),
                   reverse=True)
 
 
@@ -493,3 +544,70 @@ def joindre_signatures(items: list[dict]) -> list[dict]:
         else:
             out.append(item)
     return out
+
+
+# --- Jeu hors regles : expansion de la requete avant le RAG ------------------------
+
+# Synonymes d'equipement absents de data/synonym_dict.json (variante lexique).
+# Des MOTS, jamais des phrases du jeu de test : on complete un lexique, on
+# n'apprend pas le banc.
+LEXIQUE_EQUIPEMENTS: dict[str, tuple[str, ...]] = {
+    "tele": ("tv", "television"), "tv": ("tele", "television"),
+    "ampli": ("denon", "amplificateur"), "amplificateur": ("denon", "ampli"),
+    "chromecast": ("cast", "diffusion"), "cast": ("chromecast",),
+    "leds": ("ambilight", "retroeclairage"), "led": ("ambilight",),
+    "synchro": ("hue_beat", "beat", "synchronisation"),
+    "machine": ("vm", "machine virtuelle"), "serveur": ("vm",),
+    "sauvegardes": ("backup", "backups"), "sauvegarde": ("backup",),
+    "restauration": ("snapshot", "restore"),
+    "tar": ("archive", "export"), "archive": ("export",),
+    "clignoter": ("alert", "identifier"),
+    "applis": ("applications", "apps"), "appli": ("application", "app"),
+    "teinte": ("couleur", "temperature"),
+    "ip": ("status", "adresse"),
+    "image": ("ecran",),
+}
+
+_expander = None
+
+
+def _synonymes_du_dictionnaire():
+    """SynonymExpander de production, charge une fois ; dict normalise -> synonymes."""
+    global _expander
+    if _expander is None:
+        try:
+            from lyra.rag_enhanced.synonym_expander import SynonymExpander
+            exp = SynonymExpander()
+            brut = getattr(exp, "synonym_dict", {}) or {}
+        except Exception:
+            brut = {}
+        _expander = {" ".join(normaliser(k)): tuple(v) for k, v in brut.items()
+                     if isinstance(v, list) and not k.startswith("_")}
+    return _expander
+
+
+def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15) -> str:
+    """Requete + synonymes de ses mots (dictionnaire de production, repli sans accent).
+
+    Meme strategie que SynonymExpander.expand (requete originale, puis les
+    synonymes, au plus max_tokens), mais la recherche se fait sur les mots
+    normalises : "tele" trouve l'entree "télé". Avec lexique, LEXIQUE_EQUIPEMENTS
+    s'ajoute au dictionnaire.
+    """
+    dico = _synonymes_du_dictionnaire()
+    ajouts: list[str] = []
+    vus: set[str] = set()
+    for mot in normaliser(requete):
+        candidats = list(dico.get(mot, ()))
+        if lexique:
+            candidats += list(LEXIQUE_EQUIPEMENTS.get(mot, ()))
+        for syn in candidats:
+            cle = " ".join(normaliser(syn))
+            if cle and cle not in vus and cle not in normaliser(requete):
+                vus.add(cle)
+                ajouts.append(syn)
+            if len(ajouts) >= max_tokens:
+                break
+        if len(ajouts) >= max_tokens:
+            break
+    return f"{requete} {' '.join(ajouts)}" if ajouts else requete

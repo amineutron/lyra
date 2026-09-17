@@ -338,3 +338,50 @@ class TestMotsUrl:
 
     def test_url_generique_inchangee(self):
         assert exp.score_mots("catt.cast_url", "caste https://example.org/a.mp4", cibler_youtube=True) == 1
+
+
+# --- Jeu hors regles ------------------------------------------------------------
+
+class TestCarteEquipements:
+    def test_ampli_designe_denon(self):
+        specs = ["tv.volume_up: volume_up()", "denon.volume_up: volume_up()"]
+        assert exp.boost_mots(specs, "l'ampli, un cran plus fort", equipements=True)[0].startswith("denon.")
+
+    def test_chromecast_designe_cast(self):
+        assert exp.score_mots("catt.cast_stop", "le chromecast, coupe la lecture", equipements=True) >= 1
+        assert exp.score_mots("tv.power_off", "le chromecast, coupe la lecture", equipements=True) == 0
+
+    def test_sans_option_inchange(self):
+        assert exp.score_mots("denon.volume_up", "l'ampli, un cran plus fort") == 0
+
+
+class TestMotsRelatifs:
+    def test_moins_fort_vise_down_pas_brightness(self):
+        specs = ["tv.volume_up: volume_up()", "hue.set_brightness: set_brightness()", "tv.volume_down: volume_down()"]
+        assert exp.boost_mots(specs, "un peu moins fort la tele", relatifs=True)[0].startswith("tv.volume_down")
+        assert exp.score_mots("hue.set_brightness", "un peu moins fort la tele", relatifs=True) == 0
+
+    def test_plus_fort_vise_up(self):
+        assert exp.score_mots("denon.volume_up", "l'ampli, un cran plus fort", relatifs=True) >= 1
+
+
+class TestExpansion:
+    def test_repli_sans_accent_trouve_l_entree_accentuee(self):
+        r = exp.etendre_requete("la tele, mets-la en route")
+        assert "tv" in r.split() or "télévision" in r  # entree "télé" du dictionnaire
+
+    def test_lexique_ajoute_les_equipements(self):
+        sans = exp.etendre_requete("l'ampli en veille")
+        avec = exp.etendre_requete("l'ampli en veille", lexique=True)
+        assert "denon" not in sans.split() and "denon" in avec.split()
+
+    def test_requete_originale_conservee_en_tete(self):
+        assert exp.etendre_requete("coupe sandbox-02", lexique=True).startswith("coupe sandbox-02")
+
+    def test_limite_du_nombre_de_synonymes(self):
+        """La limite compte les synonymes (un synonyme peut faire deux mots : "home cinema")."""
+        r = exp.etendre_requete("tele leds", lexique=True, max_tokens=2)
+        assert len(r.split()) == 2 + 2
+
+    def test_sans_synonyme_inchange(self):
+        assert exp.etendre_requete("xyzzy plugh") == "xyzzy plugh"

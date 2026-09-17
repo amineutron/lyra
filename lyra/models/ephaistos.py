@@ -528,7 +528,9 @@ class Ephaistos:
             if "carte_mots" in variantes:
                 compact_specs = _exp.boost_mots(compact_specs, user_query,
                                                 poids_rares="poids_rares" in variantes,
-                                                cibler_youtube="mots_url" in variantes)
+                                                cibler_youtube="mots_url" in variantes,
+                                                equipements="carte_equipements" in variantes,
+                                                relatifs="mots_relatifs" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             if max_specs > 0:
                 compact_specs = compact_specs[:max_specs]
