@@ -1,11 +1,13 @@
-"""Variantes experimentales d'EPHAISTOS, activees par la variable LYRA_EXP.
+"""Variantes d'EPHAISTOS et du RAG, choisies par la variable LYRA_EXP.
 
-    LYRA_EXP="exemples_cibles,lexical"
+    LYRA_EXP="exemples_cibles,lexical"   # exactement ces variantes
+    LYRA_EXP=""                          # aucune : le comportement d'avant la boucle
+    (variable absente)                   # DEFAUT : la configuration retenue par la boucle
 
-La variable vide, rien ne change : le comportement de production est
-intact. C'est ce qui permet a la boucle d'amelioration
-(scripts/bench_boucle.py) de mesurer chaque idee seule, puis combinee, sur
-exactement le meme code, avec la meme graine.
+Chaque idee est une variante mesurable seule ou combinee, sur le meme code
+et la meme graine (scripts/bench_boucle.py). DEFAUT est la configuration
+retenue le 2026-09-17 apres cinq iterations : 21/21 sur le banc des modeles
+avec qwen2.5-coder:0.5b (5/21 au depart).
 
 Iteration 1 (roadmap-github#72, 2026-09-17) :
 
@@ -153,9 +155,19 @@ MOTS_CIBLES: dict[str, tuple[str, ...]] = {
 
 _RRF_K = 60
 
+# Configuration retenue par la boucle d'amelioration (iteration 5, 21/21).
+# Ecartees, mesurees : dedup et json_format (neutres), routage, index,
+# consigne_onoff, deux_exemples, top5_direct (degradent), indice_url (coutait
+# le dernier cas), couleurs (sans effet), mots_url (non necessaire).
+DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
+          "exemple_par_spec", "poids_rares", "exemple_proche", "signature")
+
+
 def actives() -> set[str]:
-    """Variantes demandees par LYRA_EXP ; inconnues ignorees."""
-    brut = os.environ.get("LYRA_EXP", "")
+    """Variantes actives : LYRA_EXP si definie (meme vide), sinon DEFAUT ; inconnues ignorees."""
+    brut = os.environ.get("LYRA_EXP")
+    if brut is None:
+        return set(DEFAUT)
     return {v.strip() for v in brut.split(",") if v.strip()} & set(VARIANTES)
 
 

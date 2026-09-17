@@ -13,7 +13,13 @@ def _env_propre(monkeypatch):
 
 
 class TestActivation:
-    def test_rien_par_defaut(self):
+    def test_variable_absente_donne_la_configuration_retenue(self):
+        assert exp.actives() == set(exp.DEFAUT)
+        assert set(exp.DEFAUT) <= set(exp.VARIANTES)
+
+    def test_variable_vide_desactive_tout(self, monkeypatch):
+        """LYRA_EXP="" est le comportement d'avant la boucle (bench_boucle s'en sert)."""
+        monkeypatch.setenv("LYRA_EXP", "")
         assert exp.actives() == set()
 
     def test_lit_la_variable(self, monkeypatch):

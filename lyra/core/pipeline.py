@@ -517,7 +517,10 @@ class Pipeline:
         if analysis is None:
             # Encoder en TOON uniquement si le modele est >= 1B (0.5b ne comprend pas TOON)
             ephaistos_model = self.config.models.ephaistos.name
-            use_toon = "0.5b" not in ephaistos_model
+            # Les variantes LYRA_EXP (voir ephaistos_exp) agissent sur le chemin
+            # des specs compactes ; avec TOON, analyze() les ignore.
+            from ..models import ephaistos_exp as _exp
+            use_toon = "0.5b" not in ephaistos_model and not _exp.actives()
             specs_toon = toon_encode_specs(specs) if use_toon else None
 
             # Analyser avec EPHAISTOS
