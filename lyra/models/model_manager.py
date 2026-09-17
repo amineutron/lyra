@@ -5,6 +5,7 @@ Orchestration des modeles EPHAISTOS (Qwen 7B) et LYRA (Llama 3B).
 Gere le chargement, le swap, et la communication avec Ollama.
 """
 
+import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -23,9 +24,29 @@ from ..core.config import RAGConfig
 # Mesure du 2026-09-17, voir roadmap-github#72.
 NUM_CTX = 8192
 
+def _options_generation(temperature: float) -> dict:
+    """Options passees a ollama pour un appel de generation.
+
+    `LYRA_SEED` fixe la graine : deux executions du meme banc donnent alors le
+    meme resultat. Sans elle, rien ne change en production. Mesure du
+    2026-09-17 : sans graine, le meme jeu de 7 requetes donne 4, 3 puis 4
+    bonnes reponses -- comparer des modeles sur cette base reviendrait a
+    mesurer le bruit autant que les modeles.
+    """
+    options = {"temperature": temperature, "num_ctx": NUM_CTX}
+    graine = os.environ.get("LYRA_SEED", "").strip()
+    if graine:
+        try:
+            options["seed"] = int(graine)
+        except ValueError:
+            pass
+    return options
+
 
 
 @dataclass
+
+
 class ModelResponse:
     """Reponse d'un modele."""
     content: str
@@ -157,10 +178,7 @@ class ModelManager:
             "messages": messages,
             "stream": False,
             "keep_alive": -1,  # garder le modele en VRAM indefiniment
-            "options": {
-                "temperature": temperature,
-                "num_ctx": NUM_CTX,
-            }
+            "options": _options_generation(temperature)
         }
 
         try:
