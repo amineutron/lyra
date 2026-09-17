@@ -24,6 +24,9 @@ import time
 import wave
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from bench_common import RESULTS, ecrire_resultat  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = REPO_ROOT / "models"
 SAMPLES_DIR = MODELS_DIR / "bench_samples"
@@ -165,6 +168,8 @@ def print_report() -> None:
     results = []
     for f in sorted(SAMPLES_DIR.glob("results_*.json")):
         results.extend(json.loads(f.read_text()))
+    for f in sorted(RESULTS.glob("*-tts.json")):
+        results.extend(json.loads(f.read_text()).get("voix", []))
     if not results:
         print("Aucun results_*.json trouve. Lancer d'abord le benchmark.")
         return
@@ -205,9 +210,13 @@ def main() -> None:
             parser.error("--kokoro-dir requis avec --engine kokoro")
         results = bench_kokoro(args.kokoro_dir)
 
+    # SAMPLES_DIR vit sous models/, qui est gitignore : les resultats y
+    # etaient perdus. On les publie aussi dans benchmarks/results/.
     out = SAMPLES_DIR / f"results_{args.engine}.json"
     out.write_text(json.dumps(results, indent=2, ensure_ascii=False))
-    print(f"Resultats ecrits dans {out}", file=sys.stderr)
+    publie = ecrire_resultat("tts", {"moteur": args.engine, "voix": results},
+                             suffixe=args.engine)
+    print(f"Resultats ecrits dans {out} et {publie}", file=sys.stderr)
 
 
 if __name__ == "__main__":

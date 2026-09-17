@@ -1,0 +1,30 @@
+{
+  "mesure": "daemon",
+  "date": "2026-09-17",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "35bd75c",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "baseline": "baseline-daemon-2026-08-07.json",
+  "mesures_s": {
+    "oneshot_fast": 3.654,
+    "oneshot_full": 12.309,
+    "repl_ready": 0.262,
+    "repl_first_request": 1.596
+  }
+}

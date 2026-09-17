@@ -980,6 +980,34 @@ def generate_text_report(results, categories, total_pass, total_partial, total_f
     return "\n".join(lines)
 
 
+def resume_json(results, categories) -> dict:
+    """Resume chiffre de la campagne, destine a benchmarks/results/.
+
+    Cette campagne n'interroge aucun LLM : elle mesure les regles seules
+    (Pipeline._rule_based_detect), donc elle est deterministe et rejouable.
+    """
+    from collections import Counter
+
+    statuts = Counter(r["status"] for r in results)
+    par_cat = {
+        cat: dict(Counter(r["status"] for r in entries))
+        for cat, entries in sorted(categories.items())
+    }
+    total = len(results)
+    return {
+        "banc": "regles",
+        "cas": total,
+        "statuts": dict(statuts),
+        "taux_pass": round(statuts["PASS"] / total, 4) if total else 0.0,
+        "par_categorie": par_cat,
+        "echecs": [
+            {"query": r["query"], "attendu": r["expected_tool"], "obtenu": r["result_tool"],
+             "statut": r["status"]}
+            for r in results if r["status"] in ("FAIL", "RULE_MISS")
+        ],
+    }
+
+
 if __name__ == "__main__":
     results, categories = run_tests()
     report_text = print_report(results, categories)
@@ -988,3 +1016,9 @@ if __name__ == "__main__":
     report_path = Path(__file__).parent / "test_campaign_report.txt"
     report_path.write_text(report_text, encoding="utf-8")
     print(f"Rapport sauvegarde : {report_path}")
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    from bench_common import ecrire_resultat  # noqa: E402
+
+    chemin = ecrire_resultat("regles", resume_json(results, categories))
+    print(f"Resume publie : {chemin}")

@@ -1,0 +1,21 @@
+{
+  "mesure": "daemon",
+  "date": "2026-08-07",
+  "role": "baseline",
+  "contexte": "Avant le chantier demon : le pipeline complet (Ollama, ChromaDB, SentenceTransformer, clients MCP) etait reinitialise a chaque requete.",
+  "materiel": {
+    "note": "Non releve a l'epoque. Machine identique a celle des mesures 'apres' sauf indication contraire.",
+    "gpu": "NVIDIA GeForce RTX 3080 Ti (12 Go)",
+    "cpu": "AMD Ryzen 9 5950X 16-Core",
+    "ram_go": 62
+  },
+  "mesures_s": {
+    "oneshot_fast": 4.49,
+    "oneshot_full": 17.08,
+    "repl_ready": 20.0,
+    "repl_first_request": 13.3
+  },
+  "commentaires": {
+    "repl_ready": "mediane de mesures entre 15 et 25 s"
+  }
+}

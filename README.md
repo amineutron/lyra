@@ -188,15 +188,18 @@ Une mascotte est piquée au hasard dans la famille correspondante à chaque éta
 
 | Mesure | Valeur |
 |---|---|
-| Tests unitaires et installeur | **1 004** verts ([CI](https://github.com/amineutron/lyra/actions/workflows/tests.yml), `uv run pytest tests/unit tests/installer`) |
-| Pipeline one-shot (démon chaud) | 17.1s → **1.3s** ([`scripts/bench_daemon.py`](scripts/bench_daemon.py), mesure du 2026-08 sur RTX 3080 Ti) |
-| REPL prêt | 20s → **0.25s** ([`scripts/bench_daemon.py`](scripts/bench_daemon.py)) |
-| Requête chaude (démon déjà lancé) | **0.3–1s** |
-| VRAM (mode expérimental, actuel) | **~4 Go** (0.5b + 1b + embeddings) |
-| VRAM (mode production, backup) | ~10.5 Go (7b + 3b + embeddings) |
-| Outils MCP disponibles | **85**, répartis sur 6 intégrations ([MCP_TOOLS.md](docs/user/MCP_TOOLS.md)) |
-| TTS (Piper, toutes voix) | **< 0.6s** par phrase ([`scripts/bench_tts.py`](scripts/bench_tts.py)) |
+| Tests unitaires et installeur | **1 051** verts ([CI](https://github.com/amineutron/lyra/actions/workflows/tests.yml), `uv run pytest tests/unit tests/installer`) |
+| Suite complète (unit + intégration + e2e) | **1 124** verts, 1 ignoré (`make test`) |
+| Latence du pipeline | mesures datées et rejouables dans [BENCHMARKS.md](BENCHMARKS.md) (`make bench-daemon`) |
+| Détection des commandes | **152/152** sur le banc de règles, sans LLM ([BENCHMARKS.md](BENCHMARKS.md), `make bench-regles`) |
+| VRAM (mode expérimental, actuel) | ~4 Go (0.5b + 1b + embeddings) — estimation, non mesurée |
+| VRAM (mode production, backup) | ~10.5 Go (7b + 3b + embeddings) — estimation, non mesurée |
+| Outils MCP disponibles | **88**, répartis sur 5 serveurs ([MCP_TOOLS.md](docs/user/MCP_TOOLS.md), vérifiable par `make smoke`) |
+| TTS (Piper, toutes voix) | latence par voix dans [BENCHMARKS.md](BENCHMARKS.md) (`make bench-tts`) |
 | Installeur validé en réel | Fedora, Ubuntu, Arch — sans GPU ([protocole et résultats](docs/user/VM_INSTALL_TESTS.md)) |
+
+Protocole de mesure, machine de référence et format des résultats :
+[`benchmarks/README.md`](benchmarks/README.md).
 
 ## Intégrations MCP
 
