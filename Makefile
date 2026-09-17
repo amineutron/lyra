@@ -1,7 +1,7 @@
 # Lyra — commandes uniques (regle testing homelab : une commande par projet)
 PY := .venv/bin/python
 
-.PHONY: test smoke campaign test-all bench bench-daemon bench-regles bench-tts
+.PHONY: test smoke campaign test-all bench bench-daemon bench-regles bench-tts bench-modeles
 
 # Suite pytest complete (unit + integration + e2e)
 test:
@@ -37,6 +37,10 @@ bench-regles:
 
 bench-tts:
 	$(PY) scripts/bench_tts.py --engine piper
+
+# Banc des modeles : fixer LYRA_SEED pour que deux executions soient comparables
+bench-modeles:
+	$(PY) tests/test_campaign_llm.py --ephaistos $(MODELE) --json
 
 # Enchaine les trois bancs puis regenere BENCHMARKS.md depuis les resultats
 bench: bench-regles bench-daemon

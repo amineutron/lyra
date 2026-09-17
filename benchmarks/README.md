@@ -103,6 +103,21 @@ Deux precisions importantes pour lire ces chiffres :
   l'utilisateur rencontre au quotidien -- en usage reel, les regles repondent
   avant lui.
 
+### Reproductibilite : fixer la graine
+
+Les modeles ne sont pas deterministes. Sans graine, le meme jeu de 7 requetes
+a donne **4, 3 puis 4** bonnes reponses sur trois executions consecutives :
+comparer des modeles sur cette base reviendrait a mesurer le bruit autant que
+les modeles.
+
+```bash
+LYRA_SEED=42 make bench-modeles      # deux executions donnent le meme resultat
+```
+
+`LYRA_SEED` n'a d'effet que si elle est definie : rien ne change en production.
+Toute comparaison entre modeles publiee ici doit avoir ete prise avec la meme
+graine, et la mentionner.
+
 Le banc **refuse de publier** si une panne technique survient (API deplacee,
 RAG muet). Le 2026-09-17 il annoncait 0/21 pour le 0.5b : la methode
 `_retrieve_specs` avait disparu du pipeline, l'exception etait comptee en
