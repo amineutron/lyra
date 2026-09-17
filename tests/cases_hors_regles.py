@@ -66,5 +66,5 @@ TESTS_HORS_REGLES = [
     ("FEDORA/vm_export", "archive", "fais-moi un tar de preprod-01 pour l'emporter", "fedora.vm_export", {"vm_name": "preprod-01"}, {}),
     ("FEDORA/backup_status", "etat", "ou en sont les sauvegardes", "fedora.backup_status", {}, {}),
     ("FEDORA/backup_verify", "integrite", "les sauvegardes sont saines ?", "fedora.backup_verify", {}, {}),
-    ("FEDORA/backup_clean", "menage", "vire les anciennes sauvegardes", "fedora.backup_clean", {}, {}),
+    ("FEDORA/backup_clean", "menage", "allege le stock de sauvegardes, garde que les recentes", "fedora.backup_clean", {}, {}),
 ]

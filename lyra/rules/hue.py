@@ -114,6 +114,13 @@ def detect(query: str):
     m_rgb = re.search(r'\b(rouge|verte?|bleue?|violet(?:te)?|orange|jaune|rose|blanc(?:he)?|cyan)\b', q)
     if m_rgb and re.search(r'\b(?:lumieres?|lampes?|ambiance|atmosphere|couleur|mode)\b', q):
         rgb = _RGB_COLOR_MAP.get(m_rgb.group(1), (255, 255, 255))
+        # Une lampe precise ("la lampe du bureau", "juste celle-la") n'est pas le
+        # groupe (lyra#22) : set_color_rgb, et l'identifiant reste a demander.
+        if re.search(r'\b(?:la|une|cette)\s+lampe\b|\bjuste\s+celle', q) and not re.search(r'\blampes\b', q):
+            return make("hue.set_color_rgb",
+                        {"red": rgb[0], "green": rgb[1], "blue": rgb[2]},
+                        f"rule: set_color_rgb {m_rgb.group(1)} (lampe precise)", 0.88,
+                        missing_args=["light_id"])
         return make("hue.set_group_color_rgb",
                     {"red": rgb[0], "green": rgb[1], "blue": rgb[2]},
                     f"rule: set_group_color_rgb {m_rgb.group(1)}", 0.90)

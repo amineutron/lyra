@@ -32,6 +32,13 @@ def detect(query: str):
         args = {"vm_name": vm} if vm and vm not in _GENERIC else {}
         return make("fedora.backup_verify", args, "rule: verifie backup", 0.93)
 
+    # backup_clean: "nettoie/purge/supprime/vire les anciens backups", "fais le menage".
+    # AVANT backup_create : "fais le menage dans les vieilles sauvegardes" tombait
+    # sur la creation, l'inverse de l'intention (lyra#22).
+    if re.search(r'\b(?:nettoie[rz]?|purge[rz]?|supprim[ea][rz]?|efface[rz]?|vide[rz]?|vire[rz]?|'
+                 r'debarrasse[rz]?|menage|vieilles|vieux|ancien(?:ne)?s?)\b', q):
+        return make("fedora.backup_clean", {}, "rule: nettoie backups", 0.92)
+
     # backup_create: "cree/fais/lance un backup [de VM]"
     if re.search(r'\b(?:cree?[rz]?|fai[st]?[rz]?|lance[rz]?|genere[rz]?|demarr[ea][rz]?)\b', q):
         m = re.search(r'(?:backup|sauvegarde)\s+(?:de\s+|d[e\']\s*)?([\w][\w.-]*)', q)
@@ -45,9 +52,5 @@ def detect(query: str):
         vm = m.group(1).strip() if m else None
         args = {"identifier": vm} if vm and vm not in _GENERIC else {}
         return make("fedora.backup_restore", args, "rule: restaure backup", 0.92)
-
-    # backup_clean: "nettoie/purge/supprime les anciens backups"
-    if re.search(r'\b(?:nettoie[rz]?|purge[rz]?|supprim[ea][rz]?|efface[rz]?|vide[rz]?)\b', q):
-        return make("fedora.backup_clean", {}, "rule: nettoie backups", 0.92)
 
     return None

@@ -154,3 +154,19 @@ class TestNoMatch:
 
     def test_empty(self):
         assert tool("") is None
+
+
+class TestPhrasesInedites:
+    """Regression lyra#22 : "fais le menage dans les vieilles sauvegardes" tombait sur backup_create."""
+
+    def test_faire_le_menage_est_un_nettoyage(self):
+        r = detect("fais le menage dans les vieilles sauvegardes")
+        assert r is not None and r.tool == "fedora.backup_clean"
+
+    def test_virer_les_anciennes(self):
+        r = detect("vire les anciennes sauvegardes")
+        assert r is not None and r.tool == "fedora.backup_clean"
+
+    def test_creer_reste_une_creation(self):
+        r = detect("fais un backup de preprod-01")
+        assert r is not None and r.tool == "fedora.backup_create"

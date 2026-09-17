@@ -230,3 +230,19 @@ class TestAmbilightCouleursMasculines:
         for color in _AMBI_COLOR_MAP:
             r = detect(f"ambilight en {color}")
             assert r is not None and r.tool == "tv.ambilight_color", color
+
+
+class TestPhrasesInedites:
+    """Regression lyra#22 : "mode musique" sur les leds n'est pas le mode son seul de la TV."""
+
+    def test_leds_en_mode_musique_ne_coupent_pas_l_image(self):
+        r = detect("passe les leds de la tele en mode musique")
+        assert r is not None and r.tool == "tv.ambilight_mode"
+        assert r.arguments.get("mode") == "follow_audio"
+
+    def test_ambilight_mode_video(self):
+        r = detect("mets l'ambilight en mode video")
+        assert r is not None and r.tool == "tv.ambilight_mode" and r.arguments.get("mode") == "follow_video"
+
+    def test_mode_musique_sans_leds_reste_son_seul(self):
+        assert tool("mets la tele en mode musique") == "tv.sound_only"

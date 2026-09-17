@@ -210,3 +210,18 @@ class TestNoMatch:
         for color in _RGB_COLOR_MAP:
             r = detect(f"lumieres en {color}")
             assert r is not None and r.tool == "hue.set_group_color_rgb", color
+
+
+class TestPhrasesInedites:
+    """Regression lyra#22 : une lampe precise en couleur allait au groupe entier."""
+
+    def test_une_lampe_nommee_ne_va_pas_au_groupe(self):
+        for q in ("passe la lampe du bureau en violet", "la lampe du bureau, teinte violette"):
+            r = detect(q)
+            assert r is not None and r.tool == "hue.set_color_rgb", q
+            assert "light_id" in r.missing_args, q
+            assert (r.arguments["red"], r.arguments["green"], r.arguments["blue"]) == (128, 0, 128)
+
+    def test_les_lampes_au_pluriel_restent_le_groupe(self):
+        r = detect("mets les lampes en rouge")
+        assert r is not None and r.tool == "hue.set_group_color_rgb"

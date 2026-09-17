@@ -5,7 +5,6 @@ L'ordre dans _REGISTRY est identique a l'ancien _rule_based_detect() dans pipeli
 Premier match gagne.
 """
 
-from typing import Optional
 
 from .backup import detect as _backup
 from .catt import detect as _catt

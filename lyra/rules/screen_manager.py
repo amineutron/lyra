@@ -21,7 +21,15 @@ _SCREEN_KW = (
 )
 
 # URLs valides
-_URL_RE = r'https?://\S+|localhost(?::\d+)?(?:/\S*)?|\w+\.\w{2,}(?:/\S*)?'
+# Un chemin de fichier ("/tmp/rapport.txt") n'est pas une URL (lyra#22) : schema,
+# www. ou un domaine termine par un TLD web.
+_URL_RE = (r'https?://\S+|localhost(?::\d+)?(?:/\S*)?|www\.\S+|'
+           r'(?<![/\w])[\w-]+(?:\.[\w-]+)*\.(?:com|org|net|fr|io|app|tv|be|dev|eu|me)\b(?:/\S*)?')
+# Equipements pilotes par d'autres serveurs : jamais des applications a ouvrir (lyra#22)
+_NOT_APPS = {'ampli', 'amplificateur', 'denon', 'chromecast', 'cast', 'lumiere', 'lumieres',
+             'lampe', 'lampes', 'ambilight', 'volume', 'son', 'image', 'video', 'musique',
+             'tv', 'tele', 'television', 'vm', 'machine', 'backup', 'sauvegarde'}
+_NOT_APPS_RE = r'\b(?:' + '|'.join(sorted(w for w in _NOT_APPS if w not in {'tv', 'tele', 'television'})) + r')\b'
 
 # Prepositions de destination
 _ON_SCREEN = r'\bsur\b|\bvers\b|\ba\s+(?:l[ae]?\s+)?(?:' + _SCREEN_KW[3:]  # retire le \b debut
@@ -91,6 +99,12 @@ def detect(query: str):
     # ------------------------------------------------------------------ #
     if re.search(_DISPLAY_VERBS, q) and re.search(_SCREEN_KW, q):
         app_name = _extract_app_name(q)
+        if app_name and app_name.lower() in _NOT_APPS:
+            return None
+        # Sans nom d'application, une phrase qui parle d'un equipement ("mets
+        # l'ampli sur la tele") n'ouvre rien : elle concerne un autre serveur.
+        if not app_name and re.search(_NOT_APPS_RE, q):
+            return None
         screen = _extract_screen_dest(q)
         args = {}
         if app_name:
@@ -107,7 +121,7 @@ def detect(query: str):
     # ------------------------------------------------------------------ #
     if re.search(_DISPLAY_VERBS, q):
         app_name = _extract_app_name_bare(q)
-        if app_name:
+        if app_name and app_name.lower() not in _NOT_APPS:
             return make("screen-manager.open_app", {"app_name": app_name},
                         f"rule: open_app sans ecran app={app_name}", 0.88,
                         missing_args=["screen"])

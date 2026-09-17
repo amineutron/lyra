@@ -16,11 +16,27 @@ _AMBI_COLOR_MAP = {
 }
 
 
+# Ambilight, ou "les leds de/derriere la tele"
+_AMBI_KW = r'\b(?:ambilight|leds?\s+(?:de\s+|derriere\s+)?(?:la\s+)?(?:tele|tv|television))\b'
+_AMBI_MODES = {"musique": "follow_audio", "audio": "follow_audio", "son": "follow_audio",
+               "video": "follow_video", "film": "follow_video",
+               "lounge": "lounge_light", "ambiance": "lounge_light", "manuel": "manual"}
+
+
 def detect(query: str):
     q = normalize(query)
 
+    # tv.ambilight_mode: "ambilight/leds en mode musique|video|lounge" (lyra#22 : "les leds
+    # de la tele en mode musique" tombait sur sound_only, qui coupe l'image)
+    if re.search(_AMBI_KW, q):
+        m_mode = re.search(r'\bmode\s+(musique|audio|son|video|film|lounge|ambiance|manuel)\b', q)
+        if m_mode:
+            return make("tv.ambilight_mode", {"mode": _AMBI_MODES[m_mode.group(1)]},
+                        f"rule: ambilight_mode {m_mode.group(1)}", 0.93)
+
     # tv.sound_only: "son seul", "mode musique/audio" — pas besoin de "tv" dans la phrase
-    if re.search(r'\b(?:son\s+seul|mode\s+(?:musique|audio|son|radio)|musique\s+seul(?:e|ement)?)\b', q):
+    if re.search(r'\b(?:son\s+seul|mode\s+(?:musique|audio|son|radio)|musique\s+seul(?:e|ement)?)\b', q) and \
+            not re.search(_AMBI_KW, q):
         return make("tv.sound_only", {}, "rule: tv sound_only", 0.97)
 
     # tv.screen_off: "coupe/eteins l'ecran/la dalle" — "dalle" et "ecran" suffisent

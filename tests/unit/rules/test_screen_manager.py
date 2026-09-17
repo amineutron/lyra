@@ -239,3 +239,18 @@ class TestRegressions:
         # Si match, vm_name ne doit pas etre 'tv'
         if r is not None:
             assert r.arguments.get("vm_name", "") != "tv"
+
+
+class TestPhrasesInedites:
+    """Regression lyra#22 : des phrases d'autres domaines tombaient sur screen-manager."""
+
+    def test_un_chemin_de_fichier_n_est_pas_une_url(self):
+        assert detect("pousse /tmp/rapport.txt vers preprod-01") is None
+
+    def test_un_equipement_n_est_pas_une_application(self):
+        assert detect("mets l'ampli sur la tele") is None
+        assert detect("mets le chromecast sur la tele") is None
+
+    def test_une_vraie_url_reste_ouverte(self):
+        r = detect("ouvre https://worldmonitor.app sur la tele")
+        assert r is not None and r.tool == "screen-manager.open_url"
