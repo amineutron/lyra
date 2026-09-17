@@ -300,6 +300,178 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
     short_name = name.split('.')[-1] if '.' in name else name
 
     triggers_map = {
+        # Outils sans paraphrase jusqu'au 2026-09-18 (34/88) : formulations generiques,
+        # jamais une phrase du jeu hors regles (scripts/controle_hors_regles.py).
+        "catt.cast_browser": [
+            "caster l'onglet du navigateur",
+            "diffuse ce que je regarde dans firefox sur la tele",
+            "envoie l'onglet actif sur la tele",
+        ],
+        "catt.cast_browser_dual": [
+            "lecture synchronisee pc et tele",
+            "lance la video sur le pc et la tele en meme temps",
+            "dual cast pc tele",
+        ],
+        "catt.cast_dual_offset": [
+            "ajuste le decalage entre pc et tele",
+            "la tele est en avance, corrige le decalage",
+            "decale la tele de deux secondes",
+        ],
+        "catt.cast_dual_resync": [
+            "resynchronise pc et tele",
+            "remets la tele au meme endroit que le pc",
+            "recale la video sur la tele",
+        ],
+        "catt.cast_dual_stop": [
+            "arrete le dual cast",
+            "stoppe la lecture synchronisee",
+            "coupe la synchro pc tele",
+        ],
+        "catt.cast_info": [
+            "quel media est en cours sur le chromecast",
+            "infos sur ce qui est diffuse",
+            "c'est quoi qui joue sur la tele",
+        ],
+        "catt.cast_scan": [
+            "trouve les chromecast",
+            "scanne les appareils de diffusion",
+            "quels chromecast sont disponibles",
+        ],
+        "fedora.help": [
+            "quels outils tu as",
+            "liste tes commandes",
+            "aide sur les outils",
+        ],
+        "fedora.vm_export": [
+            "exporte la vm dans une archive",
+            "sauvegarde la vm dans une archive portable",
+            "sors la vm en tar.gz",
+        ],
+        "fedora.vm_import": [
+            "importe une vm depuis l'archive",
+            "recharge la vm exportee",
+            "restaure une vm depuis un tar.gz",
+        ],
+        "alert_light": [
+            "identifie la lampe en la faisant clignoter",
+            "signale une lumiere",
+            "fais clignoter une ampoule",
+        ],
+        "create_group": [
+            "cree un groupe de lumieres",
+            "regroupe les lampes",
+            "nouveau groupe hue",
+        ],
+        "find_light_by_name": [
+            "cherche la lampe qui s'appelle",
+            "trouve une lumiere par son nom",
+            "quelle lampe s'appelle",
+        ],
+        "get_all_groups": [
+            "liste les groupes de lumieres",
+            "quels groupes hue",
+            "montre les pieces hue",
+        ],
+        "get_all_lights": [
+            "liste les lumieres",
+            "quelles lampes sont connectees",
+            "inventaire des ampoules",
+        ],
+        "get_all_scenes": [
+            "liste les scenes",
+            "quelles ambiances sont disponibles",
+            "montre les scenes hue",
+        ],
+        "get_group": [
+            "infos sur le groupe",
+            "etat des lumieres du salon",
+            "detail d'un groupe",
+        ],
+        "get_light": [
+            "infos sur la lampe",
+            "etat d'une lumiere",
+            "detail d'une ampoule",
+        ],
+        "hue_beat_set": [
+            "change le mode de la synchro musicale",
+            "regle la palette du beat",
+            "modifie les parametres de hue beat",
+        ],
+        "hue_beat_start": [
+            "synchronise les lumieres avec la musique",
+            "demarre hue beat",
+            "les lumieres au rythme de la musique",
+        ],
+        "hue_beat_status": [
+            "etat de la synchro musicale",
+            "hue beat tourne-t-il",
+            "la synchro musicale est active",
+        ],
+        "hue_beat_stop": [
+            "arrete la synchro musicale",
+            "stoppe hue beat",
+            "coupe les lumieres au rythme",
+        ],
+        "quick_scene": [
+            "scene rapide pour le salon",
+            "configure une ambiance dans une piece",
+            "ambiance rapide",
+        ],
+        "refresh_lights": [
+            "rafraichis la liste des lumieres",
+            "actualise les lampes",
+            "recharge le cache hue",
+        ],
+        "set_color_preset": [
+            "applique un preset de couleur a la lampe",
+            "lampe en mode coucher de soleil",
+            "couleur predefinie sur la lampe",
+        ],
+        "set_color_temperature": [
+            "regle la temperature de couleur",
+            "lumiere plus chaude",
+            "blanc froid sur la lampe",
+        ],
+        "set_group_color_preset": [
+            "applique un preset de couleur au salon",
+            "ambiance predefinie pour les lumieres",
+            "les lumieres en preset",
+        ],
+        "set_light_effect": [
+            "mets un effet sur la lampe",
+            "effet dynamique sur la lumiere",
+            "fais boucler les couleurs",
+        ],
+        "set_scene": [
+            "applique la scene au groupe",
+            "mets la scene sur le salon",
+            "active une scene pour la piece",
+        ],
+        "tv.get_state": [
+            "la tele est-elle allumee",
+            "etat de la tv",
+            "la television est en veille ou allumee",
+        ],
+        "tv.list_apps": [
+            "quelles applications sur la tele",
+            "liste les applis de la tv",
+            "montre les apps de la television",
+        ],
+        "tv.screen_off": [
+            "eteins l'ecran mais garde le son",
+            "ecran noir sur la tele",
+            "image off son on",
+        ],
+        "tv.screen_on": [
+            "rallume l'ecran de la tele",
+            "remets l'image",
+            "ecran de la tv en marche",
+        ],
+        "tv.send_key": [
+            "appuie sur une touche de la telecommande",
+            "envoie la touche ok",
+            "touche retour sur la tele",
+        ],
         # VM
         "fedora.vm_start": [
             "démarrer une VM", "lancer une machine virtuelle", "booter un serveur",
@@ -526,6 +698,7 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
             "allume l'amplificateur", "démarre le home cinéma",
         ],
         "denon.power_off": [
+            "mets l'ampli en veille",
             "éteindre l'ampli", "couper le Denon",
             "éteins l'amplificateur", "coupe le home cinéma",
         ],

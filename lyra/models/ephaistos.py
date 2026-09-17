@@ -490,8 +490,13 @@ class Ephaistos:
             sig = ' '.join(sig_m.group(1).split())  # Normaliser whitespace
             return f"{tool_id}: {sig}"
 
-        # Fallback: tronquer
-        return doc[:200]
+        # Fallback: tronquer au mot, avant les Args (la coupe brute a 200 donnait
+        # "gro" pour "group_id" et le modele renvoyait {"gro": 1}).
+        corps = re.split(r"\s{2,}Args:", doc, 1)[0]
+        if len(corps) <= 200:
+            return corps.strip()
+        coupe = corps[:200]
+        return coupe[:coupe.rfind(" ")].strip() if " " in coupe else coupe
 
     def analyze(
         self,
@@ -530,7 +535,8 @@ class Ephaistos:
                                                 poids_rares="poids_rares" in variantes,
                                                 cibler_youtube="mots_url" in variantes,
                                                 equipements="carte_equipements" in variantes,
-                                                relatifs="mots_relatifs" in variantes)
+                                                relatifs="mots_relatifs" in variantes,
+                                                son="carte_son" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             if max_specs > 0:
                 compact_specs = compact_specs[:max_specs]
@@ -547,7 +553,8 @@ class Ephaistos:
             exemples_specs = _exp.exemples_par_spec(
                 list(mcp_specs), [c.split(":")[0].strip() for c in specs_pour_index],
                 requete=user_query if "exemple_proche" in variantes else None,
-                nb=2 if "deux_exemples" in variantes else 1)
+                nb=2 if "deux_exemples" in variantes else 1,
+                description_si_vide="exemple_description" in variantes)
 
         prompt = f"""{label}:
 {specs_text}
@@ -594,6 +601,9 @@ class Ephaistos:
             analysis.tool = _exp.resoudre_index(analysis.tool, specs_pour_index)
         if "couleurs" in variantes:
             analysis.arguments = _exp.corriger_couleur(analysis.tool, analysis.arguments, user_query)
+        if "resolution_arguments" in variantes and specs_pour_index:
+            analysis.tool = _exp.resoudre_par_arguments(analysis.tool, analysis.arguments,
+                                                        specs_pour_index, user_query)
         return analysis
 
     def _parse_response(self, content: str) -> EphaistosAnalysis:

@@ -385,3 +385,58 @@ class TestExpansion:
 
     def test_sans_synonyme_inchange(self):
         assert exp.etendre_requete("xyzzy plugh") == "xyzzy plugh"
+
+
+class TestResolutionParArguments:
+    SPECS = ["catt.cast_seek: cast_seek(seconds: integer)", "catt.cast_volume: cast_volume(level: integer)",
+             "catt.cast_pause: cast_pause()"]
+
+    def test_nom_invente_resolu_par_les_arguments(self):
+        assert exp.resoudre_par_arguments("chromecast", {"command": "seek", "seconds": -10}, self.SPECS,
+                                          "recule de dix secondes sur le chromecast") == "catt.cast_seek"
+
+    def test_nom_de_serveur_va_au_rang_1(self):
+        assert exp.resoudre_par_arguments("catt", {}, self.SPECS, "y a quoi comme chromecast") == "catt.cast_seek"
+
+    def test_mot_de_la_requete_va_au_rang_1(self):
+        assert exp.resoudre_par_arguments("image", {}, ["tv.screen_on: screen_on()", "tv.power_on: power_on()"],
+                                          "rends-moi l'image sur la tele") == "tv.screen_on"
+
+    def test_nom_connu_inchange(self):
+        assert exp.resoudre_par_arguments("cast_pause", {}, self.SPECS, "x") == "cast_pause"
+
+    def test_inconnu_sans_indice_inchange(self):
+        assert exp.resoudre_par_arguments("synchro_lumieres", {}, self.SPECS, "lance la synchro") == "synchro_lumieres"
+
+
+class TestExempleDescription:
+    BRUTE = "tv.screen_on: Rallume l'ecran de la TV apres un screen_off "
+
+    def test_description_sert_d_exemple_sans_paraphrase(self):
+        r = exp.exemples_par_spec([self.BRUTE], ["tv.screen_on"], description_si_vide=True)
+        assert 'Requete: "Rallume l\'ecran de la TV apres un screen_off" -> {"tool": "screen_on"}' in r
+
+    def test_sans_option_rien(self):
+        assert exp.exemples_par_spec([self.BRUTE], ["tv.screen_on"]) == ""
+
+
+class TestCarteSon:
+    def test_couper_le_son_vise_mute(self):
+        assert exp.score_mots("denon.mute_on", "coupe le son de l'ampli", son=True) >= 1
+        assert exp.score_mots("denon.volume_down", "coupe le son de l'ampli", son=True) == 0
+
+    def test_baisser_le_son_vise_volume(self):
+        assert exp.score_mots("denon.volume_down", "baisse le son de l'ampli", son=True) >= 1
+
+
+class TestSignatureComplete:
+    def test_jointure_depuis_la_table(self):
+        item = {"source": "capabilities", "metadata": {"tool_name": "hue.set_group_color_rgb"}, "document": "Set color", "score": 0.5}
+        r = exp.joindre_signatures_depuis([item], {"hue.set_group_color_rgb": "set_group_color_rgb(red: int, green: int, blue: int)"})
+        assert r[0]["document"].endswith("Signature: set_group_color_rgb(red: int, green: int, blue: int)")
+
+    def test_compact_spec_ne_coupe_plus_en_plein_mot(self):
+        from lyra.models.ephaistos import Ephaistos
+        doc = "hue.set_group_color_rgb: " + "Set color for all lights in a group using RGB values " * 4 + "  Args: group_id: int"
+        r = Ephaistos._compact_spec(doc)
+        assert "Args" not in r and not r.endswith("gro") and len(r) <= 220

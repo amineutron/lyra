@@ -524,13 +524,22 @@ class RAG3Tier:
         # Trier par score DESC
         all_results.sort(key=lambda x: x['score'], reverse=True)
 
-        if "signature" in variantes:
+        if "signature_complete" in variantes:
+            all_results = _exp.joindre_signatures_depuis(all_results, self._signatures())
+        elif "signature" in variantes:
             all_results = _exp.joindre_signatures(all_results)
         if "lexical" in variantes:
             all_results = _exp.fusion_rrf(all_results, self._lexical().chercher(query, top_k=8))
 
         # Retourner top_k
         return all_results[:top_k]
+
+    def _signatures(self) -> dict:
+        """tool_name -> signature, depuis toute la collection parameters (variante signature_complete)."""
+        if getattr(self, "_table_signatures", None) is None:
+            from lyra.models import ephaistos_exp as _exp
+            self._table_signatures = _exp.signatures_completes(self.parameters_collection)
+        return self._table_signatures
 
     def _lexical(self):
         """Index BM25 des capabilities, construit a la premiere demande (variante lexical)."""

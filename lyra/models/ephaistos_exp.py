@@ -91,6 +91,22 @@ n'apparaissent ni dans les noms d'outils ni dans les documents.
 - lexique : synonymes d'equipement absents du dictionnaire (ampli -> denon,
   chromecast -> cast, leds -> ambilight, synchro -> beat...), ajoutes a
   l'expansion. Implique expansion.
+
+Iteration 2 hors regles (14/51 : le bon outil est en tete et le modele se
+trompe quand meme). Reponses brutes : noms inventes a partir de la requete
+("image", "chromecast", "catt", "synchro_lumieres") quand l'outil en tete
+n'a pas de paraphrase donc pas d'exemple ; "gro": 1 pour group_id (spec
+tronquee a 200 caracteres) ; "coupe le son de l'ampli" -> volume_down.
+
+- exemple_description : sans paraphrase, la description de la spec sert
+  d'exemple ("Rallume l'ecran de la TV" -> screen_on).
+- signature_complete : la signature est jointe depuis toute la collection
+  parameters, pas seulement depuis les resultats remontes.
+- resolution_arguments : un nom d'outil inconnu est remplace par la spec
+  montree dont la signature contient les arguments renvoyes ("seconds" ->
+  cast_seek) ; a defaut, si le nom est un serveur ou un mot de la requete,
+  par la spec de rang 1.
+- carte_son : "son" cible le volume, sauf avec couper/remettre : le mute.
 """
 
 from __future__ import annotations
@@ -107,6 +123,7 @@ VARIANTES = (
     "exemple_proche", "signature", "consigne_onoff", "deux_exemples",
     "mots_url",
     "carte_equipements", "mots_relatifs", "expansion", "lexique",
+    "exemple_description", "signature_complete", "resolution_arguments", "carte_son",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -289,9 +306,12 @@ def url_youtube(requete: str) -> bool:
     return bool(re.search(r"https?://(?:www\.)?(?:youtube\.com|youtu\.be)/", requete or ""))
 
 
+_VERBES_MUTE = {"coupe", "couper", "coupez", "remets", "remettre", "remet", "rends", "mute", "sourdine"}
+
+
 def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
-               relatifs: bool = False) -> int:
+               relatifs: bool = False, son: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -309,6 +329,8 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = ("youtube",)
         if relatifs and mot in ("fort", "forte", "fortes") and "moins" in mots:
             cibles = None
+        if son and mot == "son":
+            cibles = ("mute",) if any(v in mots for v in _VERBES_MUTE) else ("volume",)
         if equipements and mot in MOTS_EQUIPEMENTS:
             cibles = tuple(cibles or ()) + MOTS_EQUIPEMENTS[mot]
         if relatifs and mot in MOTS_RELATIFS:
@@ -320,11 +342,11 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
 
 def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
-               relatifs: bool = False) -> list[str]:
+               relatifs: bool = False, son: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares,
-                                           cibler_youtube, equipements, relatifs),
+                                           cibler_youtube, equipements, relatifs, son),
                   reverse=True)
 
 
@@ -480,8 +502,17 @@ def paraphrases_proches(spec_brute: str, requete: str) -> list[str]:
     return sorted(liste, key=lambda p: -len(mots & set(normaliser(p))))
 
 
+def description_courte(spec_brute: str):
+    """"tv.screen_on: Rallume l'ecran de la TV apres un screen_off" -> "Rallume l'ecran de la TV apres un screen_off"."""
+    corps = spec_brute.split(":", 1)[1] if ":" in spec_brute else spec_brute
+    corps = re.split(r"\s*\|\s*Utilise pour|\s{2,}Args:|\s+Signature:|\n", corps, 1)[0].strip()
+    corps = corps.rstrip(".").strip()
+    return corps[:80] if corps else None
+
+
 def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum: int = 3,
-                      requete: str | None = None, nb: int = 1) -> str:
+                      requete: str | None = None, nb: int = 1,
+                      description_si_vide: bool = False) -> str:
     """`nb` exemple(s) par spec montree, tires de ses paraphrases. Vide si aucune.
 
     Avec `requete`, la paraphrase la plus proche de la requete passe en premier
@@ -495,6 +526,9 @@ def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum:
     for nom in noms_montres[:maximum]:
         brute = par_nom.get(nom, "")
         phrases = paraphrases_proches(brute, requete) if requete else paraphrases(brute)
+        if not phrases and description_si_vide:
+            desc = description_courte(brute)
+            phrases = [desc] if desc else []
         court = nom.split(".")[-1]
         for phrase in phrases[:max(1, nb)]:
             lignes.append(f'Requete: "{phrase}" -> {{"tool": "{court}"}}')
@@ -611,3 +645,68 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15) -
         if len(ajouts) >= max_tokens:
             break
     return f"{requete} {' '.join(ajouts)}" if ajouts else requete
+
+
+# --- Iteration 2 hors regles : resolution par arguments, signatures completes ----
+
+def _parametres_de(spec_compacte: str) -> set[str]:
+    """"catt.cast_seek: cast_seek(seconds: integer)" -> {"seconds"}."""
+    m = re.search(r"\(([^)]*)\)", spec_compacte)
+    if not m:
+        return set()
+    return {p.strip().split(":")[0].strip().rstrip("?") for p in m.group(1).split(",") if p.strip()}
+
+
+def resoudre_par_arguments(tool, arguments: dict, specs_compactes: list[str], requete: str):
+    """Un nom d'outil qui n'est celui d'aucune spec montree est remplace :
+
+    1. par la spec dont la signature contient le plus d'arguments renvoyes
+       ("seconds": -10 -> cast_seek), si une seule l'emporte ;
+    2. sinon, si le nom est un prefixe serveur ou un mot de la requete
+       ("catt", "chromecast", "image"), par la spec de rang 1.
+    Un nom connu est rendu tel quel.
+    """
+    if not tool or not specs_compactes:
+        return tool
+    noms = [sp.split(":")[0].strip() for sp in specs_compactes]
+    court = str(tool).split(".")[-1].lower()
+    if any(n.lower() == str(tool).lower() or n.split(".")[-1].lower() == court for n in noms):
+        return tool
+    if arguments:
+        cles = {k.lower() for k in arguments}
+        scores = [len(cles & _parametres_de(sp)) for sp in specs_compactes]
+        meilleur = max(scores)
+        if meilleur > 0 and scores.count(meilleur) == 1:
+            return noms[scores.index(meilleur)]
+    serveurs = {n.split(".")[0].lower() for n in noms if "." in n}
+    if court in serveurs or court in set(normaliser(requete)):
+        return noms[0]
+    return tool
+
+
+def signatures_completes(collection) -> dict[str, str]:
+    """tool_name -> signature, lue une fois dans toute la collection parameters."""
+    try:
+        tout = collection.get(include=["documents", "metadatas"])
+    except Exception:
+        return {}
+    out: dict[str, str] = {}
+    for doc, md in zip(tout.get("documents") or [], tout.get("metadatas") or []):
+        nom = (md or {}).get("tool_name")
+        sig = extraire_signature(doc or "")
+        if nom and sig:
+            out.setdefault(nom, sig)
+    return out
+
+
+def joindre_signatures_depuis(items: list[dict], signatures: dict[str, str]) -> list[dict]:
+    """Comme joindre_signatures, mais avec une table complete (variante signature_complete)."""
+    out = []
+    for item in items:
+        nom = (item.get("metadata") or {}).get("tool_name")
+        doc = item.get("document", "")
+        if item.get("source") != "parameters" and nom in signatures and "Signature:" not in doc:
+            out.append({**item, "document": f"{doc} Signature: {signatures[nom]}"})
+        else:
+            out.append(item)
+    return out
