@@ -78,6 +78,7 @@ cast_url dans carte_mots.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import unicodedata
@@ -290,13 +291,25 @@ class RechercheLexicale:
     """
 
     def __init__(self, documents: list[str], metadonnees: list[dict]):
-        from rank_bm25 import BM25Okapi
-
         self._documents = list(documents)
         self._metadonnees = list(metadonnees)
+        self._bm25 = None
+        try:
+            from rank_bm25 import BM25Okapi
+        except ImportError:
+            # Sans rank_bm25 la recherche reste semantique seule : on le dit
+            # une fois plutot que de lever en pleine requete (la variante est
+            # active par defaut depuis le 2026-09-17).
+            logging.getLogger(__name__).warning(
+                "rank_bm25 absent : variante lexical inactive (pip install rank-bm25)")
+            return
         corpus = [normaliser(f"{md.get('tool_name', '')} ".replace("_", " ").replace(".", " ") + doc)
                   for doc, md in zip(self._documents, self._metadonnees)]
         self._bm25 = BM25Okapi(corpus) if corpus else None
+
+    @property
+    def disponible(self) -> bool:
+        return self._bm25 is not None
 
     def chercher(self, requete: str, top_k: int = 8) -> list[dict]:
         """Resultats au meme format que les collections ({'document','metadata','score','source'})."""

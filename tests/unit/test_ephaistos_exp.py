@@ -125,7 +125,22 @@ class TestUrl:
         assert not exp.contient_url("")
 
 
+class TestLexicalSansDependance:
+    def test_sans_rank_bm25_la_recherche_se_degrade_sans_lever(self, monkeypatch):
+        """CI du 2026-09-17 : ModuleNotFoundError en pleine cascade. Le repli doit etre silencieux."""
+        import sys
+        monkeypatch.setitem(sys.modules, "rank_bm25", None)   # import -> ImportError
+        idx = exp.RechercheLexicale(["doc"], [{"tool_name": "a.b"}])
+        assert idx.disponible is False
+        assert idx.chercher("doc") == []
+        assert exp.fusion_rrf([{"document": "x", "metadata": {"tool_name": "a.b"}, "score": 0.5}], idx.chercher("doc"))
+
+
 class TestLexical:
+    @pytest.fixture(autouse=True)
+    def _bm25_present(self):
+        pytest.importorskip("rank_bm25")
+
     DOCS = [
         ("tv.ambilight_on", "Active l'Ambilight de la TV"),
         ("tv.power_off", "Eteint la TV Philips (standby) | Utilise pour: éteindre la télé. éteins la télévision"),
