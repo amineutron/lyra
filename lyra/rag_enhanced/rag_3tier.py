@@ -454,6 +454,12 @@ class RAG3Tier:
         Returns:
             list[dict]: Résultats fusionnés triés par score
         """
+        # Variantes experimentales (LYRA_EXP) : aucune par defaut, voir ephaistos_exp
+        from lyra.models import ephaistos_exp as _exp
+        variantes = _exp.actives()
+        if "recall8" in variantes:
+            top_k = max(top_k, 8)
+
         all_results = []
 
         # Étape 1: Registry
@@ -514,8 +520,19 @@ class RAG3Tier:
         # Trier par score DESC
         all_results.sort(key=lambda x: x['score'], reverse=True)
 
+        if "lexical" in variantes:
+            all_results = _exp.fusion_rrf(all_results, self._lexical().chercher(query, top_k=8))
+
         # Retourner top_k
         return all_results[:top_k]
+
+    def _lexical(self):
+        """Index BM25 des capabilities, construit a la premiere demande (variante lexical)."""
+        if getattr(self, "_index_lexical", None) is None:
+            from lyra.models import ephaistos_exp as _exp
+            tout = self.capabilities_collection.get(include=["documents", "metadatas"])
+            self._index_lexical = _exp.RechercheLexicale(tout["documents"] or [], tout["metadatas"] or [])
+        return self._index_lexical
 
     def get_stats(self) -> dict:
         """

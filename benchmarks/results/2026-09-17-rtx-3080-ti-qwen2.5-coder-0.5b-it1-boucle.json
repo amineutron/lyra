@@ -1,0 +1,513 @@
+{
+  "mesure": "boucle",
+  "date": "2026-09-17",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "4714d07",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "iteration": 1,
+  "seed": "42",
+  "seuil": 0.99,
+  "modele_mesure": "qwen2.5-coder:0.5b",
+  "configurations": [
+    {
+      "variantes": [],
+      "reussis": 5,
+      "cas": 21,
+      "taux": 0.2381,
+      "score_pondere": 24,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "1/5",
+        "TV": "1/9"
+      },
+      "duree_s": 66.4,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles"
+      ],
+      "reussis": 9,
+      "cas": 21,
+      "taux": 0.4286,
+      "score_pondere": 43,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 90.8,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "dedup"
+      ],
+      "reussis": 5,
+      "cas": 21,
+      "taux": 0.2381,
+      "score_pondere": 24,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "1/5",
+        "TV": "1/9"
+      },
+      "duree_s": 77.1,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "routage"
+      ],
+      "reussis": 4,
+      "cas": 21,
+      "taux": 0.1905,
+      "score_pondere": 19,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "0/5",
+        "TV": "1/9"
+      },
+      "duree_s": 81.8,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets la luminosite a 50 pour cent",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "arrete le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "index"
+      ],
+      "panne": "5 panne(s) technique(s) avec ('index',)"
+    },
+    {
+      "variantes": [
+        "json_format"
+      ],
+      "reussis": 5,
+      "cas": 21,
+      "taux": 0.2381,
+      "score_pondere": 24,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "1/5",
+        "TV": "1/9"
+      },
+      "duree_s": 74.3,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "dedup"
+      ],
+      "reussis": 9,
+      "cas": 21,
+      "taux": 0.4286,
+      "score_pondere": 43,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 88.1,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "routage"
+      ],
+      "reussis": 8,
+      "cas": 21,
+      "taux": 0.381,
+      "score_pondere": 38,
+      "par_categorie": {
+        "CATT": "2/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 92.6,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "mets le cast en pause",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "index"
+      ],
+      "reussis": 5,
+      "cas": 21,
+      "taux": 0.2381,
+      "score_pondere": 24,
+      "par_categorie": {
+        "CATT": "2/7",
+        "HUE": "2/5",
+        "TV": "1/9"
+      },
+      "duree_s": 89.8,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "arrete le cast",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "json_format"
+      ],
+      "reussis": 9,
+      "cas": 21,
+      "taux": 0.4286,
+      "score_pondere": 43,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 106.0,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "dedup",
+        "routage"
+      ],
+      "reussis": 4,
+      "cas": 21,
+      "taux": 0.1905,
+      "score_pondere": 19,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "0/5",
+        "TV": "1/9"
+      },
+      "duree_s": 81.5,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets la luminosite a 50 pour cent",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "arrete le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "dedup",
+        "index"
+      ],
+      "panne": "5 panne(s) technique(s) avec ('dedup', 'index')"
+    },
+    {
+      "variantes": [
+        "dedup",
+        "json_format"
+      ],
+      "reussis": 5,
+      "cas": 21,
+      "taux": 0.2381,
+      "score_pondere": 24,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "1/5",
+        "TV": "1/9"
+      },
+      "duree_s": 74.0,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "routage",
+        "index"
+      ],
+      "panne": "3 panne(s) technique(s) avec ('routage', 'index')"
+    },
+    {
+      "variantes": [
+        "routage",
+        "json_format"
+      ],
+      "reussis": 4,
+      "cas": 21,
+      "taux": 0.1905,
+      "score_pondere": 19,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "0/5",
+        "TV": "1/9"
+      },
+      "duree_s": 79.4,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "ouvre youtube sur la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets la luminosite a 50 pour cent",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "arrete le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "index",
+        "json_format"
+      ],
+      "panne": "5 panne(s) technique(s) avec ('index', 'json_format')"
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "dedup",
+        "routage",
+        "index",
+        "json_format"
+      ],
+      "reussis": 5,
+      "cas": 21,
+      "taux": 0.2381,
+      "score_pondere": 24,
+      "par_categorie": {
+        "CATT": "1/7",
+        "HUE": "2/5",
+        "TV": "2/9"
+      },
+      "duree_s": 111.7,
+      "echecs": [
+        "allume la tv",
+        "eteins la tele",
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets l ambilight en bleu",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "arrete le cast",
+        "mets le cast en pause",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    }
+  ],
+  "meilleure": {
+    "variantes": [
+      "exemples_cibles",
+      "dedup"
+    ],
+    "reussis": 9,
+    "cas": 21,
+    "taux": 0.4286,
+    "score_pondere": 43,
+    "par_categorie": {
+      "CATT": "3/7",
+      "HUE": "2/5",
+      "TV": "4/9"
+    },
+    "duree_s": 88.1,
+    "echecs": [
+      "mets la tv en veille",
+      "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+      "allume l ambilight",
+      "eteins l ambilight",
+      "mets l ambilight en bleu",
+      "allume la lumiere chevet",
+      "mets les lumieres plus fortes",
+      "mets une ambiance bleue",
+      "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+      "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+      "avance de 30 secondes dans le cast",
+      "baisse le volume de la diffusion"
+    ]
+  },
+  "seuil_atteint": false
+}

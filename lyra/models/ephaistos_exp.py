@@ -1,32 +1,53 @@
 """Variantes experimentales d'EPHAISTOS, activees par la variable LYRA_EXP.
 
-    LYRA_EXP="exemples_cibles,dedup"
+    LYRA_EXP="exemples_cibles,lexical"
 
 La variable vide, rien ne change : le comportement de production est
 intact. C'est ce qui permet a la boucle d'amelioration
 (scripts/bench_boucle.py) de mesurer chaque idee seule, puis combinee, sur
 exactement le meme code, avec la meme graine.
 
-Chaque variante repond a une cause mesuree le 2026-09-17 (roadmap-github#72) :
+Iteration 1 (roadmap-github#72, 2026-09-17) :
 
 - exemples_cibles : le prompt systeme fait ~6 100 tokens dont 44 % de FEDORA ;
   le 0.5b s'ancre sur le premier exemple contenant le verbe de la requete
   ("allume les lumieres" -> turn_on_group, generalise a "allume la tv").
   On n'injecte que les blocs des serveurs presents dans les specs.
-- dedup : jusqu'a 40 % des 5 specs remontees sont des doublons.
-- routage : une regle courte "tel mot-cle -> tel serveur", plus facile a
-  suivre pour un petit modele que 60 exemples a generaliser.
-- index : repondre par le numero de la spec rend impossible d'inventer un nom
-  ("stop_cast" pour "cast_stop").
-- json_format : ollama contraint la sortie a du JSON, plus de reponse en prose.
+  Seule variante gagnante : 5/21 -> 9/21.
+- dedup : jusqu'a 40 % des 5 specs remontees sont des doublons. Neutre.
+- routage : regle "tel mot-cle -> tel serveur". DEGRADE (4/21).
+- index : repondre par le numero de la spec. Annule le gain d'exemples_cibles.
+- json_format : ollama contraint la sortie a du JSON. Neutre.
+
+Iteration 2 : le releve de recall a montre que le bon outil n'est dans les
+5 specs remontees que pour 8 cas sur 21, et en tete pour 4. Le premier
+essai ne montrant qu'une spec, le modele ne peut pas choisir un outil qu'on
+ne lui presente pas. Les variantes visent donc le RAG et l'ordre des specs :
+
+- lexical : BM25 sur les documents de capabilities (accents retires), fusion
+  RRF avec la recherche semantique. "ambilight", "veille", "chevet" sont des
+  mots rares que l'embedding dilue et qu'un index lexical accroche.
+- recall8 : 8 candidats au lieu de 5 (6 cas ont le bon outil en rang 5-8).
+- carte_mots : boost par TOKENS exacts du nom d'outil (veille -> off,
+  chevet -> light, ambiance -> color...). La carte historique compare des
+  sous-chaines : "on" est dans "monitor", "light" dans "ambilight".
+- top3_direct : 3 specs des le premier essai au lieu d'une seule.
+- indice_url : consigne conditionnelle quand la requete contient une URL.
+
+Ecartee avant mesure : retirer les descriptions de serveurs (registre) de la
+cascade ne change aucun rang -- elles se classent deja sous les outils.
 """
 
 from __future__ import annotations
 
 import os
 import re
+import unicodedata
 
-VARIANTES = ("exemples_cibles", "dedup", "routage", "index", "json_format")
+VARIANTES = (
+    "exemples_cibles", "dedup", "routage", "index", "json_format",
+    "lexical", "recall8", "carte_mots", "top3_direct", "indice_url",
+)
 
 _BLOC_PAR_SERVEUR = {
     "fedora": "FEDORA",
@@ -49,6 +70,49 @@ REGLE_ROUTAGE = """ROUTAGE PAR MOT-CLE (prioritaire sur les exemples) :
 
 CONSIGNE_INDEX = ('\nReponds dans le champ "tool" par le NUMERO de la spec choisie '
                   '(1, 2, 3...), jamais par son nom.')
+
+CONSIGNE_URL = ("\nLa requete contient une URL : choisis l'outil qui accepte une url "
+                "(youtube, url), pas un outil de navigateur.")
+
+# Mot de la requete (normalise, sans accent) -> tokens du nom d'outil qu'il
+# designe. On ne met que des mots qui nomment une CIBLE ou une PROPRIETE, pas
+# les verbes (deja couverts par _FR_ACTION_MAP), ni les mots trop larges
+# ("tv", "lumiere") qui apparaissent dans la plupart des requetes.
+MOTS_CIBLES: dict[str, tuple[str, ...]] = {
+    "ambilight": ("ambilight",),
+    "veille": ("off", "standby"),
+    "chevet": ("light",),
+    "lampe": ("light",),
+    "ampoule": ("light",),
+    "fort": ("brightness",),
+    "fortes": ("brightness",),
+    "forte": ("brightness",),
+    "faible": ("brightness",),
+    "luminosite": ("brightness",),
+    "couleur": ("color", "rgb"),
+    "ambiance": ("color", "rgb"),
+    "rouge": ("color", "rgb"),
+    "bleu": ("color", "rgb"),
+    "bleue": ("color", "rgb"),
+    "vert": ("color", "rgb"),
+    "verte": ("color", "rgb"),
+    "jaune": ("color", "rgb"),
+    "youtube": ("youtube",),
+    "http": ("youtube", "url"),
+    "https": ("youtube", "url"),
+    "diffusion": ("cast",),
+    "cast": ("cast",),
+    "chromecast": ("cast",),
+    "volume": ("volume",),
+    "son": ("volume",),
+    "secondes": ("seek",),
+    "minutes": ("seek",),
+    "netflix": ("app",),
+    "application": ("app",),
+    "appli": ("app",),
+}
+
+_RRF_K = 60
 
 
 def actives() -> set[str]:
@@ -115,3 +179,102 @@ def resoudre_index(tool, specs_compactes: list[str]):
     if 1 <= i <= len(specs_compactes):
         return specs_compactes[i - 1].split(":")[0].strip()
     return tool
+
+
+# --- Iteration 2 : texte, boost par tokens, URL -------------------------------
+
+def normaliser(texte: str) -> list[str]:
+    """Tokens minuscules sans accent ni ponctuation ("Éteins l'Ambilight" -> [eteins, l, ambilight])."""
+    sans_accent = unicodedata.normalize("NFKD", texte or "")
+    sans_accent = "".join(c for c in sans_accent if not unicodedata.combining(c))
+    return re.findall(r"[a-z0-9]+", sans_accent.lower())
+
+
+def tokens_outil(nom_outil: str) -> set[str]:
+    """"tv.ambilight_on" -> {"tv", "ambilight", "on"}."""
+    return set(normaliser(nom_outil.replace("_", " ").replace(".", " ")))
+
+
+def score_mots(nom_outil: str, requete: str) -> int:
+    """Nombre de mots-cibles de la requete qui designent un token du nom."""
+    tokens = tokens_outil(nom_outil)
+    score = 0
+    for mot in normaliser(requete):
+        cibles = MOTS_CIBLES.get(mot)
+        if cibles and any(c in tokens for c in cibles):
+            score += 1
+    return score
+
+
+def boost_mots(specs_compactes: list[str], requete: str) -> list[str]:
+    """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
+    return sorted(specs_compactes,
+                  key=lambda s: score_mots(s.split(":")[0].strip(), requete),
+                  reverse=True)
+
+
+def contient_url(requete: str) -> bool:
+    return bool(re.search(r"https?://\S+", requete or ""))
+
+
+# --- Iteration 2 : recherche lexicale et fusion ---------------------------------
+
+class RechercheLexicale:
+    """BM25 sur les documents d'une collection, tokens normalises.
+
+    Le nom de l'outil est ajoute au document : "tv.ambilight_on" apporte les
+    tokens "ambilight" et "on" meme si la description ne les repete pas.
+    """
+
+    def __init__(self, documents: list[str], metadonnees: list[dict]):
+        from rank_bm25 import BM25Okapi
+
+        self._documents = list(documents)
+        self._metadonnees = list(metadonnees)
+        corpus = [normaliser(f"{md.get('tool_name', '')} ".replace("_", " ").replace(".", " ") + doc)
+                  for doc, md in zip(self._documents, self._metadonnees)]
+        self._bm25 = BM25Okapi(corpus) if corpus else None
+
+    def chercher(self, requete: str, top_k: int = 8) -> list[dict]:
+        """Resultats au meme format que les collections ({'document','metadata','score','source'})."""
+        if self._bm25 is None:
+            return []
+        scores = self._bm25.get_scores(normaliser(requete))
+        ordre = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
+        maxi = max(scores) if len(scores) else 0.0
+        out = []
+        for i in ordre[:top_k]:
+            if scores[i] <= 0:
+                break
+            out.append({
+                "document": self._documents[i],
+                "metadata": self._metadonnees[i],
+                # Score borne a 0.5 : un doc trouve par le seul lexical ne doit
+                # pas passer pour une correspondance semantique forte.
+                "score": round(0.5 * float(scores[i]) / maxi, 4) if maxi else 0.0,
+                "source": "lexical",
+            })
+        return out
+
+
+def _cle(item: dict) -> str:
+    md = item.get("metadata") or {}
+    return md.get("tool_name") or md.get("server_name") or (item.get("document") or "")[:40]
+
+
+def fusion_rrf(semantique: list[dict], lexical: list[dict], k: int = _RRF_K) -> list[dict]:
+    """Reciprocal Rank Fusion : un item par outil, trie par la somme des 1/(k+rang).
+
+    Le score semantique d'origine est conserve (les seuils de confiance du
+    pipeline continuent de le lire) ; l'ordre, lui, vient de la fusion.
+    """
+    entrees: dict[str, dict] = {}
+    for liste in (semantique, lexical):
+        for rang, item in enumerate(liste):
+            cle = _cle(item)
+            entree = entrees.setdefault(cle, {"item": item, "rrf": 0.0})
+            entree["rrf"] += 1.0 / (k + rang + 1)
+            if item.get("score", 0) > entree["item"].get("score", 0) and item.get("source") != "lexical":
+                entree["item"] = item
+    ordre = sorted(entrees.values(), key=lambda e: e["rrf"], reverse=True)
+    return [dict(e["item"], score_rrf=round(e["rrf"], 5)) for e in ordre]

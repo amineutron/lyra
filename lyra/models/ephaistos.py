@@ -523,6 +523,8 @@ class Ephaistos:
             compact_specs = [self._compact_spec(s) for s in mcp_specs]
             # Re-trier: mettre en premier la spec qui correspond au verbe d'action
             compact_specs = self._boost_spec_order(compact_specs, user_query)
+            if "carte_mots" in variantes:
+                compact_specs = _exp.boost_mots(compact_specs, user_query)
             # Limiter le nombre de specs si demande (0 = toutes)
             if max_specs > 0:
                 compact_specs = compact_specs[:max_specs]
@@ -544,6 +546,8 @@ REQUETE: {user_query}"""
 
         if "index" in variantes and specs_pour_index:
             prompt += _exp.CONSIGNE_INDEX
+        if "indice_url" in variantes and _exp.contient_url(user_query):
+            prompt += _exp.CONSIGNE_URL
         prompt += "\nJSON:"
 
         system = EPHAISTOS_SYSTEM_PROMPT
@@ -805,6 +809,12 @@ Valide les arguments. Reponds en JSON:
             else:
                 use_toon = None
                 use_max_specs = 1 if attempt == 0 else 3
+                # Variante top3_direct : le releve de recall du 2026-09-17 a montre
+                # que le bon outil est en rang 2-3 pour 5 cas ; avec une seule spec
+                # le modele ne peut pas le choisir.
+                from . import ephaistos_exp as _exp
+                if "top3_direct" in _exp.actives():
+                    use_max_specs = 3
 
             analysis = self.analyze(user_query, mcp_specs, specs_toon=use_toon, max_specs=use_max_specs)
 

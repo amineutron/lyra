@@ -1,0 +1,566 @@
+{
+  "mesure": "boucle",
+  "date": "2026-09-17",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "4714d07",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "iteration": 2,
+  "seed": "42",
+  "seuil": 0.99,
+  "modele_mesure": "qwen2.5-coder:0.5b",
+  "configurations": [
+    {
+      "variantes": [
+        "exemples_cibles"
+      ],
+      "reussis": 9,
+      "cas": 21,
+      "taux": 0.4286,
+      "score_pondere": 43,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 119.7,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical"
+      ],
+      "reussis": 8,
+      "cas": 21,
+      "taux": 0.381,
+      "score_pondere": 38,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "1/5",
+        "TV": "4/9"
+      },
+      "duree_s": 111.5,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "recall8"
+      ],
+      "reussis": 9,
+      "cas": 21,
+      "taux": 0.4286,
+      "score_pondere": 43,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 111.4,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "carte_mots"
+      ],
+      "reussis": 10,
+      "cas": 21,
+      "taux": 0.4762,
+      "score_pondere": 48,
+      "par_categorie": {
+        "CATT": "4/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 109.9,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "top3_direct"
+      ],
+      "reussis": 10,
+      "cas": 21,
+      "taux": 0.4762,
+      "score_pondere": 48,
+      "par_categorie": {
+        "CATT": "4/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 74.2,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "mets le cast en pause",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "indice_url"
+      ],
+      "reussis": 9,
+      "cas": 21,
+      "taux": 0.4286,
+      "score_pondere": 43,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 109.3,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8"
+      ],
+      "reussis": 8,
+      "cas": 21,
+      "taux": 0.381,
+      "score_pondere": 38,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "1/5",
+        "TV": "4/9"
+      },
+      "duree_s": 108.9,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "carte_mots"
+      ],
+      "reussis": 10,
+      "cas": 21,
+      "taux": 0.4762,
+      "score_pondere": 48,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "1/5",
+        "TV": "4/9"
+      },
+      "duree_s": 86.4,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "top3_direct"
+      ],
+      "reussis": 13,
+      "cas": 21,
+      "taux": 0.619,
+      "score_pondere": 62,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "2/5",
+        "TV": "5/9"
+      },
+      "duree_s": 92.6,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "indice_url"
+      ],
+      "reussis": 8,
+      "cas": 21,
+      "taux": 0.381,
+      "score_pondere": 38,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "1/5",
+        "TV": "4/9"
+      },
+      "duree_s": 109.5,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets les lumieres en rouge",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "recall8",
+        "carte_mots"
+      ],
+      "reussis": 11,
+      "cas": 21,
+      "taux": 0.5238,
+      "score_pondere": 52,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 108.2,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "recall8",
+        "top3_direct"
+      ],
+      "reussis": 11,
+      "cas": 21,
+      "taux": 0.5238,
+      "score_pondere": 52,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 71.7,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "mets le cast en pause",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "recall8",
+        "indice_url"
+      ],
+      "reussis": 9,
+      "cas": 21,
+      "taux": 0.4286,
+      "score_pondere": 43,
+      "par_categorie": {
+        "CATT": "3/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 109.3,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "carte_mots",
+        "top3_direct"
+      ],
+      "reussis": 10,
+      "cas": 21,
+      "taux": 0.4762,
+      "score_pondere": 48,
+      "par_categorie": {
+        "CATT": "4/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 72.2,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "mets le cast en pause",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "carte_mots",
+        "indice_url"
+      ],
+      "reussis": 10,
+      "cas": 21,
+      "taux": 0.4762,
+      "score_pondere": 48,
+      "par_categorie": {
+        "CATT": "4/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 111.7,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "top3_direct",
+        "indice_url"
+      ],
+      "reussis": 10,
+      "cas": 21,
+      "taux": 0.4762,
+      "score_pondere": 48,
+      "par_categorie": {
+        "CATT": "4/7",
+        "HUE": "2/5",
+        "TV": "4/9"
+      },
+      "duree_s": 73.8,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "diffuse cette video sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "mets le cast en pause",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url"
+      ],
+      "reussis": 14,
+      "cas": 21,
+      "taux": 0.6667,
+      "score_pondere": 67,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "3/5",
+        "TV": "5/9"
+      },
+      "duree_s": 49.3,
+      "echecs": [
+        "mets la tv en veille",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "mets les lumieres plus fortes",
+        "mets une ambiance bleue",
+        "baisse le volume de la diffusion"
+      ]
+    }
+  ],
+  "meilleure": {
+    "variantes": [
+      "exemples_cibles",
+      "lexical",
+      "recall8",
+      "carte_mots",
+      "top3_direct",
+      "indice_url"
+    ],
+    "reussis": 14,
+    "cas": 21,
+    "taux": 0.6667,
+    "score_pondere": 67,
+    "par_categorie": {
+      "CATT": "6/7",
+      "HUE": "3/5",
+      "TV": "5/9"
+    },
+    "duree_s": 49.3,
+    "echecs": [
+      "mets la tv en veille",
+      "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+      "allume l ambilight",
+      "eteins l ambilight",
+      "mets les lumieres plus fortes",
+      "mets une ambiance bleue",
+      "baisse le volume de la diffusion"
+    ]
+  },
+  "seuil_atteint": false
+}

@@ -11,9 +11,9 @@
     "ram_go": 62
   },
   "versions": {
-    "python": "3.14.3",
+    "python": "3.12.13",
     "ollama": "0.14.1",
-    "lyra_commit": "35bd75c",
+    "lyra_commit": "61034bf",
     "noyau": "6.18.13-200.fc43.x86_64"
   },
   "modeles": {

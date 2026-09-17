@@ -31,13 +31,19 @@ from lyra.models.ephaistos_exp import VARIANTES  # noqa: E402
 SEUIL = 0.99
 
 
-def configurations(rapide: bool) -> list[tuple[str, ...]]:
-    seules = [(v,) for v in VARIANTES]
-    tout = [tuple(VARIANTES)]
+def configurations(rapide: bool, variantes: tuple[str, ...] = VARIANTES,
+                   socle: tuple[str, ...] = ()) -> list[tuple[str, ...]]:
+    """Socle seul, puis chaque variante, chaque paire et toutes -- au-dessus du socle.
+
+    Le socle est l'acquis des iterations precedentes (ex. exemples_cibles) :
+    on mesure ce que chaque nouvelle idee ajoute a ce qui marche deja.
+    """
+    seules = [socle + (v,) for v in variantes]
+    tout = [socle + tuple(variantes)]
     if rapide:
-        return [()] + seules + tout
-    paires = list(itertools.combinations(VARIANTES, 2))
-    return [()] + seules + paires + tout
+        return [socle] + seules + tout
+    paires = [socle + p for p in itertools.combinations(variantes, 2)]
+    return [socle] + seules + paires + tout
 
 
 def mesurer(config: tuple[str, ...], modele: str) -> dict:
@@ -78,6 +84,10 @@ def main() -> None:
     parser.add_argument("--rapide", action="store_true", help="variantes seules + toutes, sans les paires")
     parser.add_argument("--seulement", default=None,
                         help="configs a jouer, separees par ';' (ex: 'dedup;dedup,routage')")
+    parser.add_argument("--socle", default="",
+                        help="variantes acquises, presentes dans toutes les configs (ex: exemples_cibles)")
+    parser.add_argument("--variantes", default=",".join(VARIANTES),
+                        help="variantes a combiner au-dessus du socle (defaut : toutes)")
     args = parser.parse_args()
 
     if not os.environ.get("LYRA_SEED"):
@@ -87,7 +97,13 @@ def main() -> None:
     if args.seulement:
         configs = [tuple(v for v in c.split(",") if v) for c in args.seulement.split(";")]
     else:
-        configs = configurations(args.rapide)
+        socle = tuple(v for v in args.socle.split(",") if v)
+        variantes = tuple(v for v in args.variantes.split(",") if v and v not in socle)
+        inconnues = set(socle + variantes) - set(VARIANTES)
+        if inconnues:
+            print(f"Variantes inconnues : {', '.join(sorted(inconnues))}", file=sys.stderr)
+            sys.exit(2)
+        configs = configurations(args.rapide, variantes, socle)
 
     print(f"Boucle {args.iteration} -- modele {args.modele} -- seed {os.environ['LYRA_SEED']} "
           f"-- {len(configs)} configurations\n")

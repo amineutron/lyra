@@ -25,6 +25,7 @@ secrets.yaml.bak*
 # ---------- Donnees et modeles generes a l'execution ----------
 data/chromadb/
 data/chroma_db/
+/.chromadb/
 data/session_history.db
 data/feedback.json
 *.sqlite3
