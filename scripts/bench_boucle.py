@@ -46,14 +46,14 @@ def configurations(rapide: bool, variantes: tuple[str, ...] = VARIANTES,
     return [socle] + seules + paires + tout
 
 
-def mesurer(config: tuple[str, ...], modele: str) -> dict:
+def mesurer(config: tuple[str, ...], modele: str, jeu: str = "modeles") -> dict:
     """Un passage du banc avec LYRA_EXP = config. Refuse un banc en panne."""
     from test_campaign_llm import _config_derivee, run_llm_tests
 
     os.environ["LYRA_EXP"] = ",".join(config)
     chemin = _config_derivee(modele, None)
     t0 = time.time()
-    results, categories, score_pondere, pannes = run_llm_tests(chemin)
+    results, categories, score_pondere, pannes = run_llm_tests(chemin, jeu=jeu)
     duree = time.time() - t0
     if pannes:
         raise RuntimeError(f"{len(pannes)} panne(s) technique(s) avec {config or 'defaut'}")
@@ -87,6 +87,8 @@ def main() -> None:
     parser.add_argument("--rapide", action="store_true", help="variantes seules + toutes, sans les paires")
     parser.add_argument("--seulement", default=None,
                         help="configs a jouer, separees par ';' (ex: 'dedup;dedup,routage')")
+    parser.add_argument("--jeu", default="modeles", choices=["modeles", "hors_regles"],
+                        help="jeu de cas a rejouer (defaut : modeles)")
     parser.add_argument("--socle", default="",
                         help="variantes acquises, presentes dans toutes les configs (ex: exemples_cibles)")
     parser.add_argument("--variantes", default=",".join(VARIANTES),
@@ -115,7 +117,7 @@ def main() -> None:
         etiquette = "+".join(config) if config else "(defaut)"
         print(f"  [{etiquette}] ...", end="", flush=True)
         try:
-            mesure = mesurer(config, args.modele)
+            mesure = mesurer(config, args.modele, args.jeu)
         except Exception as exc:
             print(f" PANNE : {exc}")
             lignes.append({"variantes": list(config), "panne": str(exc)})
@@ -135,13 +137,15 @@ def main() -> None:
 
     chemin = ecrire_resultat("boucle", {
         "iteration": args.iteration,
+        "jeu": args.jeu,
         "seed": os.environ["LYRA_SEED"],
         "seuil": SEUIL,
         "modele_mesure": args.modele,
         "configurations": lignes,
         "meilleure": meilleur,
         "seuil_atteint": bool(meilleur and meilleur["taux"] >= SEUIL),
-    }, suffixe=f"{args.modele.replace(':', '-')}-it{args.iteration}")
+    }, suffixe=f"{args.modele.replace(':', '-')}-it{args.iteration}"
+                 + ("" if args.jeu == "modeles" else f"-{args.jeu.replace('_', '')}"))
     print(f"\nEcrit : {chemin.relative_to(REPO)}")
     if meilleur:
         etat = "ATTEINT" if meilleur["taux"] >= SEUIL else "NON ATTEINT -> nouvelle iteration"

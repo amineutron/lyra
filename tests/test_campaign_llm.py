@@ -191,7 +191,20 @@ def check_args(result_args, mandatory, optional):
     return missing_mandatory, missing_optional
 
 
-def run_llm_tests(config_path=None):
+JEUX = {"modeles": "TESTS_LLM", "hors_regles": "TESTS_HORS_REGLES"}
+
+
+def cas_du_jeu(jeu: str) -> list:
+    """Les cas d'un jeu : "modeles" (21, proches des regles) ou "hors_regles" (formulations inedites)."""
+    if jeu == "hors_regles":
+        from cases_hors_regles import TESTS_HORS_REGLES
+        return TESTS_HORS_REGLES
+    if jeu != "modeles":
+        raise ValueError(f"jeu inconnu : {jeu} (attendu : {', '.join(JEUX)})")
+    return TESTS_LLM
+
+
+def run_llm_tests(config_path=None, jeu: str = "modeles"):
     G = "\033[32m"
     Y = "\033[33m"
     R = "\033[31m"
@@ -237,9 +250,10 @@ def run_llm_tests(config_path=None):
     categories = {}
     erreurs_techniques: list[str] = []
 
-    for i, (cat, desc, query, expected_tool, mandatory_args, optional_args) in enumerate(TESTS_LLM, 1):
-        print(f"{DIM}[{i:02d}/{len(TESTS_LLM)}] {desc}: {query[:55]}...{RESET}" if len(query) > 55
-              else f"{DIM}[{i:02d}/{len(TESTS_LLM)}] {desc}: {query}{RESET}")
+    cas = cas_du_jeu(jeu)
+    for i, (cat, desc, query, expected_tool, mandatory_args, optional_args) in enumerate(cas, 1):
+        print(f"{DIM}[{i:02d}/{len(cas)}] {desc}: {query[:55]}...{RESET}" if len(query) > 55
+              else f"{DIM}[{i:02d}/{len(cas)}] {desc}: {query}{RESET}")
 
         t_start = time.time()
         try:
@@ -428,6 +442,8 @@ def main() -> None:
     parser.add_argument("--lyra", default=None, help="Modele LYRA a mesurer")
     parser.add_argument("--json", action="store_true",
                         help="Publie le resultat dans benchmarks/results/")
+    parser.add_argument("--jeu", default="modeles", choices=sorted(JEUX),
+                        help="jeu de cas : modeles (21, proches des regles) ou hors_regles (inedites)")
     args = parser.parse_args()
 
     chemin = _config_derivee(args.ephaistos, args.lyra)
@@ -435,7 +451,7 @@ def main() -> None:
         print(f"Configuration derivee : ephaistos={args.ephaistos or '(inchange)'}")
 
     debut = time.time()
-    results, categories, score_final, pannes = run_llm_tests(chemin)
+    results, categories, score_final, pannes = run_llm_tests(chemin, jeu=args.jeu)
     duree = time.time() - debut
 
     if args.json and pannes:
@@ -467,7 +483,10 @@ def main() -> None:
         variantes = sorted(_exp.actives())
         if variantes:
             slug += "-exp"
+        if args.jeu != "modeles":
+            slug += f"-{args.jeu.replace('_', '')}"
         chemin_sortie = ecrire_resultat("modeles", {
+            "jeu": args.jeu,
             "variantes": variantes,
             "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
             "cas": total,
