@@ -134,6 +134,39 @@ RAG muet). Le 2026-09-17 il annoncait 0/21 pour le 0.5b : la methode
 `LLM_FAIL` et le modele etait accuse a tort. Une panne doit interrompre la
 mesure, jamais se deguiser en resultat.
 
+## La boucle d'amelioration (variantes `LYRA_EXP`)
+
+Pour faire monter le score des petits modeles sans changer la production a
+l'aveugle, chaque idee est une **variante** de `lyra/models/ephaistos_exp.py`,
+activee par la variable `LYRA_EXP` (`LYRA_EXP="exemples_cibles,lexical"`),
+inactive par defaut. `scripts/bench_boucle.py` rejoue le banc des modeles pour
+chaque configuration -- socle seul, chaque variante seule, chaque paire, toutes
+ensemble -- a graine fixe, et ecrit un fichier `*-boucle.json` par iteration.
+
+```bash
+LYRA_SEED=42 .venv/bin/python scripts/bench_boucle.py --iteration 3 \
+    --socle exemples_cibles,lexical --variantes couleurs,top5_direct
+```
+
+Le **socle** est l'acquis des iterations precedentes : on mesure ce que chaque
+idee ajoute a ce qui marche deja. Les paires comptent : `lexical` seul degrade
+le score, et forme la meilleure paire avec `top3_direct`.
+
+Trois regles tirees des trois premieres iterations :
+
+- **Ecrire l'hypothese d'impact avant de mesurer**, puis la confronter au
+  chiffre. Une idee infirmee (routage, index) vaut autant qu'une idee confirmee.
+- **Mesurer le mecanisme avant le modele.** Le rang du bon outil dans les specs
+  remontees (recall, sans appeler le modele) se mesure en vingt secondes et
+  plafonne tout ce que le modele peut faire : au depart, le bon outil n'etait
+  montre que pour 8 cas sur 21. Une idee sans effet mecanique ne merite pas de
+  bench.
+- **Score strict et equivalences.** Le banc accepte des outils equivalents
+  declares (`EQUIVALENCES` dans `tests/test_campaign_llm.py` : une video jouee
+  sur la TV par pylips ou par le Chromecast, un groupe de lumieres pour « les
+  lumieres »), mais publie le score strict a cote (`reussis_strict`) pour rester
+  comparable aux mesures anterieures.
+
 ## Couverture des bancs
 
 Aucun banc ne couvre tous les serveurs. Il faut lire les deux ensemble, et

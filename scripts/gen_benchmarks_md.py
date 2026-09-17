@@ -188,6 +188,38 @@ def section_modeles(lignes: list[str]) -> None:
         for m in par_modele.values()), ""]
 
 
+def section_boucle(lignes: list[str]) -> None:
+    """Boucle d'amelioration : une ligne par iteration, la meilleure configuration.
+
+    Les variantes sont inactives par defaut (LYRA_EXP) : ce tableau dit ce
+    que chaque iteration a gagne, pas ce que la production fait.
+    """
+    lot = _charger("boucle")
+    if not lot:
+        return
+    lot.sort(key=lambda d: (d.get("iteration", 0), d["date"]))
+    modele = lot[-1].get("modele_mesure", "?")
+    lignes += [
+        "## Boucle d'amelioration (variantes LYRA_EXP, inactives par defaut)",
+        "",
+        f"Modele mesure : `{modele}`, graine `{lot[-1].get('seed', '?')}`. "
+        "Le score strict ignore la table d'equivalences du banc (comparable entre iterations).",
+        "",
+        "| Iteration | Configurations | Meilleure configuration | Score | Strict |",
+        "|---:|---:|---|---:|---:|",
+    ]
+    for it in lot:
+        meilleure = it.get("meilleure") or {}
+        variantes = "+".join(meilleure.get("variantes", [])) or "(defaut)"
+        score = f"{meilleure.get('reussis', 0)}/{meilleure.get('cas', 0)}"
+        strict = meilleure.get("reussis_strict")
+        strict_txt = str(strict) if strict is not None else "="
+        lignes += [f"| {it.get('iteration', '?')} | {len(it.get('configurations', []))} | "
+                   f"`{variantes}` | {score} | {strict_txt} |"]
+    lignes += ["", "Sources : " + ", ".join(
+        f"[`{m['_fichier']}`](benchmarks/results/{m['_fichier']})" for m in lot), ""]
+
+
 def generer() -> str:
     lignes = [
         "# Mesures",
@@ -201,6 +233,7 @@ def generer() -> str:
     section_daemon(lignes)
     section_regles(lignes)
     section_modeles(lignes)
+    section_boucle(lignes)
     section_tts(lignes)
     if len(lignes) <= 7:
         lignes += ["_Aucun resultat dans `benchmarks/results/`. Lancer `make bench`._", ""]
