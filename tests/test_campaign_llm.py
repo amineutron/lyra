@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from lyra.core.config import RAGConfig
-from lyra.core.pipeline import Pipeline
+from lyra.core.pipeline import _resoudre_nom_outil
 
 # ============================================================
 # Cas de test: les RULE_MISS attendus (TV, HUE complexe, CATT)
@@ -181,8 +181,27 @@ def run_llm_tests(config_path=None):
     t0 = time.time()
     chemin_config = Path(config_path) if config_path else Path(__file__).parent.parent / "config.yaml"
     config = RAGConfig.from_yaml(chemin_config)
-    pipeline = Pipeline(config)
-    pipeline.initialize()
+
+    # EnhancedPipeline, et non Pipeline : c'est le mode de run.sh, et surtout
+    # le seul branche sur le RAG 3-tier. Le Pipeline de base interroge l'index
+    # v2, qui ne contient que les 19 outils fedora : aucune requete de cast n'y
+    # trouvait de candidat, et le banc mesurait donc ce mauvais branchement
+    # plutot que le modele (roadmap-github#72).
+    import yaml as _yaml
+
+    from lyra.rag_enhanced import EnhancedPipeline
+    from lyra.rag_enhanced.config import RAGEnhancedConfig
+
+    brut = _yaml.safe_load(chemin_config.read_text()) or {}
+    enhanced = EnhancedPipeline(
+        config=config,
+        enhanced_config=RAGEnhancedConfig.from_dict(brut.get("rag_enhanced", {})),
+        enabled=True,
+        tts_mode=False,
+    )
+    enhanced.initialize()
+    pipeline = enhanced._pipeline_v2   # porte _ephaistos
+    pipeline._rag_3tier = enhanced._rag_3tier
     print(f"{G}[INIT]{RESET} Pipeline pret ({time.time()-t0:.1f}s)\n")
 
     results = []
@@ -196,8 +215,16 @@ def run_llm_tests(config_path=None):
         t_start = time.time()
         try:
             # Recuperer les specs RAG
-            fused = pipeline._retriever.retrieve(query)
-            specs = [r.document for r in fused] if fused else []
+            resultats = pipeline._rag_3tier.cascade_search(query)
+            specs = []
+            noms_outils = []
+            for item in (resultats or []):
+                meta = item.get("metadata", {}) if isinstance(item, dict) else {}
+                doc = item.get("document", "") if isinstance(item, dict) else str(item)
+                nom = meta.get("tool_name") or meta.get("name") or "?"
+                specs.append(f"{nom}: {doc}")
+                if nom != "?":
+                    noms_outils.append(nom)
 
             if not specs:
                 result = {"tool": None, "arguments": {}, "error": "Aucun spec RAG"}
@@ -218,14 +245,12 @@ def run_llm_tests(config_path=None):
                 result_tool = analysis.tool
                 result_args = analysis.arguments or {}
 
-                # Ajouter prefixe serveur si manquant
-                if result_tool and '.' not in result_tool:
-                    for r in fused:
-                        meta = r.metadata if isinstance(r.metadata, dict) else {}
-                        tool_name = meta.get('name', '')
-                        if tool_name.endswith('.' + result_tool) or tool_name == result_tool:
-                            result_tool = tool_name
-                            break
+                # Prefixe serveur : on reutilise la resolution du pipeline,
+                # deja couverte par des tests, contre les noms du 3-tier.
+                if result_tool:
+                    resolu = _resoudre_nom_outil(result_tool, [], noms_outils)
+                    if resolu:
+                        result_tool = resolu
 
         except Exception as e:
             # Une panne technique (API deplacee, RAG muet) n'est PAS un echec
