@@ -169,7 +169,7 @@ def _mock_vm_calls(pipeline):
     _wf_snapshot.get_existing_vm_names = lambda hestia: list(_TEST_VM_NAMES)
 
 
-def init_pipeline():
+def init_pipeline(config_path=None):
     """Initialise le pipeline complet (Ollama + RAG + MCP).
 
     Les appels MCP reels (validation VM, etat) sont patched pour
@@ -184,7 +184,7 @@ def init_pipeline():
 
     from lyra.core.config import RAGConfig
 
-    config_path = ROOT / "config.yaml"
+    config_path = Path(config_path) if config_path else ROOT / "config.yaml"
     config = RAGConfig.from_yaml(config_path)
 
     # Lire la config enhanced depuis YAML
@@ -480,6 +480,12 @@ def main():
     parser.add_argument("--oneshot-only", action="store_true",
                         help="Phase 2 uniquement (sans re-afficher dry-run)")
     parser.add_argument("--no-color", action="store_true", help="Desactiver les couleurs ANSI")
+    parser.add_argument("--ephaistos", default=None,
+                        help="Modele EPHAISTOS a mesurer (ex: qwen2.5-coder:7b). "
+                             "Ecrit une configuration derivee, config.yaml n'est jamais modifie.")
+    parser.add_argument("--lyra", default=None, help="Modele LYRA a mesurer")
+    parser.add_argument("--json", action="store_true",
+                        help="Publie le resultat dans benchmarks/results/")
     args = parser.parse_args()
 
     # --- Phase 1 : DRY-RUN ---
@@ -500,8 +506,26 @@ def main():
     print(f"\n{BOLD}Phase 2 : ONE-SHOT (pipeline complet){RESET}", flush=True)
     print("  Initialisation Ollama + RAG + MCP...", end="", flush=True)
     t_init = time.perf_counter()
+    chemin_config = None
+    if args.ephaistos or args.lyra:
+        import tempfile
+
+        import yaml as _yaml
+        cfg = _yaml.safe_load((ROOT / "config.yaml").read_text()) or {}
+        cfg.setdefault("models", {})
+        if args.ephaistos:
+            cfg["models"].setdefault("ephaistos", {})["name"] = args.ephaistos
+        if args.lyra:
+            cfg["models"].setdefault("lyra", {})["name"] = args.lyra
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False)
+        _yaml.safe_dump(cfg, tmp, allow_unicode=True)
+        tmp.close()
+        chemin_config = tmp.name
+        print(f"  Configuration derivee : ephaistos={args.ephaistos or '(inchange)'} "
+              f"lyra={args.lyra or '(inchange)'}", flush=True)
+
     try:
-        pipeline = init_pipeline()
+        pipeline = init_pipeline(chemin_config)
     except Exception as exc:
         print(f"\n  {RED}ERREUR init pipeline: {exc}{RESET}")
         print("  Verifiez qu'Ollama est actif et que les modeles sont disponibles.")
@@ -544,6 +568,37 @@ def main():
     # COW du clone) — ce n'est pas un echec de detection.
     one_bad = sum(1 for r in one_results
                   if r and r.get("status") in (FAIL, RULE_MISS))
+
+    if args.json:
+        from collections import Counter
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from bench_common import ecrire_resultat, modeles  # noqa: E402
+
+        actifs = modeles()
+        if args.ephaistos:
+            actifs["ephaistos"] = args.ephaistos
+        if args.lyra:
+            actifs["lyra"] = args.lyra
+        statuts = Counter(r["status"] for r in one_results if r)
+        par_cat = {}
+        for r in one_results:
+            if not r:
+                continue
+            racine = r["cat"].split("/")[0]
+            par_cat.setdefault(racine, Counter())[r["status"]] += 1
+
+        slug = (args.ephaistos or actifs.get("ephaistos", "defaut")).replace(":", "-")
+        chemin = ecrire_resultat("campagne", {
+            "banc": "one-shot (pipeline complet, avec LLM)",
+            "cas": one_done,
+            "duree_s": round(run_elapsed, 1),
+            "statuts": dict(statuts),
+            "taux_pass": round(one_pass / one_done, 4) if one_done else 0.0,
+            "par_categorie": {c: dict(v) for c, v in sorted(par_cat.items())},
+            "modeles_mesures": actifs,
+        }, suffixe=slug)
+        print(f"Resume publie : {chemin}")
+
     all_ok = (dry_pass == len(TESTS)) and one_bad == 0
     sys.exit(0 if all_ok else 1)
 

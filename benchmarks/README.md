@@ -86,6 +86,29 @@ Statuts possibles : `PASS` (bon outil, tous les arguments obligatoires),
 argument obligatoire manquant), `RULE_MISS` (aucune regle n'a repondu, la
 requete part au LLM).
 
+## Le banc des modeles (21 requetes)
+
+`tests/test_campaign_llm.py --ephaistos <modele> --json` mesure EPHAISTOS sur
+21 requetes historiquement non couvertes par les regles (TV 9, HUE 5, CATT 7).
+
+Deux precisions importantes pour lire ces chiffres :
+
+- **Le banc appelle EPHAISTOS directement**, en court-circuitant le moteur de
+  regles. C'est volontaire : sans cela il ne mesurerait pas le modele. Les 152
+  requetes du banc principal sont toutes absorbees par les regles, et les
+  comparer entre modeles donnerait quatre fois 100 % en zero seconde.
+- **14 de ces 21 requetes sont aujourd'hui couvertes par les regles** (releve du
+  2026-09-17) : les regles ont progresse depuis l'ecriture du banc. Ces chiffres
+  disent donc ce que vaut le modele *quand il est sollicite*, pas ce que
+  l'utilisateur rencontre au quotidien -- en usage reel, les regles repondent
+  avant lui.
+
+Le banc **refuse de publier** si une panne technique survient (API deplacee,
+RAG muet). Le 2026-09-17 il annoncait 0/21 pour le 0.5b : la methode
+`_retrieve_specs` avait disparu du pipeline, l'exception etait comptee en
+`LLM_FAIL` et le modele etait accuse a tort. Une panne doit interrompre la
+mesure, jamais se deguiser en resultat.
+
 ## Format d'un resultat
 
 ```json

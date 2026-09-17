@@ -162,7 +162,7 @@ def check_args(result_args, mandatory, optional):
     return missing_mandatory, missing_optional
 
 
-def run_llm_tests():
+def run_llm_tests(config_path=None):
     G = "\033[32m"
     Y = "\033[33m"
     R = "\033[31m"
@@ -179,13 +179,15 @@ def run_llm_tests():
     # Initialisation du pipeline (une seule fois)
     print(f"{C}[INIT]{RESET} Chargement du pipeline RAG (ChromaDB + modeles)...")
     t0 = time.time()
-    config = RAGConfig.from_yaml(Path(__file__).parent.parent / "config.yaml")
+    chemin_config = Path(config_path) if config_path else Path(__file__).parent.parent / "config.yaml"
+    config = RAGConfig.from_yaml(chemin_config)
     pipeline = Pipeline(config)
     pipeline.initialize()
     print(f"{G}[INIT]{RESET} Pipeline pret ({time.time()-t0:.1f}s)\n")
 
     results = []
     categories = {}
+    erreurs_techniques: list[str] = []
 
     for i, (cat, desc, query, expected_tool, mandatory_args, optional_args) in enumerate(TESTS_LLM, 1):
         print(f"{DIM}[{i:02d}/{len(TESTS_LLM)}] {desc}: {query[:55]}...{RESET}" if len(query) > 55
@@ -194,7 +196,7 @@ def run_llm_tests():
         t_start = time.time()
         try:
             # Recuperer les specs RAG
-            fused = pipeline._retrieve_specs(query)
+            fused = pipeline._retriever.retrieve(query)
             specs = [r.document for r in fused] if fused else []
 
             if not specs:
@@ -226,6 +228,11 @@ def run_llm_tests():
                             break
 
         except Exception as e:
+            # Une panne technique (API deplacee, RAG muet) n'est PAS un echec
+            # du modele : elle etait comptee en LLM_FAIL et le banc publiait
+            # un 0 % qui accusait le modele a tort (constate le 2026-09-17,
+            # _retrieve_specs avait disparu du pipeline).
+            erreurs_techniques.append(f"{desc}: {type(e).__name__}: {e}")
             result_tool = None
             result_args = {}
             print(f"  {R}ERREUR: {e}{RESET}")
@@ -318,8 +325,93 @@ def run_llm_tests():
         f.write(f"SCORE LLM: {score_final}%\n")
 
     print(f"Rapport sauvegarde : {report_path}")
-    return results, categories, score_final
+    if erreurs_techniques:
+        print(f"\n{R}{len(erreurs_techniques)} panne(s) technique(s) — "
+              f"ces cas ne mesurent PAS le modele :{RESET}")
+        for ligne in erreurs_techniques[:5]:
+            print(f"  {ligne}")
+    return results, categories, score_final, erreurs_techniques
+
+
+def _config_derivee(ephaistos: str | None, lyra: str | None) -> str | None:
+    """Ecrit une copie de config.yaml avec d'autres modeles.
+
+    config.yaml n'est jamais modifie : c'est la configuration de production.
+    """
+    if not ephaistos and not lyra:
+        return None
+    import tempfile
+
+    import yaml as _yaml
+    racine = Path(__file__).parent.parent
+    cfg = _yaml.safe_load((racine / "config.yaml").read_text()) or {}
+    cfg.setdefault("models", {})
+    if ephaistos:
+        cfg["models"].setdefault("ephaistos", {})["name"] = ephaistos
+    if lyra:
+        cfg["models"].setdefault("lyra", {})["name"] = lyra
+    tmp = tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False)
+    _yaml.safe_dump(cfg, tmp, allow_unicode=True)
+    tmp.close()
+    return tmp.name
+
+
+def main() -> None:
+    import argparse
+    from collections import Counter
+
+    parser = argparse.ArgumentParser(
+        description="Banc des requetes RULE_MISS : celles ou EPHAISTOS travaille vraiment.")
+    parser.add_argument("--ephaistos", default=None,
+                        help="Modele EPHAISTOS a mesurer (ex: qwen2.5-coder:7b)")
+    parser.add_argument("--lyra", default=None, help="Modele LYRA a mesurer")
+    parser.add_argument("--json", action="store_true",
+                        help="Publie le resultat dans benchmarks/results/")
+    args = parser.parse_args()
+
+    chemin = _config_derivee(args.ephaistos, args.lyra)
+    if chemin:
+        print(f"Configuration derivee : ephaistos={args.ephaistos or '(inchange)'}")
+
+    debut = time.time()
+    results, categories, score_final, pannes = run_llm_tests(chemin)
+    duree = time.time() - debut
+
+    if args.json and pannes:
+        print(f"\nPublication refusee : {len(pannes)} panne(s) technique(s). "
+              "Un banc en panne ne publie pas de chiffre.")
+        sys.exit(2)
+
+    if args.json:
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
+        from bench_common import ecrire_resultat, modeles  # noqa: E402
+
+        actifs = modeles()
+        if args.ephaistos:
+            actifs["ephaistos"] = args.ephaistos
+        if args.lyra:
+            actifs["lyra"] = args.lyra
+
+        statuts = Counter(r["status"] for r in results)
+        par_cat = {}
+        for r in results:
+            par_cat.setdefault(r["cat"].split("/")[0], Counter())[r["status"]] += 1
+
+        total = len(results)
+        slug = actifs.get("ephaistos", "defaut").replace(":", "-")
+        chemin_sortie = ecrire_resultat("modeles", {
+            "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
+            "cas": total,
+            "statuts": dict(statuts),
+            "taux_pass": round(statuts["LLM_PASS"] / total, 4) if total else 0.0,
+            "score_pondere": score_final,
+            "par_categorie": {c: dict(v) for c, v in sorted(par_cat.items())},
+            "modeles_mesures": actifs,
+            "duree_s": round(duree, 1),
+            "duree_inclut_initialisation": True,
+        }, suffixe=slug)
+        print(f"Resume publie : {chemin_sortie}")
 
 
 if __name__ == "__main__":
-    run_llm_tests()
+    main()

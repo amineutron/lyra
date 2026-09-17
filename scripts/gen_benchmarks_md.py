@@ -110,6 +110,46 @@ def section_tts(lignes: list[str]) -> None:
     lignes += [""]
 
 
+def section_modeles(lignes: list[str]) -> None:
+    """Comparaison des modeles sur les requetes que les regles ne couvrent pas.
+
+    Les 152 requetes du banc principal sont toutes absorbees par le moteur de
+    regles : aucun modele n'y est sollicite, comparer sur ce jeu donnerait
+    quatre fois 100 % en zero seconde. Ce tableau porte donc sur les cas
+    RULE_MISS, les seuls ou EPHAISTOS travaille reellement.
+    """
+    lot = _charger("modeles")
+    if not lot:
+        return
+    # une entree par modele : on garde la mesure la plus recente de chacun
+    par_modele: dict[str, dict] = {}
+    for mesure in sorted(lot, key=lambda d: d["date"]):
+        nom = mesure.get("modeles_mesures", {}).get("ephaistos", "?")
+        par_modele[nom] = mesure
+
+    premier = next(iter(par_modele.values()))
+    lignes += [
+        "## Comparaison des modeles (requetes non couvertes par les regles)",
+        "",
+        f"{premier['cas']} requetes RULE_MISS passees a EPHAISTOS, "
+        f"mesurees le {premier['date']} sur "
+        f"{premier['materiel']['gpu'].get('nom', 'CPU')}.",
+        "",
+        "| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for nom, mesure in sorted(par_modele.items()):
+        statuts = mesure.get("statuts", {})
+        reussis = statuts.get("LLM_PASS", 0)
+        taux = mesure.get("taux_pass", 0) * 100
+        duree = mesure.get("duree_s")
+        duree_txt = f"{duree:.0f} s" if duree else "—"
+        lignes += [f"| `{nom}` | {mesure['cas']} | {reussis} | {taux:.0f} % | {duree_txt} |"]
+    lignes += ["", "Sources : " + ", ".join(
+        f"[`{m['_fichier']}`](benchmarks/results/{m['_fichier']})"
+        for m in par_modele.values()), ""]
+
+
 def generer() -> str:
     lignes = [
         "# Mesures",
@@ -122,6 +162,7 @@ def generer() -> str:
     ]
     section_daemon(lignes)
     section_regles(lignes)
+    section_modeles(lignes)
     section_tts(lignes)
     if len(lignes) <= 7:
         lignes += ["_Aucun resultat dans `benchmarks/results/`. Lancer `make bench`._", ""]
