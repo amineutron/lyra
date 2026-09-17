@@ -5,11 +5,24 @@ Orchestration des modeles EPHAISTOS (Qwen 7B) et LYRA (Llama 3B).
 Gere le chargement, le swap, et la communication avec Ollama.
 """
 
-import httpx
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
+
+import httpx
 
 from ..core.config import RAGConfig
+
+# Fenetre de contexte demandee a ollama.
+#
+# Sans cette option, ollama sert 4096 tokens par defaut, alors que les modeles
+# utilises en supportent 32768 (qwen2.5-coder) ou 131072 (llama3.2). Or le
+# prompt systeme d'EPHAISTOS fait a lui seul ~6100 tokens : tout ce qui se
+# trouve au-dela etait tronque, et le modele ne voyait jamais les exemples de
+# la fin (CATT, MERMAID, SCREEN-MANAGER). Il repondait donc correctement sur
+# les premiers serveurs et jamais sur les derniers.
+# Mesure du 2026-09-17, voir roadmap-github#72.
+NUM_CTX = 8192
+
 
 
 @dataclass
@@ -145,7 +158,8 @@ class ModelManager:
             "stream": False,
             "keep_alive": -1,  # garder le modele en VRAM indefiniment
             "options": {
-                "temperature": temperature
+                "temperature": temperature,
+                "num_ctx": NUM_CTX,
             }
         }
 

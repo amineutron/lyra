@@ -177,6 +177,25 @@ class TestEphaistos:
 
         assert result.tool is None
 
+    def test_parse_alias_action(self, ephaistos):
+        """Le 0.5b repond {"action": "cast_pause"} : c'etait la bonne reponse.
+
+        Faute d'alias, elle etait jetee et Lyra concluait qu'aucun outil ne
+        correspondait (roadmap-github#72).
+        """
+        result = ephaistos._parse_response('{"action": "cast_pause", "arguments": {}}')
+        assert result.tool == "cast_pause"
+
+    def test_parse_alias_tool_name(self, ephaistos):
+        """Le RAG 3-tier nomme la cle tool_name : certains modeles la reprennent."""
+        result = ephaistos._parse_response('{"tool_name": "catt.cast_stop"}')
+        assert result.tool == "catt.cast_stop"
+
+    def test_parse_tool_reste_prioritaire(self, ephaistos):
+        """Un alias ne doit jamais supplanter la cle attendue."""
+        result = ephaistos._parse_response('{"tool": "vm_start", "action": "autre_chose"}')
+        assert result.tool == "vm_start"
+
     def test_analyze_with_known_args(self, ephaistos, mock_manager):
         """Test d'analyse avec args deja connus."""
         mock_manager.call_ephaistos.return_value = ModelResponse(

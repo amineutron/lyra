@@ -597,10 +597,11 @@ REQUETE: {user_query}"""
                 else:
                     raise json.JSONDecodeError("No JSON found", content, 0)
 
-            # Normaliser les cles (certains modeles utilisent des variantes)
-            # "command", "function", "name" → "tool"
+            # Normaliser les cles (certains modeles utilisent des variantes).
+            # "action" vient du 0.5b, qui repond {"action": "cast_pause"} :
+            # la bonne reponse etait jetee faute d'alias (roadmap-github#72).
             if "tool" not in data:
-                for alt in ("command", "function", "name"):
+                for alt in ("command", "function", "name", "action", "tool_name"):
                     if alt in data and isinstance(data[alt], str):
                         data["tool"] = data[alt]
                         break
