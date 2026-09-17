@@ -510,6 +510,11 @@ class Ephaistos:
         Returns:
             EphaistosAnalysis avec l'outil et arguments
         """
+        # Variantes experimentales (LYRA_EXP) : aucune par defaut, voir ephaistos_exp
+        from . import ephaistos_exp as _exp
+        variantes = _exp.actives()
+        specs_pour_index: list[str] = []
+
         # Utiliser TOON si disponible, sinon extraire signatures compactes
         if specs_toon:
             specs_text = specs_toon
@@ -521,6 +526,11 @@ class Ephaistos:
             # Limiter le nombre de specs si demande (0 = toutes)
             if max_specs > 0:
                 compact_specs = compact_specs[:max_specs]
+            if "dedup" in variantes:
+                compact_specs = _exp.dedupliquer(compact_specs)
+            specs_pour_index = list(compact_specs)
+            if "index" in variantes:
+                compact_specs = _exp.numeroter(compact_specs)
             specs_text = "\n".join(compact_specs)
             label = "SPECS MCP"
 
@@ -532,12 +542,21 @@ REQUETE: {user_query}"""
         if known_args:
             prompt += f"\nARGS CONNUS: {json.dumps(known_args, ensure_ascii=False)}"
 
+        if "index" in variantes and specs_pour_index:
+            prompt += _exp.CONSIGNE_INDEX
         prompt += "\nJSON:"
+
+        system = EPHAISTOS_SYSTEM_PROMPT
+        if "exemples_cibles" in variantes and specs_pour_index:
+            system = _exp.exemples_cibles(system, _exp.serveurs_des_specs(specs_pour_index))
+        if "routage" in variantes:
+            system = system.replace("STRUCTURE DE REPONSE:",
+                                    _exp.REGLE_ROUTAGE + "STRUCTURE DE REPONSE:", 1)
 
         # Appeler EPHAISTOS
         response = self.model_manager.call_ephaistos(
             prompt=prompt,
-            system_prompt=EPHAISTOS_SYSTEM_PROMPT
+            system_prompt=system
         )
 
         if not response.success:
@@ -551,7 +570,10 @@ REQUETE: {user_query}"""
             )
 
         # Parser la reponse JSON
-        return self._parse_response(response.content)
+        analysis = self._parse_response(response.content)
+        if "index" in variantes and specs_pour_index:
+            analysis.tool = _exp.resoudre_index(analysis.tool, specs_pour_index)
+        return analysis
 
     def _parse_response(self, content: str) -> EphaistosAnalysis:
         """Parse la reponse JSON d'EPHAISTOS.
