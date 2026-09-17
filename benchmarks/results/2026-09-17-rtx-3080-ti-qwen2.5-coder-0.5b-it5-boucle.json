@@ -1,0 +1,134 @@
+{
+  "mesure": "boucle",
+  "date": "2026-09-17",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "817d343",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "iteration": 5,
+  "seed": "42",
+  "seuil": 0.99,
+  "modele_mesure": "qwen2.5-coder:0.5b",
+  "configurations": [
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche",
+        "signature"
+      ],
+      "reussis": 20,
+      "reussis_strict": 16,
+      "cas": 21,
+      "taux": 0.9524,
+      "score_pondere": 95,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "9/9"
+      },
+      "duree_s": 58.6,
+      "echecs": [
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche",
+        "signature"
+      ],
+      "reussis": 21,
+      "reussis_strict": 18,
+      "cas": 21,
+      "taux": 1.0,
+      "score_pondere": 100,
+      "par_categorie": {
+        "CATT": "7/7",
+        "HUE": "5/5",
+        "TV": "9/9"
+      },
+      "duree_s": 50.5,
+      "echecs": []
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche",
+        "signature",
+        "mots_url"
+      ],
+      "reussis": 21,
+      "reussis_strict": 18,
+      "cas": 21,
+      "taux": 1.0,
+      "score_pondere": 100,
+      "par_categorie": {
+        "CATT": "7/7",
+        "HUE": "5/5",
+        "TV": "9/9"
+      },
+      "duree_s": 52.7,
+      "echecs": []
+    }
+  ],
+  "meilleure": {
+    "variantes": [
+      "exemples_cibles",
+      "lexical",
+      "recall8",
+      "carte_mots",
+      "top3_direct",
+      "exemple_par_spec",
+      "poids_rares",
+      "exemple_proche",
+      "signature"
+    ],
+    "reussis": 21,
+    "reussis_strict": 18,
+    "cas": 21,
+    "taux": 1.0,
+    "score_pondere": 100,
+    "par_categorie": {
+      "CATT": "7/7",
+      "HUE": "5/5",
+      "TV": "9/9"
+    },
+    "duree_s": 50.5,
+    "echecs": []
+  },
+  "seuil_atteint": true
+}

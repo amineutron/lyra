@@ -122,30 +122,11 @@ def section_tts(lignes: list[str]) -> None:
     lignes += [""]
 
 
-def section_modeles(lignes: list[str]) -> None:
-    """Comparaison des modeles sur les requetes que les regles ne couvrent pas.
-
-    Les 152 requetes du banc principal sont toutes absorbees par le moteur de
-    regles : aucun modele n'y est sollicite, comparer sur ce jeu donnerait
-    quatre fois 100 % en zero seconde. Ce tableau porte donc sur les cas
-    RULE_MISS, les seuls ou EPHAISTOS travaille reellement.
-    """
-    lot = _charger("modeles")
-    if not lot:
-        return
-    # une entree par modele : on garde la mesure la plus recente de chacun
-    par_modele: dict[str, dict] = {}
-    for mesure in sorted(lot, key=lambda d: d["date"]):
-        nom = mesure.get("modeles_mesures", {}).get("ephaistos", "?")
-        par_modele[nom] = mesure
-
-    premier = next(iter(par_modele.values()))
+def _tableau_modeles(lignes: list[str], par_modele: dict[str, dict], titre: str, note: str) -> None:
     lignes += [
-        "## Comparaison des modeles (requetes non couvertes par les regles)",
+        titre,
         "",
-        f"{premier['cas']} requetes RULE_MISS passees a EPHAISTOS, "
-        f"mesurees le {premier['date']} sur "
-        f"{premier['materiel']['gpu'].get('nom', 'CPU')}.",
+        note,
         "",
         "| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |",
         "|---|---:|---:|---:|---:|",
@@ -159,18 +140,15 @@ def section_modeles(lignes: list[str]) -> None:
         lignes += [f"| `{nom}` | {mesure['cas']} | {reussis} | {taux:.0f} % | {duree_txt} |"]
     # Ventilation par serveur MCP : un score global masque le fait qu'un modele
     # peut etre bon sur un serveur et nul sur un autre.
-    noms_modeles = list(par_modele)
+    noms_modeles = list(sorted(par_modele))
     par_mcp: dict[str, dict[str, tuple]] = {}
     for nom, mesure in par_modele.items():
         for categorie, statuts in mesure.get("par_categorie", {}).items():
             mcp = _MCP_PAR_CATEGORIE.get(categorie, categorie)
             total = sum(statuts.values())
             par_mcp.setdefault(mcp, {})[nom] = (statuts.get("LLM_PASS", 0), total)
-
     if par_mcp:
         lignes += [
-            "",
-            "### Par serveur MCP",
             "",
             "| Serveur | Commandes | " + " | ".join(f"`{n}`" for n in noms_modeles) + " |",
             "|---|---:|" + "---:|" * len(noms_modeles),
@@ -179,13 +157,50 @@ def section_modeles(lignes: list[str]) -> None:
             total = next((t for _, t in scores.values()), 0)
             cellules = " | ".join(f"{scores.get(n, (0, 0))[0]}/{total}" for n in noms_modeles)
             lignes += [f"| {mcp} | {total} | {cellules} |"]
-        couverts = ", ".join(sorted(par_mcp))
-        lignes += ["", f"Ce banc ne couvre que : {couverts}. Les autres serveurs "
-                       "(fedora-agents, denon-mcp) sont mesures par le banc de regles.", ""]
-
-    lignes += ["Sources : " + ", ".join(
+    lignes += ["", "Sources : " + ", ".join(
         f"[`{m['_fichier']}`](benchmarks/results/{m['_fichier']})"
         for m in par_modele.values()), ""]
+
+
+def section_modeles(lignes: list[str]) -> None:
+    """Comparaison des modeles sur les requetes que les regles ne couvrent pas.
+
+    Les 152 requetes du banc principal sont toutes absorbees par le moteur de
+    regles : aucun modele n'y est sollicite, comparer sur ce jeu donnerait
+    quatre fois 100 % en zero seconde. Ce tableau porte donc sur les cas
+    RULE_MISS, les seuls ou EPHAISTOS travaille reellement.
+
+    Deux tableaux : la configuration de reference, puis la meme mesure avec les
+    variantes LYRA_EXP retenues par la boucle d'amelioration.
+    """
+    lot = _charger("modeles")
+    if not lot:
+        return
+    # une entree par modele et par jeu de variantes : la mesure la plus recente
+    reference: dict[str, dict] = {}
+    avec_variantes: dict[str, dict] = {}
+    for mesure in sorted(lot, key=lambda d: d["date"]):
+        nom = mesure.get("modeles_mesures", {}).get("ephaistos", "?")
+        (avec_variantes if mesure.get("variantes") else reference)[nom] = mesure
+
+    premier = next(iter((reference or avec_variantes).values()))
+    lignes += [
+        "## Comparaison des modeles (requetes non couvertes par les regles)",
+        "",
+        f"{premier['cas']} requetes RULE_MISS passees a EPHAISTOS, "
+        f"mesurees le {premier['date']} sur "
+        f"{premier['materiel']['gpu'].get('nom', 'CPU')}. "
+        "Ce banc ne couvre que pylips-mcp, catt-mcp et hue-mcp ; fedora-agents et "
+        "denon-mcp sont mesures par le banc de regles.",
+        "",
+    ]
+    if reference:
+        _tableau_modeles(lignes, reference, "### Configuration de reference",
+                         "Sans variante : le comportement du depot tel quel.")
+    if avec_variantes:
+        variantes = ", ".join(f"`{v}`" for v in next(iter(avec_variantes.values()))["variantes"])
+        _tableau_modeles(lignes, avec_variantes, "### Avec les variantes retenues par la boucle",
+                         f"`LYRA_EXP` = {variantes}. Le score accepte les equivalences declarees du banc.")
 
 
 def section_boucle(lignes: list[str]) -> None:

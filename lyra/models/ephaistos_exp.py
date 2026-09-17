@@ -50,6 +50,28 @@ de la diffusion" -> denon.volume_down.
 - poids_rares : dans carte_mots, un mot-cible rare (ambilight, diffusion,
   chevet) vaut 2 ; "diffusion" doit peser plus que "baisse le volume".
 - top5_direct : 5 specs des le premier essai (prime sur top3_direct).
+
+Iteration 4 (exemple_par_spec + poids_rares : 18/21). Les trois echecs ont le
+bon outil en rang 1 : "eteins la tele" -> power_on et "eteins l'ambilight" ->
+ambilight_on (biais ON/OFF ; l'exemple injecte, premiere paraphrase, ne porte
+pas le verbe de la requete) ; "mode lounge" -> bon outil, arguments vides (la
+spec montree n'a pas de signature : la fusion garde le doc capabilities).
+
+- exemple_proche : la paraphrase de chaque spec la plus proche de la requete
+  (recouvrement de tokens) sert d'exemple ; "eteins l'ambilight" existe mot
+  pour mot dans les paraphrases.
+- signature : la signature du doc parameters est jointe au doc capabilities ;
+  _compact_spec retrouve alors le format d'origine "nom: f(params)".
+- consigne_onoff : une ligne "eteins/coupe/desactive = off, allume = on",
+  seulement quand la requete contient l'un de ces verbes.
+- deux_exemples : deux paraphrases par spec au lieu d'une.
+
+Iteration 5 (exemple_proche + signature : 20/21). Dernier echec : "caste cette
+video youtube <url>" -> cast_url, qui perd YouTube Premium (cast_youtube passe
+par ADB). La consigne indice_url nomme "url", et "http" donne un point a
+cast_url dans carte_mots.
+
+- mots_url : quand l'URL est YouTube, "http" ne cible que "youtube".
 """
 
 from __future__ import annotations
@@ -62,6 +84,8 @@ VARIANTES = (
     "exemples_cibles", "dedup", "routage", "index", "json_format",
     "lexical", "recall8", "carte_mots", "top3_direct", "indice_url",
     "couleurs", "exemple_par_spec", "poids_rares", "top5_direct",
+    "exemple_proche", "signature", "consigne_onoff", "deux_exemples",
+    "mots_url",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -128,7 +152,6 @@ MOTS_CIBLES: dict[str, tuple[str, ...]] = {
 }
 
 _RRF_K = 60
-
 
 def actives() -> set[str]:
     """Variantes demandees par LYRA_EXP ; inconnues ignorees."""
@@ -210,24 +233,34 @@ def tokens_outil(nom_outil: str) -> set[str]:
     return set(normaliser(nom_outil.replace("_", " ").replace(".", " ")))
 
 
-def score_mots(nom_outil: str, requete: str, poids_rares: bool = False) -> int:
+def url_youtube(requete: str) -> bool:
+    return bool(re.search(r"https?://(?:www\.)?(?:youtube\.com|youtu\.be)/", requete or ""))
+
+
+def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
+               cibler_youtube: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
-    Avec poids_rares, un mot de MOTS_RARES compte double.
+    Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
+    une URL YouTube ne donne plus de point aux outils "url" generiques.
     """
     tokens = tokens_outil(nom_outil)
+    youtube = cibler_youtube and url_youtube(requete)
     score = 0
     for mot in normaliser(requete):
         cibles = MOTS_CIBLES.get(mot)
+        if youtube and mot in ("http", "https"):
+            cibles = ("youtube",)
         if cibles and any(c in tokens for c in cibles):
             score += 2 if (poids_rares and mot in MOTS_RARES) else 1
     return score
 
 
-def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False) -> list[str]:
+def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
+               cibler_youtube: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
-                  key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares),
+                  key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares, cibler_youtube),
                   reverse=True)
 
 
@@ -342,27 +375,96 @@ def corriger_couleur(tool, arguments: dict, requete: str) -> dict:
     return {**arguments, **dict(zip(cles, rgb))}
 
 
+def paraphrases(spec_brute: str) -> list[str]:
+    """Phrases de la section "Utilise pour" (dedoublonnees, ordre conserve)."""
+    m = re.search(r"Utilise pour:\s*(.+?)(?:\s*(?:Exemples:|Variantes:|Cat[eé]gorie:|Signature:)|$)",
+                  spec_brute or "", re.DOTALL)
+    if not m:
+        return []
+    vues: set[str] = set()
+    out = []
+    for phrase in re.split(r"[.|\n]", m.group(1)):
+        phrase = phrase.strip()
+        if phrase and phrase not in vues:
+            vues.add(phrase)
+            out.append(phrase)
+    return out
+
+
 def premiere_paraphrase(spec_brute: str):
     """"tv.ambilight_on: Active ... | Utilise pour: allume l'ambilight. active..." -> "allume l'ambilight"."""
-    m = re.search(r"Utilise pour:\s*([^.|\n]+)", spec_brute or "")
-    if not m:
-        return None
-    phrase = m.group(1).strip()
-    return phrase or None
+    liste = paraphrases(spec_brute)
+    return liste[0] if liste else None
 
 
-def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum: int = 3) -> str:
-    """Un exemple par spec montree, tire de sa premiere paraphrase. Vide si aucune."""
+def paraphrases_proches(spec_brute: str, requete: str) -> list[str]:
+    """Paraphrases triees par recouvrement de tokens avec la requete (tri stable)."""
+    mots = set(normaliser(requete))
+    liste = paraphrases(spec_brute)
+    return sorted(liste, key=lambda p: -len(mots & set(normaliser(p))))
+
+
+def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum: int = 3,
+                      requete: str | None = None, nb: int = 1) -> str:
+    """`nb` exemple(s) par spec montree, tires de ses paraphrases. Vide si aucune.
+
+    Avec `requete`, la paraphrase la plus proche de la requete passe en premier
+    (variante exemple_proche) ; sinon c'est la premiere du document.
+    """
     par_nom = {}
     for brute in specs_brutes:
         nom = brute.split(":")[0].strip()
         par_nom.setdefault(nom, brute)
     lignes = []
     for nom in noms_montres[:maximum]:
-        phrase = premiere_paraphrase(par_nom.get(nom, ""))
-        if phrase:
-            court = nom.split(".")[-1]
+        brute = par_nom.get(nom, "")
+        phrases = paraphrases_proches(brute, requete) if requete else paraphrases(brute)
+        court = nom.split(".")[-1]
+        for phrase in phrases[:max(1, nb)]:
             lignes.append(f'Requete: "{phrase}" -> {{"tool": "{court}"}}')
     if not lignes:
         return ""
     return "EXEMPLES POUR CES SPECS:\n" + "\n".join(lignes) + "\n\n"
+
+
+# --- Iteration 4 : signature jointe, consigne on/off ------------------------------
+
+_VERBES_OFF = {"eteins", "eteindre", "eteint", "coupe", "couper", "desactive", "desactiver", "arrete"}
+_VERBES_ON = {"allume", "allumer", "active", "activer", "enclenche", "demarre"}
+CONSIGNE_ONOFF = ("\nRAPPEL : eteindre, couper, desactiver = outil *_off ; "
+                  "allumer, activer = outil *_on.")
+
+
+def verbe_onoff(requete: str) -> bool:
+    mots = set(normaliser(requete))
+    return bool(mots & (_VERBES_OFF | _VERBES_ON))
+
+
+def extraire_signature(document: str):
+    m = re.search(r"Signature:\s+(\S+\(.*?\))", document or "", re.DOTALL)
+    return " ".join(m.group(1).split()) if m else None
+
+
+def joindre_signatures(items: list[dict]) -> list[dict]:
+    """Ajoute "Signature: f(...)" au document capabilities d'un outil dont le doc parameters est present.
+
+    Renvoie une nouvelle liste (les dicts enrichis sont des copies). Sans
+    signature, _compact_spec montre un paragraphe de paraphrases ; avec, le
+    format d'origine "nom: f(params)" que les exemples du prompt utilisent.
+    """
+    signatures: dict[str, str] = {}
+    for item in items:
+        if item.get("source") == "parameters":
+            nom = (item.get("metadata") or {}).get("tool_name")
+            sig = extraire_signature(item.get("document", ""))
+            if nom and sig:
+                signatures.setdefault(nom, sig)
+    out = []
+    for item in items:
+        nom = (item.get("metadata") or {}).get("tool_name")
+        doc = item.get("document", "")
+        if item.get("source") != "parameters" and nom in signatures and "Signature:" not in doc:
+            out.append({**item, "document": f"{doc} Signature: {signatures[nom]}"})
+        else:
+            out.append(item)
+    return out

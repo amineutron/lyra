@@ -1,0 +1,417 @@
+{
+  "mesure": "boucle",
+  "date": "2026-09-17",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "817d343",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "iteration": 3,
+  "seed": "42",
+  "seuil": 0.99,
+  "modele_mesure": "qwen2.5-coder:0.5b",
+  "configurations": [
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url"
+      ],
+      "reussis": 15,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 71,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "4/5",
+        "TV": "5/9"
+      },
+      "duree_s": 57.7,
+      "echecs": [
+        "eteins la tele",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "mets les lumieres plus fortes",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "couleurs"
+      ],
+      "reussis": 15,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 71,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "4/5",
+        "TV": "5/9"
+      },
+      "duree_s": 49.2,
+      "echecs": [
+        "eteins la tele",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "mets les lumieres plus fortes",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec"
+      ],
+      "reussis": 17,
+      "reussis_strict": 13,
+      "cas": 21,
+      "taux": 0.8095,
+      "score_pondere": 83,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "6/9"
+      },
+      "duree_s": 49.4,
+      "echecs": [
+        "eteins la tele",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "poids_rares"
+      ],
+      "reussis": 15,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 71,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "4/5",
+        "TV": "5/9"
+      },
+      "duree_s": 45.6,
+      "echecs": [
+        "eteins la tele",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "mets les lumieres plus fortes",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "top5_direct"
+      ],
+      "reussis": 15,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 71,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "4/5",
+        "TV": "6/9"
+      },
+      "duree_s": 58.4,
+      "echecs": [
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "mets les lumieres plus fortes",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "couleurs",
+        "exemple_par_spec"
+      ],
+      "reussis": 17,
+      "reussis_strict": 13,
+      "cas": 21,
+      "taux": 0.8095,
+      "score_pondere": 83,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "6/9"
+      },
+      "duree_s": 48.7,
+      "echecs": [
+        "eteins la tele",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "couleurs",
+        "poids_rares"
+      ],
+      "reussis": 15,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 71,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "4/5",
+        "TV": "5/9"
+      },
+      "duree_s": 45.4,
+      "echecs": [
+        "eteins la tele",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "mets les lumieres plus fortes",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "couleurs",
+        "top5_direct"
+      ],
+      "reussis": 15,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 71,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "4/5",
+        "TV": "6/9"
+      },
+      "duree_s": 58.2,
+      "echecs": [
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "mets les lumieres plus fortes",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares"
+      ],
+      "reussis": 18,
+      "reussis_strict": 14,
+      "cas": 21,
+      "taux": 0.8571,
+      "score_pondere": 88,
+      "par_categorie": {
+        "CATT": "7/7",
+        "HUE": "5/5",
+        "TV": "6/9"
+      },
+      "duree_s": 47.2,
+      "echecs": [
+        "eteins la tele",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "top5_direct"
+      ],
+      "reussis": 16,
+      "reussis_strict": 13,
+      "cas": 21,
+      "taux": 0.7619,
+      "score_pondere": 79,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "5/9"
+      },
+      "duree_s": 60.4,
+      "echecs": [
+        "eteins la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "poids_rares",
+        "top5_direct"
+      ],
+      "reussis": 15,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 71,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "4/5",
+        "TV": "6/9"
+      },
+      "duree_s": 58.2,
+      "echecs": [
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "mets les lumieres plus fortes",
+        "avance de 30 secondes dans le cast",
+        "baisse le volume de la diffusion"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "couleurs",
+        "exemple_par_spec",
+        "poids_rares",
+        "top5_direct"
+      ],
+      "reussis": 16,
+      "reussis_strict": 13,
+      "cas": 21,
+      "taux": 0.7619,
+      "score_pondere": 79,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "5/9"
+      },
+      "duree_s": 60.7,
+      "echecs": [
+        "eteins la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "baisse le volume de la diffusion"
+      ]
+    }
+  ],
+  "meilleure": {
+    "variantes": [
+      "exemples_cibles",
+      "lexical",
+      "recall8",
+      "carte_mots",
+      "top3_direct",
+      "indice_url",
+      "exemple_par_spec",
+      "poids_rares"
+    ],
+    "reussis": 18,
+    "reussis_strict": 14,
+    "cas": 21,
+    "taux": 0.8571,
+    "score_pondere": 88,
+    "par_categorie": {
+      "CATT": "7/7",
+      "HUE": "5/5",
+      "TV": "6/9"
+    },
+    "duree_s": 47.2,
+    "echecs": [
+      "eteins la tele",
+      "eteins l ambilight",
+      "passe l ambilight en mode lounge"
+    ]
+  },
+  "seuil_atteint": false
+}

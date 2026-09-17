@@ -242,3 +242,78 @@ class TestFusionRRFUnRangParListe:
         lex = [self._item("b", 0.5, "lexical")]
         r = exp.fusion_rrf(sem, lex)
         assert r[0]["metadata"]["tool_name"] == "b"
+
+
+# --- Iteration 4 --------------------------------------------------------------
+
+class TestExempleProche:
+    BRUTE = ("tv.ambilight_off: Desactive l'Ambilight | Utilise pour: désactiver l'ambilight. "
+             "éteindre les LEDs. éteins l'ambilight. coupe l'ambilight Catégorie: tv")
+
+    def test_paraphrases_dedoublonnees_sans_categorie(self):
+        assert exp.paraphrases(self.BRUTE) == ["désactiver l'ambilight", "éteindre les LEDs",
+                                               "éteins l'ambilight", "coupe l'ambilight"]
+
+    def test_la_plus_proche_de_la_requete_en_premier(self):
+        assert exp.paraphrases_proches(self.BRUTE, "eteins l ambilight")[0] == "éteins l'ambilight"
+
+    def test_exemple_proche_dans_le_bloc(self):
+        r = exp.exemples_par_spec([self.BRUTE], ["tv.ambilight_off"], requete="eteins l ambilight")
+        assert r.splitlines()[1] == 'Requete: "éteins l\'ambilight" -> {"tool": "ambilight_off"}'
+
+    def test_sans_requete_premiere_paraphrase(self):
+        r = exp.exemples_par_spec([self.BRUTE], ["tv.ambilight_off"])
+        assert "désactiver l'ambilight" in r.splitlines()[1]
+
+    def test_deux_exemples(self):
+        r = exp.exemples_par_spec([self.BRUTE], ["tv.ambilight_off"], nb=2)
+        assert len(r.strip().splitlines()) == 3
+
+
+class TestSignature:
+    CAP = {"source": "capabilities", "metadata": {"tool_name": "tv.ambilight_mode"},
+           "document": "Change le mode Ambilight | Utilise pour: changer le mode ambilight", "score": 0.6}
+    PAR = {"source": "parameters", "metadata": {"tool_name": "tv.ambilight_mode"},
+           "document": "tv.ambilight_mode: Change le mode. Signature: ambilight_mode(mode: string) Change", "score": 0.4}
+
+    def test_signature_jointe_au_doc_capabilities(self):
+        r = exp.joindre_signatures([self.CAP, self.PAR])
+        assert r[0]["document"].endswith("Signature: ambilight_mode(mode: string)")
+        assert r[1] is self.PAR
+
+    def test_compact_spec_retrouve_le_format_court(self):
+        from lyra.models.ephaistos import Ephaistos
+        doc = exp.joindre_signatures([self.CAP, self.PAR])[0]["document"]
+        assert Ephaistos._compact_spec(f"tv.ambilight_mode: {doc}") == "tv.ambilight_mode: ambilight_mode(mode: string)"
+
+    def test_sans_doc_parameters_inchange(self):
+        r = exp.joindre_signatures([self.CAP])
+        assert r[0] is self.CAP
+
+    def test_ne_mute_pas_l_entree(self):
+        exp.joindre_signatures([self.CAP, self.PAR])
+        assert "Signature" not in self.CAP["document"]
+
+
+class TestConsigneOnOff:
+    def test_detecte_les_verbes(self):
+        assert exp.verbe_onoff("éteins la télé") and exp.verbe_onoff("allume l ambilight")
+        assert not exp.verbe_onoff("monte le volume")
+
+
+class TestMotsUrl:
+    Q = "caste cette video youtube https://youtu.be/dQw4w9WgXcQ"
+
+    def test_url_youtube_detectee(self):
+        assert exp.url_youtube(self.Q) and exp.url_youtube("https://www.youtube.com/watch?v=x")
+        assert not exp.url_youtube("https://example.org/video.mp4")
+
+    def test_sans_option_cast_url_marque(self):
+        assert exp.score_mots("catt.cast_url", self.Q) == 1
+
+    def test_avec_option_cast_url_ne_marque_plus(self):
+        assert exp.score_mots("catt.cast_url", self.Q, cibler_youtube=True) == 0
+        assert exp.score_mots("catt.cast_youtube", self.Q, cibler_youtube=True) >= 2
+
+    def test_url_generique_inchangee(self):
+        assert exp.score_mots("catt.cast_url", "caste https://example.org/a.mp4", cibler_youtube=True) == 1

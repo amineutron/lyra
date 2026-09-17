@@ -1,0 +1,428 @@
+{
+  "mesure": "boucle",
+  "date": "2026-09-17",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "817d343",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "iteration": 4,
+  "seed": "42",
+  "seuil": 0.99,
+  "modele_mesure": "qwen2.5-coder:0.5b",
+  "configurations": [
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares"
+      ],
+      "reussis": 18,
+      "reussis_strict": 14,
+      "cas": 21,
+      "taux": 0.8571,
+      "score_pondere": 88,
+      "par_categorie": {
+        "CATT": "7/7",
+        "HUE": "5/5",
+        "TV": "6/9"
+      },
+      "duree_s": 57.7,
+      "echecs": [
+        "eteins la tele",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche"
+      ],
+      "reussis": 19,
+      "reussis_strict": 15,
+      "cas": 21,
+      "taux": 0.9048,
+      "score_pondere": 93,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "8/9"
+      },
+      "duree_s": 48.3,
+      "echecs": [
+        "passe l ambilight en mode lounge",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "signature"
+      ],
+      "reussis": 19,
+      "reussis_strict": 15,
+      "cas": 21,
+      "taux": 0.9048,
+      "score_pondere": 90,
+      "par_categorie": {
+        "CATT": "7/7",
+        "HUE": "5/5",
+        "TV": "7/9"
+      },
+      "duree_s": 48.2,
+      "echecs": [
+        "eteins la tele",
+        "eteins l ambilight"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "consigne_onoff"
+      ],
+      "reussis": 15,
+      "reussis_strict": 11,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 74,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "4/5",
+        "TV": "5/9"
+      },
+      "duree_s": 50.4,
+      "echecs": [
+        "allume la tv",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "arrete le cast"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "deux_exemples"
+      ],
+      "reussis": 17,
+      "reussis_strict": 14,
+      "cas": 21,
+      "taux": 0.8095,
+      "score_pondere": 81,
+      "par_categorie": {
+        "CATT": "7/7",
+        "HUE": "5/5",
+        "TV": "5/9"
+      },
+      "duree_s": 50.4,
+      "echecs": [
+        "eteins la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche",
+        "signature"
+      ],
+      "reussis": 20,
+      "reussis_strict": 16,
+      "cas": 21,
+      "taux": 0.9524,
+      "score_pondere": 95,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "9/9"
+      },
+      "duree_s": 48.6,
+      "echecs": [
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche",
+        "consigne_onoff"
+      ],
+      "reussis": 15,
+      "reussis_strict": 11,
+      "cas": 21,
+      "taux": 0.7143,
+      "score_pondere": 74,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "4/5",
+        "TV": "6/9"
+      },
+      "duree_s": 50.5,
+      "echecs": [
+        "allume la tv",
+        "allume l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "arrete le cast"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche",
+        "deux_exemples"
+      ],
+      "reussis": 18,
+      "reussis_strict": 15,
+      "cas": 21,
+      "taux": 0.8571,
+      "score_pondere": 88,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "5/5",
+        "TV": "7/9"
+      },
+      "duree_s": 50.4,
+      "echecs": [
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "passe l ambilight en mode lounge",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "signature",
+        "consigne_onoff"
+      ],
+      "reussis": 16,
+      "reussis_strict": 12,
+      "cas": 21,
+      "taux": 0.7619,
+      "score_pondere": 76,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "4/5",
+        "TV": "6/9"
+      },
+      "duree_s": 49.6,
+      "echecs": [
+        "allume la tv",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "allume la lumiere chevet",
+        "arrete le cast"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "signature",
+        "deux_exemples"
+      ],
+      "reussis": 18,
+      "reussis_strict": 15,
+      "cas": 21,
+      "taux": 0.8571,
+      "score_pondere": 86,
+      "par_categorie": {
+        "CATT": "7/7",
+        "HUE": "5/5",
+        "TV": "6/9"
+      },
+      "duree_s": 50.5,
+      "echecs": [
+        "eteins la tele",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "eteins l ambilight"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "consigne_onoff",
+        "deux_exemples"
+      ],
+      "reussis": 14,
+      "reussis_strict": 11,
+      "cas": 21,
+      "taux": 0.6667,
+      "score_pondere": 67,
+      "par_categorie": {
+        "CATT": "6/7",
+        "HUE": "4/5",
+        "TV": "4/9"
+      },
+      "duree_s": 51.8,
+      "echecs": [
+        "allume la tv",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "arrete le cast"
+      ]
+    },
+    {
+      "variantes": [
+        "exemples_cibles",
+        "lexical",
+        "recall8",
+        "carte_mots",
+        "top3_direct",
+        "indice_url",
+        "exemple_par_spec",
+        "poids_rares",
+        "exemple_proche",
+        "signature",
+        "consigne_onoff",
+        "deux_exemples"
+      ],
+      "reussis": 13,
+      "reussis_strict": 10,
+      "cas": 21,
+      "taux": 0.619,
+      "score_pondere": 64,
+      "par_categorie": {
+        "CATT": "5/7",
+        "HUE": "4/5",
+        "TV": "4/9"
+      },
+      "duree_s": 51.8,
+      "echecs": [
+        "allume la tv",
+        "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+        "allume l ambilight",
+        "eteins l ambilight",
+        "passe l ambilight en mode lounge",
+        "allume la lumiere chevet",
+        "caste cette video youtube https://youtu.be/dQw4w9WgXcQ",
+        "arrete le cast"
+      ]
+    }
+  ],
+  "meilleure": {
+    "variantes": [
+      "exemples_cibles",
+      "lexical",
+      "recall8",
+      "carte_mots",
+      "top3_direct",
+      "indice_url",
+      "exemple_par_spec",
+      "poids_rares",
+      "exemple_proche",
+      "signature"
+    ],
+    "reussis": 20,
+    "reussis_strict": 16,
+    "cas": 21,
+    "taux": 0.9524,
+    "score_pondere": 95,
+    "par_categorie": {
+      "CATT": "6/7",
+      "HUE": "5/5",
+      "TV": "9/9"
+    },
+    "duree_s": 48.6,
+    "echecs": [
+      "caste cette video youtube https://youtu.be/dQw4w9WgXcQ"
+    ]
+  },
+  "seuil_atteint": false
+}

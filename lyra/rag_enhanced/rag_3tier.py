@@ -520,6 +520,8 @@ class RAG3Tier:
         # Trier par score DESC
         all_results.sort(key=lambda x: x['score'], reverse=True)
 
+        if "signature" in variantes:
+            all_results = _exp.joindre_signatures(all_results)
         if "lexical" in variantes:
             all_results = _exp.fusion_rrf(all_results, self._lexical().chercher(query, top_k=8))
 

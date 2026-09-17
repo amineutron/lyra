@@ -475,7 +475,9 @@ class Ephaistos:
         if not name_m:
             return doc[:200]
 
-        tool_id = name_m.group(1)
+        # Le bench et le pipeline passent "nom: doc" : sans ce rstrip la spec
+        # compacte devenait "nom:: f()".
+        tool_id = name_m.group(1).rstrip(":")
 
         # Extraire la signature: apres "Signature: " jusqu'au ) terminal avant description
         # Le ) de la signature est suivi d'un espace puis d'une maj ou d'un mot-cle
@@ -525,7 +527,8 @@ class Ephaistos:
             compact_specs = self._boost_spec_order(compact_specs, user_query)
             if "carte_mots" in variantes:
                 compact_specs = _exp.boost_mots(compact_specs, user_query,
-                                                poids_rares="poids_rares" in variantes)
+                                                poids_rares="poids_rares" in variantes,
+                                                cibler_youtube="mots_url" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             if max_specs > 0:
                 compact_specs = compact_specs[:max_specs]
@@ -540,7 +543,9 @@ class Ephaistos:
         exemples_specs = ""
         if "exemple_par_spec" in variantes and specs_pour_index:
             exemples_specs = _exp.exemples_par_spec(
-                list(mcp_specs), [c.split(":")[0].strip() for c in specs_pour_index])
+                list(mcp_specs), [c.split(":")[0].strip() for c in specs_pour_index],
+                requete=user_query if "exemple_proche" in variantes else None,
+                nb=2 if "deux_exemples" in variantes else 1)
 
         prompt = f"""{label}:
 {specs_text}
@@ -554,6 +559,8 @@ class Ephaistos:
             prompt += _exp.CONSIGNE_INDEX
         if "indice_url" in variantes and _exp.contient_url(user_query):
             prompt += _exp.CONSIGNE_URL
+        if "consigne_onoff" in variantes and _exp.verbe_onoff(user_query):
+            prompt += _exp.CONSIGNE_ONOFF
         prompt += "\nJSON:"
 
         system = EPHAISTOS_SYSTEM_PROMPT

@@ -263,7 +263,12 @@ def run_llm_tests(config_path=None):
                 # Appeler EPHAISTOS directement
                 from lyra.utils.toon import toon_encode_specs
                 ephaistos_model = pipeline.config.models.ephaistos.name
-                use_toon = "0.5b" not in ephaistos_model
+                # Les variantes LYRA_EXP agissent sur le chemin des specs
+                # compactes ; avec TOON, analyze() les ignore. Pour comparer les
+                # modeles a configuration egale, pas de TOON des qu'une variante
+                # est active.
+                from lyra.models import ephaistos_exp as _exp
+                use_toon = "0.5b" not in ephaistos_model and not _exp.actives()
                 specs_toon = toon_encode_specs(specs) if use_toon else None
 
                 analysis = pipeline._ephaistos.analyze_with_retry(
@@ -455,7 +460,15 @@ def main() -> None:
 
         total = len(results)
         slug = actifs.get("ephaistos", "defaut").replace(":", "-")
+        # Une mesure prise avec des variantes LYRA_EXP ne remplace pas la
+        # mesure de reference du meme modele : fichier distinct, variantes
+        # enregistrees dans le resultat.
+        from lyra.models import ephaistos_exp as _exp
+        variantes = sorted(_exp.actives())
+        if variantes:
+            slug += "-exp"
         chemin_sortie = ecrire_resultat("modeles", {
+            "variantes": variantes,
             "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
             "cas": total,
             "statuts": dict(statuts),
