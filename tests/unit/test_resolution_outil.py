@@ -131,3 +131,37 @@ class TestContratNoMatch:
         analyse = self._analyse("catt.cast_stop")
         with pytest.raises(AttributeError):
             analyse.no_match = True
+
+
+class TestCatalogueComplet:
+    """Le RAG ne remonte que 5 specs : le catalogue complet sert de recours.
+
+    « arrete le cast » : EPHAISTOS repondait `cast_stop`, ce qui etait juste,
+    mais le RAG proposait cast_dual_stop, cast_resume, cast_status... La bonne
+    reponse etait donc rejetee faute de figurer dans l'echantillon.
+    """
+
+    CATALOGUE = ["fedora.vm_start", "catt.cast_stop", "catt.cast_pause",
+                 "hue.turn_on_light", "denon.volume_down"]
+
+    def test_resolu_par_le_catalogue_quand_absent_des_specs(self):
+        fused = [_spec_3tier("catt.cast_dual_stop"), _spec_3tier("catt.cast_resume")]
+        assert _resoudre_nom_outil("cast_stop", fused, self.CATALOGUE) == "catt.cast_stop"
+
+    def test_les_specs_remontees_restent_prioritaires(self):
+        """Le contexte du RAG prime sur le catalogue global."""
+        fused = [_spec_3tier("catt.cast_pause")]
+        assert _resoudre_nom_outil("cast_pause", fused, self.CATALOGUE) == "catt.cast_pause"
+
+    def test_nom_invente_toujours_refuse(self):
+        fused = [_spec_3tier("catt.cast_resume")]
+        assert _resoudre_nom_outil("stop_cast", fused, self.CATALOGUE) is None
+        assert _resoudre_nom_outil("baisse", fused, self.CATALOGUE) is None
+
+    def test_catalogue_absent_ne_casse_rien(self):
+        fused = [_spec_3tier("catt.cast_pause")]
+        assert _resoudre_nom_outil("cast_pause", fused, None) == "catt.cast_pause"
+        assert _resoudre_nom_outil("cast_stop", fused, []) is None
+
+    def test_nom_complet_verifie_contre_le_catalogue(self):
+        assert _resoudre_nom_outil("catt.cast_stop", [], self.CATALOGUE) == "catt.cast_stop"

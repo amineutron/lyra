@@ -551,10 +551,15 @@ class Pipeline:
         # prefixe serveur manquant ("vm_clone" -> "fedora.vm_clone") et rejeter
         # un nom qu'aucune spec ne porte, plutot que de proposer une action vide.
         if analysis.tool and not analysis.no_match:
-            resolu = _resoudre_nom_outil(analysis.tool, fused)
+            try:
+                catalogue = [o.get("name", "")
+                             for o in (self._hestia.get_available_tools() or [])]
+            except Exception:
+                catalogue = []   # catalogue indisponible : on ne conclut rien
+            resolu = _resoudre_nom_outil(analysis.tool, fused, catalogue)
             if resolu:
                 analysis.tool = resolu
-            elif '.' not in analysis.tool and _noms_outils_disponibles(fused):
+            elif '.' not in analysis.tool and (_noms_outils_disponibles(fused) or catalogue):
                 # Nom court introuvable parmi des candidats CONNUS : EPHAISTOS
                 # l'a invente, on le dit au lieu de faire confirmer du vide.
                 # Sans candidats (RAG mocke, specs precalculees passees
@@ -1291,8 +1296,16 @@ def _noms_outils_disponibles(fused: list) -> list[str]:
     return noms
 
 
-def _resoudre_nom_outil(tool: str, fused: list):
-    """Nom complet de l'outil, ou None si aucune spec remontee ne le porte.
+def _resoudre_nom_outil(tool: str, fused: list, catalogue: list = None):
+    """Nom complet de l'outil, ou None s'il n'existe nulle part.
+
+    Deux viviers, dans cet ordre : les specs remontees par le RAG (le contexte
+    le plus pertinent), puis le catalogue complet des outils MCP. Le second est
+    indispensable : le RAG ne remonte que 5 specs, et il arrive que le bon
+    outil n'en fasse pas partie alors que le modele l'a correctement nomme.
+    « arrete le cast » en est l'exemple : EPHAISTOS repondait `cast_stop`, mais
+    le RAG proposait cast_dual_stop, cast_resume, cast_status... et la reponse
+    juste etait rejetee.
 
     EPHAISTOS renvoie souvent un nom court ("vm_clone" pour "fedora.vm_clone")
     qu'il faut prefixer, et parfois un nom qu'il invente : "stop_cast" au lieu
@@ -1302,12 +1315,12 @@ def _resoudre_nom_outil(tool: str, fused: list):
     """
     if not tool:
         return None
-    disponibles = _noms_outils_disponibles(fused)
-    if tool in disponibles:
-        return tool
-    for nom in disponibles:
-        if nom.endswith("." + tool):
-            return nom
+    for viviers in (_noms_outils_disponibles(fused), list(catalogue or [])):
+        if tool in viviers:
+            return tool
+        for nom in viviers:
+            if nom.endswith("." + tool):
+                return nom
     return None
 
 
