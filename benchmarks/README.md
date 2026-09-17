@@ -134,6 +134,15 @@ RAG muet). Le 2026-09-17 il annoncait 0/21 pour le 0.5b : la methode
 `LLM_FAIL` et le modele etait accuse a tort. Une panne doit interrompre la
 mesure, jamais se deguiser en resultat.
 
+### Le scenario « one-shot pipeline complet » n'est pas exploitable seul
+
+Quatre runs enchaines le 2026-09-17, a configuration egale, ont donne 23,0 s,
+16,1 s, 5,7 s et 16,8 s : la variance depasse tout effet qu'on voudrait y
+lire (chargement des modeles ollama, cache, charge residuelle). Les trois
+autres scenarios sont stables (REPL pret 0,24 s, premiere requete 0,61 s,
+fast-path 3,2-3,5 s). Ne comparer ce scenario qu'en mediane de plusieurs
+runs, machine au repos, et ne jamais en tirer un « avant/apres » sur un run.
+
 ## La boucle d'amelioration (variantes `LYRA_EXP`)
 
 Pour faire monter le score des petits modeles sans changer la production a

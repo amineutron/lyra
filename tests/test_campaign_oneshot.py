@@ -57,7 +57,14 @@ def eval_result(result_tool, result_args, result_pending, expected_tool, mandato
     all_args = dict(result_args or {})
 
     if expected_tool is None:
-        return PASS if result_tool is None else FAIL
+        # Aucune action attendue : soit le pipeline ne propose rien, soit il
+        # propose un outil en ATTENTE d'un argument obligatoire (le pipeline
+        # pose alors une question, rien ne s'execute). "cree un snapshot" sans
+        # nom de VM doit demander la VM ; c'est une clarification, pas une
+        # action. Un outil propose sans argument en attente reste un echec.
+        if result_tool is None:
+            return PASS
+        return PASS if result_pending else FAIL
     if result_tool is None:
         return RULE_MISS
     if not tool_matches(result_tool, expected_tool):
