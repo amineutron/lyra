@@ -35,7 +35,11 @@ Mesure du 2026-09-17 ([source](benchmarks/results/2026-09-17-rtx-3080-ti-regles.
 
 ## Comparaison des modeles (requetes non couvertes par les regles)
 
-21 requetes RULE_MISS passees a EPHAISTOS, mesurees le 2026-09-17 sur NVIDIA GeForce RTX 3080 Ti.
+21 requetes RULE_MISS passees a EPHAISTOS, mesurees le 2026-09-17 sur NVIDIA GeForce RTX 3080 Ti. Ce banc ne couvre que pylips-mcp, catt-mcp et hue-mcp ; fedora-agents et denon-mcp sont mesures par le banc de regles.
+
+### Configuration de reference
+
+Sans variante : le comportement du depot tel quel.
 
 | Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
 |---|---:|---:|---:|---:|
@@ -44,14 +48,43 @@ Mesure du 2026-09-17 ([source](benchmarks/results/2026-09-17-rtx-3080-ti-regles.
 | `qwen2.5-coder:0.5b` | 21 | 5 | 24 % | 66 s |
 | `qwen2.5-coder:7b` | 21 | 6 | 29 % | 736 s |
 
-### Par serveur MCP
-
 | Serveur | Commandes | `llama3.2:1b` | `llama3.2:3b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:7b` |
 |---|---:|---:|---:|---:|---:|
 | catt-mcp | 7 | 3/7 | 3/7 | 3/7 | 4/7 |
 | hue-mcp | 5 | 2/5 | 2/5 | 1/5 | 0/5 |
 | pylips-mcp | 9 | 3/9 | 1/9 | 1/9 | 2/9 |
 
-Ce banc ne couvre que : catt-mcp, hue-mcp, pylips-mcp. Les autres serveurs (fedora-agents, denon-mcp) sont mesures par le banc de regles.
-
 Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json), [`2026-09-17-rtx-3080-ti-llama3.2-3b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-3b-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-modeles.json)
+
+### Avec les variantes retenues par la boucle
+
+`LYRA_EXP` = `carte_mots`, `exemple_par_spec`, `exemple_proche`, `exemples_cibles`, `lexical`, `poids_rares`, `recall8`, `signature`, `top3_direct`. Le score accepte les equivalences declarees du banc.
+
+| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
+|---|---:|---:|---:|---:|
+| `llama3.2:1b` | 21 | 18 | 86 % | 208 s |
+| `llama3.2:3b` | 21 | 18 | 86 % | 185 s |
+| `qwen2.5-coder:0.5b` | 21 | 21 | 100 % | 59 s |
+| `qwen2.5-coder:7b` | 21 | 19 | 90 % | 398 s |
+
+| Serveur | Commandes | `llama3.2:1b` | `llama3.2:3b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:7b` |
+|---|---:|---:|---:|---:|---:|
+| catt-mcp | 7 | 6/7 | 6/7 | 7/7 | 6/7 |
+| hue-mcp | 5 | 5/5 | 5/5 | 5/5 | 5/5 |
+| pylips-mcp | 9 | 7/9 | 7/9 | 9/9 | 8/9 |
+
+Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json)
+
+## Boucle d'amelioration (variantes LYRA_EXP, inactives par defaut)
+
+Modele mesure : `qwen2.5-coder:0.5b`, graine `42`. Le score strict ignore la table d'equivalences du banc (comparable entre iterations).
+
+| Iteration | Configurations | Meilleure configuration | Score | Strict |
+|---:|---:|---|---:|---:|
+| 1 | 17 | `exemples_cibles+dedup` | 9/21 | = |
+| 2 | 17 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+indice_url` | 14/21 | = |
+| 3 | 12 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+indice_url+exemple_par_spec+poids_rares` | 18/21 | 14 |
+| 4 | 12 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+indice_url+exemple_par_spec+poids_rares+exemple_proche+signature` | 20/21 | 16 |
+| 5 | 3 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+exemple_par_spec+poids_rares+exemple_proche+signature` | 21/21 | 18 |
+
+Sources : [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it1-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it1-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it2-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it2-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it3-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it3-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it4-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it4-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it5-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it5-boucle.json)
