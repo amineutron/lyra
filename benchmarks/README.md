@@ -134,6 +134,31 @@ RAG muet). Le 2026-09-17 il annoncait 0/21 pour le 0.5b : la methode
 `LLM_FAIL` et le modele etait accuse a tort. Une panne doit interrompre la
 mesure, jamais se deguiser en resultat.
 
+## Couverture des bancs
+
+Aucun banc ne couvre tous les serveurs. Il faut lire les deux ensemble, et
+savoir ce qu'aucun des deux ne mesure.
+
+| Serveur MCP | Banc de regles (152) | Banc des modeles (21) |
+|---|---:|---:|
+| fedora-agents (VM) | 63 | 0 |
+| fedora-agents (backup) | 35 | 0 |
+| denon-mcp | 16 | 0 |
+| pylips-mcp (TV) | 13 | 9 |
+| hue-mcp | 12 | 5 |
+| catt-mcp | **0** | 7 |
+| cas limites | 13 | 0 |
+
+Deux trous a connaitre :
+
+- **Le banc des modeles ne juge les modeles que sur trois serveurs** (TV, Hue,
+  cast). Un modele peut donc afficher un mauvais score global alors qu'il n'a
+  jamais ete interroge sur les VM ou les sauvegardes, qui representent pourtant
+  98 des 152 commandes du banc de regles.
+- **catt-mcp n'apparait pas du tout dans le banc de regles** : aucune commande
+  de cast n'est couverte par une regle, elles partent toutes au modele. C'est
+  precisement pourquoi les defauts de detection se voyaient d'abord la.
+
 ## Format d'un resultat
 
 ```json

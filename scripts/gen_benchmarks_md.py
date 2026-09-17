@@ -20,6 +20,18 @@ BENCHMARKS = REPO / "benchmarks"
 RESULTS = BENCHMARKS / "results"
 SORTIE = REPO / "BENCHMARKS.md"
 
+# Les bancs nomment les categories par domaine ; le lecteur raisonne par
+# serveur MCP. On traduit une fois ici.
+_MCP_PAR_CATEGORIE = {
+    "TV": "pylips-mcp",
+    "HUE": "hue-mcp",
+    "CATT": "catt-mcp",
+    "DENON": "denon-mcp",
+    "FEDORA": "fedora-agents",
+    "BACKUP": "fedora-agents",
+    "EDGE": "cas limites",
+}
+
 LIBELLES = {
     "oneshot_fast": "One-shot, chemin rapide (regle, sans LLM)",
     "oneshot_full": "One-shot, pipeline complet",
@@ -145,7 +157,33 @@ def section_modeles(lignes: list[str]) -> None:
         duree = mesure.get("duree_s")
         duree_txt = f"{duree:.0f} s" if duree else "—"
         lignes += [f"| `{nom}` | {mesure['cas']} | {reussis} | {taux:.0f} % | {duree_txt} |"]
-    lignes += ["", "Sources : " + ", ".join(
+    # Ventilation par serveur MCP : un score global masque le fait qu'un modele
+    # peut etre bon sur un serveur et nul sur un autre.
+    noms_modeles = list(par_modele)
+    par_mcp: dict[str, dict[str, tuple]] = {}
+    for nom, mesure in par_modele.items():
+        for categorie, statuts in mesure.get("par_categorie", {}).items():
+            mcp = _MCP_PAR_CATEGORIE.get(categorie, categorie)
+            total = sum(statuts.values())
+            par_mcp.setdefault(mcp, {})[nom] = (statuts.get("LLM_PASS", 0), total)
+
+    if par_mcp:
+        lignes += [
+            "",
+            "### Par serveur MCP",
+            "",
+            "| Serveur | Commandes | " + " | ".join(f"`{n}`" for n in noms_modeles) + " |",
+            "|---|---:|" + "---:|" * len(noms_modeles),
+        ]
+        for mcp, scores in sorted(par_mcp.items()):
+            total = next((t for _, t in scores.values()), 0)
+            cellules = " | ".join(f"{scores.get(n, (0, 0))[0]}/{total}" for n in noms_modeles)
+            lignes += [f"| {mcp} | {total} | {cellules} |"]
+        couverts = ", ".join(sorted(par_mcp))
+        lignes += ["", f"Ce banc ne couvre que : {couverts}. Les autres serveurs "
+                       "(fedora-agents, denon-mcp) sont mesures par le banc de regles.", ""]
+
+    lignes += ["Sources : " + ", ".join(
         f"[`{m['_fichier']}`](benchmarks/results/{m['_fichier']})"
         for m in par_modele.values()), ""]
 

@@ -44,4 +44,14 @@ Mesure du 2026-09-17 ([source](benchmarks/results/2026-09-17-rtx-3080-ti-regles.
 | `qwen2.5-coder:0.5b` | 21 | 5 | 24 % | 66 s |
 | `qwen2.5-coder:7b` | 21 | 6 | 29 % | 736 s |
 
+### Par serveur MCP
+
+| Serveur | Commandes | `llama3.2:1b` | `llama3.2:3b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:7b` |
+|---|---:|---:|---:|---:|---:|
+| catt-mcp | 7 | 3/7 | 3/7 | 3/7 | 4/7 |
+| hue-mcp | 5 | 2/5 | 2/5 | 1/5 | 0/5 |
+| pylips-mcp | 9 | 3/9 | 1/9 | 1/9 | 2/9 |
+
+Ce banc ne couvre que : catt-mcp, hue-mcp, pylips-mcp. Les autres serveurs (fedora-agents, denon-mcp) sont mesures par le banc de regles.
+
 Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json), [`2026-09-17-rtx-3080-ti-llama3.2-3b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-3b-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-modeles.json)
