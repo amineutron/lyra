@@ -164,6 +164,21 @@ def handle_cow_choice(
 # Workflow principal vm_clone
 # ---------------------------------------------------------------------------
 
+def _args_connus(analysis, source_vm, new_vm_name) -> dict:
+    """Arguments deja extraits (start, linked...) plus la source et la destination.
+
+    Le tool_call rendu pendant les questions du workflow ne reprenait que
+    source_vm et new_vm_name : "clone X en Y et demarre" perdait start=True
+    pour tout client qui lit tool_call (lyra#21). La pending action, elle,
+    le conservait deja.
+    """
+    return {
+        **{k: v for k, v in analysis.arguments.items() if not k.startswith("_")},
+        "source_vm": source_vm,
+        "new_vm_name": new_vm_name,
+    }
+
+
 def handle_vm_clone_workflow(
     query: str, analysis: "EphaistosAnalysis", ctx: "WorkflowContext"
 ) -> "PipelineResult":
@@ -367,7 +382,7 @@ def handle_vm_clone_workflow(
             query_type=QueryType.ACTION,
             tool_call={
                 "name": analysis.tool,
-                "arguments": {"source_vm": source_vm, "new_vm_name": new_vm_name}
+                "arguments": _args_connus(analysis, source_vm, new_vm_name)
             },
             pending_args=["_user_choice"]
         )
@@ -401,7 +416,7 @@ def handle_vm_clone_workflow(
             query_type=QueryType.ACTION,
             tool_call={
                 "name": analysis.tool,
-                "arguments": {"source_vm": source_vm, "new_vm_name": new_vm_name}
+                "arguments": _args_connus(analysis, source_vm, new_vm_name)
             },
             pending_args=["_linked_choice"]
         )
