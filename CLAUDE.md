@@ -52,7 +52,7 @@ scenes/ironman/  scène cinéma pilotée par la voix (optionnelle)
 intro/           animation d'intro (Manim, chafa)
 prompts/         system_prompt.txt (utilisé par main.py)
 tests/           unit/, integration/, installer/, campagnes
-docs/            user/ (flux de données, outils MCP, tests en VM), dev/ (architecture, RAG), archive/ (notes de phases)
+docs/            user/ (flux de données, outils MCP, tests en VM), dev/ (architecture, RAG, BOUCLE_AMELIORATION.md : méthode de bench itérative), archive/ (notes de phases)
 ```
 
 ## Sécurité : ce que le code garantit

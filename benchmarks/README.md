@@ -152,7 +152,10 @@ Le **socle** est l'acquis des iterations precedentes : on mesure ce que chaque
 idee ajoute a ce qui marche deja. Les paires comptent : `lexical` seul degrade
 le score, et forme la meilleure paire avec `top3_direct`.
 
-Trois regles tirees des trois premieres iterations :
+La methode complete, avec ses pieges et ce qu'elle ne garantit pas :
+[`docs/dev/BOUCLE_AMELIORATION.md`](../docs/dev/BOUCLE_AMELIORATION.md).
+
+Trois regles tirees des cinq iterations :
 
 - **Ecrire l'hypothese d'impact avant de mesurer**, puis la confronter au
   chiffre. Une idee infirmee (routage, index) vaut autant qu'une idee confirmee.
