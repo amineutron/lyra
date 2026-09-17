@@ -105,7 +105,9 @@ def parse_signature_params(signature_str: str) -> tuple[list[str], list[str]]:
 
 def extract_use_cases(document: str) -> str:
     """Extrait la section 'Utilise pour' du document."""
-    match = re.search(r'Utilise pour:\s*([^E]+?)(?:Exemples:|Variantes:|Cat[eé]gorie:|$)', document, re.DOTALL)
+    # `[^E]+?` (avant 2026-09-17) ne traversait pas un E majuscule : "LEDs", "TV"
+    # faisaient echouer l'extraction entiere (38 outils sur 88 sans paraphrase).
+    match = re.search(r'Utilise pour:\s*(.+?)\s*(?:Exemples:|Variantes:|Cat[eé]gorie:|$)', document, re.DOTALL)
     if match:
         return match.group(1).strip().replace('\n', ' ')
     return ""

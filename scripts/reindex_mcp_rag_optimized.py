@@ -372,6 +372,7 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
 
         # HUE
         "turn_on_light": [
+            "allume la lampe de chevet", "allume la lumière du chevet",
             "allumer une lumière", "activer une lampe", "éclairer",
             "allume la lumière", "allume la lampe", "mets la lumière", "éclaire la pièce",
         ],
@@ -392,20 +393,24 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
             "éteindre les lampes", "toutes les lumières éteintes",
         ],
         "set_brightness": [
+            "mets la lumière plus forte", "rends la lampe plus faible",
             "régler la luminosité", "changer l'intensité lumineuse",
             "règle la luminosité", "ajuste la lumière", "baisse la luminosité",
             "monte la luminosité",
         ],
         "set_group_brightness": [
+            "mets les lumières plus fortes", "rends les lumières plus faibles",
             "régler la luminosité d'un groupe", "tamiser les lumières",
             "baisse les lumières", "tamise les lumières", "monte les lumières",
             "règle l'intensité des lumières", "baisser les lumières",
         ],
         "set_color_rgb": [
+            "mets une ambiance bleue", "mets la lampe en bleu",
             "changer la couleur d'une lumière", "mettre en rouge/bleu/vert",
             "change la couleur", "mets en rouge", "mets en bleu", "lumière colorée",
         ],
         "set_group_color_rgb": [
+            "mets une ambiance bleue dans la pièce", "mets les lumières en bleu",
             "changer la couleur d'un groupe", "mettre les lumières en rouge",
             "change la couleur des lumières", "mets les lumières en bleu",
         ],
@@ -420,6 +425,7 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
             "allume la télévision", "mets la télé en marche", "enclenche la TV",
         ],
         "tv.power_off": [
+            "mets la télé en veille", "mets la TV en veille",
             "éteindre la télé", "couper la TV",
             "éteins la télévision", "coupe la télé", "arrête la TV",
         ],
@@ -446,6 +452,10 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
         "tv.ambilight_off": [
             "désactiver l'ambilight", "éteindre les LEDs",
             "éteins l'ambilight", "coupe le rétroéclairage",
+        ],
+        "tv.ambilight_mode": [
+            "changer le mode ambilight", "passe l'ambilight en mode lounge",
+            "mets l'ambilight en mode vidéo", "ambilight mode audio",
         ],
         "tv.ambilight_color": [
             "changer la couleur de l'ambilight",
