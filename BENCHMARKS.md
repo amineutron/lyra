@@ -32,3 +32,16 @@ Mesure du 2026-09-17 ([source](benchmarks/results/2026-09-17-rtx-3080-ti-regles.
 | FEDORA | 63 | 63 |
 | HUE | 12 | 12 |
 | TV | 13 | 13 |
+
+## Comparaison des modeles (requetes non couvertes par les regles)
+
+21 requetes RULE_MISS passees a EPHAISTOS, mesurees le 2026-09-17 sur NVIDIA GeForce RTX 3080 Ti.
+
+| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
+|---|---:|---:|---:|---:|
+| `llama3.2:1b` | 21 | 8 | 38 % | 395 s |
+| `llama3.2:3b` | 21 | 6 | 29 % | 495 s |
+| `qwen2.5-coder:0.5b` | 21 | 5 | 24 % | 66 s |
+| `qwen2.5-coder:7b` | 21 | 6 | 29 % | 736 s |
+
+Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json), [`2026-09-17-rtx-3080-ti-llama3.2-3b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-3b-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-modeles.json)

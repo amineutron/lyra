@@ -1,0 +1,51 @@
+{
+  "mesure": "modeles",
+  "date": "2026-09-17",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "10071d1",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
+  "cas": 21,
+  "statuts": {
+    "LLM_FAIL": 13,
+    "LLM_PASS": 8
+  },
+  "taux_pass": 0.381,
+  "score_pondere": 38,
+  "par_categorie": {
+    "CATT": {
+      "LLM_PASS": 3,
+      "LLM_FAIL": 4
+    },
+    "HUE": {
+      "LLM_PASS": 2,
+      "LLM_FAIL": 3
+    },
+    "TV": {
+      "LLM_FAIL": 6,
+      "LLM_PASS": 3
+    }
+  },
+  "modeles_mesures": {
+    "ephaistos": "llama3.2:1b",
+    "lyra": "llama3.2:1b"
+  },
+  "duree_s": 395.2,
+  "duree_inclut_initialisation": true
+}

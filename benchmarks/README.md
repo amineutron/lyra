@@ -103,6 +103,16 @@ Deux precisions importantes pour lire ces chiffres :
   l'utilisateur rencontre au quotidien -- en usage reel, les regles repondent
   avant lui.
 
+### Ce qui est fiable dans la comparaison de modeles
+
+Les **scores** sont des verdicts pris a graine fixe : ils ne dependent pas de
+la charge de la machine et deux executions donnent le meme resultat.
+
+Les **durees** sont indicatives. Celles publiees le 2026-09-17 ont ete prises a
+des niveaux de charge differents (de 3,5 a 9,8 de charge moyenne), la machine
+enchainant les campagnes. Pour comparer des durees entre modeles, rejouer les
+quatre bancs d'affilee sur une machine au repos.
+
 ### Reproductibilite : fixer la graine
 
 Les modeles ne sont pas deterministes. Sans graine, le meme jeu de 7 requetes
