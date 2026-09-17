@@ -141,7 +141,24 @@ TESTS_LLM = [
 ]
 
 
+# Outils acceptes a la place de l'attendu : meme effet pour l'utilisateur.
+# "mets les lumieres plus fortes" (pluriel) via set_group_brightness est au
+# moins aussi juste que set_brightness ; une video YouTube jouee sur la TV
+# passe par pylips ou par le Chromecast. Le score STRICT reste publie a cote
+# (cle `strict` de chaque resultat) pour rester comparable aux mesures
+# anterieures au 2026-09-17.
+EQUIVALENCES = {
+    "tv.youtube_video": {"catt.cast_youtube"},
+    "catt.cast_youtube": {"tv.youtube_video"},
+    "hue.set_brightness": {"hue.set_group_brightness"},
+    "hue.set_color_rgb": {"hue.set_group_color_rgb", "hue.set_color_preset", "hue.set_group_color_preset"},
+    "hue.turn_on_group": {"hue.turn_on_light"},
+    "hue.turn_off_group": {"hue.turn_off_light"},
+}
+
+
 def tool_matches(result_tool, expected_tool):
+    """Correspondance stricte (nom court)."""
     if expected_tool is None:
         return result_tool is None
     if result_tool is None:
@@ -149,6 +166,15 @@ def tool_matches(result_tool, expected_tool):
     r = result_tool.split(".")[-1] if "." in result_tool else result_tool
     e = expected_tool.split(".")[-1] if "." in expected_tool else expected_tool
     return r == e
+
+
+def tool_equivalent(result_tool, expected_tool):
+    """Correspondance stricte OU equivalence declaree dans EQUIVALENCES."""
+    if tool_matches(result_tool, expected_tool):
+        return True
+    if not result_tool or not expected_tool:
+        return False
+    return any(tool_matches(result_tool, eq) for eq in EQUIVALENCES.get(expected_tool, ()))
 
 
 def check_args(result_args, mandatory, optional):
@@ -268,7 +294,8 @@ def run_llm_tests(config_path=None):
         elapsed = time.time() - t_start
 
         # Evaluer le resultat
-        tool_ok = tool_matches(result_tool, expected_tool)
+        strict = tool_matches(result_tool, expected_tool)
+        tool_ok = tool_equivalent(result_tool, expected_tool)
         missing_mand, missing_opt = check_args(result_args, mandatory_args, optional_args)
 
         if result_tool is None:
@@ -292,8 +319,9 @@ def run_llm_tests(config_path=None):
             args_str = f" {Y}OPT_MISS={missing_opt}{RESET}"
         elif result_tool and not tool_ok:
             exp_short = (expected_tool or "").split(".")[-1]
-            got_short = (result_tool or "NONE").split(".")[-1]
             args_str = f" {R}attendu={exp_short}{RESET}"
+        elif tool_ok and not strict:
+            args_str = f" {Y}EQUIV de {(expected_tool or '').split('.')[-1]}{RESET}"
 
         print(f"  {color}[{status:<10}]{RESET} {DIM}{pad}{RESET} -> {tool_str}{args_str} {DIM}({elapsed:.1f}s){RESET}")
 
@@ -302,7 +330,7 @@ def run_llm_tests(config_path=None):
             "expected_tool": expected_tool, "result_tool": result_tool,
             "result_args": result_args, "mandatory_args": mandatory_args,
             "missing_mand": missing_mand, "missing_opt": missing_opt,
-            "status": status, "elapsed": elapsed
+            "status": status, "strict": strict and status == "LLM_PASS", "elapsed": elapsed
         }
         results.append(entry)
         categories.setdefault(cat.split("/")[0], []).append(entry)

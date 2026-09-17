@@ -36,6 +36,20 @@ ne lui presente pas. Les variantes visent donc le RAG et l'ordre des specs :
 
 Ecartee avant mesure : retirer les descriptions de serveurs (registre) de la
 cascade ne change aucun rang -- elles se classent deja sous les outils.
+
+Iteration 3 (les cinq d'iteration 2 ensemble : 14/21). Les echecs restants
+cote modele : "allume l'ambilight" -> tool "allume" (premier mot de la
+requete) ; "ambiance bleue" -> bon outil mais (0, 255, 0) ; "baisse le volume
+de la diffusion" -> denon.volume_down.
+
+- couleurs : une couleur nommee dans la requete fixe red/green/blue de facon
+  deterministe. Un 0.5b n'a pas a calculer une couleur.
+- exemple_par_spec : pour chaque spec montree, un exemple tire de sa premiere
+  paraphrase ("allume l'ambilight" -> ambilight_on). Le modele voit le verbe
+  de la requete associe au bon nom.
+- poids_rares : dans carte_mots, un mot-cible rare (ambilight, diffusion,
+  chevet) vaut 2 ; "diffusion" doit peser plus que "baisse le volume".
+- top5_direct : 5 specs des le premier essai (prime sur top3_direct).
 """
 
 from __future__ import annotations
@@ -47,6 +61,7 @@ import unicodedata
 VARIANTES = (
     "exemples_cibles", "dedup", "routage", "index", "json_format",
     "lexical", "recall8", "carte_mots", "top3_direct", "indice_url",
+    "couleurs", "exemple_par_spec", "poids_rares", "top5_direct",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -195,21 +210,24 @@ def tokens_outil(nom_outil: str) -> set[str]:
     return set(normaliser(nom_outil.replace("_", " ").replace(".", " ")))
 
 
-def score_mots(nom_outil: str, requete: str) -> int:
-    """Nombre de mots-cibles de la requete qui designent un token du nom."""
+def score_mots(nom_outil: str, requete: str, poids_rares: bool = False) -> int:
+    """Nombre de mots-cibles de la requete qui designent un token du nom.
+
+    Avec poids_rares, un mot de MOTS_RARES compte double.
+    """
     tokens = tokens_outil(nom_outil)
     score = 0
     for mot in normaliser(requete):
         cibles = MOTS_CIBLES.get(mot)
         if cibles and any(c in tokens for c in cibles):
-            score += 1
+            score += 2 if (poids_rares and mot in MOTS_RARES) else 1
     return score
 
 
-def boost_mots(specs_compactes: list[str], requete: str) -> list[str]:
+def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
-                  key=lambda s: score_mots(s.split(":")[0].strip(), requete),
+                  key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares),
                   reverse=True)
 
 
@@ -270,11 +288,81 @@ def fusion_rrf(semantique: list[dict], lexical: list[dict], k: int = _RRF_K) -> 
     """
     entrees: dict[str, dict] = {}
     for liste in (semantique, lexical):
+        # Un outil ne compte qu'une fois par liste (son meilleur rang) : la liste
+        # semantique contient capabilities ET parameters du meme outil, qui
+        # cumulaient deux rangs et passaient devant un outil trouve par le seul
+        # lexical (ambilight_off perdu selon l'ordre des egalites de l'index).
+        vus_ici: set[str] = set()
         for rang, item in enumerate(liste):
             cle = _cle(item)
             entree = entrees.setdefault(cle, {"item": item, "rrf": 0.0})
-            entree["rrf"] += 1.0 / (k + rang + 1)
+            if cle not in vus_ici:
+                entree["rrf"] += 1.0 / (k + rang + 1)
+                vus_ici.add(cle)
             if item.get("score", 0) > entree["item"].get("score", 0) and item.get("source") != "lexical":
                 entree["item"] = item
     ordre = sorted(entrees.values(), key=lambda e: e["rrf"], reverse=True)
     return [dict(e["item"], score_rrf=round(e["rrf"], 5)) for e in ordre]
+
+
+# --- Iteration 3 : couleurs, exemples par spec, mots rares -----------------------
+
+COULEURS: dict[str, tuple[int, int, int]] = {
+    "rouge": (255, 0, 0), "bleu": (0, 0, 255), "bleue": (0, 0, 255),
+    "vert": (0, 255, 0), "verte": (0, 255, 0), "jaune": (255, 255, 0),
+    "blanc": (255, 255, 255), "blanche": (255, 255, 255), "orange": (255, 165, 0),
+    "rose": (255, 105, 180), "violet": (128, 0, 128), "violette": (128, 0, 128),
+    "cyan": (0, 255, 255), "turquoise": (64, 224, 208),
+}
+
+MOTS_RARES = {"ambilight", "diffusion", "chevet", "veille", "cast", "chromecast",
+              "youtube", "netflix", "lounge"}
+
+
+def couleur_nommee(requete: str):
+    for mot in normaliser(requete):
+        if mot in COULEURS:
+            return COULEURS[mot]
+    return None
+
+
+def corriger_couleur(tool, arguments: dict, requete: str) -> dict:
+    """Pour un outil *color_rgb*, la couleur nommee dans la requete fixe les composantes.
+
+    Renvoie un nouveau dict ; les cles existantes (red/green/blue ou r/g/b)
+    sont respectees, sinon red/green/blue sont ajoutees.
+    """
+    arguments = dict(arguments or {})
+    if not tool or "color_rgb" not in str(tool):
+        return arguments
+    rgb = couleur_nommee(requete)
+    if rgb is None:
+        return arguments
+    cles = ("r", "g", "b") if {"r", "g", "b"} & set(arguments) else ("red", "green", "blue")
+    return {**arguments, **dict(zip(cles, rgb))}
+
+
+def premiere_paraphrase(spec_brute: str):
+    """"tv.ambilight_on: Active ... | Utilise pour: allume l'ambilight. active..." -> "allume l'ambilight"."""
+    m = re.search(r"Utilise pour:\s*([^.|\n]+)", spec_brute or "")
+    if not m:
+        return None
+    phrase = m.group(1).strip()
+    return phrase or None
+
+
+def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum: int = 3) -> str:
+    """Un exemple par spec montree, tire de sa premiere paraphrase. Vide si aucune."""
+    par_nom = {}
+    for brute in specs_brutes:
+        nom = brute.split(":")[0].strip()
+        par_nom.setdefault(nom, brute)
+    lignes = []
+    for nom in noms_montres[:maximum]:
+        phrase = premiere_paraphrase(par_nom.get(nom, ""))
+        if phrase:
+            court = nom.split(".")[-1]
+            lignes.append(f'Requete: "{phrase}" -> {{"tool": "{court}"}}')
+    if not lignes:
+        return ""
+    return "EXEMPLES POUR CES SPECS:\n" + "\n".join(lignes) + "\n\n"

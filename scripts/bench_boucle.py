@@ -59,6 +59,8 @@ def mesurer(config: tuple[str, ...], modele: str) -> dict:
         raise RuntimeError(f"{len(pannes)} panne(s) technique(s) avec {config or 'defaut'}")
     total = len(results)
     ok = sum(1 for r in results if r["status"] == "LLM_PASS")
+    # Score strict (sans la table d'equivalences du banc) : comparable aux iterations 1 et 2.
+    ok_strict = sum(1 for r in results if r.get("strict", r["status"] == "LLM_PASS"))
     par_cat = {}
     for r in results:
         cat = r["cat"].split("/")[0]
@@ -68,6 +70,7 @@ def mesurer(config: tuple[str, ...], modele: str) -> dict:
     return {
         "variantes": list(config),
         "reussis": ok,
+        "reussis_strict": ok_strict,
         "cas": total,
         "taux": round(ok / total, 4) if total else 0.0,
         "score_pondere": score_pondere,
@@ -118,17 +121,17 @@ def main() -> None:
             lignes.append({"variantes": list(config), "panne": str(exc)})
             continue
         lignes.append(mesure)
-        print(f" {mesure['reussis']}/{mesure['cas']} ({mesure['taux']*100:.0f} %)  {mesure['duree_s']:.0f} s")
+        print(f" {mesure['reussis']}/{mesure['cas']} ({mesure['taux']*100:.0f} %, strict {mesure['reussis_strict']})  {mesure['duree_s']:.0f} s")
 
     valides = [ligne for ligne in lignes if "panne" not in ligne]
     valides.sort(key=lambda ligne: (-ligne["taux"], ligne["duree_s"]))
     meilleur = valides[0] if valides else None
 
-    print(f"\n{'Configuration':34s} {'Score':>8s} {'Taux':>6s} {'Duree':>7s}")
+    print(f"\n{'Configuration':34s} {'Score':>8s} {'Taux':>6s} {'Strict':>6s} {'Duree':>7s}")
     for ligne in valides:
         etiquette = "+".join(ligne["variantes"]) if ligne["variantes"] else "(defaut)"
         print(f"{etiquette:34s} {ligne['reussis']:>4d}/{ligne['cas']:<3d} "
-              f"{ligne['taux']*100:>5.0f}% {ligne['duree_s']:>6.0f}s")
+              f"{ligne['taux']*100:>5.0f}% {ligne['reussis_strict']:>6d} {ligne['duree_s']:>6.0f}s")
 
     chemin = ecrire_resultat("boucle", {
         "iteration": args.iteration,

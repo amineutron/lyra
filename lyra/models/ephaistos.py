@@ -524,7 +524,8 @@ class Ephaistos:
             # Re-trier: mettre en premier la spec qui correspond au verbe d'action
             compact_specs = self._boost_spec_order(compact_specs, user_query)
             if "carte_mots" in variantes:
-                compact_specs = _exp.boost_mots(compact_specs, user_query)
+                compact_specs = _exp.boost_mots(compact_specs, user_query,
+                                                poids_rares="poids_rares" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             if max_specs > 0:
                 compact_specs = compact_specs[:max_specs]
@@ -536,10 +537,15 @@ class Ephaistos:
             specs_text = "\n".join(compact_specs)
             label = "SPECS MCP"
 
+        exemples_specs = ""
+        if "exemple_par_spec" in variantes and specs_pour_index:
+            exemples_specs = _exp.exemples_par_spec(
+                list(mcp_specs), [c.split(":")[0].strip() for c in specs_pour_index])
+
         prompt = f"""{label}:
 {specs_text}
 
-REQUETE: {user_query}"""
+{exemples_specs}REQUETE: {user_query}"""
 
         if known_args:
             prompt += f"\nARGS CONNUS: {json.dumps(known_args, ensure_ascii=False)}"
@@ -577,6 +583,8 @@ REQUETE: {user_query}"""
         analysis = self._parse_response(response.content)
         if "index" in variantes and specs_pour_index:
             analysis.tool = _exp.resoudre_index(analysis.tool, specs_pour_index)
+        if "couleurs" in variantes:
+            analysis.arguments = _exp.corriger_couleur(analysis.tool, analysis.arguments, user_query)
         return analysis
 
     def _parse_response(self, content: str) -> EphaistosAnalysis:
@@ -815,6 +823,8 @@ Valide les arguments. Reponds en JSON:
                 from . import ephaistos_exp as _exp
                 if "top3_direct" in _exp.actives():
                     use_max_specs = 3
+                if "top5_direct" in _exp.actives():
+                    use_max_specs = 5
 
             analysis = self.analyze(user_query, mcp_specs, specs_toon=use_toon, max_specs=use_max_specs)
 

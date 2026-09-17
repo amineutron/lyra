@@ -175,3 +175,70 @@ class TestFusionRRF:
     def test_liste_lexicale_vide(self):
         sem = [self._item("a", 0.9)]
         assert exp.fusion_rrf(sem, [])[0]["metadata"]["tool_name"] == "a"
+
+
+# --- Iteration 3 --------------------------------------------------------------
+
+class TestCouleurs:
+    def test_bleu_fixe_les_composantes(self):
+        r = exp.corriger_couleur("hue.set_group_color_rgb", {"red": 0, "green": 255, "blue": 0}, "mets une ambiance bleue")
+        assert (r["red"], r["green"], r["blue"]) == (0, 0, 255)
+
+    def test_cles_courtes_respectees(self):
+        r = exp.corriger_couleur("set_color_rgb", {"r": 1, "g": 2, "b": 3}, "mets en rouge")
+        assert (r["r"], r["g"], r["b"]) == (255, 0, 0) and "red" not in r
+
+    def test_sans_couleur_nommee_inchange(self):
+        args = {"red": 1, "green": 2, "blue": 3}
+        assert exp.corriger_couleur("set_color_rgb", args, "change la couleur") == args
+
+    def test_outil_sans_couleur_inchange(self):
+        assert exp.corriger_couleur("tv.power_on", {}, "mets la tv en bleu") == {}
+
+    def test_ne_mute_pas_l_entree(self):
+        args = {"red": 1}
+        exp.corriger_couleur("set_color_rgb", args, "vert")
+        assert args == {"red": 1}
+
+
+class TestExemplesParSpec:
+    BRUTES = ["tv.ambilight_on: Active l'Ambilight | Utilise pour: allume l'ambilight. active les LEDs",
+              "tv.power_on: Allume la TV",
+              "hue.turn_on_light: Turn on | Utilise pour: allumer une lumière. allume la lampe"]
+
+    def test_un_exemple_par_spec_avec_paraphrase(self):
+        r = exp.exemples_par_spec(self.BRUTES, ["tv.ambilight_on", "tv.power_on", "hue.turn_on_light"])
+        assert 'Requete: "allume l\'ambilight" -> {"tool": "ambilight_on"}' in r
+        assert 'Requete: "allumer une lumière" -> {"tool": "turn_on_light"}' in r
+        assert "power_on" not in r
+
+    def test_vide_sans_paraphrase(self):
+        assert exp.exemples_par_spec(self.BRUTES, ["tv.power_on"]) == ""
+
+    def test_premiere_paraphrase(self):
+        assert exp.premiere_paraphrase(self.BRUTES[0]) == "allume l'ambilight"
+        assert exp.premiere_paraphrase("x: rien") is None
+
+
+class TestPoidsRares:
+    def test_diffusion_pese_plus_que_le_verbe(self):
+        specs = ["denon.volume_down: volume_down()", "catt.cast_volume: cast_volume(level)"]
+        # sans poids : volume (+1) pour les deux, diffusion (+1) pour cast_volume -> deja devant
+        assert exp.score_mots("catt.cast_volume", "baisse le volume de la diffusion", poids_rares=True) == 3
+        assert exp.score_mots("denon.volume_down", "baisse le volume de la diffusion", poids_rares=True) == 1
+        assert exp.boost_mots(specs, "baisse le volume de la diffusion", poids_rares=True)[0].startswith("catt.")
+
+    def test_sans_option_comportement_inchange(self):
+        assert exp.score_mots("catt.cast_volume", "baisse le volume de la diffusion") == 2
+
+
+class TestFusionRRFUnRangParListe:
+    def _item(self, nom, score, source="capabilities"):
+        return {"document": f"doc {nom}", "metadata": {"tool_name": nom}, "score": score, "source": source}
+
+    def test_un_doublon_semantique_ne_cumule_pas(self):
+        """a (caps rang 1 + params rang 3) ne doit pas depasser b (rang 2 semantique + rang 1 lexical)."""
+        sem = [self._item("a", 0.9), self._item("b", 0.8), self._item("a", 0.7, "parameters")]
+        lex = [self._item("b", 0.5, "lexical")]
+        r = exp.fusion_rrf(sem, lex)
+        assert r[0]["metadata"]["tool_name"] == "b"
