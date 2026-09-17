@@ -8,6 +8,7 @@ Premier match gagne.
 from typing import Optional
 
 from .backup import detect as _backup
+from .catt import detect as _catt
 from .denon import detect as _denon
 from .hue import detect as _hue
 from .ironman import detect as _ironman
@@ -20,6 +21,9 @@ from .vm import detect as _vm
 _REGISTRY = [
     _ironman,        # IRONMAN: triggers exacts "je suis iron man" etc. (priorite max, aucune collision)
     _backup,         # BACKUP: verifie AVANT vm (collision "verifie backup" / "verifie VM")
+    _catt,           # CATT: cast_stop/pause/resume/youtube/volume/seek. AVANT vm, sinon
+                     # "arrete la diffusion" tombe sur vm_stop. Le module existait mais
+                     # n'etait pas enregistre : aucune commande de cast n'avait de regle.
     _vm,             # VM: clone, copy, verify, start, stop, destroy, exec, snapshot, status, export, import
     _tracking,       # TRACKING: dashboard, taches en cours
     _hue,            # HUE: scenes AVANT vm_start ("lance la scene X" sinon vm_start)
