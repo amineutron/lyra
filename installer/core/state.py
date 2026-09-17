@@ -7,7 +7,7 @@ from typing import Any
 
 from .osdetect import Distro
 
-DEFAULT_LYRA_REPO = "git@github.com:marouabah/lyra.git"
+DEFAULT_LYRA_REPO = "git@github.com:amineutron/lyra.git"
 
 
 @dataclass(frozen=True)

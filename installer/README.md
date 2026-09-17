@@ -67,7 +67,7 @@ installer/
 ## Ajouter un MCP au catalogue
 
 Une entree YAML dans `core/catalog.yaml` suffit : id, repo (prive
-marouabah/...), dest, runtime (python|node), fields (les champs `secret:
+amineutron/...), dest, runtime (python|node), fields (les champs `secret:
 true` vont dans secrets.yaml chmod 600, jamais dans config.yaml),
 config/server (blocs injectes dans config.yaml), check (http|tcp),
 extra_steps (npm_build, sudoers, hue_pairing, pip_catt). `sudoers` copie

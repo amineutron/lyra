@@ -17,10 +17,15 @@ def test_chargement_et_ids_uniques(catalog):
     assert {"fedora", "hue", "tv", "denon", "catt", "tracking"} <= set(ids)
 
 
-def test_repos_ssh_marouabah(catalog):
+def test_repos_ssh_amineutron(catalog):
+    """Le catalogue doit cloner les depots qui recoivent les commits.
+
+    marouabah/* ne fait plus que rediriger vers amineutron/*, et pour hue la
+    redirection aboutit meme sur amineutron/hue-mcp-old (copie d'aout).
+    """
     for m in catalog:
         if m.repo:
-            assert m.repo.startswith("git@github.com:marouabah/"), m.id
+            assert m.repo.startswith("git@github.com:amineutron/"), m.id
 
 
 def test_aucune_ip_en_dur(catalog):
