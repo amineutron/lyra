@@ -680,3 +680,14 @@ class TestIteration11:
         specs = ["tv.ambilight_mode: ambilight_mode(mode: string)"]
         assert exp.completer_arguments("ambilight_mode", {}, specs, "passe l'ambilight en mode lounge") == {"mode": "lounge_light"}
         assert exp.completer_arguments("ambilight_mode", {"mode": "manual"}, specs, "mode lounge")["mode"] == "manual"
+
+
+class TestSignatureApresFusion:
+    def test_un_item_lexical_recoit_aussi_sa_signature(self):
+        """Regression : ambilight_mode remonte par BM25 seul arrivait sans signature (mode jamais rempli)."""
+        item = {"source": "lexical", "metadata": {"tool_name": "tv.ambilight_mode"},
+                "document": "Change le mode Ambilight | Utilise pour: changer le mode ambilight", "score": 0.3}
+        r = exp.joindre_signatures_depuis([item], {"tv.ambilight_mode": "ambilight_mode(mode: string)"})
+        assert r[0]["document"].endswith("Signature: ambilight_mode(mode: string)")
+        specs = ["tv.ambilight_mode: ambilight_mode(mode: string)"]
+        assert exp.completer_arguments("ambilight_mode", {}, specs, "passe l ambilight en mode lounge") == {"mode": "lounge_light"}

@@ -540,12 +540,14 @@ class RAG3Tier:
         # Trier par score DESC
         all_results.sort(key=lambda x: x['score'], reverse=True)
 
-        if "signature_complete" in variantes:
-            all_results = _exp.joindre_signatures_depuis(all_results, self._signatures())
-        elif "signature" in variantes:
+        if "signature" in variantes and "signature_complete" not in variantes:
             all_results = _exp.joindre_signatures(all_results)
         if "lexical" in variantes:
             all_results = _exp.fusion_rrf(all_results, self._lexical().chercher(query, top_k=8))
+        if "signature_complete" in variantes:
+            # Apres la fusion : un outil remonte par le seul index lexical arrivait
+            # sans signature, et ses arguments (mode, level...) restaient vides.
+            all_results = _exp.joindre_signatures_depuis(all_results, self._signatures())
 
         # Retourner top_k
         return all_results[:top_k]
