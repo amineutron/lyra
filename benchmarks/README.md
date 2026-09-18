@@ -192,12 +192,15 @@ LYRA_SEED=42 .venv/bin/python tests/test_campaign_llm.py --ephaistos qwen2.5-cod
 LYRA_SEED=42 .venv/bin/python scripts/bench_boucle.py --jeu hors_regles --socle ... --variantes ...
 ```
 
-Ordre de grandeur mesure le 2026-09-18 : la configuration qui faisait 21/21
-sur le premier banc fait 13/51 ici ; quatre iterations l'amenent a 26/51 (51 %),
-et sur ce jeu la taille du modele compte (3b 63 %, 7b 71 %). Les deux jeux se
-lisent ensemble : optimiser l'un coute a l'autre (la configuration hors regles
-fait 19/21 sur le premier banc). Une phrase du jeu ne doit jamais entrer dans
-`triggers_map` ni dans les regles ; des mots, oui (un lexique se complete).
+Trajet mesure les 2026-09-18 et 19 : la configuration qui faisait 21/21 sur le
+premier banc faisait 13/51 ici ; onze iterations (donnees, lexique, cartes de
+tri, outil impose quand le tri est net) l'amenent a **51/51**, et la
+configuration finale garde **21/21** sur le premier banc. Les deux jeux se
+lisent ensemble : optimiser l'un coute a l'autre, et la derniere iteration a
+servi a les reconcilier. Une phrase du jeu ne doit jamais entrer dans
+`triggers_map` ni dans les regles ; des mots, oui (un lexique se complete) --
+mais un jeu qui a servi a onze iterations n'est plus une mesure de
+generalisation : un troisieme jeu tenu a l'ecart est la prochaine mesure.
 
 ## Couverture des bancs
 

@@ -153,7 +153,21 @@ la meme boucle le 2026-09-18 :
   sur le premier banc. Decider sur les deux jeux ensemble, et verifier ce que
   les regles interceptent en usage reel.
 - **Sur du langage libre, la taille du modele compte** (0.5b 51 %, 3b 63 %,
-  7b 71 %) alors qu'elle ne comptait pas sur le premier banc.
+  7b 71 %) alors qu'elle ne comptait pas sur le premier banc -- jusqu'a ce que
+  le tri des specs soit assez sur pour decider a la place du modele.
+- **Quand le tri est net, ne pas demander au modele.** Mesure sans modele : le
+  rang 1 du tri, quand son score est net, etait le bon outil 27 fois sur 27.
+  `outil_force_si_net` impose alors l'outil et laisse au modele les arguments et
+  les cas ambigus. Avec les cartes de tri, c'est ce qui a mene le 0.5b de 39 a
+  51/51 -- et le 1.5b ne faisait pas mieux que le 0.5b a configuration egale.
+- **Le vote n'aide pas un modele systematique.** Trois appels sur trois ordres
+  de specs ont degrade le score : le 0.5b n'est pas bruite, il est attire par
+  le meme voisin a chaque fois. Corriger ce qu'on lui montre vaut mieux que
+  le reinterroger.
+- **Un jeu qui a servi a onze iterations n'est plus une mesure de
+  generalisation**, meme sans copie de phrase : les cartes ont ete completees
+  en regardant ses echecs. Le troisieme jeu, tenu a l'ecart, dira ce que vaut
+  le 72/72.
 
 ## A industrialiser
 
