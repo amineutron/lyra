@@ -629,3 +629,23 @@ class TestIteration8:
         avec = exp.inserer_bloc_denon("=== EXEMPLES CATT (x) ===")
         sans = exp.inserer_bloc_denon("=== EXEMPLES CATT (x) ===", sans_veille=True)
         assert "mets l'ampli en veille" in avec and "mets l'ampli en veille" not in sans and "eteins l'ampli" in sans
+
+
+class TestCartesFines:
+    OPTS = dict(poids_rares=True, equipements=True, relatifs=True, catt=True, son=True, tri=True, fines=True)
+
+    def test_le_verbe_decide_pas_lecture(self):
+        specs = ["catt.cast_status: cast_status()", "catt.cast_resume: cast_resume()", "catt.cast_pause: cast_pause()", "catt.cast_stop: cast_stop()"]
+        assert exp.boost_mots(specs, "fige la lecture du chromecast", **self.OPTS)[0].startswith("catt.cast_pause")
+        assert exp.boost_mots(specs, "le chromecast, coupe la lecture", **self.OPTS)[0].startswith("catt.cast_stop")
+        assert exp.boost_mots(specs, "ou en est la lecture sur le chromecast", **self.OPTS)[0].startswith("catt.cast_status")
+
+    def test_teinte_chaude_vise_temperature(self):
+        specs = ["hue.set_group_color_rgb: f()", "hue.set_group_color_preset: f()", "hue.set_color_temperature: f()"]
+        assert exp.boost_mots(specs, "mets une teinte chaude dans le salon", **self.OPTS)[0].startswith("hue.set_color_temperature")
+
+    def test_couper_le_son_vise_mute_on(self):
+        specs = ["denon.power_off: power_off()", "denon.mute_off: mute_off()", "denon.mute_on: mute_on()"]
+        tries = exp.boost_mots(specs, "coupe le son de l'ampli", **self.OPTS)
+        assert tries[0].startswith("denon.mute_on")
+        assert exp.score_net(tries, "coupe le son de l'ampli", **self.OPTS)   # net = apres tri, comme dans analyze()

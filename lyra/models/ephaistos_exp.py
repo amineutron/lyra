@@ -178,6 +178,15 @@ des que le tri est net.
 - carte_son : retestee sur ce socle ; "remets le son" -> mute_off.
 - denon_sans_veille : le bloc Denon dit "eteins l'ampli" au lieu de "mets
   l'ampli en veille", dont la forme attirait "mets l'ampli en route".
+
+Iteration 9 hors regles (47/51). Les quatre echecs ne sont pas "nets" :
+"lecture" annule le verbe (fige, coupe) ; "chaude" ne cible rien et "salon"
+pousse vers le groupe ; "coupe" cible off et mute_off gagne a la place de
+mute_on.
+
+- cartes_fines : "lecture" ne cible rien quand un verbe d'action est la ;
+  fige/gele et chaude/froide comptent double ; teinte/chaude/froide ->
+  temperature ; "coupe le son" -> on (mute_on), exclusif.
 """
 
 from __future__ import annotations
@@ -199,7 +208,7 @@ VARIANTES = (
     "entites_vm", "lexique_langue", "exemples_denon", "double_passe",
     "boost_sur_etendue", "top1_si_net", "args_par_regex", "resolution_floue",
     "spec_description", "outil_force_si_net", "vote_rotation", "verification_binaire",
-    "cartes_tri", "denon_sans_veille",
+    "cartes_tri", "denon_sans_veille", "cartes_fines",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -315,6 +324,11 @@ MOTS_TRI: dict[str, tuple[str, ...]] = {
     "purge": ("clean",), "recentes": ("clean",), "anciennes": ("clean",),
     "lecture": ("status", "resume"),
 }
+MOTS_FINS: dict[str, tuple[str, ...]] = {
+    "teinte": ("color", "temperature"), "chaude": ("temperature",), "chaud": ("temperature",),
+    "froide": ("temperature",), "froid": ("temperature",),
+}
+_RARES_FINS = {"fige", "gele", "chaude", "froide", "chaud", "froid"}
 
 # Quantite relative -> direction (variante mots_relatifs)
 MOTS_RELATIFS: dict[str, tuple[str, ...]] = {
@@ -439,7 +453,7 @@ def question_d_etat(requete: str) -> bool:
 def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False, tri: bool = False) -> int:
+               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -461,16 +475,22 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = ("mute",) if any(v in mots for v in _VERBES_MUTE) else ("volume",)
         if tri and mot in MOTS_TRI:
             cibles = tuple(cibles or ()) + MOTS_TRI[mot]
+        if fines and mot in MOTS_FINS:
+            cibles = tuple(cibles or ()) + MOTS_FINS[mot]
+        if fines and mot == "lecture" and any(v in mots for v in VERBES_CATT):
+            cibles = None   # "fige la lecture" : le verbe decide, pas "lecture"
         if catt and mot in VERBES_CATT:
             cibles = tuple(cibles or ()) + VERBES_CATT[mot]
         if son and mot in ("remets", "remettre", "remet", "rends") and "son" in mots:
             cibles = ("off",)   # "remets le son" = fin du mute : ni resume ni on (exclusif, apres les autres cartes)
+        if fines and son and mot in ("coupe", "couper", "coupez") and "son" in mots:
+            cibles = ("on",)    # "coupe le son" = mute_on, pas mute_off ni power_off
         if equipements and mot in MOTS_EQUIPEMENTS:
             cibles = tuple(cibles or ()) + MOTS_EQUIPEMENTS[mot]
         if relatifs and mot in MOTS_RELATIFS:
             cibles = tuple(cibles or ()) + MOTS_RELATIFS[mot]
         if cibles and any(c in tokens for c in cibles):
-            score += 2 if (poids_rares and mot in MOTS_RARES) else 1
+            score += 2 if (poids_rares and (mot in MOTS_RARES or (fines and mot in _RARES_FINS))) else 1
     if catt and "dual" in tokens and not (set(mots) & _MOTS_DUAL):
         score -= 1
     if etat and question_d_etat(requete) and any(c in tokens for c in _CIBLES_ETAT):
@@ -483,11 +503,11 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
 def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False, tri: bool = False) -> list[str]:
+               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(nom_de_spec(s), requete, poids_rares,
-                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri),
+                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri, fines),
                   reverse=True)
 
 
