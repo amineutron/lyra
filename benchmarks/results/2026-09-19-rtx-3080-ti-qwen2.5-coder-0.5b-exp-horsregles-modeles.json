@@ -1,0 +1,87 @@
+{
+  "mesure": "modeles",
+  "date": "2026-09-19",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "4aa0bfe",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "jeu": "hors_regles",
+  "variantes": [
+    "args_par_regex",
+    "arguments_contradictoires",
+    "carte_equipements",
+    "carte_mots",
+    "carte_son",
+    "cartes_fines",
+    "cartes_tri",
+    "denon_sans_veille",
+    "double_passe",
+    "entites_vm",
+    "exemple_par_spec",
+    "exemple_proche",
+    "exemples_cibles",
+    "exemples_denon",
+    "expansion",
+    "lexical",
+    "lexique",
+    "lexique_langue",
+    "mots_relatifs",
+    "mots_url",
+    "outil_force_si_net",
+    "poids_rares",
+    "recall8",
+    "resolution_arguments",
+    "signature",
+    "signature_complete",
+    "spec_description",
+    "top3_direct",
+    "verbes_catt",
+    "verbes_tri",
+    "verification_binaire"
+  ],
+  "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
+  "cas": 51,
+  "statuts": {
+    "LLM_PASS": 51
+  },
+  "taux_pass": 1.0,
+  "score_pondere": 100,
+  "par_categorie": {
+    "CATT": {
+      "LLM_PASS": 10
+    },
+    "DENON": {
+      "LLM_PASS": 10
+    },
+    "FEDORA": {
+      "LLM_PASS": 11
+    },
+    "HUE": {
+      "LLM_PASS": 10
+    },
+    "TV": {
+      "LLM_PASS": 10
+    }
+  },
+  "modeles_mesures": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "duree_s": 381.4,
+  "duree_inclut_initialisation": true
+}
