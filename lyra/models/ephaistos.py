@@ -555,12 +555,14 @@ class Ephaistos:
                                                 son="carte_son" in variantes,
                                                 catt="verbes_catt" in variantes,
                                                 etat="question_etat" in variantes,
-                                                vm="nom_de_vm" in variantes)
+                                                vm="nom_de_vm" in variantes,
+                                                tri="cartes_tri" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             outil_force = None
             net = (max_specs and not skip_specs
                    and _exp.score_net(compact_specs, requete_tri, poids_rares=True, equipements=True,
-                                      relatifs=True, catt=True))
+                                      relatifs=True, catt=True, son="carte_son" in variantes,
+                                      tri="cartes_tri" in variantes))
             if "top1_si_net" in variantes and net:
                 max_specs = 1
             if "outil_force_si_net" in variantes and net:
@@ -606,7 +608,7 @@ class Ephaistos:
 
         system = EPHAISTOS_SYSTEM_PROMPT
         if "exemples_denon" in variantes:
-            system = _exp.inserer_bloc_denon(system)
+            system = _exp.inserer_bloc_denon(system, sans_veille="denon_sans_veille" in variantes)
         if "exemples_cibles" in variantes and specs_pour_index:
             system = _exp.exemples_cibles(system, _exp.serveurs_des_specs(specs_pour_index))
         if "routage" in variantes:

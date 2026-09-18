@@ -167,6 +167,17 @@ vide, indiscernable de "cast_status()" autrement que par son nom.
 - vote_rotation : trois appels, memes specs dans trois ordres, vote.
 - verification_binaire : si la reponse differe du rang 1, un second appel
   avec deux specs (rang 1, reponse) tranche.
+
+Iteration 8 hors regles (39/51 ; 11 confusions). Dans 9 cas sur 12 le bon
+outil n'est pas au rang 1 du tri parce qu'un mot decisif ("noire",
+"route", "bascule", "chambre", "ou en est", "espace disque", "allege") n'est
+dans aucune carte de tri -- et outil_force_si_net a une precision de 100 %
+des que le tri est net.
+
+- cartes_tri : ces mots entrent dans les cartes de tri (MOTS_TRI).
+- carte_son : retestee sur ce socle ; "remets le son" -> mute_off.
+- denon_sans_veille : le bloc Denon dit "eteins l'ampli" au lieu de "mets
+  l'ampli en veille", dont la forme attirait "mets l'ampli en route".
 """
 
 from __future__ import annotations
@@ -188,6 +199,7 @@ VARIANTES = (
     "entites_vm", "lexique_langue", "exemples_denon", "double_passe",
     "boost_sur_etendue", "top1_si_net", "args_par_regex", "resolution_floue",
     "spec_description", "outil_force_si_net", "vote_rotation", "verification_binaire",
+    "cartes_tri", "denon_sans_veille",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -285,6 +297,24 @@ _MARQUES_QUESTION = {"?", "est-il", "est-elle", "tourne", "encore", "quel", "que
 _CIBLES_ETAT = ("status", "state", "info", "get", "list", "scan")
 
 _NOM_DE_VM = re.compile(r"\b[a-z]+-\d{1,3}\b")
+
+# Mots decisifs du tri manquants (variante cartes_tri). Des mots de langue
+# courante, jamais une phrase du jeu ; chacun a fait rater un tri en it7.
+MOTS_TRI: dict[str, tuple[str, ...]] = {
+    "noir": ("off",), "noire": ("off",), "rien": ("off",), "eteint": ("off",),
+    "route": ("on", "start"), "marche": ("on", "start"),
+    "bascule": ("toggle",), "inverse": ("toggle",), "toggle": ("toggle",),
+    "chambre": ("group",), "salon": ("group",), "bureau": ("group",), "cuisine": ("group",),
+    "piece": ("group",), "lumieres": ("group", "lights"),
+    "quelles": ("all", "list", "get"), "quels": ("all", "list", "get"), "maison": ("all",),
+    "ou": ("status",),
+    "cinema": ("scene",), "saines": ("verify",), "saine": ("verify",), "integrite": ("verify",),
+    "comme": ("scan", "list", "apps"), "chez": ("scan",),
+    "espace": ("exec",), "disque": ("exec",), "df": ("exec",), "commande": ("exec",),
+    "allege": ("clean",), "vire": ("clean",), "nettoie": ("clean",), "menage": ("clean",),
+    "purge": ("clean",), "recentes": ("clean",), "anciennes": ("clean",),
+    "lecture": ("status", "resume"),
+}
 
 # Quantite relative -> direction (variante mots_relatifs)
 MOTS_RELATIFS: dict[str, tuple[str, ...]] = {
@@ -409,7 +439,7 @@ def question_d_etat(requete: str) -> bool:
 def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False) -> int:
+               etat: bool = False, vm: bool = False, tri: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -429,8 +459,12 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = None
         if son and mot == "son":
             cibles = ("mute",) if any(v in mots for v in _VERBES_MUTE) else ("volume",)
+        if tri and mot in MOTS_TRI:
+            cibles = tuple(cibles or ()) + MOTS_TRI[mot]
         if catt and mot in VERBES_CATT:
             cibles = tuple(cibles or ()) + VERBES_CATT[mot]
+        if son and mot in ("remets", "remettre", "remet", "rends") and "son" in mots:
+            cibles = ("off",)   # "remets le son" = fin du mute : ni resume ni on (exclusif, apres les autres cartes)
         if equipements and mot in MOTS_EQUIPEMENTS:
             cibles = tuple(cibles or ()) + MOTS_EQUIPEMENTS[mot]
         if relatifs and mot in MOTS_RELATIFS:
@@ -449,11 +483,11 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
 def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False) -> list[str]:
+               etat: bool = False, vm: bool = False, tri: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
-                  key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares,
-                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm),
+                  key=lambda s: score_mots(nom_de_spec(s), requete, poids_rares,
+                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri),
                   reverse=True)
 
 
@@ -767,10 +801,10 @@ Specs: power_on(), power_off()
 Reponse:
 {"tool": "power_on", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "allumer = ON"}
 
-Requete: "mets l'ampli en veille"
+Requete: "__VEILLE__"
 Specs: power_on(), power_off()
 Reponse:
-{"tool": "power_off", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "veille = OFF"}
+{"tool": "power_off", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "eteindre = OFF"}
 
 Requete: "coupe le son de l'ampli"
 Specs: mute_on(), mute_off(), volume_down()
@@ -817,14 +851,19 @@ def _synonymes_du_dictionnaire():
     return _expander
 
 
-def inserer_bloc_denon(system_prompt: str) -> str:
-    """Ajoute le bloc d'exemples Denon avant le bloc CATT (ou a la fin)."""
+def inserer_bloc_denon(system_prompt: str, sans_veille: bool = False) -> str:
+    """Ajoute le bloc d'exemples Denon avant le bloc CATT (ou a la fin).
+
+    sans_veille : l'exemple power_off dit "eteins l'ampli" ; "mets l'ampli en
+    veille" attirait "mets l'ampli en route" par sa forme (variante denon_sans_veille).
+    """
     if "=== EXEMPLES DENON" in system_prompt:
         return system_prompt
+    bloc = EXEMPLES_DENON.replace("__VEILLE__", "eteins l'ampli" if sans_veille else "mets l'ampli en veille")
     marque = "=== EXEMPLES CATT"
     if marque in system_prompt:
-        return system_prompt.replace(marque, EXEMPLES_DENON + marque, 1)
-    return system_prompt + "\n" + EXEMPLES_DENON
+        return system_prompt.replace(marque, bloc + marque, 1)
+    return system_prompt + "\n" + bloc
 
 
 def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,

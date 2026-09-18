@@ -603,3 +603,29 @@ class TestIteration7:
         a = EphaistosAnalysis(tool="x", arguments={}, missing_args=[], confidence=0.9, reasoning="", raw_response="")
         a.rang1 = "catt.cast_pause"
         assert a.rang1 == "catt.cast_pause"
+
+
+class TestIteration8:
+    OPTS = dict(poids_rares=True, equipements=True, relatifs=True, catt=True, tri=True)
+
+    def test_noire_et_image_tranchent_pour_screen_off(self):
+        specs = ["tv.volume_down: volume_down()", "tv.volume_up: volume_up()", "tv.screen_off: screen_off()"]
+        assert exp.boost_mots(specs, "la tele, image noire mais garde le son", **self.OPTS)[0].startswith("tv.screen_off")
+
+    def test_route_tranche_pour_power_on(self):
+        specs = ["denon.power_off: power_off()", "denon.power_on: power_on()"]
+        assert exp.score_net(specs, "mets l'ampli en route", **self.OPTS) is False  # egalite : l'ordre RAG
+        assert exp.boost_mots(specs, "mets l'ampli en route", **self.OPTS)[0].startswith("denon.power_on")
+
+    def test_bascule_tranche_pour_toggle(self):
+        specs = ["denon.mute_on: mute_on()", "denon.mute_toggle: mute_toggle()"]
+        assert exp.boost_mots(specs, "bascule le mute de l'ampli", **self.OPTS)[0].startswith("denon.mute_toggle")
+
+    def test_remets_le_son_vise_mute_off(self):
+        specs = ["denon.mute_on: mute_on()", "denon.mute_off: mute_off()", "denon.volume_down: volume_down()"]
+        assert exp.boost_mots(specs, "remets le son sur l'ampli", son=True, **self.OPTS)[0].startswith("denon.mute_off")
+
+    def test_bloc_denon_sans_veille(self):
+        avec = exp.inserer_bloc_denon("=== EXEMPLES CATT (x) ===")
+        sans = exp.inserer_bloc_denon("=== EXEMPLES CATT (x) ===", sans_veille=True)
+        assert "mets l'ampli en veille" in avec and "mets l'ampli en veille" not in sans and "eteins l'ampli" in sans
