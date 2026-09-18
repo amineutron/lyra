@@ -529,10 +529,17 @@ class Ephaistos:
             label = "SPECS MCP (TOON)"
         else:
             compact_specs = [self._compact_spec(s) for s in mcp_specs]
+            # Variante boost_sur_etendue : le tri et l'exemple proche lisent la
+            # requete etendue de synonymes (lexique_langue n'agissait que cote RAG)
+            requete_tri = user_query
+            if "boost_sur_etendue" in variantes:
+                requete_tri = _exp.etendre_requete(user_query, lexique="lexique" in variantes,
+                                                   entites="entites_vm" in variantes,
+                                                   langue="lexique_langue" in variantes)
             # Re-trier: mettre en premier la spec qui correspond au verbe d'action
-            compact_specs = self._boost_spec_order(compact_specs, user_query)
+            compact_specs = self._boost_spec_order(compact_specs, requete_tri)
             if "carte_mots" in variantes:
-                compact_specs = _exp.boost_mots(compact_specs, user_query,
+                compact_specs = _exp.boost_mots(compact_specs, requete_tri,
                                                 poids_rares="poids_rares" in variantes,
                                                 cibler_youtube="mots_url" in variantes,
                                                 equipements="carte_equipements" in variantes,
@@ -542,6 +549,10 @@ class Ephaistos:
                                                 etat="question_etat" in variantes,
                                                 vm="nom_de_vm" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
+            if ("top1_si_net" in variantes and max_specs and not skip_specs
+                    and _exp.score_net(compact_specs, requete_tri, poids_rares=True, equipements=True,
+                                       relatifs=True, catt=True)):
+                max_specs = 1
             compact_specs = _exp.fenetre(compact_specs, max_specs, skip_specs)
             if "dedup" in variantes:
                 compact_specs = _exp.dedupliquer(compact_specs)
@@ -555,7 +566,8 @@ class Ephaistos:
         if "exemple_par_spec" in variantes and specs_pour_index:
             exemples_specs = _exp.exemples_par_spec(
                 list(mcp_specs), [c.split(":")[0].strip() for c in specs_pour_index],
-                requete=user_query if "exemple_proche" in variantes else None,
+                requete=(requete_tri if "boost_sur_etendue" in variantes else user_query)
+                if "exemple_proche" in variantes else None,
                 nb=2 if "deux_exemples" in variantes else 1,
                 description_si_vide="exemple_description" in variantes,
                 discriminant="exemple_discriminant" in variantes)
@@ -612,6 +624,11 @@ class Ephaistos:
                                                         specs_pour_index, user_query)
         if "arguments_contradictoires" in variantes and specs_pour_index:
             analysis.tool = _exp.basculer_par_arguments(analysis.tool, analysis.arguments, specs_pour_index)
+        if "resolution_floue" in variantes and specs_pour_index:
+            analysis.tool = _exp.resoudre_flou(analysis.tool, specs_pour_index)
+        if "args_par_regex" in variantes and specs_pour_index:
+            analysis.arguments = _exp.completer_arguments(analysis.tool, analysis.arguments,
+                                                          specs_pour_index, user_query)
         return analysis
 
     def _parse_response(self, content: str) -> EphaistosAnalysis:

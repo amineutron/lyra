@@ -549,3 +549,31 @@ class TestNomDeSpec:
     def test_resolution_ne_deforme_pas_un_nom_connu_sans_prefixe(self):
         """Regression : DEFAUT actif dans les tests d'EPHAISTOS, "generate_diagram" devenait "generate_diagram(topic?"."""
         assert exp.resoudre_par_arguments("generate_diagram", {"topic": "VPN"}, ["generate_diagram(topic?: string)"], "x") == "generate_diagram"
+
+
+class TestIteration6:
+    def test_score_net(self):
+        specs = ["catt.cast_pause: cast_pause()", "catt.cast_info: cast_info()"]
+        assert exp.score_net(specs, "fige la lecture du chromecast pause", equipements=True, catt=True)
+        assert not exp.score_net(["catt.cast_info: cast_info()", "catt.cast_pause: cast_pause()"], "le chromecast", equipements=True)
+
+    def test_completer_arguments_vm(self):
+        specs = ["fedora.vm_clone: vm_clone(source_vm: string, new_vm_name: string)", "fedora.vm_exec: vm_exec(vm_name: string, command: string)"]
+        a = exp.completer_arguments("vm_clone", {}, specs, "je veux un double de preprod-01, nomme preprod-02")
+        assert a == {"source_vm": "preprod-01", "new_vm_name": "preprod-02"}
+        b = exp.completer_arguments("vm_exec", {"path": "/tmp"}, specs, "regarde l'espace disque dans sandbox-02 avec df -h")
+        assert b["vm_name"] == "sandbox-02" and b["command"] == "df -h" and b["path"] == "/tmp"
+
+    def test_completer_ne_remplace_pas(self):
+        specs = ["fedora.vm_stop: vm_stop(vm_name: string)"]
+        assert exp.completer_arguments("vm_stop", {"vm_name": "x"}, specs, "coupe sandbox-02")["vm_name"] == "x"
+
+    def test_resolution_floue(self):
+        specs = ["hue.set_group_color_rgb: f()", "hue.refresh_lights: f()", "hue.get_all_lights: f()"]
+        assert exp.resoudre_flou("get_lights", specs) == "hue.get_all_lights"
+        assert exp.resoudre_flou("zzz", specs) == "hue.set_group_color_rgb"
+        assert exp.resoudre_flou("refresh_lights", specs) == "refresh_lights"
+
+    def test_lexique_relie_remets_et_regarde(self):
+        assert "mute" in exp.etendre_requete("remets le son sur l'ampli", langue=True).split()
+        assert "youtube" in exp.etendre_requete("regarde-moi ca sur le chromecast", langue=True).split()

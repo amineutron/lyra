@@ -140,6 +140,20 @@ d'exemples Denon ; une seule tentative a 3 specs.
 - exemples_denon : un bloc d'exemples Denon dans le prompt systeme.
 - double_passe : second appel sur les specs 4 a 6 ; la reponse au meilleur
   score de mots l'emporte.
+
+Iteration 6 hors regles (34/51). Classement des 17 echecs : 11 confusions
+entre voisins du meme serveur (cast_info, power_off), 2 arguments, 2 noms
+inventes, 2 absents. lexique_langue n'agissait que cote RAG : la requete
+etendue ne servait ni au tri des specs ni au choix de l'exemple.
+
+- boost_sur_etendue : tri des specs et exemple proche calcules sur la
+  requete etendue ("fige ... pause" compte pour cast_pause).
+- top1_si_net : si la spec de rang 1 a un score de mots net (>= 2 et
+  strictement superieur au rang 2), le modele ne voit qu'elle.
+- args_par_regex : vm_name/source_vm depuis le nom de machine de la
+  requete, command depuis le segment apres "avec".
+- resolution_floue : nom inconnu -> spec montree dont le nom partage le
+  plus de tokens, sinon rang 1.
 """
 
 from __future__ import annotations
@@ -159,6 +173,7 @@ VARIANTES = (
     "exemple_description", "signature_complete", "resolution_arguments", "carte_son",
     "exemple_discriminant", "question_etat", "nom_de_vm", "verbes_catt", "arguments_contradictoires",
     "entites_vm", "lexique_langue", "exemples_denon", "double_passe",
+    "boost_sur_etendue", "top1_si_net", "args_par_regex", "resolution_floue",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -709,7 +724,8 @@ LEXIQUE_LANGUE: dict[str, tuple[str, ...]] = {
     "recentes": ("anciens", "nettoyer"),
     "console": ("game", "source", "entree"), "cran": ("volume", "monter"),
     "lien": ("url",), "balance": ("caster", "envoyer", "diffuser"),
-    "fige": ("pause",), "gele": ("pause",), "remets": ("reprendre", "reactiver"),
+    "fige": ("pause",), "gele": ("pause",), "remets": ("reprendre", "reactiver", "desactiver", "mute"),
+    "regarde": ("regarder", "video", "youtube"),
     "passe": ("joue", "lecture", "media"), "moment": ("cours", "actuel"),
     "regarder": ("lancer", "application", "app"), "veux": ("lance",),
     "repere": ("identifier", "clignoter"), "clignoter": ("identifier", "alert"),
@@ -935,3 +951,56 @@ def choisir_par_score(premiere, seconde, requete: str):
     def score(a):
         return score_mots(str(a.tool), requete, poids_rares=True, equipements=True, relatifs=True, catt=True)
     return seconde if score(seconde) > score(premiere) else premiere
+
+
+# --- Iteration 6 hors regles ---------------------------------------------------------
+
+def score_net(specs_compactes: list[str], requete: str, **options) -> bool:
+    """Vrai si la spec de rang 1 a un score de mots >= 2 et strictement superieur au rang 2."""
+    if not specs_compactes:
+        return False
+    s1 = score_mots(nom_de_spec(specs_compactes[0]), requete, **options)
+    s2 = score_mots(nom_de_spec(specs_compactes[1]), requete, **options) if len(specs_compactes) > 1 else 0
+    return s1 >= 2 and s1 > s2
+
+
+def completer_arguments(tool, arguments: dict, specs_compactes: list[str], requete: str) -> dict:
+    """Arguments deductibles de la requete quand la signature les attend (variante args_par_regex).
+
+    vm_name / source_vm : le premier nom de machine ("sandbox-02") ; new_vm_name :
+    le second ; command : le segment apres "avec" (ou ":"). Ne remplace jamais
+    une valeur deja presente.
+    """
+    arguments = dict(arguments or {})
+    if not tool:
+        return arguments
+    court = str(tool).split(".")[-1].lower()
+    params = next((_parametres_de(sp) for sp in specs_compactes if nom_de_spec(sp).split(".")[-1].lower() == court), set())
+    machines = _MOTIF_VM.findall((requete or "").lower())
+    if machines:
+        for cle in ("vm_name", "source_vm"):
+            if cle in params and not arguments.get(cle):
+                arguments[cle] = machines[0]
+        if "new_vm_name" in params and not arguments.get("new_vm_name") and len(machines) > 1:
+            arguments["new_vm_name"] = machines[1]
+    if "command" in params and not arguments.get("command"):
+        m = re.search(r"\b(?:avec|via|commande)\s+(.+)$|:\s*(.+)$", requete or "")
+        if m:
+            arguments["command"] = (m.group(1) or m.group(2)).strip()
+    return arguments
+
+
+def resoudre_flou(tool, specs_compactes: list[str]):
+    """Nom inconnu -> spec montree dont le nom partage le plus de tokens ; a defaut, rang 1."""
+    if not tool or not specs_compactes:
+        return tool
+    noms = [nom_de_spec(sp) for sp in specs_compactes]
+    court = str(tool).split(".")[-1].lower()
+    if any(n.split(".")[-1].lower() == court for n in noms):
+        return tool
+    mots = set(court.split("_"))
+    scores = [len(mots & set(n.split(".")[-1].lower().split("_"))) for n in noms]
+    meilleur = max(scores)
+    if meilleur > 0 and scores.count(meilleur) == 1:
+        return noms[scores.index(meilleur)]
+    return noms[0]
