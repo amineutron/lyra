@@ -287,11 +287,15 @@ _RRF_K = 60
 # json_format, couleurs, mots_url, exemple_description, carte_son,
 # question_etat, nom_de_vm (neutres) ; routage, index, consigne_onoff,
 # deux_exemples, top5_direct, indice_url, exemple_discriminant (degradent).
+# Etendue le 2026-09-18 apres les iterations 5 et 6 hors regles : 35/51 avec
+# le 0.5b, 38/51 avec qwen2.5:1.5b, 44/51 avec qwen2.5:3b (la meme
+# configuration). Infirmees : boost_sur_etendue, resolution_floue, top1_si_net.
 DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
           "carte_equipements", "mots_relatifs", "expansion", "lexique",
           "resolution_arguments", "signature_complete", "verbes_catt",
-          "arguments_contradictoires")
+          "arguments_contradictoires", "entites_vm", "lexique_langue",
+          "exemples_denon", "double_passe", "args_par_regex")
 
 
 def actives() -> set[str]:
