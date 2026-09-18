@@ -43,37 +43,37 @@
   "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
   "cas": 51,
   "statuts": {
-    "LLM_FAIL": 25,
-    "LLM_PASS": 26
+    "LLM_FAIL": 19,
+    "LLM_PASS": 32
   },
-  "taux_pass": 0.5098,
-  "score_pondere": 51,
+  "taux_pass": 0.6275,
+  "score_pondere": 63,
   "par_categorie": {
     "CATT": {
       "LLM_FAIL": 5,
       "LLM_PASS": 5
     },
     "DENON": {
-      "LLM_PASS": 7,
-      "LLM_FAIL": 3
+      "LLM_PASS": 8,
+      "LLM_FAIL": 2
     },
     "FEDORA": {
-      "LLM_PASS": 3,
-      "LLM_FAIL": 8
-    },
-    "HUE": {
-      "LLM_PASS": 5,
+      "LLM_PASS": 6,
       "LLM_FAIL": 5
     },
+    "HUE": {
+      "LLM_PASS": 6,
+      "LLM_FAIL": 4
+    },
     "TV": {
-      "LLM_FAIL": 4,
-      "LLM_PASS": 6
+      "LLM_FAIL": 3,
+      "LLM_PASS": 7
     }
   },
   "modeles_mesures": {
-    "ephaistos": "qwen2.5-coder:0.5b",
+    "ephaistos": "llama3.2:3b",
     "lyra": "llama3.2:1b"
   },
-  "duree_s": 170.9,
+  "duree_s": 594.6,
   "duree_inclut_initialisation": true
 }

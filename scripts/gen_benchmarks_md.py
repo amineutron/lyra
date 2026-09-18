@@ -179,9 +179,13 @@ def section_modeles(lignes: list[str]) -> None:
     # une entree par modele et par jeu de variantes : la mesure la plus recente
     reference: dict[str, dict] = {}
     avec_variantes: dict[str, dict] = {}
+    hors_regles: dict[str, dict] = {}
     for mesure in sorted(lot, key=lambda d: d["date"]):
         nom = mesure.get("modeles_mesures", {}).get("ephaistos", "?")
-        (avec_variantes if mesure.get("variantes") else reference)[nom] = mesure
+        if mesure.get("jeu", "modeles") == "hors_regles":
+            hors_regles[nom] = mesure
+        else:
+            (avec_variantes if mesure.get("variantes") else reference)[nom] = mesure
 
     premier = next(iter((reference or avec_variantes).values()))
     lignes += [
@@ -201,6 +205,12 @@ def section_modeles(lignes: list[str]) -> None:
         variantes = ", ".join(f"`{v}`" for v in next(iter(avec_variantes.values()))["variantes"])
         _tableau_modeles(lignes, avec_variantes, "### Avec les variantes retenues par la boucle",
                          f"`LYRA_EXP` = {variantes}. Le score accepte les equivalences declarees du banc.")
+    if hors_regles:
+        variantes = ", ".join(f"`{v}`" for v in next(iter(hors_regles.values())).get("variantes", []))
+        _tableau_modeles(lignes, hors_regles, "### Jeu « hors regles » (formulations inedites)",
+                         "51 formulations inedites sur les 5 serveurs (`tests/cases_hors_regles.py`), "
+                         "tenues a l'ecart des regles et des paraphrases indexees : la mesure de "
+                         f"generalisation. `LYRA_EXP` = {variantes}.")
 
 
 def section_boucle(lignes: list[str]) -> None:

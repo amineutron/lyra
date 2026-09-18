@@ -75,6 +75,27 @@ Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json`](benchmarks/results
 
 Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json)
 
+### Jeu « hors regles » (formulations inedites)
+
+51 formulations inedites sur les 5 serveurs (`tests/cases_hors_regles.py`), tenues a l'ecart des regles et des paraphrases indexees : la mesure de generalisation. `LYRA_EXP` = `arguments_contradictoires`, `carte_equipements`, `carte_mots`, `exemple_par_spec`, `exemple_proche`, `exemples_cibles`, `expansion`, `lexical`, `lexique`, `mots_relatifs`, `poids_rares`, `recall8`, `resolution_arguments`, `signature`, `signature_complete`, `top3_direct`, `verbes_catt`.
+
+| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
+|---|---:|---:|---:|---:|
+| `llama3.2:1b` | 51 | 23 | 45 % | 1487 s |
+| `llama3.2:3b` | 51 | 32 | 63 % | 595 s |
+| `qwen2.5-coder:0.5b` | 51 | 26 | 51 % | 171 s |
+| `qwen2.5-coder:7b` | 51 | 36 | 71 % | 1138 s |
+
+| Serveur | Commandes | `llama3.2:1b` | `llama3.2:3b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:7b` |
+|---|---:|---:|---:|---:|---:|
+| catt-mcp | 10 | 3/10 | 5/10 | 5/10 | 8/10 |
+| denon-mcp | 10 | 7/10 | 8/10 | 7/10 | 6/10 |
+| fedora-agents | 11 | 4/11 | 6/11 | 3/11 | 8/11 |
+| hue-mcp | 10 | 6/10 | 6/10 | 5/10 | 5/10 |
+| pylips-mcp | 10 | 3/10 | 7/10 | 6/10 | 9/10 |
+
+Sources : [`2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json)
+
 ## Boucle d'amelioration (variantes LYRA_EXP, inactives par defaut)
 
 Modele mesure : `qwen2.5-coder:0.5b`, graine `42`. Le score strict ignore la table d'equivalences du banc (comparable entre iterations).
@@ -82,9 +103,13 @@ Modele mesure : `qwen2.5-coder:0.5b`, graine `42`. Le score strict ignore la tab
 | Iteration | Configurations | Meilleure configuration | Score | Strict |
 |---:|---:|---|---:|---:|
 | 1 | 17 | `exemples_cibles+dedup` | 9/21 | = |
+| 1 | 6 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+exemple_par_spec+poids_rares+exemple_proche+signature+carte_equipements+mots_relatifs+expansion+lexique` | 14/51 | 14 |
 | 2 | 17 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+indice_url` | 14/21 | = |
+| 2 | 6 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+exemple_par_spec+poids_rares+exemple_proche+signature+carte_equipements+mots_relatifs+expansion+lexique+exemple_description+signature_complete+resolution_arguments+carte_son` | 21/51 | 21 |
 | 3 | 12 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+indice_url+exemple_par_spec+poids_rares` | 18/21 | 14 |
+| 3 | 7 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+exemple_par_spec+poids_rares+exemple_proche+signature+carte_equipements+mots_relatifs+expansion+lexique+resolution_arguments+signature_complete+verbes_catt` | 26/51 | 26 |
 | 4 | 12 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+indice_url+exemple_par_spec+poids_rares+exemple_proche+signature` | 20/21 | 16 |
+| 4 | 4 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+exemple_par_spec+poids_rares+exemple_proche+signature+carte_equipements+mots_relatifs+expansion+lexique+resolution_arguments+signature_complete+verbes_catt+nom_de_vm` | 26/51 | 26 |
 | 5 | 3 | `exemples_cibles+lexical+recall8+carte_mots+top3_direct+exemple_par_spec+poids_rares+exemple_proche+signature` | 21/21 | 18 |
 
-Sources : [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it1-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it1-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it2-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it2-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it3-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it3-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it4-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it4-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it5-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it5-boucle.json)
+Sources : [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it1-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it1-boucle.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it1-horsregles-boucle.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it1-horsregles-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it2-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it2-boucle.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it2-horsregles-boucle.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it2-horsregles-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it3-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it3-boucle.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it3-horsregles-boucle.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it3-horsregles-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it4-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it4-boucle.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it4-horsregles-boucle.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-it4-horsregles-boucle.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it5-boucle.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-it5-boucle.json)
