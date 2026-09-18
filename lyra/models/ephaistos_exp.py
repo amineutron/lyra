@@ -154,6 +154,19 @@ etendue ne servait ni au tri des specs ni au choix de l'exemple.
   requete, command depuis le segment apres "avec".
 - resolution_floue : nom inconnu -> spec montree dont le nom partage le
   plus de tokens, sinon rang 1.
+
+Iteration 7 hors regles (35/51, 16 confusions entre voisins). Avec
+signature_complete, un outil sans parametre devient "cast_info()" : une spec
+vide, indiscernable de "cast_status()" autrement que par son nom.
+
+- spec_description : la description courte suit la signature
+  ("cast_info() -- infos detaillees du media en cours").
+- outil_force_si_net : quand le score du rang 1 est net, l'outil est impose
+  (le modele ne sert qu'aux arguments). top1_si_net laissait le modele
+  repondre un autre nom.
+- vote_rotation : trois appels, memes specs dans trois ordres, vote.
+- verification_binaire : si la reponse differe du rang 1, un second appel
+  avec deux specs (rang 1, reponse) tranche.
 """
 
 from __future__ import annotations
@@ -174,6 +187,7 @@ VARIANTES = (
     "exemple_discriminant", "question_etat", "nom_de_vm", "verbes_catt", "arguments_contradictoires",
     "entites_vm", "lexique_langue", "exemples_denon", "double_passe",
     "boost_sur_etendue", "top1_si_net", "args_par_regex", "resolution_floue",
+    "spec_description", "outil_force_si_net", "vote_rotation", "verification_binaire",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -1008,3 +1022,37 @@ def resoudre_flou(tool, specs_compactes: list[str]):
     if meilleur > 0 and scores.count(meilleur) == 1:
         return noms[scores.index(meilleur)]
     return noms[0]
+
+
+# --- Iteration 7 hors regles ---------------------------------------------------------
+
+def avec_description(spec_compacte: str, spec_brute: str, maximum: int = 70) -> str:
+    """"catt.cast_info: cast_info()" + description courte -> "catt.cast_info: cast_info() -- infos ..."."""
+    if " -- " in spec_compacte:
+        return spec_compacte
+    desc = description_courte(spec_brute)
+    if not desc:
+        return spec_compacte
+    desc = desc[:maximum].rstrip()
+    return f"{spec_compacte} -- {desc}"
+
+
+def rotation(liste: list, k: int) -> list:
+    """Rotation de k positions vers la gauche ([a, b, c], 1) -> [b, c, a]."""
+    if not liste:
+        return []
+    k %= len(liste)
+    return list(liste[k:]) + list(liste[:k])
+
+
+def vote(analyses: list, requete: str):
+    """Vote majoritaire sur le nom court de l'outil ; a egalite, la premiere analyse."""
+    valides = [a for a in analyses if a is not None and getattr(a, "tool", None)]
+    if not valides:
+        return analyses[0] if analyses else None
+    comptes: dict[str, int] = {}
+    for a in valides:
+        court = str(a.tool).split(".")[-1].lower()
+        comptes[court] = comptes.get(court, 0) + 1
+    gagnant = max(comptes.items(), key=lambda kv: kv[1])[0]
+    return next(a for a in valides if str(a.tool).split(".")[-1].lower() == gagnant)

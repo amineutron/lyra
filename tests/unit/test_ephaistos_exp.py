@@ -577,3 +577,29 @@ class TestIteration6:
     def test_lexique_relie_remets_et_regarde(self):
         assert "mute" in exp.etendre_requete("remets le son sur l'ampli", langue=True).split()
         assert "youtube" in exp.etendre_requete("regarde-moi ca sur le chromecast", langue=True).split()
+
+
+class TestIteration7:
+    def test_avec_description(self):
+        r = exp.avec_description("catt.cast_info: cast_info()", "catt.cast_info: Retourne les infos detaillees du media en cours | Utilise pour: x")
+        assert r == "catt.cast_info: cast_info() -- Retourne les infos detaillees du media en cours"
+        assert exp.nom_de_spec(r) == "catt.cast_info" and exp._parametres_de(r) == set()
+        assert exp.avec_description(r, "x") == r
+
+    def test_rotation(self):
+        assert exp.rotation(["a", "b", "c"], 1) == ["b", "c", "a"]
+        assert exp.rotation(["a", "b", "c"], 2) == ["c", "a", "b"]
+        assert exp.rotation([], 1) == []
+
+    def test_vote_majoritaire(self):
+        from types import SimpleNamespace as N
+        a, b, c = N(tool="cast_pause"), N(tool="catt.cast_info"), N(tool="cast_pause")
+        assert exp.vote([b, a, c], "x") is a
+        assert exp.vote([a, b, N(tool="cast_scan")], "x") is a   # egalite : la premiere
+        assert exp.vote([N(tool=None), b], "x") is b
+
+    def test_analysis_accepte_rang1(self):
+        from lyra.models._analysis import EphaistosAnalysis
+        a = EphaistosAnalysis(tool="x", arguments={}, missing_args=[], confidence=0.9, reasoning="", raw_response="")
+        a.rang1 = "catt.cast_pause"
+        assert a.rang1 == "catt.cast_pause"

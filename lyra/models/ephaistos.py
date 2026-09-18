@@ -505,7 +505,9 @@ class Ephaistos:
         known_args: Optional[dict] = None,
         specs_toon: Optional[str] = None,
         max_specs: int = 0,
-        skip_specs: int = 0
+        skip_specs: int = 0,
+        rotation_specs: int = 0,
+        seulement: Optional[list] = None
     ) -> EphaistosAnalysis:
         """Analyse une requete avec les specs MCP.
 
@@ -523,12 +525,18 @@ class Ephaistos:
         variantes = _exp.actives()
         specs_pour_index: list[str] = []
 
+        if seulement:
+            voulus = {n.split(".")[-1].lower() for n in seulement}
+            mcp_specs = [s for s in mcp_specs if _exp.nom_de_spec(s).split(".")[-1].lower() in voulus] or mcp_specs
+
         # Utiliser TOON si disponible, sinon extraire signatures compactes
         if specs_toon:
             specs_text = specs_toon
             label = "SPECS MCP (TOON)"
         else:
             compact_specs = [self._compact_spec(s) for s in mcp_specs]
+            if "spec_description" in variantes:
+                compact_specs = [_exp.avec_description(c, b) for c, b in zip(compact_specs, mcp_specs)]
             # Variante boost_sur_etendue : le tri et l'exemple proche lisent la
             # requete etendue de synonymes (lexique_langue n'agissait que cote RAG)
             requete_tri = user_query
@@ -549,11 +557,19 @@ class Ephaistos:
                                                 etat="question_etat" in variantes,
                                                 vm="nom_de_vm" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
-            if ("top1_si_net" in variantes and max_specs and not skip_specs
-                    and _exp.score_net(compact_specs, requete_tri, poids_rares=True, equipements=True,
-                                       relatifs=True, catt=True)):
+            outil_force = None
+            net = (max_specs and not skip_specs
+                   and _exp.score_net(compact_specs, requete_tri, poids_rares=True, equipements=True,
+                                      relatifs=True, catt=True))
+            if "top1_si_net" in variantes and net:
                 max_specs = 1
-            compact_specs = _exp.fenetre(compact_specs, max_specs, skip_specs)
+            if "outil_force_si_net" in variantes and net:
+                max_specs = 1
+                outil_force = _exp.nom_de_spec(compact_specs[0])
+            if rotation_specs and max_specs:
+                compact_specs = _exp.rotation(_exp.fenetre(compact_specs, max_specs, skip_specs), rotation_specs)
+            else:
+                compact_specs = _exp.fenetre(compact_specs, max_specs, skip_specs)
             if "dedup" in variantes:
                 compact_specs = _exp.dedupliquer(compact_specs)
             specs_pour_index = list(compact_specs)
@@ -629,6 +645,9 @@ class Ephaistos:
         if "args_par_regex" in variantes and specs_pour_index:
             analysis.arguments = _exp.completer_arguments(analysis.tool, analysis.arguments,
                                                           specs_pour_index, user_query)
+        if outil_force and analysis.tool is not None:
+            analysis.tool = outil_force
+        analysis.rang1 = _exp.nom_de_spec(specs_pour_index[0]) if specs_pour_index else None
         return analysis
 
     def _parse_response(self, content: str) -> EphaistosAnalysis:
@@ -880,6 +899,17 @@ Valide les arguments. Reponds en JSON:
                 seconde = self.analyze(user_query, mcp_specs, max_specs=use_max_specs,
                                        skip_specs=use_max_specs)
                 analysis = _exp.choisir_par_score(analysis, seconde, user_query)
+
+            if attempt == 0 and not use_toon and "vote_rotation" in _exp.actives() and use_max_specs:
+                autres = [self.analyze(user_query, mcp_specs, max_specs=use_max_specs, rotation_specs=k)
+                          for k in (1, 2)]
+                analysis = _exp.vote([analysis] + autres, user_query)
+
+            if (attempt == 0 and not use_toon and "verification_binaire" in _exp.actives()
+                    and analysis.tool and getattr(analysis, "rang1", None)
+                    and str(analysis.tool).split(".")[-1] != str(analysis.rang1).split(".")[-1]):
+                analysis = self.analyze(user_query, mcp_specs, max_specs=2,
+                                        seulement=[analysis.rang1, analysis.tool])
 
             # Si on a un outil valide, retourner
             if analysis.tool is not None:
