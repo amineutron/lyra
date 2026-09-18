@@ -13,7 +13,7 @@
   "versions": {
     "python": "3.12.13",
     "ollama": "0.14.1",
-    "lyra_commit": "9d90bf6",
+    "lyra_commit": "9f7aa01",
     "noyau": "6.18.13-200.fc43.x86_64"
   },
   "modeles": {
@@ -22,15 +22,20 @@
   },
   "jeu": "modeles",
   "variantes": [
+    "args_par_regex",
     "arguments_contradictoires",
     "carte_equipements",
     "carte_mots",
+    "double_passe",
+    "entites_vm",
     "exemple_par_spec",
     "exemple_proche",
     "exemples_cibles",
+    "exemples_denon",
     "expansion",
     "lexical",
     "lexique",
+    "lexique_langue",
     "mots_relatifs",
     "poids_rares",
     "recall8",
@@ -43,27 +48,29 @@
   "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
   "cas": 21,
   "statuts": {
-    "LLM_PASS": 20,
-    "LLM_FAIL": 1
+    "LLM_PASS": 19,
+    "LLM_FAIL": 1,
+    "LLM_PARTIAL": 1
   },
-  "taux_pass": 0.9524,
-  "score_pondere": 95,
+  "taux_pass": 0.9048,
+  "score_pondere": 93,
   "par_categorie": {
     "CATT": {
-      "LLM_PASS": 6,
-      "LLM_FAIL": 1
+      "LLM_PASS": 7
     },
     "HUE": {
       "LLM_PASS": 5
     },
     "TV": {
-      "LLM_PASS": 9
+      "LLM_PASS": 7,
+      "LLM_FAIL": 1,
+      "LLM_PARTIAL": 1
     }
   },
   "modeles_mesures": {
     "ephaistos": "qwen2.5:1.5b",
     "lyra": "llama3.2:1b"
   },
-  "duree_s": 116.0,
+  "duree_s": 267.7,
   "duree_inclut_initialisation": true
 }

@@ -13,7 +13,7 @@
   "versions": {
     "python": "3.12.13",
     "ollama": "0.14.1",
-    "lyra_commit": "9d90bf6",
+    "lyra_commit": "758b647",
     "noyau": "6.18.13-200.fc43.x86_64"
   },
   "modeles": {
@@ -22,15 +22,20 @@
   },
   "jeu": "hors_regles",
   "variantes": [
+    "args_par_regex",
     "arguments_contradictoires",
     "carte_equipements",
     "carte_mots",
+    "double_passe",
+    "entites_vm",
     "exemple_par_spec",
     "exemple_proche",
     "exemples_cibles",
+    "exemples_denon",
     "expansion",
     "lexical",
     "lexique",
+    "lexique_langue",
     "mots_relatifs",
     "poids_rares",
     "recall8",
@@ -43,37 +48,37 @@
   "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
   "cas": 51,
   "statuts": {
-    "LLM_FAIL": 21,
-    "LLM_PASS": 30
+    "LLM_PASS": 38,
+    "LLM_FAIL": 13
   },
-  "taux_pass": 0.5882,
-  "score_pondere": 59,
+  "taux_pass": 0.7451,
+  "score_pondere": 75,
   "par_categorie": {
     "CATT": {
+      "LLM_PASS": 8,
+      "LLM_FAIL": 2
+    },
+    "DENON": {
       "LLM_FAIL": 3,
       "LLM_PASS": 7
     },
-    "DENON": {
-      "LLM_PASS": 6,
-      "LLM_FAIL": 4
-    },
     "FEDORA": {
-      "LLM_PASS": 6,
-      "LLM_FAIL": 5
+      "LLM_PASS": 9,
+      "LLM_FAIL": 2
     },
     "HUE": {
-      "LLM_PASS": 3,
-      "LLM_FAIL": 7
+      "LLM_PASS": 5,
+      "LLM_FAIL": 5
     },
     "TV": {
-      "LLM_FAIL": 2,
-      "LLM_PASS": 8
+      "LLM_PASS": 9,
+      "LLM_FAIL": 1
     }
   },
   "modeles_mesures": {
     "ephaistos": "qwen2.5:1.5b",
     "lyra": "llama3.2:1b"
   },
-  "duree_s": 350.9,
+  "duree_s": 546.3,
   "duree_inclut_initialisation": true
 }
