@@ -40,6 +40,21 @@ def _load_heavy_deps() -> None:
         CHROMADB_AVAILABLE = False
 
 
+def document_capabilities(entry: dict) -> str:
+    """Texte indexe pour un outil : description + paraphrases, une seule fois.
+
+    build_capabilities (index_rag_3tier.py) met deja "| Utilise pour: ..." dans
+    `capabilities` ; concatener `use_cases` derriere dupliquait les paraphrases
+    et collait la derniere a la premiere ("...à X régler le volume..."), ce qui
+    produisait des exemples bancals pour EPHAISTOS.
+    """
+    capabilities = (entry.get("capabilities") or "").strip()
+    use_cases = (entry.get("use_cases") or "").strip()
+    if not use_cases or "Utilise pour" in capabilities:
+        return capabilities
+    return f"{capabilities} | Utilise pour: {use_cases}"
+
+
 class RAG3Tier:
     """
     Système RAG 3-Tier avec entonnoir séquentiel.
@@ -218,8 +233,7 @@ class RAG3Tier:
         ids = []
 
         for i, entry in enumerate(entries):
-            # Document = capabilities + use_cases
-            doc = f"{entry.get('capabilities', '')} {entry.get('use_cases', '')}"
+            doc = document_capabilities(entry)
             documents.append(doc)
 
             # Metadata

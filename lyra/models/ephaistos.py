@@ -536,7 +536,10 @@ class Ephaistos:
                                                 cibler_youtube="mots_url" in variantes,
                                                 equipements="carte_equipements" in variantes,
                                                 relatifs="mots_relatifs" in variantes,
-                                                son="carte_son" in variantes)
+                                                son="carte_son" in variantes,
+                                                catt="verbes_catt" in variantes,
+                                                etat="question_etat" in variantes,
+                                                vm="nom_de_vm" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             if max_specs > 0:
                 compact_specs = compact_specs[:max_specs]
@@ -554,7 +557,8 @@ class Ephaistos:
                 list(mcp_specs), [c.split(":")[0].strip() for c in specs_pour_index],
                 requete=user_query if "exemple_proche" in variantes else None,
                 nb=2 if "deux_exemples" in variantes else 1,
-                description_si_vide="exemple_description" in variantes)
+                description_si_vide="exemple_description" in variantes,
+                discriminant="exemple_discriminant" in variantes)
 
         prompt = f"""{label}:
 {specs_text}
@@ -604,6 +608,8 @@ class Ephaistos:
         if "resolution_arguments" in variantes and specs_pour_index:
             analysis.tool = _exp.resoudre_par_arguments(analysis.tool, analysis.arguments,
                                                         specs_pour_index, user_query)
+        if "arguments_contradictoires" in variantes and specs_pour_index:
+            analysis.tool = _exp.basculer_par_arguments(analysis.tool, analysis.arguments, specs_pour_index)
         return analysis
 
     def _parse_response(self, content: str) -> EphaistosAnalysis:

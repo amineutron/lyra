@@ -440,3 +440,57 @@ class TestSignatureComplete:
         doc = "hue.set_group_color_rgb: " + "Set color for all lights in a group using RGB values " * 4 + "  Args: group_id: int"
         r = Ephaistos._compact_spec(doc)
         assert "Args" not in r and not r.endswith("gro") and len(r) <= 220
+
+
+class TestExempleDiscriminant:
+    ON = "denon.power_on: Allume | Utilise pour: allumer l'ampli. mettre l'ampli en marche"
+    OFF = "denon.power_off: Eteint | Utilise pour: mets l'ampli en veille. éteindre l'ampli"
+
+    def test_mots_communs_a_toutes_les_specs(self):
+        assert {"l", "ampli"} <= exp.mots_communs([self.ON, self.OFF])
+
+    def test_la_proximite_ignore_les_mots_communs(self):
+        r = exp.exemples_par_spec([self.ON, self.OFF], ["denon.power_on", "denon.power_off"],
+                                  requete="mets l'ampli en route", discriminant=True)
+        # sans discriminant, "mets l'ampli en veille" serait le plus proche pour power_off ;
+        # avec, "mets"/"en" comptent encore pour power_off : on verifie surtout que power_on
+        # ne recoit pas un exemple trompeur et que le bloc reste bien forme
+        assert '{"tool": "power_on"}' in r and '{"tool": "power_off"}' in r
+
+
+class TestQuestionEtat:
+    def test_question_cible_les_outils_d_etat(self):
+        specs = ["denon.power_on: power_on()", "denon.get_status: get_status()"]
+        assert exp.boost_mots(specs, "l'ampli est allume ?", etat=True)[0].startswith("denon.get_status")
+        assert exp.question_d_etat("la synchro lumiere tourne encore ?")
+        assert not exp.question_d_etat("allume la tele")
+
+
+class TestNomDeVm:
+    def test_nom_de_vm_cible_vm(self):
+        specs = ["hue.turn_off_group: turn_off_group()", "fedora.vm_stop: vm_stop(vm_name)"]
+        assert exp.boost_mots(specs, "coupe sandbox-02", vm=True)[0].startswith("fedora.vm_stop")
+
+
+class TestVerbesCatt:
+    def test_coupe_la_lecture_vise_stop(self):
+        specs = ["catt.cast_dual_stop: cast_dual_stop()", "catt.cast_resume: cast_resume()", "catt.cast_stop: cast_stop()"]
+        assert exp.boost_mots(specs, "le chromecast, coupe la lecture", catt=True)[0].startswith("catt.cast_stop")
+
+    def test_dual_penalise_sans_contexte(self):
+        assert exp.score_mots("catt.cast_dual_stop", "le chromecast, coupe la lecture", catt=True) < \
+               exp.score_mots("catt.cast_stop", "le chromecast, coupe la lecture", catt=True)
+        assert exp.score_mots("catt.cast_dual_stop", "arrete le dual cast", catt=True) >= 1
+
+
+class TestArgumentsContradictoires:
+    SPECS = ["denon.power_on: power_on()", "denon.volume_set: volume_set(level: integer)", "denon.mute_on: mute_on()"]
+
+    def test_outil_sans_parametre_avec_argument_d_une_autre_spec(self):
+        assert exp.basculer_par_arguments("power_on", {"level": 40}, self.SPECS) == "denon.volume_set"
+
+    def test_sans_argument_inchange(self):
+        assert exp.basculer_par_arguments("power_on", {}, self.SPECS) == "power_on"
+
+    def test_outil_qui_accepte_l_argument_inchange(self):
+        assert exp.basculer_par_arguments("volume_set", {"level": 40}, self.SPECS) == "volume_set"

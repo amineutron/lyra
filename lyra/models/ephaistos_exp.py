@@ -107,6 +107,25 @@ tronquee a 200 caracteres) ; "coupe le son de l'ampli" -> volume_down.
   cast_seek) ; a defaut, si le nom est un serveur ou un mot de la requete,
   par la spec de rang 1.
 - carte_son : "son" cible le volume, sauf avec couper/remettre : le mute.
+
+Iteration 3 hors regles (21/51 ; catt 1/10, denon 3/10). Reponses brutes :
+"mets l'ampli en route" copie l'exemple "mets l'ampli en veille -> power_off"
+(quatre mots communs, le seul mot discriminant ignore) ; "regle l'ampli a 40"
+-> power_on avec level: 40 ; "l'ampli est allume ?" -> power_on ; "coupe
+sandbox-02" remonte des outils Hue ; les verbes oraux du cast (fige, remets,
+coupe la lecture, a trente pour cent) ne sont dans aucune carte.
+
+- exemple_discriminant : la proximite ignore les mots presents dans toutes
+  les paraphrases candidates ("mets", "ampli", "en") ; seuls les mots qui
+  departagent comptent.
+- question_etat : une question ("... ?", "est-il", "tourne encore") cible
+  les outils status/state/info/get.
+- nom_de_vm : un motif de nom de VM ("sandbox-02") cible les outils vm.
+- verbes_catt : coupe -> stop/off, fige/gele -> pause, remets/reprends ->
+  resume, recule -> seek, "a N"/"pour cent" -> set/volume ; les outils
+  "dual" ne marquent que si la requete parle de dual/synchro/pc.
+- arguments_contradictoires : un outil sans parametre renvoye avec un
+  argument qui appartient a une seule autre spec montree bascule vers elle.
 """
 
 from __future__ import annotations
@@ -124,6 +143,7 @@ VARIANTES = (
     "mots_url",
     "carte_equipements", "mots_relatifs", "expansion", "lexique",
     "exemple_description", "signature_complete", "resolution_arguments", "carte_son",
+    "exemple_discriminant", "question_etat", "nom_de_vm", "verbes_catt", "arguments_contradictoires",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -203,6 +223,23 @@ MOTS_EQUIPEMENTS: dict[str, tuple[str, ...]] = {
     "applis": ("apps",), "applications": ("apps",),
     "ecran": ("screen",), "image": ("screen",),
 }
+
+# Verbes oraux du cast et reglages (variante verbes_catt)
+VERBES_CATT: dict[str, tuple[str, ...]] = {
+    "coupe": ("stop", "off"), "couper": ("stop", "off"), "arrete": ("stop",), "stoppe": ("stop",),
+    "fige": ("pause",), "gele": ("pause",), "pause": ("pause",),
+    "remets": ("resume", "on"), "reprends": ("resume",), "relance": ("resume",), "continue": ("resume",),
+    "recule": ("seek",), "avance": ("seek",), "secondes": ("seek",),
+    "regle": ("set",), "regler": ("set",), "cent": ("volume", "set"), "pourcent": ("volume", "set"),
+}
+_MOTS_DUAL = {"dual", "synchro", "synchronise", "synchronisee", "pc", "firefox", "decalage", "resynchronise"}
+
+# Question d'etat -> outils d'information (variante question_etat)
+_MARQUES_QUESTION = {"?", "est-il", "est-elle", "tourne", "encore", "quel", "quelle", "quels", "quelles",
+                     "combien", "ou", "quoi", "comment", "etat"}
+_CIBLES_ETAT = ("status", "state", "info", "get", "list", "scan")
+
+_NOM_DE_VM = re.compile(r"\b[a-z]+-\d{1,3}\b")
 
 # Quantite relative -> direction (variante mots_relatifs)
 MOTS_RELATIFS: dict[str, tuple[str, ...]] = {
@@ -309,9 +346,15 @@ def url_youtube(requete: str) -> bool:
 _VERBES_MUTE = {"coupe", "couper", "coupez", "remets", "remettre", "remet", "rends", "mute", "sourdine"}
 
 
+def question_d_etat(requete: str) -> bool:
+    r = (requete or "").lower()
+    return "?" in r or any(m in set(normaliser(r)) for m in _MARQUES_QUESTION if m != "?")
+
+
 def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
-               relatifs: bool = False, son: bool = False) -> int:
+               relatifs: bool = False, son: bool = False, catt: bool = False,
+               etat: bool = False, vm: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -331,22 +374,31 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = None
         if son and mot == "son":
             cibles = ("mute",) if any(v in mots for v in _VERBES_MUTE) else ("volume",)
+        if catt and mot in VERBES_CATT:
+            cibles = tuple(cibles or ()) + VERBES_CATT[mot]
         if equipements and mot in MOTS_EQUIPEMENTS:
             cibles = tuple(cibles or ()) + MOTS_EQUIPEMENTS[mot]
         if relatifs and mot in MOTS_RELATIFS:
             cibles = tuple(cibles or ()) + MOTS_RELATIFS[mot]
         if cibles and any(c in tokens for c in cibles):
             score += 2 if (poids_rares and mot in MOTS_RARES) else 1
+    if catt and "dual" in tokens and not (set(mots) & _MOTS_DUAL):
+        score -= 1
+    if etat and question_d_etat(requete) and any(c in tokens for c in _CIBLES_ETAT):
+        score += 2
+    if vm and _NOM_DE_VM.search((requete or "").lower()) and "vm" in tokens:
+        score += 2
     return score
 
 
 def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
-               relatifs: bool = False, son: bool = False) -> list[str]:
+               relatifs: bool = False, son: bool = False, catt: bool = False,
+               etat: bool = False, vm: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(s.split(":")[0].strip(), requete, poids_rares,
-                                           cibler_youtube, equipements, relatifs, son),
+                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm),
                   reverse=True)
 
 
@@ -495,11 +547,27 @@ def premiere_paraphrase(spec_brute: str):
     return liste[0] if liste else None
 
 
-def paraphrases_proches(spec_brute: str, requete: str) -> list[str]:
-    """Paraphrases triees par recouvrement de tokens avec la requete (tri stable)."""
-    mots = set(normaliser(requete))
+def paraphrases_proches(spec_brute: str, requete: str, ignorer: set[str] | None = None) -> list[str]:
+    """Paraphrases triees par recouvrement de tokens avec la requete (tri stable).
+
+    `ignorer` : mots qui ne departagent rien (presents dans toutes les specs
+    montrees : "mets", "ampli", "en") -- variante exemple_discriminant.
+    """
+    mots = set(normaliser(requete)) - (ignorer or set())
     liste = paraphrases(spec_brute)
     return sorted(liste, key=lambda p: -len(mots & set(normaliser(p))))
+
+
+def mots_communs(specs_brutes: list[str]) -> set[str]:
+    """Mots presents dans les paraphrases de TOUTES les specs : ils ne departagent rien."""
+    ensembles = []
+    for brute in specs_brutes:
+        mots = set()
+        for ph in paraphrases(brute):
+            mots |= set(normaliser(ph))
+        if mots:
+            ensembles.append(mots)
+    return set.intersection(*ensembles) if len(ensembles) > 1 else set()
 
 
 def description_courte(spec_brute: str):
@@ -512,7 +580,7 @@ def description_courte(spec_brute: str):
 
 def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum: int = 3,
                       requete: str | None = None, nb: int = 1,
-                      description_si_vide: bool = False) -> str:
+                      description_si_vide: bool = False, discriminant: bool = False) -> str:
     """`nb` exemple(s) par spec montree, tires de ses paraphrases. Vide si aucune.
 
     Avec `requete`, la paraphrase la plus proche de la requete passe en premier
@@ -523,9 +591,11 @@ def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum:
         nom = brute.split(":")[0].strip()
         par_nom.setdefault(nom, brute)
     lignes = []
+    montrees = [par_nom.get(n, "") for n in noms_montres[:maximum]]
+    ignorer = mots_communs(montrees) if (requete and discriminant) else set()
     for nom in noms_montres[:maximum]:
         brute = par_nom.get(nom, "")
-        phrases = paraphrases_proches(brute, requete) if requete else paraphrases(brute)
+        phrases = paraphrases_proches(brute, requete, ignorer) if requete else paraphrases(brute)
         if not phrases and description_si_vide:
             desc = description_courte(brute)
             phrases = [desc] if desc else []
@@ -710,3 +780,22 @@ def joindre_signatures_depuis(items: list[dict], signatures: dict[str, str]) -> 
         else:
             out.append(item)
     return out
+
+
+def basculer_par_arguments(tool, arguments: dict, specs_compactes: list[str]):
+    """Outil sans parametre rendu avec un argument qui n'appartient qu'a une autre spec montree.
+
+    "regle l'ampli a 40" -> power_on avec level: 40 : level est le parametre de
+    volume_set, et de lui seul -> volume_set. Sans argument, ou si l'outil
+    accepte l'argument, rien ne change.
+    """
+    if not tool or not arguments or not specs_compactes:
+        return tool
+    court = str(tool).split(".")[-1].lower()
+    params = {sp.split(":")[0].strip(): _parametres_de(sp) for sp in specs_compactes}
+    propres = next((p for n, p in params.items() if n.split(".")[-1].lower() == court), None)
+    if propres is None or propres:
+        return tool
+    cles = {k.lower() for k in arguments}
+    candidats = [n for n, p in params.items() if p and cles <= p and n.split(".")[-1].lower() != court]
+    return candidats[0] if len(candidats) == 1 else tool

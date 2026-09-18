@@ -723,6 +723,7 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
             "réactive le son de l'ampli", "enlève le mute",
         ],
         "denon.mute_toggle": [
+            "inverse le mute de l'ampli", "bascule la sourdine",
             "basculer le mute de l'ampli",
             "toggle mute ampli",
         ],
