@@ -649,3 +649,20 @@ class TestCartesFines:
         tries = exp.boost_mots(specs, "coupe le son de l'ampli", **self.OPTS)
         assert tries[0].startswith("denon.mute_on")
         assert exp.score_net(tries, "coupe le son de l'ampli", **self.OPTS)   # net = apres tri, comme dans analyze()
+
+
+class TestVerbesTri:
+    OPTS = dict(poids_rares=True, equipements=True, relatifs=True, catt=True, son=True, tri=True, fines=True, verbes=True, cibler_youtube=True)
+
+    def test_allume_tranche_pour_turn_on_light(self):
+        specs = ["hue.alert_light: f()", "hue.turn_on_light: f()", "hue.turn_on_group: f()"]
+        t = exp.boost_mots(specs, "allume la lumiere chevet", **self.OPTS)
+        assert t[0].startswith("hue.turn_on_light") and exp.score_net(t, "allume la lumiere chevet", **self.OPTS)
+
+    def test_ouvre_youtube_vise_launch_app(self):
+        specs = ["tv.youtube_video: f(url)", "tv.launch_app: f(app)"]
+        assert exp.boost_mots(specs, "ouvre youtube sur la tele", **self.OPTS)[0].startswith("tv.launch_app")
+
+    def test_url_youtube_vise_cast_youtube(self):
+        specs = ["catt.cast_url: f(url)", "catt.cast_youtube: f(url)"]
+        assert exp.boost_mots(specs, "diffuse cette video sur la tv https://youtu.be/x", **self.OPTS)[0].startswith("catt.cast_youtube")

@@ -187,6 +187,14 @@ mute_on.
 - cartes_fines : "lecture" ne cible rien quand un verbe d'action est la ;
   fige/gele et chaude/froide comptent double ; teinte/chaude/froide ->
   temperature ; "coupe le son" -> on (mute_on), exclusif.
+
+Iteration 10 (51/51 hors regles, mais 17/21 sur le premier banc). Les
+verbes on/off vivent dans _FR_ACTION_MAP (sous-chaines, ordre initial) que
+boost_mots ecrase : "allume la lumiere chevet" laisse turn_on_light et
+alert_light a egalite ; "ouvre YouTube" ne cible pas launch_app.
+
+- verbes_tri : allume/active/demarre -> on/start, eteins/arrete -> off/stop,
+  ouvre/lance -> launch/app, dans les cartes de tri.
 """
 
 from __future__ import annotations
@@ -208,7 +216,7 @@ VARIANTES = (
     "entites_vm", "lexique_langue", "exemples_denon", "double_passe",
     "boost_sur_etendue", "top1_si_net", "args_par_regex", "resolution_floue",
     "spec_description", "outil_force_si_net", "vote_rotation", "verification_binaire",
-    "cartes_tri", "denon_sans_veille", "cartes_fines",
+    "cartes_tri", "denon_sans_veille", "cartes_fines", "verbes_tri",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -329,6 +337,13 @@ MOTS_FINS: dict[str, tuple[str, ...]] = {
     "froide": ("temperature",), "froid": ("temperature",),
 }
 _RARES_FINS = {"fige", "gele", "chaude", "froide", "chaud", "froid"}
+VERBES_TRI: dict[str, tuple[str, ...]] = {
+    "allume": ("on", "start"), "allumer": ("on", "start"), "active": ("on", "start"), "activer": ("on",),
+    "demarre": ("on", "start"), "demarrer": ("on", "start"), "rallume": ("on",),
+    "eteins": ("off", "stop"), "eteindre": ("off", "stop"), "eteint": ("off",), "arrete": ("off", "stop"),
+    "arreter": ("off", "stop"), "stoppe": ("stop",), "desactive": ("off",),
+    "ouvre": ("launch", "app"), "ouvrir": ("launch", "app"), "lance": ("launch", "app", "start"),
+}
 
 # Quantite relative -> direction (variante mots_relatifs)
 MOTS_RELATIFS: dict[str, tuple[str, ...]] = {
@@ -453,7 +468,8 @@ def question_d_etat(requete: str) -> bool:
 def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False) -> int:
+               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
+               verbes: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -479,6 +495,11 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = tuple(cibles or ()) + MOTS_FINS[mot]
         if fines and mot == "lecture" and any(v in mots for v in VERBES_CATT):
             cibles = None   # "fige la lecture" : le verbe decide, pas "lecture"
+        if verbes and mot in VERBES_TRI:
+            cibles = tuple(cibles or ()) + VERBES_TRI[mot]
+        if verbes and mot in ("youtube", "netflix", "disney", "plex", "spotify") and "http" not in requete.lower() \
+                and any(v in mots for v in ("ouvre", "ouvrir", "lance", "lancer", "mets", "regarder")):
+            cibles = ("app", "launch")   # sans URL, "ouvre youtube" est une application a lancer
         if catt and mot in VERBES_CATT:
             cibles = tuple(cibles or ()) + VERBES_CATT[mot]
         if son and mot in ("remets", "remettre", "remet", "rends") and "son" in mots:
@@ -503,11 +524,13 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
 def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False) -> list[str]:
+               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
+               verbes: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(nom_de_spec(s), requete, poids_rares,
-                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri, fines),
+                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri, fines,
+                                           verbes),
                   reverse=True)
 
 

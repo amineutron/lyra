@@ -557,13 +557,16 @@ class Ephaistos:
                                                 etat="question_etat" in variantes,
                                                 vm="nom_de_vm" in variantes,
                                                 tri="cartes_tri" in variantes,
-                                                fines="cartes_fines" in variantes)
+                                                fines="cartes_fines" in variantes,
+                                                verbes="verbes_tri" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             outil_force = None
             net = (max_specs and not skip_specs
                    and _exp.score_net(compact_specs, requete_tri, poids_rares=True, equipements=True,
                                       relatifs=True, catt=True, son="carte_son" in variantes,
-                                      tri="cartes_tri" in variantes, fines="cartes_fines" in variantes))
+                                      tri="cartes_tri" in variantes, fines="cartes_fines" in variantes,
+                                      verbes="verbes_tri" in variantes,
+                                      cibler_youtube="mots_url" in variantes))
             if "top1_si_net" in variantes and net:
                 max_specs = 1
             if "outil_force_si_net" in variantes and net:
