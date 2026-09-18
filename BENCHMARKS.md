@@ -62,18 +62,25 @@ Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json`](benchmarks/results
 
 | Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
 |---|---:|---:|---:|---:|
+| `gemma3:1b` | 21 | 16 | 76 % | 124 s |
 | `llama3.2:1b` | 21 | 18 | 86 % | 208 s |
 | `llama3.2:3b` | 21 | 18 | 86 % | 185 s |
+| `mistral:7b` | 21 | 21 | 100 % | 537 s |
 | `qwen2.5-coder:0.5b` | 21 | 21 | 100 % | 59 s |
+| `qwen2.5-coder:1.5b` | 21 | 20 | 95 % | 117 s |
 | `qwen2.5-coder:7b` | 21 | 19 | 90 % | 398 s |
+| `qwen2.5:1.5b` | 21 | 20 | 95 % | 116 s |
+| `qwen2.5:3b` | 21 | 19 | 90 % | 197 s |
+| `qwen2.5:7b` | 21 | 20 | 95 % | 388 s |
+| `qwen3:1.7b` | 21 | 19 | 90 % | 696 s |
 
-| Serveur | Commandes | `llama3.2:1b` | `llama3.2:3b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:7b` |
-|---|---:|---:|---:|---:|---:|
-| catt-mcp | 7 | 6/7 | 6/7 | 7/7 | 6/7 |
-| hue-mcp | 5 | 5/5 | 5/5 | 5/5 | 5/5 |
-| pylips-mcp | 9 | 7/9 | 7/9 | 9/9 | 8/9 |
+| Serveur | Commandes | `gemma3:1b` | `llama3.2:1b` | `llama3.2:3b` | `mistral:7b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:1.5b` | `qwen2.5-coder:7b` | `qwen2.5:1.5b` | `qwen2.5:3b` | `qwen2.5:7b` | `qwen3:1.7b` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| catt-mcp | 7 | 6/7 | 6/7 | 6/7 | 7/7 | 7/7 | 7/7 | 6/7 | 6/7 | 6/7 | 7/7 | 7/7 |
+| hue-mcp | 5 | 4/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 3/5 |
+| pylips-mcp | 9 | 6/9 | 7/9 | 7/9 | 9/9 | 9/9 | 8/9 | 8/9 | 9/9 | 8/9 | 8/9 | 9/9 |
 
-Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json)
+Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-llama3.2-3b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-0.5b-exp-modeles.json), [`2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json`](benchmarks/results/2026-09-17-rtx-3080-ti-qwen2.5-coder-7b-exp-modeles.json), [`2026-09-18-rtx-3080-ti-gemma3-1b-exp-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-gemma3-1b-exp-modeles.json), [`2026-09-18-rtx-3080-ti-mistral-7b-exp-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-mistral-7b-exp-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-1.5b-exp-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-1.5b-exp-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-3b-exp-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-3b-exp-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-7b-exp-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-7b-exp-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-1.5b-exp-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-1.5b-exp-modeles.json), [`2026-09-18-rtx-3080-ti-qwen3-1.7b-exp-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen3-1.7b-exp-modeles.json)
 
 ### Jeu « hors regles » (formulations inedites)
 
@@ -81,20 +88,27 @@ Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/res
 
 | Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
 |---|---:|---:|---:|---:|
+| `gemma3:1b` | 51 | 23 | 45 % | 506 s |
 | `llama3.2:1b` | 51 | 23 | 45 % | 1487 s |
 | `llama3.2:3b` | 51 | 32 | 63 % | 595 s |
+| `mistral:7b` | 51 | 30 | 59 % | 1778 s |
 | `qwen2.5-coder:0.5b` | 51 | 26 | 51 % | 171 s |
+| `qwen2.5-coder:1.5b` | 51 | 29 | 57 % | 331 s |
 | `qwen2.5-coder:7b` | 51 | 36 | 71 % | 1138 s |
+| `qwen2.5:1.5b` | 51 | 30 | 59 % | 351 s |
+| `qwen2.5:3b` | 51 | 33 | 65 % | 569 s |
+| `qwen2.5:7b` | 51 | 34 | 67 % | 1143 s |
+| `qwen3:1.7b` | 51 | 32 | 63 % | 2307 s |
 
-| Serveur | Commandes | `llama3.2:1b` | `llama3.2:3b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:7b` |
-|---|---:|---:|---:|---:|---:|
-| catt-mcp | 10 | 3/10 | 5/10 | 5/10 | 8/10 |
-| denon-mcp | 10 | 7/10 | 8/10 | 7/10 | 6/10 |
-| fedora-agents | 11 | 4/11 | 6/11 | 3/11 | 8/11 |
-| hue-mcp | 10 | 6/10 | 6/10 | 5/10 | 5/10 |
-| pylips-mcp | 10 | 3/10 | 7/10 | 6/10 | 9/10 |
+| Serveur | Commandes | `gemma3:1b` | `llama3.2:1b` | `llama3.2:3b` | `mistral:7b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:1.5b` | `qwen2.5-coder:7b` | `qwen2.5:1.5b` | `qwen2.5:3b` | `qwen2.5:7b` | `qwen3:1.7b` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| catt-mcp | 10 | 3/10 | 3/10 | 5/10 | 6/10 | 5/10 | 6/10 | 8/10 | 7/10 | 7/10 | 7/10 | 5/10 |
+| denon-mcp | 10 | 5/10 | 7/10 | 8/10 | 4/10 | 7/10 | 7/10 | 6/10 | 6/10 | 6/10 | 7/10 | 8/10 |
+| fedora-agents | 11 | 3/11 | 4/11 | 6/11 | 8/11 | 3/11 | 6/11 | 8/11 | 6/11 | 6/11 | 7/11 | 7/11 |
+| hue-mcp | 10 | 5/10 | 6/10 | 6/10 | 4/10 | 5/10 | 5/10 | 5/10 | 3/10 | 6/10 | 5/10 | 5/10 |
+| pylips-mcp | 10 | 7/10 | 3/10 | 7/10 | 8/10 | 6/10 | 5/10 | 9/10 | 8/10 | 8/10 | 8/10 | 7/10 |
 
-Sources : [`2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json)
+Sources : [`2026-09-18-rtx-3080-ti-gemma3-1b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-gemma3-1b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-mistral-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-mistral-7b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-1.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-1.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-3b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-3b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-7b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-1.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-1.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen3-1.7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen3-1.7b-exp-horsregles-modeles.json)
 
 ## Boucle d'amelioration (variantes LYRA_EXP, inactives par defaut)
 

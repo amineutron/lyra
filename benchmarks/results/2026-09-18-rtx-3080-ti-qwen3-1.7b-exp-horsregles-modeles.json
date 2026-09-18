@@ -1,0 +1,79 @@
+{
+  "mesure": "modeles",
+  "date": "2026-09-18",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "9d90bf6",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "jeu": "hors_regles",
+  "variantes": [
+    "arguments_contradictoires",
+    "carte_equipements",
+    "carte_mots",
+    "exemple_par_spec",
+    "exemple_proche",
+    "exemples_cibles",
+    "expansion",
+    "lexical",
+    "lexique",
+    "mots_relatifs",
+    "poids_rares",
+    "recall8",
+    "resolution_arguments",
+    "signature",
+    "signature_complete",
+    "top3_direct",
+    "verbes_catt"
+  ],
+  "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
+  "cas": 51,
+  "statuts": {
+    "LLM_FAIL": 19,
+    "LLM_PASS": 32
+  },
+  "taux_pass": 0.6275,
+  "score_pondere": 63,
+  "par_categorie": {
+    "CATT": {
+      "LLM_FAIL": 5,
+      "LLM_PASS": 5
+    },
+    "DENON": {
+      "LLM_PASS": 8,
+      "LLM_FAIL": 2
+    },
+    "FEDORA": {
+      "LLM_PASS": 7,
+      "LLM_FAIL": 4
+    },
+    "HUE": {
+      "LLM_PASS": 5,
+      "LLM_FAIL": 5
+    },
+    "TV": {
+      "LLM_FAIL": 3,
+      "LLM_PASS": 7
+    }
+  },
+  "modeles_mesures": {
+    "ephaistos": "qwen3:1.7b",
+    "lyra": "llama3.2:1b"
+  },
+  "duree_s": 2307.1,
+  "duree_inclut_initialisation": true
+}
