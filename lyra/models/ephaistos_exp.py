@@ -363,12 +363,19 @@ _RRF_K = 60
 # Etendue le 2026-09-18 apres les iterations 5 et 6 hors regles : 35/51 avec
 # le 0.5b, 38/51 avec qwen2.5:1.5b, 44/51 avec qwen2.5:3b (la meme
 # configuration). Infirmees : boost_sur_etendue, resolution_floue, top1_si_net.
+# Configuration finale du 2026-09-19 (onze iterations hors regles) : 51/51 sur
+# le jeu hors regles et 21/21 sur le premier banc avec qwen2.5-coder:0.5b.
+# Infirmees en route : vote_rotation, boost_sur_etendue, resolution_floue,
+# top1_si_net (remplacee par outil_force_si_net).
 DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
           "carte_equipements", "mots_relatifs", "expansion", "lexique",
           "resolution_arguments", "signature_complete", "verbes_catt",
           "arguments_contradictoires", "entites_vm", "lexique_langue",
-          "exemples_denon", "double_passe", "args_par_regex")
+          "exemples_denon", "double_passe", "args_par_regex",
+          "spec_description", "outil_force_si_net", "verification_binaire",
+          "cartes_tri", "carte_son", "denon_sans_veille", "cartes_fines",
+          "mots_url", "verbes_tri")
 
 
 def actives() -> set[str]:
