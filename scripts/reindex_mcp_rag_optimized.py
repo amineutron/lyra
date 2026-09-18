@@ -15,6 +15,7 @@ Usage:
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -102,6 +103,12 @@ def expand_text_with_synonyms(text: str) -> list[str]:
     return variants[:6]  # Max 6 variantes
 
 
+# Limites du generateur, mesurees comme un plafond le 2026-09-18 (mediane 5
+# paraphrases par outil) : reglables pour la boucle d'amelioration.
+_TRIGGERS_MAX = int(os.environ.get("LYRA_TRIGGERS_MAX", "3"))
+_VARIANTES_MAX = int(os.environ.get("LYRA_VARIANTES_MAX", "8"))
+
+
 def generate_rich_document(tool: dict) -> str:
     """Génère un document RICHE pour un outil MCP avec SYNONYMES INTÉGRÉS.
 
@@ -184,12 +191,12 @@ def generate_rich_document(tool: dict) -> str:
     if triggers:
         # Générer variantes pour chaque trigger
         all_trigger_variants = []
-        for trigger in triggers[:3]:  # Max 3 triggers de base
+        for trigger in triggers[:_TRIGGERS_MAX]:  # 3 par defaut (LYRA_TRIGGERS_MAX)
             variants = expand_text_with_synonyms(trigger)
             all_trigger_variants.extend(variants)
 
         if all_trigger_variants:
-            parts.append(f"Utilise pour: {'. '.join(all_trigger_variants[:8])}")  # Max 8 variantes
+            parts.append(f"Utilise pour: {'. '.join(all_trigger_variants[:_VARIANTES_MAX])}")  # 8 par defaut (LYRA_VARIANTES_MAX)
 
     # Exemples concrets avec VARIANTES NATURELLES
     if examples:

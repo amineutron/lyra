@@ -504,7 +504,8 @@ class Ephaistos:
         mcp_specs: list[str],
         known_args: Optional[dict] = None,
         specs_toon: Optional[str] = None,
-        max_specs: int = 0
+        max_specs: int = 0,
+        skip_specs: int = 0
     ) -> EphaistosAnalysis:
         """Analyse une requete avec les specs MCP.
 
@@ -541,8 +542,7 @@ class Ephaistos:
                                                 etat="question_etat" in variantes,
                                                 vm="nom_de_vm" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
-            if max_specs > 0:
-                compact_specs = compact_specs[:max_specs]
+            compact_specs = _exp.fenetre(compact_specs, max_specs, skip_specs)
             if "dedup" in variantes:
                 compact_specs = _exp.dedupliquer(compact_specs)
             specs_pour_index = list(compact_specs)
@@ -577,6 +577,8 @@ class Ephaistos:
         prompt += "\nJSON:"
 
         system = EPHAISTOS_SYSTEM_PROMPT
+        if "exemples_denon" in variantes:
+            system = _exp.inserer_bloc_denon(system)
         if "exemples_cibles" in variantes and specs_pour_index:
             system = _exp.exemples_cibles(system, _exp.serveurs_des_specs(specs_pour_index))
         if "routage" in variantes:
@@ -852,6 +854,15 @@ Valide les arguments. Reponds en JSON:
                     use_max_specs = 5
 
             analysis = self.analyze(user_query, mcp_specs, specs_toon=use_toon, max_specs=use_max_specs)
+
+            # Variante double_passe : un second appel sur les specs suivantes ; la
+            # reponse au meilleur score de mots l'emporte (un bon outil en rang 4-6
+            # n'etait jamais montre, et le modele repond toujours avec confiance).
+            if (attempt == 0 and not use_toon and "double_passe" in _exp.actives()
+                    and use_max_specs and len(mcp_specs) > use_max_specs):
+                seconde = self.analyze(user_query, mcp_specs, max_specs=use_max_specs,
+                                       skip_specs=use_max_specs)
+                analysis = _exp.choisir_par_score(analysis, seconde, user_query)
 
             # Si on a un outil valide, retourner
             if analysis.tool is not None:

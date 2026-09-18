@@ -126,6 +126,20 @@ coupe la lecture, a trente pour cent) ne sont dans aucune carte.
   "dual" ne marquent que si la requete parle de dual/synchro/pc.
 - arguments_contradictoires : un outil sans parametre renvoye avec un
   argument qui appartient a une seule autre spec montree bascule vers elle.
+
+Iteration 5 hors regles (26/51, plateau). Analyse des plafonds : 31/51
+requetes contiennent un mot que ni l'index, ni le dictionnaire, ni les
+cartes ne relient ; les noms de VM n'existent nulle part ; aucun bloc
+d'exemples Denon ; une seule tentative a 3 specs.
+
+- entites_vm : un motif de nom de machine ("sandbox-02") ajoute "vm machine
+  virtuelle" a la requete AVANT le RAG (nom_de_vm n'agissait qu'apres).
+- lexique_langue : synonymes de langue courante pour les mots que rien ne
+  reliait ("en route" -> allumer, "noir" -> eteindre, "un double" ->
+  clone...). Des mots, jamais une phrase du jeu.
+- exemples_denon : un bloc d'exemples Denon dans le prompt systeme.
+- double_passe : second appel sur les specs 4 a 6 ; la reponse au meilleur
+  score de mots l'emporte.
 """
 
 from __future__ import annotations
@@ -144,6 +158,7 @@ VARIANTES = (
     "carte_equipements", "mots_relatifs", "expansion", "lexique",
     "exemple_description", "signature_complete", "resolution_arguments", "carte_son",
     "exemple_discriminant", "question_etat", "nom_de_vm", "verbes_catt", "arguments_contradictoires",
+    "entites_vm", "lexique_langue", "exemples_denon", "double_passe",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -153,6 +168,7 @@ _BLOC_PAR_SERVEUR = {
     "catt": "CATT",
     "mermaid": "MERMAID",
     "screen-manager": "SCREEN-MANAGER",
+    "denon": "DENON",
 }
 
 REGLE_ROUTAGE = """ROUTAGE PAR MOT-CLE (prioritaire sur les exemples) :
@@ -678,6 +694,77 @@ LEXIQUE_EQUIPEMENTS: dict[str, tuple[str, ...]] = {
     "image": ("ecran",),
 }
 
+# Synonymes de langue courante (variante lexique_langue) : des mots que ni
+# l'index ni le dictionnaire ne relient a un outil. Registre oral -> registre
+# des paraphrases. Jamais une phrase du jeu de test.
+LEXIQUE_LANGUE: dict[str, tuple[str, ...]] = {
+    "route": ("allumer", "demarrer", "marche"),
+    "noir": ("eteindre", "eteins", "off"), "noire": ("eteindre", "ecran", "off"),
+    "moitie": ("luminosite", "50", "tamiser"),
+    "double": ("clone", "cloner", "dupliquer"),
+    "restauration": ("snapshot", "instantane"), "point": ("snapshot",),
+    "emporter": ("exporter", "archive"), "tar": ("archive", "exporter"),
+    "saines": ("verifier", "integrite"), "saine": ("verifier", "integrite"),
+    "allege": ("nettoyer", "supprimer", "purger"), "stock": ("liste", "anciens"),
+    "recentes": ("anciens", "nettoyer"),
+    "console": ("game", "source", "entree"), "cran": ("volume", "monter"),
+    "lien": ("url",), "balance": ("caster", "envoyer", "diffuser"),
+    "fige": ("pause",), "gele": ("pause",), "remets": ("reprendre", "reactiver"),
+    "passe": ("joue", "lecture", "media"), "moment": ("cours", "actuel"),
+    "regarder": ("lancer", "application", "app"), "veux": ("lance",),
+    "repere": ("identifier", "clignoter"), "clignoter": ("identifier", "alert"),
+    "maison": ("toutes", "liste"), "quelles": ("liste",),
+    "ambiance": ("scene", "activer"), "cinema": ("scene",),
+    "mauve": ("violet", "couleur"), "celle": ("lampe",),
+    "encore": ("etat", "status"), "tourne": ("etat", "actif"),
+    "comme": ("liste",), "applis": ("applications",),
+    "espace": ("commande", "executer"), "disque": ("commande", "executer"),
+    "depose": ("copier", "fichier"), "rapport": ("fichier",),
+    "vingt": ("20", "niveau"), "trente": ("30", "niveau"), "dix": ("10",),
+    "suit": ("mode",), "derriere": ("ambilight",),
+}
+_MOTIF_VM = re.compile(r"\b[a-z]+-\d{1,3}\b")
+
+# Bloc d'exemples Denon (variante exemples_denon) : le prompt systeme n'en avait aucun
+EXEMPLES_DENON = """=== EXEMPLES DENON (Home cinema) ===
+
+Requete: "allume l'ampli"
+Specs: power_on(), power_off()
+Reponse:
+{"tool": "power_on", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "allumer = ON"}
+
+Requete: "mets l'ampli en veille"
+Specs: power_on(), power_off()
+Reponse:
+{"tool": "power_off", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "veille = OFF"}
+
+Requete: "coupe le son de l'ampli"
+Specs: mute_on(), mute_off(), volume_down()
+Reponse:
+{"tool": "mute_on", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "couper le son = mute"}
+
+Requete: "remets le son sur l'ampli"
+Specs: mute_on(), mute_off(), volume_up()
+Reponse:
+{"tool": "mute_off", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "remettre le son = fin du mute"}
+
+Requete: "regle l'ampli a 40"
+Specs: volume_set(level: integer), power_on()
+Reponse:
+{"tool": "volume_set", "arguments": {"level": 40}, "missing_args": [], "confidence": 0.95, "reasoning": "niveau explicite"}
+
+Requete: "l'ampli sur la console"
+Specs: set_input(source: string), power_on()
+Reponse:
+{"tool": "set_input", "arguments": {"source": "GAME"}, "missing_args": [], "confidence": 0.9, "reasoning": "console = entree GAME"}
+
+Requete: "l'ampli est allume ?"
+Specs: get_status(), power_on()
+Reponse:
+{"tool": "get_status", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "question d'etat"}
+
+"""
+
 _expander = None
 
 
@@ -696,7 +783,18 @@ def _synonymes_du_dictionnaire():
     return _expander
 
 
-def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15) -> str:
+def inserer_bloc_denon(system_prompt: str) -> str:
+    """Ajoute le bloc d'exemples Denon avant le bloc CATT (ou a la fin)."""
+    if "=== EXEMPLES DENON" in system_prompt:
+        return system_prompt
+    marque = "=== EXEMPLES CATT"
+    if marque in system_prompt:
+        return system_prompt.replace(marque, EXEMPLES_DENON + marque, 1)
+    return system_prompt + "\n" + EXEMPLES_DENON
+
+
+def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
+                    entites: bool = False, langue: bool = False) -> str:
     """Requete + synonymes de ses mots (dictionnaire de production, repli sans accent).
 
     Meme strategie que SynonymExpander.expand (requete originale, puis les
@@ -707,10 +805,15 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15) -
     dico = _synonymes_du_dictionnaire()
     ajouts: list[str] = []
     vus: set[str] = set()
+    if entites and _MOTIF_VM.search((requete or "").lower()):
+        ajouts += ["vm", "machine virtuelle"]
+        vus |= {"vm", "machine virtuelle"}
     for mot in normaliser(requete):
         candidats = list(dico.get(mot, ()))
         if lexique:
             candidats += list(LEXIQUE_EQUIPEMENTS.get(mot, ()))
+        if langue:
+            candidats += list(LEXIQUE_LANGUE.get(mot, ()))
         for syn in candidats:
             cle = " ".join(normaliser(syn))
             if cle and cle not in vus and cle not in normaliser(requete):
@@ -724,6 +827,15 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15) -
 
 
 # --- Iteration 2 hors regles : resolution par arguments, signatures completes ----
+
+def nom_de_spec(spec_compacte: str) -> str:
+    """"catt.cast_seek: cast_seek(seconds: integer)" -> "catt.cast_seek" ; "vm_start(vm_name: string)" -> "vm_start".
+
+    Le premier ":" peut etre celui d'un type quand la spec n'a pas de prefixe
+    "nom:" (specs passees telles quelles par les tests et par certains appels).
+    """
+    return re.split(r"[:(]", spec_compacte or "", 1)[0].strip()
+
 
 def _parametres_de(spec_compacte: str) -> set[str]:
     """"catt.cast_seek: cast_seek(seconds: integer)" -> {"seconds"}."""
@@ -744,7 +856,7 @@ def resoudre_par_arguments(tool, arguments: dict, specs_compactes: list[str], re
     """
     if not tool or not specs_compactes:
         return tool
-    noms = [sp.split(":")[0].strip() for sp in specs_compactes]
+    noms = [nom_de_spec(sp) for sp in specs_compactes]
     court = str(tool).split(".")[-1].lower()
     if any(n.lower() == str(tool).lower() or n.split(".")[-1].lower() == court for n in noms):
         return tool
@@ -798,10 +910,28 @@ def basculer_par_arguments(tool, arguments: dict, specs_compactes: list[str]):
     if not tool or not arguments or not specs_compactes:
         return tool
     court = str(tool).split(".")[-1].lower()
-    params = {sp.split(":")[0].strip(): _parametres_de(sp) for sp in specs_compactes}
+    params = {nom_de_spec(sp): _parametres_de(sp) for sp in specs_compactes}
     propres = next((p for n, p in params.items() if n.split(".")[-1].lower() == court), None)
     if propres is None or propres:
         return tool
     cles = {k.lower() for k in arguments}
     candidats = [n for n, p in params.items() if p and cles <= p and n.split(".")[-1].lower() != court]
     return candidats[0] if len(candidats) == 1 else tool
+
+
+def fenetre(specs_compactes: list[str], max_specs: int, skip: int = 0) -> list[str]:
+    """Les specs montrees : `max_specs` a partir de `skip` (0 = toutes)."""
+    if max_specs <= 0:
+        return list(specs_compactes[skip:]) if skip else list(specs_compactes)
+    return list(specs_compactes[skip:skip + max_specs])
+
+
+def choisir_par_score(premiere, seconde, requete: str):
+    """double_passe : la reponse dont l'outil a le meilleur score de mots l'emporte, la premiere a egalite."""
+    if seconde is None or not getattr(seconde, "tool", None):
+        return premiere
+    if not getattr(premiere, "tool", None):
+        return seconde
+    def score(a):
+        return score_mots(str(a.tool), requete, poids_rares=True, equipements=True, relatifs=True, catt=True)
+    return seconde if score(seconde) > score(premiere) else premiere

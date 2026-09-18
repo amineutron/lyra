@@ -494,3 +494,58 @@ class TestArgumentsContradictoires:
 
     def test_outil_qui_accepte_l_argument_inchange(self):
         assert exp.basculer_par_arguments("volume_set", {"level": 40}, self.SPECS) == "volume_set"
+
+
+class TestEntitesEtLangue:
+    def test_nom_de_machine_ajoute_vm_avant_le_rag(self):
+        r = exp.etendre_requete("coupe sandbox-02", entites=True)
+        assert r.startswith("coupe sandbox-02") and "vm" in r.split()
+
+    def test_sans_motif_rien(self):
+        assert "vm" not in exp.etendre_requete("coupe le son", entites=True).split()
+
+    def test_lexique_langue_relie_les_mots_orphelins(self):
+        r = exp.etendre_requete("je veux un double de preprod-01", langue=True)
+        assert "clone" in r.split()
+        assert "clone" not in exp.etendre_requete("je veux un double de preprod-01").split()
+
+
+class TestExemplesDenon:
+    def test_bloc_insere_avant_catt_et_garde_par_exemples_cibles(self):
+        from lyra.models.ephaistos import EPHAISTOS_SYSTEM_PROMPT as P
+        s = exp.inserer_bloc_denon(P)
+        assert s.index("=== EXEMPLES DENON") < s.index("=== EXEMPLES CATT")
+        c = exp.exemples_cibles(s, {"denon"})
+        assert "=== EXEMPLES DENON" in c and "=== EXEMPLES CATT" not in c
+
+    def test_idempotent(self):
+        s = exp.inserer_bloc_denon("x === EXEMPLES CATT (Cast video) === y")
+        assert exp.inserer_bloc_denon(s) == s
+
+
+class TestDoublePasse:
+    def test_fenetre(self):
+        specs = ["a", "b", "c", "d", "e"]
+        assert exp.fenetre(specs, 3) == ["a", "b", "c"]
+        assert exp.fenetre(specs, 3, skip=3) == ["d", "e"]
+        assert exp.fenetre(specs, 0) == specs
+
+    def test_la_seconde_gagne_seulement_si_meilleur_score(self):
+        from types import SimpleNamespace as N
+        p1 = N(tool="tv.power_on")
+        p2 = N(tool="catt.cast_stop")
+        assert exp.choisir_par_score(p1, p2, "le chromecast, coupe la lecture") is p2
+        assert exp.choisir_par_score(p1, p2, "allume la tele") is p1
+        assert exp.choisir_par_score(p1, None, "x") is p1
+        assert exp.choisir_par_score(N(tool=None), p2, "x") is p2
+
+
+class TestNomDeSpec:
+    def test_avec_et_sans_prefixe(self):
+        assert exp.nom_de_spec("catt.cast_seek: cast_seek(seconds: integer)") == "catt.cast_seek"
+        assert exp.nom_de_spec("vm_start(vm_name: string)") == "vm_start"
+        assert exp.nom_de_spec("generate_diagram(topic?: string)") == "generate_diagram"
+
+    def test_resolution_ne_deforme_pas_un_nom_connu_sans_prefixe(self):
+        """Regression : DEFAUT actif dans les tests d'EPHAISTOS, "generate_diagram" devenait "generate_diagram(topic?"."""
+        assert exp.resoudre_par_arguments("generate_diagram", {"topic": "VPN"}, ["generate_diagram(topic?: string)"], "x") == "generate_diagram"
