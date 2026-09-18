@@ -179,6 +179,26 @@ Trois regles tirees des cinq iterations :
   lumieres »), mais publie le score strict a cote (`reussis_strict`) pour rester
   comparable aux mesures anterieures.
 
+## Le jeu « hors regles » (generalisation)
+
+Le banc des modeles (21 requetes) est proche des regles : un score de 21/21 y
+mesure surtout la memoire du banc. `tests/cases_hors_regles.py` contient
+**51 formulations inedites** sur les 5 serveurs, tenues a l'ecart :
+`scripts/controle_hors_regles.py` refuse toute phrase prise par une regle ou
+recopiee d'une paraphrase indexee. C'est la seule mesure de generalisation.
+
+```bash
+LYRA_SEED=42 .venv/bin/python tests/test_campaign_llm.py --ephaistos qwen2.5-coder:0.5b --jeu hors_regles --json
+LYRA_SEED=42 .venv/bin/python scripts/bench_boucle.py --jeu hors_regles --socle ... --variantes ...
+```
+
+Ordre de grandeur mesure le 2026-09-18 : la configuration qui faisait 21/21
+sur le premier banc fait 13/51 ici ; quatre iterations l'amenent a 26/51 (51 %),
+et sur ce jeu la taille du modele compte (3b 63 %, 7b 71 %). Les deux jeux se
+lisent ensemble : optimiser l'un coute a l'autre (la configuration hors regles
+fait 19/21 sur le premier banc). Une phrase du jeu ne doit jamais entrer dans
+`triggers_map` ni dans les regles ; des mots, oui (un lexique se complete).
+
 ## Couverture des bancs
 
 Aucun banc ne couvre tous les serveurs. Il faut lire les deux ensemble, et

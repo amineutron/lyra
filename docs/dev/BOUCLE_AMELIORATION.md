@@ -132,9 +132,32 @@ LYRA_SEED=42 .venv/bin/python scripts/bench_boucle.py --iteration 6 \
 - Un seul run par configuration, a graine fixe : reproductible, mais pas une
   distribution. Changer de graine changerait des cas a la marge.
 
+## Le second banc : ce que la boucle a appris le lendemain
+
+Le jeu « hors regles » (`tests/cases_hors_regles.py`, 51 formulations inedites,
+5 serveurs, controle mecanique contre les regles et l'index) a ete rejoue avec
+la meme boucle le 2026-09-18 :
+
+- **Le 21/21 ne generalisait pas** : 13/51 au depart. Quatre iterations :
+  13 -> 14 -> 21 -> 26/51, puis plateau. Le rendement a ete porte par les
+  **donnees** (paraphrases pour les 34 outils qui n'en avaient pas, index sans
+  doublon, lexique des mots d'equipement), les reglages de code valant +1 a +3.
+- **Le recall ne suffit pas** : en iteration 1 le bon outil est passe de 7 a 20
+  fois en tete et le score n'a pas bouge. Sans exemple attache a la spec, un
+  0.5b baptise l'outil avec un mot de la requete. Lire la reponse brute reste
+  l'etape qui classe l'echec.
+- **Une regle fausse est pire qu'un modele faux** : six regles repondaient a
+  cote sur des phrases inedites, sans confirmation vocale en mode performance.
+  Ecrire un jeu hors regles est aussi un test des regles.
+- **Optimiser un jeu coute a l'autre** : la configuration hors regles fait 19/21
+  sur le premier banc. Decider sur les deux jeux ensemble, et verifier ce que
+  les regles interceptent en usage reel.
+- **Sur du langage libre, la taille du modele compte** (0.5b 51 %, 3b 63 %,
+  7b 71 %) alors qu'elle ne comptait pas sur le premier banc.
+
 ## A industrialiser
 
 - Le releve de recall (rang du bon outil sans modele) est un script de
   session : en faire `scripts/bench_recall.py` publie dans `benchmarks/`.
-- Le jeu « hors regles » (40 a 60 paraphrases nouvelles, 5 serveurs) comme
-  second banc, avec la meme boucle.
+- Un troisieme jeu, tenu a l'ecart a son tour, le jour ou le jeu hors regles
+  aura servi a trop d'iterations pour rester une mesure de generalisation.
