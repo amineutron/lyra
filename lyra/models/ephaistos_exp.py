@@ -496,7 +496,9 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
         if fines and mot == "lecture" and any(v in mots for v in VERBES_CATT):
             cibles = None   # "fige la lecture" : le verbe decide, pas "lecture"
         if verbes and mot in VERBES_TRI:
-            cibles = tuple(cibles or ()) + VERBES_TRI[mot]
+            # "l'ampli est allume ?" n'est pas un ordre : dans une question d'etat,
+            # le verbe designe les outils d'information
+            cibles = tuple(cibles or ()) + (_CIBLES_ETAT if question_d_etat(requete) else VERBES_TRI[mot])
         if verbes and mot in ("youtube", "netflix", "disney", "plex", "spotify") and "http" not in requete.lower() \
                 and any(v in mots for v in ("ouvre", "ouvrir", "lance", "lancer", "mets", "regarder")):
             cibles = ("app", "launch")   # sans URL, "ouvre youtube" est une application a lancer
@@ -1087,7 +1089,15 @@ def completer_arguments(tool, arguments: dict, specs_compactes: list[str], reque
         m = re.search(r"\b(?:avec|via|commande)\s+(.+)$|:\s*(.+)$", requete or "")
         if m:
             arguments["command"] = (m.group(1) or m.group(2)).strip()
+    if "mode" in params and not arguments.get("mode"):
+        m = re.search(r"\bmode\s+([a-z_]+)", (requete or "").lower())
+        if m:
+            arguments["mode"] = _MODES_AMBILIGHT.get(m.group(1), m.group(1))
     return arguments
+
+
+_MODES_AMBILIGHT = {"lounge": "lounge_light", "musique": "follow_audio", "audio": "follow_audio",
+                    "video": "follow_video", "film": "follow_video", "manuel": "manual"}
 
 
 def resoudre_flou(tool, specs_compactes: list[str]):

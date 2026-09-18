@@ -666,3 +666,17 @@ class TestVerbesTri:
     def test_url_youtube_vise_cast_youtube(self):
         specs = ["catt.cast_url: f(url)", "catt.cast_youtube: f(url)"]
         assert exp.boost_mots(specs, "diffuse cette video sur la tv https://youtu.be/x", **self.OPTS)[0].startswith("catt.cast_youtube")
+
+
+class TestIteration11:
+    OPTS = dict(poids_rares=True, equipements=True, relatifs=True, catt=True, son=True, tri=True, fines=True, verbes=True, cibler_youtube=True)
+
+    def test_question_d_etat_ignore_les_verbes(self):
+        specs = ["denon.power_on: power_on()", "denon.get_status: get_status()"]
+        assert exp.boost_mots(specs, "l'ampli est allume ?", **self.OPTS)[0].startswith("denon.get_status")
+        assert exp.boost_mots(specs, "allume l'ampli", **self.OPTS)[0].startswith("denon.power_on")
+
+    def test_mode_extrait(self):
+        specs = ["tv.ambilight_mode: ambilight_mode(mode: string)"]
+        assert exp.completer_arguments("ambilight_mode", {}, specs, "passe l'ambilight en mode lounge") == {"mode": "lounge_light"}
+        assert exp.completer_arguments("ambilight_mode", {"mode": "manual"}, specs, "mode lounge")["mode"] == "manual"
