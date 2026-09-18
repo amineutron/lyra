@@ -41,12 +41,12 @@ Mesure du 2026-09-17 ([source](benchmarks/results/2026-09-17-rtx-3080-ti-regles.
 
 Sans variante : le comportement du depot tel quel.
 
-| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
-|---|---:|---:|---:|---:|
-| `llama3.2:1b` | 21 | 8 | 38 % | 395 s |
-| `llama3.2:3b` | 21 | 6 | 29 % | 495 s |
-| `qwen2.5-coder:0.5b` | 21 | 5 | 24 % | 66 s |
-| `qwen2.5-coder:7b` | 21 | 6 | 29 % | 736 s |
+| Modele EPHAISTOS | Cas | Reussis | Taux | Duree | Variantes | Date |
+|---|---:|---:|---:|---:|---:|---|
+| `llama3.2:1b` | 21 | 8 | 38 % | 395 s | 0 | 2026-09-17 |
+| `llama3.2:3b` | 21 | 6 | 29 % | 495 s | 0 | 2026-09-17 |
+| `qwen2.5-coder:0.5b` | 21 | 5 | 24 % | 66 s | 0 | 2026-09-17 |
+| `qwen2.5-coder:7b` | 21 | 6 | 29 % | 736 s | 0 | 2026-09-17 |
 
 | Serveur | Commandes | `llama3.2:1b` | `llama3.2:3b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:7b` |
 |---|---:|---:|---:|---:|---:|
@@ -58,21 +58,21 @@ Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-modeles.json`](benchmarks/results
 
 ### Avec les variantes retenues par la boucle
 
-`LYRA_EXP` = `carte_mots`, `exemple_par_spec`, `exemple_proche`, `exemples_cibles`, `lexical`, `poids_rares`, `recall8`, `signature`, `top3_direct`. Le score accepte les equivalences declarees du banc.
+Configuration du jour indique (colonne Variantes) ; le score accepte les equivalences declarees du banc.
 
-| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
-|---|---:|---:|---:|---:|
-| `gemma3:1b` | 21 | 16 | 76 % | 124 s |
-| `llama3.2:1b` | 21 | 18 | 86 % | 208 s |
-| `llama3.2:3b` | 21 | 18 | 86 % | 185 s |
-| `mistral:7b` | 21 | 21 | 100 % | 537 s |
-| `qwen2.5-coder:0.5b` | 21 | 21 | 100 % | 229 s |
-| `qwen2.5-coder:1.5b` | 21 | 20 | 95 % | 117 s |
-| `qwen2.5-coder:7b` | 21 | 19 | 90 % | 398 s |
-| `qwen2.5:1.5b` | 21 | 19 | 90 % | 268 s |
-| `qwen2.5:3b` | 21 | 19 | 90 % | 466 s |
-| `qwen2.5:7b` | 21 | 20 | 95 % | 388 s |
-| `qwen3:1.7b` | 21 | 19 | 90 % | 696 s |
+| Modele EPHAISTOS | Cas | Reussis | Taux | Duree | Variantes | Date |
+|---|---:|---:|---:|---:|---:|---|
+| `gemma3:1b` | 21 | 16 | 76 % | 124 s | 17 | 2026-09-18 |
+| `llama3.2:1b` | 21 | 18 | 86 % | 208 s | 9 | 2026-09-17 |
+| `llama3.2:3b` | 21 | 18 | 86 % | 185 s | 9 | 2026-09-17 |
+| `mistral:7b` | 21 | 21 | 100 % | 537 s | 17 | 2026-09-18 |
+| `qwen2.5-coder:0.5b` | 21 | 21 | 100 % | 229 s | 31 | 2026-09-19 |
+| `qwen2.5-coder:1.5b` | 21 | 20 | 95 % | 117 s | 17 | 2026-09-18 |
+| `qwen2.5-coder:7b` | 21 | 19 | 90 % | 398 s | 9 | 2026-09-17 |
+| `qwen2.5:1.5b` | 21 | 19 | 90 % | 268 s | 22 | 2026-09-18 |
+| `qwen2.5:3b` | 21 | 19 | 90 % | 466 s | 22 | 2026-09-18 |
+| `qwen2.5:7b` | 21 | 20 | 95 % | 388 s | 17 | 2026-09-18 |
+| `qwen3:1.7b` | 21 | 19 | 90 % | 696 s | 17 | 2026-09-18 |
 
 | Serveur | Commandes | `gemma3:1b` | `llama3.2:1b` | `llama3.2:3b` | `mistral:7b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:1.5b` | `qwen2.5-coder:7b` | `qwen2.5:1.5b` | `qwen2.5:3b` | `qwen2.5:7b` | `qwen3:1.7b` |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -84,21 +84,21 @@ Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/res
 
 ### Jeu « hors regles » (formulations inedites)
 
-51 formulations inedites sur les 5 serveurs (`tests/cases_hors_regles.py`), tenues a l'ecart des regles et des paraphrases indexees : la mesure de generalisation. `LYRA_EXP` = `arguments_contradictoires`, `carte_equipements`, `carte_mots`, `exemple_par_spec`, `exemple_proche`, `exemples_cibles`, `expansion`, `lexical`, `lexique`, `mots_relatifs`, `poids_rares`, `recall8`, `resolution_arguments`, `signature`, `signature_complete`, `top3_direct`, `verbes_catt`.
+51 formulations inedites sur les 5 serveurs (`tests/cases_hors_regles.py`), tenues a l'ecart des regles et des paraphrases indexees. Chaque modele est mesure avec la configuration du jour indique (colonne Variantes) : seule la ligne la plus recente correspond a la configuration par defaut actuelle. Ce jeu a servi a onze iterations : ce n'est plus une mesure de generalisation pour la configuration finale (voir benchmarks/README.md).
 
-| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |
-|---|---:|---:|---:|---:|
-| `gemma3:1b` | 51 | 23 | 45 % | 506 s |
-| `llama3.2:1b` | 51 | 23 | 45 % | 1487 s |
-| `llama3.2:3b` | 51 | 32 | 63 % | 595 s |
-| `mistral:7b` | 51 | 30 | 59 % | 1778 s |
-| `qwen2.5-coder:0.5b` | 51 | 51 | 100 % | 381 s |
-| `qwen2.5-coder:1.5b` | 51 | 29 | 57 % | 331 s |
-| `qwen2.5-coder:7b` | 51 | 36 | 71 % | 1138 s |
-| `qwen2.5:1.5b` | 51 | 39 | 76 % | 642 s |
-| `qwen2.5:3b` | 51 | 44 | 86 % | 928 s |
-| `qwen2.5:7b` | 51 | 34 | 67 % | 1143 s |
-| `qwen3:1.7b` | 51 | 32 | 63 % | 2307 s |
+| Modele EPHAISTOS | Cas | Reussis | Taux | Duree | Variantes | Date |
+|---|---:|---:|---:|---:|---:|---|
+| `gemma3:1b` | 51 | 23 | 45 % | 506 s | 17 | 2026-09-18 |
+| `llama3.2:1b` | 51 | 23 | 45 % | 1487 s | 17 | 2026-09-18 |
+| `llama3.2:3b` | 51 | 32 | 63 % | 595 s | 17 | 2026-09-18 |
+| `mistral:7b` | 51 | 30 | 59 % | 1778 s | 17 | 2026-09-18 |
+| `qwen2.5-coder:0.5b` | 51 | 51 | 100 % | 381 s | 31 | 2026-09-19 |
+| `qwen2.5-coder:1.5b` | 51 | 29 | 57 % | 331 s | 17 | 2026-09-18 |
+| `qwen2.5-coder:7b` | 51 | 36 | 71 % | 1138 s | 17 | 2026-09-18 |
+| `qwen2.5:1.5b` | 51 | 39 | 76 % | 642 s | 25 | 2026-09-19 |
+| `qwen2.5:3b` | 51 | 44 | 86 % | 928 s | 22 | 2026-09-18 |
+| `qwen2.5:7b` | 51 | 34 | 67 % | 1143 s | 17 | 2026-09-18 |
+| `qwen3:1.7b` | 51 | 32 | 63 % | 2307 s | 17 | 2026-09-18 |
 
 | Serveur | Commandes | `gemma3:1b` | `llama3.2:1b` | `llama3.2:3b` | `mistral:7b` | `qwen2.5-coder:0.5b` | `qwen2.5-coder:1.5b` | `qwen2.5-coder:7b` | `qwen2.5:1.5b` | `qwen2.5:3b` | `qwen2.5:7b` | `qwen3:1.7b` |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|

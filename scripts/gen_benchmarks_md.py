@@ -128,8 +128,8 @@ def _tableau_modeles(lignes: list[str], par_modele: dict[str, dict], titre: str,
         "",
         note,
         "",
-        "| Modele EPHAISTOS | Cas | Reussis | Taux | Duree |",
-        "|---|---:|---:|---:|---:|",
+        "| Modele EPHAISTOS | Cas | Reussis | Taux | Duree | Variantes | Date |",
+        "|---|---:|---:|---:|---:|---:|---|",
     ]
     for nom, mesure in sorted(par_modele.items()):
         statuts = mesure.get("statuts", {})
@@ -137,7 +137,10 @@ def _tableau_modeles(lignes: list[str], par_modele: dict[str, dict], titre: str,
         taux = mesure.get("taux_pass", 0) * 100
         duree = mesure.get("duree_s")
         duree_txt = f"{duree:.0f} s" if duree else "—"
-        lignes += [f"| `{nom}` | {mesure['cas']} | {reussis} | {taux:.0f} % | {duree_txt} |"]
+        # Les modeles n'ont pas tous ete mesures avec la meme configuration : le
+        # nombre de variantes et la date le disent, plutot que de le laisser croire.
+        lignes += [f"| `{nom}` | {mesure['cas']} | {reussis} | {taux:.0f} % | {duree_txt} | "
+                   f"{len(mesure.get('variantes', []))} | {mesure['date']} |"]
     # Ventilation par serveur MCP : un score global masque le fait qu'un modele
     # peut etre bon sur un serveur et nul sur un autre.
     noms_modeles = list(sorted(par_modele))
@@ -202,15 +205,17 @@ def section_modeles(lignes: list[str]) -> None:
         _tableau_modeles(lignes, reference, "### Configuration de reference",
                          "Sans variante : le comportement du depot tel quel.")
     if avec_variantes:
-        variantes = ", ".join(f"`{v}`" for v in next(iter(avec_variantes.values()))["variantes"])
         _tableau_modeles(lignes, avec_variantes, "### Avec les variantes retenues par la boucle",
-                         f"`LYRA_EXP` = {variantes}. Le score accepte les equivalences declarees du banc.")
+                         "Configuration du jour indique (colonne Variantes) ; le score accepte les "
+                         "equivalences declarees du banc.")
     if hors_regles:
-        variantes = ", ".join(f"`{v}`" for v in next(iter(hors_regles.values())).get("variantes", []))
         _tableau_modeles(lignes, hors_regles, "### Jeu « hors regles » (formulations inedites)",
                          "51 formulations inedites sur les 5 serveurs (`tests/cases_hors_regles.py`), "
-                         "tenues a l'ecart des regles et des paraphrases indexees : la mesure de "
-                         f"generalisation. `LYRA_EXP` = {variantes}.")
+                         "tenues a l'ecart des regles et des paraphrases indexees. Chaque modele est "
+                         "mesure avec la configuration du jour indique (colonne Variantes) : seule la "
+                         "ligne la plus recente correspond a la configuration par defaut actuelle. "
+                         "Ce jeu a servi a onze iterations : ce n'est plus une mesure de generalisation "
+                         "pour la configuration finale (voir benchmarks/README.md).")
 
 
 def section_boucle(lignes: list[str]) -> None:
