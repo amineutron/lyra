@@ -249,12 +249,18 @@ MOTS_RELATIFS: dict[str, tuple[str, ...]] = {
 
 _RRF_K = 60
 
-# Configuration retenue par la boucle d'amelioration (iteration 5, 21/21).
-# Ecartees, mesurees : dedup et json_format (neutres), routage, index,
-# consigne_onoff, deux_exemples, top5_direct (degradent), indice_url (coutait
-# le dernier cas), couleurs (sans effet), mots_url (non necessaire).
+# Configuration retenue le 2026-09-18 apres la boucle sur le jeu hors regles :
+# 26/51 sur les formulations inedites et 19/21 sur le premier banc (les deux
+# cas perdus sont couverts par une regle en usage reel), contre 13/51 et 21/21
+# pour les neuf variantes du 2026-09-17. Ecartees, mesurees : dedup,
+# json_format, couleurs, mots_url, exemple_description, carte_son,
+# question_etat, nom_de_vm (neutres) ; routage, index, consigne_onoff,
+# deux_exemples, top5_direct, indice_url, exemple_discriminant (degradent).
 DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
-          "exemple_par_spec", "poids_rares", "exemple_proche", "signature")
+          "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
+          "carte_equipements", "mots_relatifs", "expansion", "lexique",
+          "resolution_arguments", "signature_complete", "verbes_catt",
+          "arguments_contradictoires")
 
 
 def actives() -> set[str]:
