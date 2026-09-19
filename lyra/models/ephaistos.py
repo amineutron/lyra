@@ -558,7 +558,9 @@ class Ephaistos:
                                                 vm="nom_de_vm" in variantes,
                                                 tri="cartes_tri" in variantes,
                                                 fines="cartes_fines" in variantes,
-                                                verbes="verbes_tri" in variantes)
+                                                verbes="verbes_tri" in variantes,
+                                                courants="verbes_courants" in variantes,
+                                                courants2="mots_courants_2" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             outil_force = None
             net = (max_specs and not skip_specs
@@ -566,6 +568,9 @@ class Ephaistos:
                                       relatifs=True, catt=True, son="carte_son" in variantes,
                                       tri="cartes_tri" in variantes, fines="cartes_fines" in variantes,
                                       verbes="verbes_tri" in variantes,
+                                      courants="verbes_courants" in variantes,
+                                      courants2="mots_courants_2" in variantes,
+                                      seuil=1 if "net_assoupli" in variantes else 2,
                                       cibler_youtube="mots_url" in variantes))
             if "top1_si_net" in variantes and net:
                 max_specs = 1
@@ -641,6 +646,9 @@ class Ephaistos:
             analysis.tool = _exp.resoudre_index(analysis.tool, specs_pour_index)
         if "couleurs" in variantes:
             analysis.arguments = _exp.corriger_couleur(analysis.tool, analysis.arguments, user_query)
+        if "outil_par_machine" in variantes and specs_pour_index:
+            analysis.tool, analysis.arguments = _exp.outil_par_machine(
+                analysis.tool, analysis.arguments, specs_pour_index, user_query)
         if "resolution_arguments" in variantes and specs_pour_index:
             analysis.tool = _exp.resoudre_par_arguments(analysis.tool, analysis.arguments,
                                                         specs_pour_index, user_query)
@@ -650,7 +658,8 @@ class Ephaistos:
             analysis.tool = _exp.resoudre_flou(analysis.tool, specs_pour_index)
         if "args_par_regex" in variantes and specs_pour_index:
             analysis.arguments = _exp.completer_arguments(analysis.tool, analysis.arguments,
-                                                          specs_pour_index, user_query)
+                                                          specs_pour_index, user_query,
+                                                          inventaire="inventaire_vm" in variantes)
         if outil_force and analysis.tool is not None:
             analysis.tool = outil_force
         analysis.rang1 = _exp.nom_de_spec(specs_pour_index[0]) if specs_pour_index else None

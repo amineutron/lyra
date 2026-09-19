@@ -128,7 +128,20 @@ def load_source_data(client: chromadb.ClientAPI) -> tuple[list[str], list[dict],
     print(f"[*] Source: {SOURCE_COLLECTION} ({total} docs)")
 
     results = col.get(limit=total, include=['documents', 'metadatas'])
-    return results['ids'], results['metadatas'], results['documents']
+    return filtrer_sans_serveur(results['ids'], results['metadatas'], results['documents'])
+
+
+def filtrer_sans_serveur(ids, metadatas, documents):
+    """Ecarte les docs sans server_name (ex. ironman.run_scene, intercepte hors MCP).
+
+    Sans ce filtre, build_registry cree un serveur "UNKNOWN" et un outil que
+    HESTIA ne peut pas appeler (audit 2026-09-19).
+    """
+    gardes = [(i, m, d) for i, m, d in zip(ids, metadatas, documents) if (m or {}).get('server_name')]
+    ecartes = len(ids) - len(gardes)
+    if ecartes:
+        print(f"    {ecartes} doc(s) sans server_name ignore(s)")
+    return ([i for i, _, _ in gardes], [m for _, m, _ in gardes], [d for _, _, d in gardes])
 
 
 def build_registry(ids, metadatas, documents) -> list[dict]:

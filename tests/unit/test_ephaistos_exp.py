@@ -691,3 +691,87 @@ class TestSignatureApresFusion:
         assert r[0]["document"].endswith("Signature: ambilight_mode(mode: string)")
         specs = ["tv.ambilight_mode: ambilight_mode(mode: string)"]
         assert exp.completer_arguments("ambilight_mode", {}, specs, "passe l ambilight en mode lounge") == {"mode": "lounge_light"}
+
+
+class TestLeviersGeneriques:
+    """inventaire_vm, lexique_courant, verbes_courants (2026-09-19)."""
+
+    def setup_method(self):
+        exp.definir_inventaire_vm(["fedora-base", "test-vm", "windows-11-test"])
+
+    def teardown_method(self):
+        exp.definir_inventaire_vm([])
+
+    def test_inventaire_reconnait_les_vrais_noms(self):
+        assert exp.noms_de_machines("reveille fedora-base", inventaire=True) == ["fedora-base"]
+        assert exp.noms_de_machines("reveille fedora-base", inventaire=False) == []
+
+    def test_motif_et_inventaire_dans_l_ordre_sans_doublon(self):
+        assert exp.noms_de_machines("clone test-vm en sandbox-02", inventaire=True) == ["test-vm", "sandbox-02"]
+
+    def test_nom_long_prime_sur_son_prefixe(self):
+        assert exp.noms_de_machines("snapshot de windows-11-test", inventaire=True) == ["windows-11-test"]
+
+    def test_inventaire_depuis_l_environnement(self, monkeypatch):
+        exp.definir_inventaire_vm([])
+        monkeypatch.setenv("LYRA_VMS", "arch-base, ubuntu-base")
+        assert exp.noms_de_machines("arrete ubuntu-base", inventaire=True) == ["ubuntu-base"]
+
+    def test_expansion_ajoute_vm_pour_un_nom_reel(self):
+        r = exp.etendre_requete("reveille fedora-base", inventaire=True)
+        assert "vm" in r.split()
+        assert "vm" not in exp.etendre_requete("reveille fedora-base", entites=True).split()
+
+    def test_args_par_regex_lit_l_inventaire(self):
+        specs = ["fedora.vm_start: vm_start(vm_name: string)"]
+        assert exp.completer_arguments("vm_start", {}, specs, "reveille fedora-base",
+                                       inventaire=True) == {"vm_name": "fedora-base"}
+        assert exp.completer_arguments("vm_start", {}, specs, "reveille fedora-base") == {}
+
+    def test_nouveau_nom_du_clone(self):
+        specs = ["fedora.vm_clone: vm_clone(source_vm: string, new_vm_name: string)"]
+        args = exp.completer_arguments("vm_clone", {}, specs, "clone fedora-base en fedora-test", inventaire=True)
+        assert args == {"source_vm": "fedora-base", "new_vm_name": "fedora-test"}
+
+    def test_lexique_courant_relie_les_mots_ordinaires(self):
+        r = exp.etendre_requete("vire les leds", courant=True)
+        assert "eteindre" in r.split()
+        assert "eteindre" not in exp.etendre_requete("vire les leds").split()
+
+    def test_verbes_courants_dans_le_tri(self):
+        specs = ["tv.ambilight_on: ambilight_on()", "tv.ambilight_off: ambilight_off()"]
+        assert exp.boost_mots(specs, "vire les leds", courants=True)[0].startswith("tv.ambilight_off")
+        assert exp.boost_mots(specs, "vire les leds")[0].startswith("tv.ambilight_on")
+
+    def test_variantes_declarees(self):
+        assert {"inventaire_vm", "lexique_courant", "verbes_courants"} <= set(exp.VARIANTES)
+
+
+class TestIteration15:
+    SPECS = ["fedora.vm_start: vm_start(vm_name: string)", "fedora.vm_status: vm_status(vm_name?: string)"]
+
+    def setup_method(self):
+        exp.definir_inventaire_vm(["fedora-base", "arch-base"])
+
+    def teardown_method(self):
+        exp.definir_inventaire_vm([])
+
+    def test_nom_de_machine_en_nom_d_outil(self):
+        tool, args = exp.outil_par_machine("fedora_base", {}, self.SPECS, "reveille fedora-base")
+        assert (tool, args) == ("fedora.vm_start", {"vm_name": "fedora-base"})
+
+    def test_nom_d_outil_connu_inchange(self):
+        assert exp.outil_par_machine("vm_status", {"vm_name": "x"}, self.SPECS, "fedora-base ?") == ("vm_status", {"vm_name": "x"})
+
+    def test_nom_inconnu_qui_n_est_pas_une_machine_inchange(self):
+        assert exp.outil_par_machine("repo_add", {}, self.SPECS, "mets fedora-base au repos")[0] == "repo_add"
+
+    def test_seuil_du_net(self):
+        specs = ["denon.volume_up: volume_up()", "denon.volume_down: volume_down()"]
+        assert not exp.score_net(specs, "monte l'ampli", poids_rares=True, relatifs=True)
+        assert exp.score_net(specs, "monte l'ampli", seuil=1, poids_rares=True, relatifs=True)
+
+    def test_mots_courants_2(self):
+        specs = ["fedora.vm_import: vm_import()", "fedora.vm_export: vm_export()"]
+        assert exp.boost_mots(specs, "sors la machine dans une archive", courants2=True)[0].startswith("fedora.vm_export")
+        assert "exporter" in exp.etendre_requete("sors la machine", courant2=True).split()

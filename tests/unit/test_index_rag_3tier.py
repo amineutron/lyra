@@ -34,3 +34,11 @@ def test_s_arrete_avant_la_categorie_et_les_exemples():
 
 def test_sans_section():
     assert extract_use_cases("x Signature: f() rien") == ""
+
+
+def test_docs_sans_serveur_ecartes(capsys):
+    from index_rag_3tier import filtrer_sans_serveur
+    ids, metas, docs = filtrer_sans_serveur(
+        ["a", "b"], [{"server_name": "fedora"}, {"category": "scene"}], ["d1", "d2"])
+    assert ids == ["a"] and metas == [{"server_name": "fedora"}] and docs == ["d1"]
+    assert "1 doc(s) sans server_name" in capsys.readouterr().out

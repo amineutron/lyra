@@ -169,9 +169,45 @@ la meme boucle le 2026-09-18 :
   en regardant ses echecs. Le troisieme jeu, tenu a l'ecart, dira ce que vaut
   le 72/72.
 
+## Le troisieme jeu : ce que valait le 72/72, et comment on repart
+
+Le troisieme jeu (`tests/cases_hors_regles_2.py`, 100 phrases, ecrit apres la
+boucle) a donne **56/100** en mesure unique a la configuration qui faisait
+72/72 : un jeu itere mesure la boucle, pas le produit. La suite, le 2026-09-19
+au soir, a fixe le protocole a trois jeux :
+
+1. **Sceller le jeu suivant avant de toucher a quoi que ce soit.** Le
+   quatrieme jeu (`tests/cases_hors_regles_3.py`, 50 phrases, vrais noms de
+   machines, dix outils jamais mesures) a ete ecrit et controle AVANT les
+   leviers ; le troisieme devient le jeu de developpement. Le controle du jeu
+   a encore trouve trois regles fausses (corrigees, tests de regression).
+2. **Des leviers qui ne dependent pas des phrases.** L'inventaire reel des
+   machines (`vm_status` au demarrage du pipeline, ou `LYRA_VMS`) a la place
+   d'un motif de nom ; un lexique de langue courante ecrit domaine par domaine
+   (allumage, extinction, volume, lumiere, lecture, machines, sauvegardes) ;
+   les memes verbes dans les cartes de tri. Mesure mecanique avant le banc :
+   rang 1 pour 41 -> 60 cas sur 100, absents 13 -> 5.
+3. **Le banc confirme le mecanisme** : 56 -> 58 / 64 / 64 seules, 67 / 66 / 68
+   par paires, **70** les trois ensemble (it14) ; regression 21/21 et 50/51.
+4. **Lire les echecs restants avec le classement automatique** : le 0.5b copie
+   parfois l'entite en nom d'outil (`fedora_base` pour "reveille
+   fedora-base") -> `outil_par_machine` (+2, comme prevu) ; une seconde table
+   de mots ordinaires (+9) ; assouplir le critere net (seuil 1) est
+   **infirme** (-4 : la precision mecanique 36/5 contre 29/2 l'annoncait, trois
+   faux nets imposent trois mauvais outils). It15 : **82/100** sur le jeu 3.
+5. **Une seule mesure du jeu scelle**, et c'est le seul chiffre qu'on publie
+   comme generalisation. Le jour ou on y touche, un cinquieme prend le relais.
+
+Pieges de ces deux iterations : un guetteur `until ! pgrep -f "<ligne du
+banc>"` matche sa propre ligne de commande et ne rend jamais la main (guetter
+un fichier marqueur) ; un mot ordinaire peut etre nuisible sur l'autre jeu
+("point" -> status casse "point de restauration" = snapshot) : le recall
+mecanique sur les deux jeux le voit en vingt secondes, avant le banc.
+
 ## A industrialiser
 
-- Le releve de recall (rang du bon outil sans modele) est un script de
-  session : en faire `scripts/bench_recall.py` publie dans `benchmarks/`.
-- Un troisieme jeu, tenu a l'ecart a son tour, le jour ou le jeu hors regles
-  aura servi a trop d'iterations pour rester une mesure de generalisation.
+- Le releve de recall (rang du bon outil sans modele, precision du critere
+  net) est un script de session : en faire `scripts/bench_recall.py` publie
+  dans `benchmarks/`.
+- Un cinquieme jeu, tenu a l'ecart a son tour, le jour ou le quatrieme aura
+  servi a une iteration.

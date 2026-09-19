@@ -148,6 +148,12 @@ class Pipeline:
             f_rag.result()     # propager les exceptions eventuelles
             f_hestia.result()
 
+        # Inventaire reel des machines pour la variante inventaire_vm (noms
+        # hors motif "nom-NN" : fedora-base, test-vm). Silencieux si vm_status echoue.
+        from lyra.models import ephaistos_exp as _exp
+        if "inventaire_vm" in _exp.actives():
+            _exp.definir_inventaire_vm(get_existing_vm_names(self._hestia))
+
         # Model Manager + EPHAISTOS + LYRA + Intent Classifier (sequentiel, rapide)
         self._model_manager = ModelManager(self.config)
         self._ephaistos = Ephaistos(self._model_manager)

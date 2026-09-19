@@ -195,6 +195,33 @@ alert_light a egalite ; "ouvre YouTube" ne cible pas launch_app.
 
 - verbes_tri : allume/active/demarre -> on/start, eteins/arrete -> off/stop,
   ouvre/lance -> launch/app, dans les cartes de tri.
+
+Leviers generiques (2026-09-19, apres le troisieme jeu a 56/100 : 11 outils
+jamais remontes, 24 confusions, vrais noms de machines non reconnus). Construits
+hors de tout jeu, mesures sur le troisieme (devenu jeu de developpement) et une
+seule fois sur le quatrieme, tenu a l'ecart.
+
+- inventaire_vm : les noms de machines viennent de l'inventaire reel (vm_status
+  au demarrage, ou LYRA_VMS), plus le motif "nom-NN" ; "fedora-base" et
+  "test-vm" sont reconnus par l'expansion et par args_par_regex. Le nouveau nom
+  d'un clone ("en fedora-test") est aussi lu.
+- lexique_courant : synonymes de langue courante par domaine (allumage,
+  extinction, volume, lumiere, lecture, machines, sauvegardes), ecrits a partir
+  du francais de tous les jours et non des echecs d'un banc.
+- verbes_courants : les memes verbes dans les cartes de tri (reveille -> on,
+  vire/degage -> off/destroy, pousse -> up, descends -> down, jumeau -> clone...).
+
+Iteration 15 (jeu 3 a 70/100 : 16 confusions, 4 noms inventes dont deux noms
+de machine copies en nom d'outil, 4 absents) :
+
+- outil_par_machine : un nom d'outil qui est un nom de machine ("fedora_base"
+  pour "reveille fedora-base") est remplace par la spec de rang 1, la machine
+  passant en vm_name.
+- net_assoupli : le tri est "net" des que le rang 1 a un mot-cible de plus que
+  le rang 2 (seuil 1 au lieu de 2) ; precision mesuree sans modele avant.
+- mots_courants_2 : deuxieme table de mots ordinaires (sors -> export, le point
+  -> status, on en reste la -> stop, sans le son -> mute, prends -> source,
+  dispo/connectees -> liste, danser/suivent -> beat...).
 """
 
 from __future__ import annotations
@@ -217,6 +244,8 @@ VARIANTES = (
     "boost_sur_etendue", "top1_si_net", "args_par_regex", "resolution_floue",
     "spec_description", "outil_force_si_net", "vote_rotation", "verification_binaire",
     "cartes_tri", "denon_sans_veille", "cartes_fines", "verbes_tri",
+    "inventaire_vm", "lexique_courant", "verbes_courants",
+    "outil_par_machine", "net_assoupli", "mots_courants_2",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -367,6 +396,10 @@ _RRF_K = 60
 # le jeu hors regles et 21/21 sur le premier banc avec qwen2.5-coder:0.5b.
 # Infirmees en route : vote_rotation, boost_sur_etendue, resolution_floue,
 # top1_si_net (remplacee par outil_force_si_net).
+# Etendue le 2026-09-19 (soir) apres deux iterations sur le troisieme jeu,
+# devenu jeu de developpement : 56 -> 70 (inventaire_vm, lexique_courant,
+# verbes_courants) -> 82/100 (outil_par_machine, mots_courants_2).
+# Infirmee : net_assoupli (-4 : trois faux nets de plus imposent un mauvais outil).
 DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
           "carte_equipements", "mots_relatifs", "expansion", "lexique",
@@ -375,7 +408,10 @@ DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "exemples_denon", "double_passe", "args_par_regex",
           "spec_description", "outil_force_si_net", "verification_binaire",
           "cartes_tri", "carte_son", "denon_sans_veille", "cartes_fines",
-          "mots_url", "verbes_tri")
+          "mots_url", "verbes_tri",
+          # Iterations 14-15 sur le troisieme jeu (56 -> 82/100) ; net_assoupli infirmee (-4).
+          "inventaire_vm", "lexique_courant", "verbes_courants",
+          "outil_par_machine", "mots_courants_2")
 
 
 def actives() -> set[str]:
@@ -476,7 +512,7 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
                etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
-               verbes: bool = False) -> int:
+               verbes: bool = False, courants: bool = False, courants2: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -498,6 +534,10 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = ("mute",) if any(v in mots for v in _VERBES_MUTE) else ("volume",)
         if tri and mot in MOTS_TRI:
             cibles = tuple(cibles or ()) + MOTS_TRI[mot]
+        if courants and mot in VERBES_COURANTS:
+            cibles = tuple(cibles or ()) + VERBES_COURANTS[mot]
+        if courants2 and mot in VERBES_COURANTS_2:
+            cibles = tuple(cibles or ()) + VERBES_COURANTS_2[mot]
         if fines and mot in MOTS_FINS:
             cibles = tuple(cibles or ()) + MOTS_FINS[mot]
         if fines and mot == "lecture" and any(v in mots for v in VERBES_CATT):
@@ -525,7 +565,7 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
         score -= 1
     if etat and question_d_etat(requete) and any(c in tokens for c in _CIBLES_ETAT):
         score += 2
-    if vm and _NOM_DE_VM.search((requete or "").lower()) and "vm" in tokens:
+    if vm and noms_de_machines(requete, inventaire=courants or "inventaire_vm" in actives()) and "vm" in tokens:
         score += 2
     return score
 
@@ -534,12 +574,12 @@ def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = Fal
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
                etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
-               verbes: bool = False) -> list[str]:
+               verbes: bool = False, courants: bool = False, courants2: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(nom_de_spec(s), requete, poids_rares,
                                            cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri, fines,
-                                           verbes),
+                                           verbes, courants, courants2),
                   reverse=True)
 
 
@@ -919,7 +959,8 @@ def inserer_bloc_denon(system_prompt: str, sans_veille: bool = False) -> str:
 
 
 def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
-                    entites: bool = False, langue: bool = False) -> str:
+                    entites: bool = False, langue: bool = False,
+                    inventaire: bool = False, courant: bool = False, courant2: bool = False) -> str:
     """Requete + synonymes de ses mots (dictionnaire de production, repli sans accent).
 
     Meme strategie que SynonymExpander.expand (requete originale, puis les
@@ -930,7 +971,7 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
     dico = _synonymes_du_dictionnaire()
     ajouts: list[str] = []
     vus: set[str] = set()
-    if entites and _MOTIF_VM.search((requete or "").lower()):
+    if (entites or inventaire) and noms_de_machines(requete, inventaire=inventaire):
         ajouts += ["vm", "machine virtuelle"]
         vus |= {"vm", "machine virtuelle"}
     for mot in normaliser(requete):
@@ -939,6 +980,10 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
             candidats += list(LEXIQUE_EQUIPEMENTS.get(mot, ()))
         if langue:
             candidats += list(LEXIQUE_LANGUE.get(mot, ()))
+        if courant:
+            candidats += list(LEXIQUE_COURANT.get(mot, ()))
+        if courant2:
+            candidats += list(LEXIQUE_COURANT_2.get(mot, ()))
         for syn in candidats:
             cle = " ".join(normaliser(syn))
             if cle and cle not in vus and cle not in normaliser(requete):
@@ -1064,16 +1109,17 @@ def choisir_par_score(premiere, seconde, requete: str):
 
 # --- Iteration 6 hors regles ---------------------------------------------------------
 
-def score_net(specs_compactes: list[str], requete: str, **options) -> bool:
-    """Vrai si la spec de rang 1 a un score de mots >= 2 et strictement superieur au rang 2."""
+def score_net(specs_compactes: list[str], requete: str, seuil: int = 2, **options) -> bool:
+    """Vrai si la spec de rang 1 a un score de mots >= seuil et strictement superieur au rang 2."""
     if not specs_compactes:
         return False
     s1 = score_mots(nom_de_spec(specs_compactes[0]), requete, **options)
     s2 = score_mots(nom_de_spec(specs_compactes[1]), requete, **options) if len(specs_compactes) > 1 else 0
-    return s1 >= 2 and s1 > s2
+    return s1 >= seuil and s1 > s2
 
 
-def completer_arguments(tool, arguments: dict, specs_compactes: list[str], requete: str) -> dict:
+def completer_arguments(tool, arguments: dict, specs_compactes: list[str], requete: str,
+                        inventaire: bool = False) -> dict:
     """Arguments deductibles de la requete quand la signature les attend (variante args_par_regex).
 
     vm_name / source_vm : le premier nom de machine ("sandbox-02") ; new_vm_name :
@@ -1085,13 +1131,16 @@ def completer_arguments(tool, arguments: dict, specs_compactes: list[str], reque
         return arguments
     court = str(tool).split(".")[-1].lower()
     params = next((_parametres_de(sp) for sp in specs_compactes if nom_de_spec(sp).split(".")[-1].lower() == court), set())
-    machines = _MOTIF_VM.findall((requete or "").lower())
+    machines = noms_de_machines(requete, inventaire=inventaire)
     if machines:
         for cle in ("vm_name", "source_vm"):
             if cle in params and not arguments.get(cle):
                 arguments[cle] = machines[0]
-        if "new_vm_name" in params and not arguments.get("new_vm_name") and len(machines) > 1:
-            arguments["new_vm_name"] = machines[1]
+        if "new_vm_name" in params and not arguments.get("new_vm_name"):
+            if len(machines) > 1:
+                arguments["new_vm_name"] = machines[1]
+            elif inventaire and nouveau_nom(requete, machines[0]):
+                arguments["new_vm_name"] = nouveau_nom(requete, machines[0])
     if "command" in params and not arguments.get("command"):
         m = re.search(r"\b(?:avec|via|commande)\s+(.+)$|:\s*(.+)$", requete or "")
         if m:
@@ -1155,3 +1204,179 @@ def vote(analyses: list, requete: str):
         comptes[court] = comptes.get(court, 0) + 1
     gagnant = max(comptes.items(), key=lambda kv: kv[1])[0]
     return next(a for a in valides if str(a.tool).split(".")[-1].lower() == gagnant)
+
+
+# --- Leviers generiques (2026-09-19, apres le troisieme jeu) --------------------------
+
+_INVENTAIRE_VM: tuple[str, ...] = ()
+
+
+def definir_inventaire_vm(noms) -> None:
+    """Enregistre les noms de machines reels (vm_status au demarrage du pipeline)."""
+    global _INVENTAIRE_VM
+    _INVENTAIRE_VM = tuple(sorted({str(n).strip().lower() for n in (noms or ()) if str(n).strip()},
+                                  key=len, reverse=True))
+
+
+def inventaire_vm() -> tuple[str, ...]:
+    """Noms enregistres, sinon LYRA_VMS ("fedora-base,test-vm"), sinon rien."""
+    if _INVENTAIRE_VM:
+        return _INVENTAIRE_VM
+    brut = os.environ.get("LYRA_VMS", "")
+    return tuple(sorted({n.strip().lower() for n in brut.split(",") if n.strip()}, key=len, reverse=True))
+
+
+def noms_de_machines(requete: str, inventaire: bool = False) -> list[str]:
+    """Noms de machines cites, dans l'ordre : inventaire reel (si demande) puis motif "nom-NN"."""
+    texte = (requete or "").lower()
+    trouves: list[tuple[int, str]] = []
+    if inventaire:
+        for nom in inventaire_vm():
+            for m in re.finditer(rf"(?<![a-z0-9-]){re.escape(nom)}(?![a-z0-9-])", texte):
+                trouves.append((m.start(), nom))
+    for m in _MOTIF_VM.finditer(texte):
+        trouves.append((m.start(), m.group(0)))
+    noms = [nom for _, nom in sorted(trouves)]
+    # "windows-11" (motif) est un morceau de "windows-11-test" (inventaire) : le plus long gagne
+    resultat: list[str] = []
+    for nom in noms:
+        if nom not in resultat and not any(nom != autre and nom in autre for autre in noms):
+            resultat.append(nom)
+    return resultat
+
+
+_NOUVEAU_NOM = re.compile(r"\b(?:en|vers|nomme|nommee|appelle|appelee|appelant|nom)\s+([a-z0-9]+(?:-[a-z0-9]+)+)\b")
+
+
+def nouveau_nom(requete: str, source: str) -> str | None:
+    """"clone fedora-base en fedora-test" -> "fedora-test" (un nom avec tiret apres en/nomme/appelle)."""
+    for m in _NOUVEAU_NOM.finditer((requete or "").lower()):
+        if m.group(1) != source:
+            return m.group(1)
+    return None
+
+
+# Synonymes de langue courante par domaine (variante lexique_courant). Ecrits a
+# partir du francais de tous les jours, domaine par domaine, pas des echecs d'un
+# banc : chaque entree relie un mot ordinaire au registre des paraphrases indexees.
+LEXIQUE_COURANT: dict[str, tuple[str, ...]] = {
+    # allumage / extinction
+    "reveille": ("allumer", "demarrer"), "reveiller": ("allumer", "demarrer"), "reveilles": ("allumer",),
+    "eclaire": ("allumer", "lumiere"), "eclairer": ("allumer", "lumiere"), "eclairage": ("lumiere", "lampe"),
+    "vire": ("eteindre", "supprimer"), "virer": ("eteindre", "supprimer"), "degage": ("supprimer", "eteindre"),
+    "degager": ("supprimer", "eteindre"), "enleve": ("eteindre", "desactiver"), "enlever": ("eteindre", "desactiver"),
+    "repos": ("eteindre", "arreter", "veille"), "dodo": ("veille", "eteindre"), "dormir": ("veille", "eteindre"),
+    "nuit": ("eteindre", "veille"), "fini": ("eteindre", "arreter"), "ferme": ("eteindre", "arreter"),
+    "obscurite": ("eteindre",), "sombre": ("baisser", "luminosite"),
+    # volume / son
+    "fort": ("volume", "monter"), "forte": ("volume", "monter"), "pousse": ("monter", "volume"),
+    "pousser": ("monter", "volume"), "descends": ("baisser", "volume"), "descendre": ("baisser", "volume"),
+    "doucement": ("baisser", "volume"), "silence": ("mute", "couper le son"), "chut": ("mute", "couper le son"),
+    "sourdine": ("mute",), "cran": ("volume",), "niveau": ("volume",),
+    # lumiere
+    "tamise": ("luminosite", "baisser"), "tamiser": ("luminosite", "baisser"), "moitie": ("luminosite", "50"),
+    "fond": ("luminosite", "maximum"), "couleur": ("couleur", "rgb"), "teinte": ("couleur", "temperature"),
+    "preset": ("preset", "couleur"), "predefini": ("preset",), "groupe": ("groupe", "piece"),
+    "groupes": ("groupes", "pieces"), "pieces": ("groupes",), "nommee": ("nom", "chercher"), "nomme": ("nom", "chercher"),
+    "appelle": ("nom", "chercher"), "connectees": ("liste", "toutes"), "clignote": ("alert", "identifier"),
+    # lecture / cast
+    "attends": ("pause",), "patiente": ("pause",), "reprends": ("reprendre", "lecture"), "repartir": ("reprendre",),
+    "saute": ("avancer", "secondes"), "arriere": ("reculer", "secondes"), "titre": ("info", "en cours"),
+    "morceau": ("info", "en cours"), "onglet": ("navigateur", "browser"), "navigateur": ("browser", "onglet"),
+    "firefox": ("navigateur", "browser"), "recale": ("resynchroniser", "decalage"), "decales": ("resynchroniser",),
+    "decale": ("decalage", "offset"), "avance": ("decalage", "avancer"), "retard": ("decalage",),
+    "flux": ("url", "diffuser"), "lien": ("url",), "video": ("youtube", "url"),
+    # applications / entrees
+    "netflix": ("application", "app"), "plex": ("application", "app"), "disney": ("application", "app"),
+    "prime": ("application", "app"), "twitch": ("application", "app"), "spotify": ("application", "app"),
+    "youtube": ("application", "app"), "playstation": ("game", "source", "entree"), "ps5": ("game", "source"),
+    "xbox": ("game", "source"), "switch": ("game", "source"), "console": ("game", "source", "entree"),
+    "bluray": ("bd", "source", "entree"), "lecteur": ("source", "entree"), "media": ("mplay", "source"),
+    # machines
+    "jumeau": ("clone", "cloner"), "jumelle": ("clone",), "duplique": ("clone", "cloner"), "copie": ("clone", "copier"),
+    "instantane": ("snapshot",), "photo": ("snapshot",), "image": ("snapshot", "ecran"),
+    "supprime": ("supprimer", "detruire"), "efface": ("supprimer", "detruire"), "detruis": ("detruire",),
+    "place": ("commande", "df"), "espace": ("commande", "df"), "uptime": ("commande", "executer"),
+    "tourne": ("etat", "status"), "route": ("allumer", "demarrer", "etat"),
+    # sauvegardes
+    "restaure": ("restaurer", "restore"), "recupere": ("restaurer", "restore"), "hier": ("sauvegarde", "restaurer"),
+    "menage": ("nettoyer", "supprimer"), "nettoie": ("nettoyer", "purger"), "purge": ("nettoyer",),
+    "vieilles": ("anciennes", "nettoyer"), "timeshift": ("sauvegarde", "backup"), "borg": ("sauvegarde", "backup"),
+    "bonnes": ("verifier", "integrite"), "fiables": ("verifier", "integrite"),
+}
+
+# Les memes verbes dans les cartes de tri (variante verbes_courants) : cibles = tokens des noms d'outils.
+VERBES_COURANTS: dict[str, tuple[str, ...]] = {
+    "reveille": ("on", "start"), "reveiller": ("on", "start"), "eclaire": ("on",), "eclairer": ("on",),
+    "vire": ("off", "destroy"), "virer": ("off", "destroy"), "degage": ("destroy", "off"), "degager": ("destroy", "off"),
+    "enleve": ("off",), "enlever": ("off",), "repos": ("off", "stop"), "dodo": ("off",), "dormir": ("off",),
+    "fini": ("off", "stop"), "ferme": ("off", "stop"),
+    "pousse": ("up",), "pousser": ("up",), "descends": ("down",), "descendre": ("down",), "doucement": ("down",),
+    "silence": ("mute",), "chut": ("mute",), "sourdine": ("mute",),
+    "tamise": ("brightness",), "tamiser": ("brightness",), "fond": ("brightness",),
+    "preset": ("preset",), "predefini": ("preset",), "groupes": ("groups",), "pieces": ("groups",),
+    "nommee": ("find", "name"), "nomme": ("find", "name"), "appelle": ("find", "name"),
+    "attends": ("pause",), "patiente": ("pause",), "reprends": ("resume",), "repartir": ("resume",),
+    "saute": ("seek",), "arriere": ("seek",), "titre": ("info",), "morceau": ("info",),
+    "onglet": ("browser",), "navigateur": ("browser",), "recale": ("resync",), "decale": ("offset",),
+    "retard": ("offset",), "flux": ("url",),
+    "playstation": ("input",), "ps5": ("input",), "xbox": ("input",), "console": ("input",),
+    "bluray": ("input",), "lecteur": ("input",),
+    "jumeau": ("clone",), "jumelle": ("clone",), "duplique": ("clone",), "instantane": ("snapshot",),
+    "photo": ("snapshot",), "supprime": ("destroy", "clean"), "efface": ("destroy",), "detruis": ("destroy",),
+    "place": ("exec",), "uptime": ("exec",), "tourne": ("status", "state"),
+    "restaure": ("restore",), "recupere": ("restore",), "menage": ("clean",), "nettoie": ("clean",),
+    "purge": ("clean",), "vieilles": ("clean",), "bonnes": ("verify",), "fiables": ("verify",),
+}
+
+
+# --- Iteration 15 ------------------------------------------------------------------
+
+def outil_par_machine(tool, arguments: dict, specs_compactes: list[str], requete: str):
+    """"fedora_base" renvoye comme outil pour "reveille fedora-base" -> spec de rang 1, vm_name = fedora-base.
+
+    Le 0.5b copie l'entite en nom d'outil quand le verbe ne lui dit rien. Ne
+    touche pas a un nom qui est celui d'une spec montree.
+    """
+    if not tool or not specs_compactes:
+        return tool, arguments
+    court = str(tool).split(".")[-1].lower().replace("_", "-")
+    noms = [nom_de_spec(sp) for sp in specs_compactes]
+    if any(n.split(".")[-1].lower() == str(tool).split(".")[-1].lower() for n in noms):
+        return tool, arguments
+    machines = noms_de_machines(requete, inventaire=True)
+    if court not in machines:
+        return tool, arguments
+    nouveau = noms[0]
+    args = dict(arguments or {})
+    params = _parametres_de(specs_compactes[0])
+    for cle in ("vm_name", "source_vm"):
+        if cle in params and not args.get(cle):
+            args[cle] = court
+            break
+    return nouveau, args
+
+
+LEXIQUE_COURANT_2: dict[str, tuple[str, ...]] = {
+    "sors": ("exporter", "archive"), "sortir": ("exporter", "archive"), "sortie": ("exporter",),
+    "bilan": ("etat", "status"),   # pas "point" : "point de restauration" est un snapshot
+    "reste": ("arreter", "stop"), "restons": ("arreter", "stop"), "termine": ("arreter", "stop"),
+    "sans": ("couper", "mute"), "silencieux": ("mute",),
+    "prends": ("source", "entree"), "prend": ("source", "entree"), "prendre": ("source", "entree"),
+    "dispo": ("liste", "disponibles"), "disponibles": ("liste",), "disponible": ("liste",),
+    "connectees": ("liste", "toutes"), "connectes": ("liste", "toutes"),
+    "danser": ("beat", "synchro", "musique"), "dansent": ("beat", "synchro"),
+    "suivent": ("beat", "etat"), "suit": ("beat", "etat"),
+    "ambiances": ("scenes", "liste"), "froide": ("temperature", "froid"), "chaude": ("temperature", "chaud"),
+    "avance": ("decalage", "offset"), "mettre": ("allumer", "lancer"),
+}
+
+VERBES_COURANTS_2: dict[str, tuple[str, ...]] = {
+    "sors": ("export",), "sortir": ("export",), "bilan": ("status",),
+    "reste": ("stop",), "restons": ("stop",), "termine": ("stop", "off"),
+    "sans": ("mute",), "silencieux": ("mute",),
+    "prends": ("input",), "prend": ("input",), "prendre": ("input",),
+    "dispo": ("all", "list", "apps"), "disponibles": ("all", "list"), "connectees": ("all", "lights"),
+    "danser": ("beat", "start"), "dansent": ("beat", "start"), "suivent": ("beat", "status"), "suit": ("beat", "status"),
+    "ambiances": ("scenes", "all"), "avance": ("offset",), "mettre": ("on",),
+}

@@ -184,12 +184,15 @@ def section_modeles(lignes: list[str]) -> None:
     avec_variantes: dict[str, dict] = {}
     hors_regles: dict[str, dict] = {}
     tenu_a_l_ecart: dict[str, dict] = {}
+    quatrieme: dict[str, dict] = {}
     for mesure in sorted(lot, key=lambda d: d["date"]):
         nom = mesure.get("modeles_mesures", {}).get("ephaistos", "?")
         if mesure.get("jeu", "modeles") == "hors_regles":
             hors_regles[nom] = mesure
         elif mesure.get("jeu") == "hors_regles_2":
             tenu_a_l_ecart[nom] = mesure
+        elif mesure.get("jeu") == "hors_regles_3":
+            quatrieme[nom] = mesure
         else:
             (avec_variantes if mesure.get("variantes") else reference)[nom] = mesure
 
@@ -220,13 +223,20 @@ def section_modeles(lignes: list[str]) -> None:
                          "Ce jeu a servi a onze iterations : ce n'est plus une mesure de generalisation "
                          "pour la configuration finale (voir benchmarks/README.md).")
     if tenu_a_l_ecart:
-        _tableau_modeles(lignes, tenu_a_l_ecart, "### Troisieme jeu, tenu a l'ecart (100 formulations)",
+        _tableau_modeles(lignes, tenu_a_l_ecart, "### Troisieme jeu (100 formulations)",
                          "`tests/cases_hors_regles_2.py` : 100 formulations ecrites APRES la boucle, dont 50 "
-                         "d'usage quotidien avec les noms reels. Une seule mesure par configuration, jamais "
-                         "d'iteration dessus : c'est la mesure de generalisation de la configuration finale. "
+                         "d'usage quotidien avec les noms reels. Mesure unique de la configuration du 19/09 "
+                         "(56/100), puis jeu de developpement des iterations 14 et suivantes : les lignes "
+                         "posterieures ne sont plus une mesure de generalisation (voir le quatrieme jeu). "
                          "Une partie de ces phrases est couverte par une regle juste en usage reel "
                          "(scripts/controle_hors_regles.py --jeu 2 les compte) ; le banc mesure le modele "
                          "sur toutes.")
+    if quatrieme:
+        _tableau_modeles(lignes, quatrieme, "### Quatrieme jeu, tenu a l'ecart (50 formulations)",
+                         "`tests/cases_hors_regles_3.py` : 50 formulations d'usage quotidien avec les vrais "
+                         "noms de machines et dix outils jamais mesures, ecrites AVANT les leviers generiques "
+                         "des iterations 14-15. Une seule mesure par configuration, jamais d'iteration dessus : "
+                         "c'est la mesure de generalisation de la configuration finale.")
 
 
 def section_boucle(lignes: list[str]) -> None:

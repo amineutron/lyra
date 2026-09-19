@@ -13,7 +13,7 @@
   "versions": {
     "python": "3.12.13",
     "ollama": "0.14.1",
-    "lyra_commit": "ad9b5c0",
+    "lyra_commit": "5ede4ce",
     "noyau": "6.18.13-200.fc43.x86_64"
   },
   "modeles": {
@@ -37,12 +37,16 @@
     "exemples_cibles",
     "exemples_denon",
     "expansion",
+    "inventaire_vm",
     "lexical",
     "lexique",
+    "lexique_courant",
     "lexique_langue",
+    "mots_courants_2",
     "mots_relatifs",
     "mots_url",
     "outil_force_si_net",
+    "outil_par_machine",
     "poids_rares",
     "recall8",
     "resolution_arguments",
@@ -51,6 +55,7 @@
     "spec_description",
     "top3_direct",
     "verbes_catt",
+    "verbes_courants",
     "verbes_tri",
     "verification_binaire"
   ],
@@ -82,6 +87,6 @@
     "ephaistos": "qwen2.5-coder:0.5b",
     "lyra": "llama3.2:1b"
   },
-  "duree_s": 326.7,
+  "duree_s": 281.7,
   "duree_inclut_initialisation": true
 }

@@ -201,9 +201,15 @@ servi a les reconcilier. Une phrase du jeu ne doit jamais entrer dans
 `triggers_map` ni dans les regles ; des mots, oui (un lexique se complete) --
 mais un jeu qui a servi a onze iterations n'est plus une mesure de
 generalisation. Le troisieme jeu (`tests/cases_hors_regles_2.py`, 100
-formulations, jamais itere) donne **56/100** a la meme configuration : c'est
-le chiffre de generalisation, et il ne doit pas servir a une boucle -- un
-quatrieme jeu prendrait le relais le jour ou on y toucherait.
+formulations) a donne **56/100** a cette configuration en mesure unique : le
+72/72 mesurait la boucle, pas le produit. Il est ensuite devenu le jeu de
+developpement (iterations 14-15 : leviers generiques, 56 -> 70 -> 82/100), et
+un **quatrieme jeu** (`tests/cases_hors_regles_3.py`, 50 formulations, vrais
+noms de machines, dix outils jamais mesures) a ete scelle AVANT ces
+iterations : mesure unique, **41/50**, avec 21/21 et 51/51 conserves. C'est le
+chiffre de generalisation ; le jour ou on y touche, un cinquieme prend le
+relais. `scripts/controle_hors_regles.py --jeu 3` compte les phrases que les
+regles interceptent en usage reel (24/50).
 
 ## Couverture des bancs
 

@@ -152,6 +152,7 @@ EQUIVALENCES = {
     "catt.cast_youtube": {"tv.youtube_video"},
     "hue.set_brightness": {"hue.set_group_brightness"},
     "hue.set_color_rgb": {"hue.set_group_color_rgb", "hue.set_color_preset", "hue.set_group_color_preset"},
+    "hue.set_group_color_rgb": {"hue.set_group_color_preset"},   # "chambre en rouge" : preset rouge = rgb rouge
     "hue.turn_on_group": {"hue.turn_on_light"},
     "hue.turn_off_group": {"hue.turn_off_light"},
 }
@@ -191,7 +192,8 @@ def check_args(result_args, mandatory, optional):
     return missing_mandatory, missing_optional
 
 
-JEUX = {"modeles": "TESTS_LLM", "hors_regles": "TESTS_HORS_REGLES", "hors_regles_2": "TESTS_HORS_REGLES_2"}
+JEUX = {"modeles": "TESTS_LLM", "hors_regles": "TESTS_HORS_REGLES", "hors_regles_2": "TESTS_HORS_REGLES_2",
+        "hors_regles_3": "TESTS_HORS_REGLES_3"}
 
 
 def cas_du_jeu(jeu: str) -> list:
@@ -202,6 +204,9 @@ def cas_du_jeu(jeu: str) -> list:
     if jeu == "hors_regles_2":
         from cases_hors_regles_2 import TESTS_HORS_REGLES_2
         return TESTS_HORS_REGLES_2
+    if jeu == "hors_regles_3":
+        from cases_hors_regles_3 import TESTS_HORS_REGLES_3
+        return TESTS_HORS_REGLES_3
     if jeu != "modeles":
         raise ValueError(f"jeu inconnu : {jeu} (attendu : {', '.join(JEUX)})")
     return TESTS_LLM

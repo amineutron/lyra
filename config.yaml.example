@@ -97,6 +97,14 @@ mcp:
       timeout: 10
       keep_alive: true
 
+    catt:
+      enabled: true
+      command: python3
+      args:
+        - /chemin/vers/catt-mcp/server.py
+      timeout: 15
+      keep_alive: true
+
 # =============================================================================
 # TV Philips
 # =============================================================================

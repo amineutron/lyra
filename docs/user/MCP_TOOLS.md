@@ -1,274 +1,128 @@
-# Lyra - Liste des Outils MCP
-
-Liste complète des 85 outils MCP disponibles dans Lyra.
-
-## FEDORA (17 outils) - VM KVM et Backups
-
-### VM Controller
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `vm_start` | Démarre une VM KVM | `vm_name` (string) |
-| `vm_stop` | Arrête une VM KVM | `vm_name` (string), `force` (bool, optionnel) |
-| `vm_destroy` | Supprime définitivement une VM | `vm_name` (string) |
-| `vm_status` | Affiche le statut d'une ou toutes les VMs | `vm_name` (string, optionnel) |
-| `vm_exec` | Exécute une commande dans une VM | `vm_name` (string), `command` (string) |
-| `vm_copy` | Copie des fichiers vers/depuis une VM | `vm_name` (string), `local_path` (string), `remote_path` (string) |
-| `vm_snapshot` | Crée un snapshot d'une VM | `vm_name` (string), `snapshot_name` (string) |
-| `vm_clone` | Clone une VM | `source_vm` (string), `new_vm_name` (string), `start` (bool, optionnel) |
-| `vm_clone_system` | Clone le PC hote vers une VM (defaut: LEGER — interface/configs sans ~/dev, modeles IA ni secrets) | `name` (string), `full` (bool, optionnel: clone complet) |
-| `vm_verify` | Vérifie l'intégrité d'une VM | `vm_name` (string) |
-
-### Backup Manager
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `backup_create` | Crée un backup d'une VM | `vm_name` (string) |
-| `backup_list` | Liste les backups disponibles | `vm_name` (string, optionnel) |
-| `backup_restore` | Restaure un backup | `vm_name` (string), `backup_name` (string) |
-| `backup_verify` | Vérifie l'intégrité d'un backup | `backup_name` (string) |
-| `backup_clean` | Nettoie les anciens backups | `vm_name` (string), `keep` (int) |
-| `backup_status` | Dashboard global des backups | - |
-
----
-
-## TV (14 outils) - Philips 55OLED705/12
-
-### Power
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `tv.power_on` | Allume la TV | - |
-| `tv.power_off` | Éteint la TV (standby) | - |
-
-### Volume
-
-**IMPORTANT:** Avec HDMI ARC actif, les commandes volume sont automatiquement redirigées vers le Denon.
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `tv.volume_set` | Règle le volume | `level` (int, 0-60 pour TV, 0-98 pour Denon) |
-| `tv.volume_up` | Augmente le volume | `step` (int, default: 5) |
-| `tv.volume_down` | Baisse le volume | `step` (int, default: 5) |
-| `tv.mute` | Toggle mute | - |
-
-### Ambilight
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `tv.ambilight_on` | Active l'Ambilight | - |
-| `tv.ambilight_off` | Désactive l'Ambilight | - |
-| `tv.ambilight_set_color` | Change la couleur Ambilight | `r` (int), `g` (int), `b` (int) |
-| `tv.ambilight_set_mode` | Change le mode Ambilight | `mode` (string: internal, manual, expert) |
-
-### Applications
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `tv.launch_app` | Lance une application | `app_id` (string) |
-| `tv.youtube_video` | Lance une vidéo YouTube | `video_id` (string) |
-| `tv.get_state` | Statut de la TV | - |
-
----
-
-## HUE (24 outils) - Philips Hue Bridge
-
-### Lumières individuelles
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `hue.turn_on_light` | Allume une lumière | `light_id` (int ou string) |
-| `hue.turn_off_light` | Éteint une lumière | `light_id` (int ou string) |
-| `hue.set_brightness` | Règle la luminosité | `light_id` (int/string), `brightness` (int, 0-254) |
-| `hue.set_color_rgb` | Change la couleur RGB | `light_id` (int/string), `r`, `g`, `b` (int, 0-255) |
-| `hue.set_color_temp` | Règle la température de couleur | `light_id` (int/string), `temp` (int, 153-500) |
-| `hue.get_light_state` | État d'une lumière | `light_id` (int ou string) |
-
-### Groupes
-
-Groupe par défaut : **81** (Chambre à coucher)
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `hue.turn_on_group` | Allume un groupe | `group_id` (int ou string) |
-| `hue.turn_off_group` | Éteint un groupe | `group_id` (int ou string) |
-| `hue.set_group_brightness` | Luminosité du groupe | `group_id` (int/string), `brightness` (int, 0-254) |
-| `hue.set_group_color_rgb` | Couleur RGB du groupe | `group_id` (int/string), `r`, `g`, `b` (int, 0-255) |
-| `hue.set_group_color_temp` | Température du groupe | `group_id` (int/string), `temp` (int, 153-500) |
-| `hue.get_group_state` | État d'un groupe | `group_id` (int ou string) |
-
-### Scènes
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `hue.activate_scene` | Active une scène (par ID) | `scene_id` (string) |
-| `hue.activate_scene_by_name` | Active une scène (par nom) | `scene_name` (string) |
-| `hue.list_scenes` | Liste toutes les scènes | - |
-
-### Listing
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `hue.get_all_lights` | Liste toutes les lumières | - |
-| `hue.get_all_groups` | Liste tous les groupes | - |
-| `hue.get_bridge_info` | Infos du bridge | - |
-
-### Autres
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `hue.turn_on_all` | Allume toutes les lumières | - |
-| `hue.turn_off_all` | Éteint toutes les lumières | - |
-| `hue.set_brightness_all` | Luminosité globale | `brightness` (int, 0-254) |
-| `hue.set_color_rgb_all` | Couleur RGB globale | `r`, `g`, `b` (int, 0-255) |
-| `hue.toggle_light` | Toggle une lumière | `light_id` (int ou string) |
-| `hue.toggle_group` | Toggle un groupe | `group_id` (int ou string) |
-
----
-
-## CATT (15 outils) - Cast YouTube/Video vers TV
-
-Device : **55OLED705/12** (Chromecast/DLNA)
-
-### Cast
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `cast_browser` | Caste l'onglet actif Firefox | - |
-| `cast_youtube` | Caste une vidéo YouTube | `url` (string) |
-| `cast_url` | Caste une URL vidéo/audio | `url` (string) |
-
-### Contrôle
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `cast_stop` | Arrête le cast | - |
-| `cast_pause` | Met en pause | - |
-| `cast_resume` | Reprend la lecture | - |
-| `cast_volume` | Règle le volume du cast | `level` (int, 0-100) |
-| `cast_seek` | Avance/recule (secondes) | `seconds` (int, négatif = reculer) |
-
-### Info
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `cast_status` | Statut du cast en cours | - |
-| `cast_scan` | Liste les devices disponibles | - |
-
----
-
-## DENON (10 outils) - Home Cinema AVR-X1700H DAB
-
-**IMPORTANT:** Les commandes `tv.volume_*` sont automatiquement redirigées vers le Denon quand HDMI ARC est actif.
-
-### Volume
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `denon.volume_set` | Règle le volume (0-98, 80 = 0dB) | `level` (int, 0-98) |
-| `denon.volume_up` | Augmente le volume | `step` (int, default: 1) |
-| `denon.volume_down` | Baisse le volume | `step` (int, default: 1) |
-
-### Mute
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `denon.mute_on` | Active le mute | - |
-| `denon.mute_off` | Désactive le mute | - |
-| `denon.mute_toggle` | Toggle le mute | - |
-
-### Power
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `denon.power_on` | Allume le Denon | - |
-| `denon.power_off` | Éteint le Denon (standby) | - |
-
-### Source
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `denon.set_input` | Change la source | `source` (string: BD, TV, GAME, SAT/CBL, DVD, MPLAY) |
-
-### Info
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `denon.get_status` | Statut du Denon | - |
-
----
-
-## Récapitulatif
-
-| Serveur MCP | Nombre d'outils | Catégories |
-|-------------|-----------------|------------|
-| **FEDORA** | 17 | VM (10) + Backup (7) |
-| **TV** | 14 | Power (2) + Volume (4) + Ambilight (4) + Apps (4) |
-| **HUE** | 24 | Lumières (6) + Groupes (6) + Scènes (3) + Listing (3) + Autres (6) |
-| **CATT** | 15 | Cast (3) + Contrôle (6) + Info (2) |
-| **DENON** | 10 | Volume (3) + Mute (3) + Power (2) + Source (1) + Info (1) |
-| **TOTAL** | **80** | - |
-
----
-
-## Notes importantes
-
-### HDMI ARC et redirection automatique
-
-Quand un home cinéma Denon est connecté en **HDMI ARC/eARC** à la TV :
-- Le volume de la TV est désactivé (sortie audio via HDMI)
-- Les commandes `tv.volume_*` et `tv.mute` sont **automatiquement redirigées** vers `denon.*`
-- Vous pouvez utiliser indifféremment `tv.volume_set 44` ou `denon.volume_set 44`
-
-### Échelles de volume
-
-- **TV Philips** : 0-60
-- **Denon AVR** : 0-98 (où 80 = 0dB référence)
-- **Cast (CATT)** : 0-100
-
-### Mode Performance
-
-En mode performance (`./run.sh -p`), les outils domotique (TV, Hue, Catt, Denon) s'exécutent **sans confirmation**. Les outils VM/Backup dangereux gardent la confirmation obligatoire.
-
-### Groupes Hue par défaut
-
-- **Groupe 81** : Chambre à coucher (groupe principal)
-- **Groupe 0** : Toutes les lumières (n'existe pas, utiliser `hue.turn_on_all` à la place)
-
----
-
-## MERMAID (5 outils) - Génération de diagrammes
-
-### Génération
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `generate_diagram` | Génère un diagramme Mermaid avec template HTML | `mermaid_code` (string), `title` (string), `subtitle` (string, opt), `colors` (object, opt), `extra_content` (string, opt), `theme` (string, opt), `export_format` (string, opt: html/png/svg) |
-| `validate_diagram` | Valide la syntaxe d'un code Mermaid | `mermaid_code` (string) |
-
-### Affichage
-
-| Outil | Description | Arguments |
-|-------|-------------|-----------|
-| `show_diagram` | Affiche un diagramme dans le navigateur | `diagram_path` (string) |
-| `set_display_mode` | Configure l'affichage auto des diagrammes | `mode` (string: ask/always/never) |
-| `list_diagrams` | Liste tous les diagrammes générés | - |
-
-### Exemples d'utilisation
-
-```
-"Génère-moi un diagramme de l'architecture Lyra"
-"Fais-moi un flowchart avec légende"
-"Crée un diagramme Mermaid de la structure du projet"
-"Liste mes diagrammes"
-"Affiche le dernier diagramme"
-```
-
-### Fonctionnalités
-
-- **Template HTML** : Diagrammes professionnels avec Mermaid.js intégré
-- **Légendes automatiques** : Couleurs et composants expliqués
-- **Export multiple** : HTML (interactif), PNG, SVG
-- **Validation** : Vérification de syntaxe avant génération
-- **Bonnes pratiques** : Applique automatiquement les règles de `MERMAID_BEST_PRACTICES.md`
-- **Gestion de session** : Mode d'affichage configurable (ask/always/never)
+# Lyra - Liste des outils MCP
+
+Genere le 2026-09-19 par `scripts/gen_mcp_tools_md.py` depuis les serveurs configures (88 outils, 5 serveurs). Ne pas editer a la main : relancer le script.
+
+Colonne confirmation (source : `lyra/core/constants.py`) :
+
+- **DESTRUCTIF** : perte ou ecrasement irreversible ; banniere rouge, `o`/`oui` obligatoire, jamais auto-confirme (`-y`, `-p`).
+- **SENSIBLE** : ecrit, execute une commande ou coupe une machine ; `o`/`oui` obligatoire, jamais auto-confirme.
+- **sans confirmation en mode performance** : domotique reversible ; en mode par defaut, confirmation `[O/n]`.
+- **confirmation [O/n]** : Entree vaut oui.
+
+## FEDORA - VM KVM et sauvegardes (fedora-agents) (19 outils)
+
+| Outil | Description | Arguments | Confirmation |
+|---|---|---|---|
+| `fedora.backup_clean` | Applique les politiques de rétention et supprime les anciens backups ⚠️ ATTENTION: Opération potentiellement... | `type` (string: timeshift/borg/vm/manual/all), `dry_run` (boolean, opt), `force` (boolean, opt), `keep_last` (number, opt) | DESTRUCTIF : oui explicite, jamais auto-confirme |
+| `fedora.backup_create` | Crée un backup (timeshift, borg, vm-snapshot, ou manual) | `type` (string: timeshift/borg/vm-snapshot/manual), `comment` (string, opt), `verify` (boolean, opt), `notify` (boolean, opt), `dry_run` (boolean, opt), `vm` (string, opt), `live` (boolean, opt), `source` (string, opt), `dest` (string, opt), `timeout_ms` (number, opt) | confirmation [O/n] |
+| `fedora.backup_list` | Liste tous les backups disponibles (par type ou tous) | `all` (boolean, opt), `type` (string: timeshift/borg/vm-snapshot/manual, opt), `detailed` (boolean, opt), `limit` (number, opt), `sort` (string: date/type/size, opt) | confirmation [O/n] |
+| `fedora.backup_restore` | Restaure un backup (ATTENTION: opération destructive!) ⚠️ ATTENTION: Opération potentiellement destructive! | `type` (string: timeshift/borg/vm-snapshot/manual), `identifier` (string), `dry_run` (boolean, opt), `force` (boolean, opt), `partial` (string, opt), `target` (string, opt), `skip_pre_snapshot` (boolean, opt) | DESTRUCTIF : oui explicite, jamais auto-confirme |
+| `fedora.backup_status` | Affiche le dashboard global des backups (status, espace, alertes) | `watch` (boolean, opt), `compact` (boolean, opt) | confirmation [O/n] |
+| `fedora.backup_verify` | Vérifie l'intégrité des backups | `type` (string: timeshift/borg/vm/all, opt), `deep` (boolean, opt), `quick` (boolean, opt), `backup_id` (string, opt), `timeout_ms` (number, opt) | confirmation [O/n] |
+| `fedora.help` | Liste tous les outils disponibles avec leurs descriptions. Appelle cet outil en premier pour savoir ce que tu... | - | confirmation [O/n] |
+| `fedora.vm_clone` | Clone une VM KVM existante (complet ou lié) | `source_vm` (string), `new_vm_name` (string), `start` (boolean, opt), `autostart` (boolean, opt), `linked` (boolean, opt), `network` (string, opt), `timeout_ms` (number, opt), `tracking_session_id` (string, opt) | confirmation [O/n] |
+| `fedora.vm_clone_system` | Clone le système hôte entier vers une VM KVM bootable ⚠️ ATTENTION: Opération potentiellement destructive! | `name` (string, opt), `disk_size` (string, opt), `memory` (number, opt), `cpus` (number, opt), `hostname` (string, opt), `username` (string, opt), `dry_run` (boolean, opt), `timeout_ms` (number, opt) | SENSIBLE : oui explicite, jamais auto-confirme |
+| `fedora.vm_copy` | Copie des fichiers entre l'hôte et une VM via SCP ⚠️ ATTENTION: Opération potentiellement destructive! | `vm_name` (string), `source` (string), `dest` (string), `direction` (string: to_vm/from_vm, opt), `recursive` (boolean, opt), `checksum` (boolean, opt), `preserve` (boolean, opt) | SENSIBLE : oui explicite, jamais auto-confirme |
+| `fedora.vm_destroy` | Supprime complètement une VM KVM (définition + stockage) ⚠️ ATTENTION: Opération potentiellement destructive! | `vm_name` (string), `force` (boolean, opt), `keep_storage` (boolean, opt) | DESTRUCTIF : oui explicite, jamais auto-confirme |
+| `fedora.vm_exec` | Exécute une commande dans une VM via SSH ⚠️ ATTENTION: Opération potentiellement destructive! | `vm_name` (string), `command` (string), `user` (string, opt), `sudo` (boolean, opt), `timeout` (number, opt), `capture` (boolean, opt) | SENSIBLE : oui explicite, jamais auto-confirme |
+| `fedora.vm_export` | Exporte une VM KVM dans une archive portable (.tar.gz) avec sanitarisation des donnees sensibles. Mode... | `vm_name` (string), `mode` (string: classic/exam/custom, opt), `output_path` (string, opt), `force` (boolean, opt), `dry_run` (boolean, opt), `operations` (array, opt), `firstboot` (boolean, opt) | confirmation [O/n] |
+| `fedora.vm_import` | Importe une VM KVM depuis une archive exportee par vm_export. Effectue un test pre-import (integrite archive... | `archive_path` (string), `new_name` (string, opt), `pool_dir` (string, opt), `start` (boolean, opt), `dry_run` (boolean, opt) | SENSIBLE : oui explicite, jamais auto-confirme |
+| `fedora.vm_snapshot` | Gère les snapshots d'une VM (create, list, restore, delete) ⚠️ ATTENTION: Opération potentiellement... | `vm_name` (string), `action` (string: create/list/restore/delete/delete-all), `snapshot_name` (string, opt), `description` (string, opt), `live` (boolean, opt), `yes` (boolean, opt) | SENSIBLE : oui explicite, jamais auto-confirme |
+| `fedora.vm_start` | Démarre une VM KVM et attend optionnellement que SSH soit accessible | `vm_name` (string), `wait_ssh` (boolean, opt), `wait_ip` (boolean, opt), `timeout` (number, opt) | confirmation [O/n] |
+| `fedora.vm_status` | Affiche le status et les informations d'une VM (IP, SSH, ressources). Sans vm_name, liste toutes les VMs. | `vm_name` (string, opt), `detailed` (boolean, opt), `json` (boolean, opt) | confirmation [O/n] |
+| `fedora.vm_stop` | Arrête une VM KVM proprement (ou force l'arrêt avec --force) ⚠️ ATTENTION: Opération potentiellement... | `vm_name` (string), `force` (boolean, opt), `wait` (boolean, opt), `timeout` (number, opt) | SENSIBLE : oui explicite, jamais auto-confirme |
+| `fedora.vm_verify` | Vérifie qu'une VM clonée est une copie fidèle du système hôte | `vm_name` (string, opt), `ip` (any, opt), `user` (string, opt), `self_check` (boolean, opt), `verbose` (boolean, opt), `quick` (boolean, opt), `save_report` (boolean, opt), `compare_packages` (boolean, opt), `compare_content` (boolean, opt) | confirmation [O/n] |
+
+## TV - Philips Android TV (pylips-mcp) (16 outils)
+
+| Outil | Description | Arguments | Confirmation |
+|---|---|---|---|
+| `tv.ambilight_mode` | Change le mode Ambilight | `mode` (string: follow_video/follow_audio/lounge_light/manual/video_immersive/audio_spectrum) | sans confirmation en mode performance (-p) |
+| `tv.ambilight_off` | Desactive l'Ambilight de la TV | - | sans confirmation en mode performance (-p) |
+| `tv.ambilight_on` | Active l'Ambilight de la TV | - | sans confirmation en mode performance (-p) |
+| `tv.get_state` | Retourne l'etat actuel de la TV (allumee/standby) | - | sans confirmation en mode performance (-p) |
+| `tv.launch_app` | Lance une application sur la TV | `app` (string: netflix/youtube/plex/disney/prime) | sans confirmation en mode performance (-p) |
+| `tv.list_apps` | Liste les applications disponibles sur la TV | - | sans confirmation en mode performance (-p) |
+| `tv.mute` | Coupe ou remet le son de la TV | - | sans confirmation en mode performance (-p) |
+| `tv.power_off` | Eteint la TV Philips (standby) | - | sans confirmation en mode performance (-p) |
+| `tv.power_on` | Allume la TV Philips | - | sans confirmation en mode performance (-p) |
+| `tv.screen_off` | Eteint l'ecran de la TV tout en gardant le son actif (mode musique). Note: fonctionne principalement en... | - | sans confirmation en mode performance (-p) |
+| `tv.screen_on` | Rallume l'ecran de la TV apres un screen_off | - | sans confirmation en mode performance (-p) |
+| `tv.send_key` | Envoie une touche de telecommande | `key` (string) | confirmation [O/n] |
+| `tv.volume_down` | Baisse le volume de la TV (default -5) | `step` (integer, opt) | sans confirmation en mode performance (-p) |
+| `tv.volume_set` | Regle le volume a un niveau specifique | `level` (integer) | sans confirmation en mode performance (-p) |
+| `tv.volume_up` | Augmente le volume de la TV (default +5) | `step` (integer, opt) | sans confirmation en mode performance (-p) |
+| `tv.youtube_video` | Lance YouTube sur une video specifique (URL youtube ou ID de video) | `video` (string) | sans confirmation en mode performance (-p) |
+
+## HUE - Lumieres Philips Hue (hue-mcp) (28 outils)
+
+| Outil | Description | Arguments | Confirmation |
+|---|---|---|---|
+| `hue.activate_scene_by_name` | Find and activate a scene by its name (partial match, accent-insensitive). Args: scene_name: Name of the... | `scene_name` (string), `group_id` (integer, opt) | sans confirmation en mode performance (-p) |
+| `hue.alert_light` | Make a light flash briefly to identify it. Args: light_id: The ID of the light to alert Returns: Confirmation... | `light_id` (integer) | sans confirmation en mode performance (-p) |
+| `hue.create_group` | Create a new group of lights. Args: name: Name for the new group light_ids: List of light IDs to include in... | `name` (string), `light_ids` (array) | confirmation [O/n] |
+| `hue.find_light_by_name` | Find lights by searching their names. Args: name: Partial or full name to search for Returns: JSON string... | `name` (string) | sans confirmation en mode performance (-p) |
+| `hue.get_all_groups` | Get information about all light groups. Returns: JSON string containing information about all groups | - | sans confirmation en mode performance (-p) |
+| `hue.get_all_lights` | Get information about all lights connected to the Hue bridge. Returns: JSON string containing information... | - | sans confirmation en mode performance (-p) |
+| `hue.get_all_scenes` | Get information about all scenes. Returns: JSON string containing information about all scenes | - | sans confirmation en mode performance (-p) |
+| `hue.get_group` | Get information about a specific light group. Args: group_id: The ID of the group Returns: JSON string... | `group_id` (integer) | sans confirmation en mode performance (-p) |
+| `hue.get_light` | Get detailed information about a specific light. Args: light_id: The ID of the light Returns: JSON string... | `light_id` (integer) | sans confirmation en mode performance (-p) |
+| `hue.hue_beat_set` | Modifie les parametres de hue_beat a chaud (sans redemarrage). Args: palette: ironman / fire / neon / cool /... | `palette` (string, opt), `mode` (string, opt), `brightness` (number, opt), `floor` (number, opt), `sensitivity` (number, opt) | sans confirmation en mode performance (-p) |
+| `hue.hue_beat_start` | Lance hue_beat.py en arriere-plan (Entertainment API DTLS ~5ms). Pendant que hue_beat tourne, les commandes... | `mode` (string, opt), `palette` (string, opt), `bass_only` (boolean, opt) | sans confirmation en mode performance (-p) |
+| `hue.hue_beat_status` | Retourne l'etat de hue_beat (actif/inactif, mode, palette, BPM). | - | sans confirmation en mode performance (-p) |
+| `hue.hue_beat_stop` | Arrete hue_beat proprement (SIGTERM → stop_entertainment → REST reprend). | - | sans confirmation en mode performance (-p) |
+| `hue.quick_scene` | Quickly set up a lighting scene for a group. Args: name: Name for the scene rgb: Optional RGB values [r, g,... | `name` (string), `rgb` (any, opt), `temperature` (any, opt), `brightness` (any, opt), `group_id` (integer, opt) | confirmation [O/n] |
+| `hue.refresh_lights` | Refresh the light information cache. This is useful if lights have been added or removed, or if their state... | - | confirmation [O/n] |
+| `hue.set_brightness` | Set the brightness of a light. Args: light_id: The ID of the light brightness: Brightness level (0-254)... | `light_id` (integer), `brightness` (integer) | sans confirmation en mode performance (-p) |
+| `hue.set_color_preset` | Apply a color preset to a light. Args: light_id: The ID of the light preset: Color preset name (warm, cool,... | `light_id` (integer), `preset` (string) | sans confirmation en mode performance (-p) |
+| `hue.set_color_rgb` | Set light color using RGB values. Args: light_id: The ID of the light red: Red value (0-255) green: Green... | `light_id` (integer), `red` (integer), `green` (integer), `blue` (integer) | sans confirmation en mode performance (-p) |
+| `hue.set_color_temperature` | Set the color temperature of a light in Kelvin. Color temperature controls the warmth or coolness of white... | `light_id` (integer), `temperature` (integer) | sans confirmation en mode performance (-p) |
+| `hue.set_group_brightness` | Set the brightness of all lights in a group. Args: brightness: Brightness level (0-254) group_id: The ID of... | `brightness` (integer), `group_id` (integer, opt) | sans confirmation en mode performance (-p) |
+| `hue.set_group_color_preset` | Apply a color preset to a group. Args: preset: Color preset name (warm, cool, daylight, concentration, relax,... | `preset` (string), `group_id` (integer, opt) | sans confirmation en mode performance (-p) |
+| `hue.set_group_color_rgb` | Set color for all lights in a group using RGB values. Args: red: Red value (0-255) green: Green value (0-255)... | `red` (integer), `green` (integer), `blue` (integer), `group_id` (integer, opt) | sans confirmation en mode performance (-p) |
+| `hue.set_light_effect` | Set a dynamic effect on a light. Args: light_id: The ID of the light effect: Effect type ('none' or... | `light_id` (integer), `effect` (string) | sans confirmation en mode performance (-p) |
+| `hue.set_scene` | Apply a scene to a group. Args: scene_id: The ID of the scene group_id: The ID of the group (default: 81 =... | `scene_id` (string), `group_id` (integer, opt) | sans confirmation en mode performance (-p) |
+| `hue.turn_off_group` | Turn off all lights in a specific group. Args: group_id: The ID of the group (default: 81 = Chambre a... | `group_id` (integer, opt) | sans confirmation en mode performance (-p) |
+| `hue.turn_off_light` | Turn off a specific light by ID or by name. Args: light_id: The numeric ID of the light (priority over... | `light_id` (integer, opt), `light_name` (string, opt) | sans confirmation en mode performance (-p) |
+| `hue.turn_on_group` | Turn on all lights in a specific group. Args: group_id: The ID of the group (default: 81 = Chambre a coucher)... | `group_id` (integer, opt) | sans confirmation en mode performance (-p) |
+| `hue.turn_on_light` | Turn on a specific light by ID or by name. Args: light_id: The numeric ID of the light (priority over... | `light_id` (integer, opt), `light_name` (string, opt) | sans confirmation en mode performance (-p) |
+
+## DENON - Home cinema Denon AVR (denon-mcp) (10 outils)
+
+| Outil | Description | Arguments | Confirmation |
+|---|---|---|---|
+| `denon.get_status` | Retourne le statut du Denon (volume, power, etc.). | - | sans confirmation en mode performance (-p) |
+| `denon.mute_off` | Desactive le mute du Denon. | - | sans confirmation en mode performance (-p) |
+| `denon.mute_on` | Active le mute du Denon. | - | sans confirmation en mode performance (-p) |
+| `denon.mute_toggle` | Toggle le mute du Denon (on/off). | - | sans confirmation en mode performance (-p) |
+| `denon.power_off` | Eteint le Denon AVR (standby). | - | sans confirmation en mode performance (-p) |
+| `denon.power_on` | Allume le Denon AVR. | - | sans confirmation en mode performance (-p) |
+| `denon.set_input` | Change la source d'entree du Denon (BD, TV, GAME, SAT/CBL, DVD, MPLAY). | `source` (string) | sans confirmation en mode performance (-p) |
+| `denon.volume_down` | Baisse le volume du Denon. | `step` (integer, opt) | sans confirmation en mode performance (-p) |
+| `denon.volume_set` | Regle le volume du Denon a un niveau specifique (0-98). 80 = 0dB reference. | `level` (integer) | sans confirmation en mode performance (-p) |
+| `denon.volume_up` | Augmente le volume du Denon. | `step` (integer, opt) | sans confirmation en mode performance (-p) |
+
+## CATT - Chromecast et cast navigateur (catt-mcp) (15 outils)
+
+| Outil | Description | Arguments | Confirmation |
+|---|---|---|---|
+| `catt.cast_browser` | Caste la video de l'onglet actif de Firefox sur la TV (YouTube, Twitch, etc.) | - | sans confirmation en mode performance (-p) |
+| `catt.cast_browser_dual` | Lance la video sur PC (Firefox) ET TV simultanement avec synchronisation (pour LightBeat) | - | sans confirmation en mode performance (-p) |
+| `catt.cast_dual_offset` | Ajuste le decalage TV (positif=TV en avance, negatif=TV en retard) | `offset` (number) | sans confirmation en mode performance (-p) |
+| `catt.cast_dual_resync` | Resynchronise PC et TV en relancant la TV a la position Firefox | - | sans confirmation en mode performance (-p) |
+| `catt.cast_dual_stop` | Arrete le dual cast et le watcher de synchronisation | - | sans confirmation en mode performance (-p) |
+| `catt.cast_info` | Retourne les infos detaillees du media en cours | - | sans confirmation en mode performance (-p) |
+| `catt.cast_pause` | Met en pause le cast en cours | - | sans confirmation en mode performance (-p) |
+| `catt.cast_resume` | Reprend la lecture du cast | - | sans confirmation en mode performance (-p) |
+| `catt.cast_scan` | Scanne les devices Chromecast/DLNA disponibles sur le reseau | - | sans confirmation en mode performance (-p) |
+| `catt.cast_seek` | Avance ou recule dans la video | `seconds` (integer) | sans confirmation en mode performance (-p) |
+| `catt.cast_status` | Retourne le statut du cast en cours | - | sans confirmation en mode performance (-p) |
+| `catt.cast_stop` | Arrete le cast en cours sur la TV | - | sans confirmation en mode performance (-p) |
+| `catt.cast_url` | Caste une URL quelconque (video, audio, stream) sur la TV | `url` (string) | sans confirmation en mode performance (-p) |
+| `catt.cast_volume` | Regle le volume du cast (0-100) | `level` (integer) | sans confirmation en mode performance (-p) |
+| `catt.cast_youtube` | Caste une video YouTube sur la TV (URL ou ID de video) | `url` (string) | sans confirmation en mode performance (-p) |
+
+## Hors MCP
+
+- `tracking.*` et `ironman.run_scene` sont interceptes par HESTIA avant tout serveur (lyra/hestia/executor.py).
+- `mermaid-mcp` (mcp-servers/) n'est pas branche dans config.yaml : ses outils ne sont pas appelables par Lyra.
