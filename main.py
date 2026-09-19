@@ -74,31 +74,9 @@ def _validate_backup_type(btype: str) -> bool:
 # Phase 5: Mode Performance - Outils sans confirmation
 # =============================================================================
 
-# Outils executables sans confirmation en mode performance
-PERFORMANCE_TOOLS = {
-    # TV Philips
-    "tv.power_on", "tv.power_off",
-    "tv.volume_up", "tv.volume_down", "tv.volume_set", "tv.mute",
-    "tv.ambilight_on", "tv.ambilight_off", "tv.ambilight_mode",
-    "tv.list_apps", "tv.launch_app", "tv.youtube_video", "tv.send_key",
-    # Lumieres Hue - individuelles
-    "hue.turn_on_light", "hue.turn_off_light",
-    "hue.set_brightness", "hue.set_color_rgb", "hue.set_color_temperature",
-    "hue.set_color_preset",
-    # Lumieres Hue - groupes
-    "hue.turn_on_group", "hue.turn_off_group",
-    "hue.set_group_brightness", "hue.set_group_color_rgb", "hue.set_group_color_preset",
-    "hue.set_scene", "hue.activate_scene_by_name",
-}
-
-# Outils TOUJOURS avec confirmation (meme en mode performance)
-ALWAYS_CONFIRM_TOOLS = {
-    "vm_destroy", "fedora.vm_destroy",
-    "vm_stop", "fedora.vm_stop",
-    "backup_restore", "fedora.backup_restore",
-    "backup_clean", "fedora.backup_clean",
-    "vm_clone_system", "fedora.vm_clone_system",
-}
+# Source unique de verite (lyra/core/constants.py) : les listes recopiees ici
+# divergeaient (vm_exec absent, cast_* absents) -- audit 2026-09-19.
+from lyra.core.constants import PERFORMANCE_TOOLS, is_dangerous_tool  # noqa: E402
 
 # Outils en lecture seule (pas de confirmation en mode performance)
 QUICK_READ_TOOLS = {
@@ -269,7 +247,7 @@ class Lyra:
             True si on peut executer sans confirmation
         """
         # Toujours confirmer les outils dangereux
-        if tool_name in ALWAYS_CONFIRM_TOOLS:
+        if is_dangerous_tool(tool_name):
             return False
 
         # Mode performance: skip pour les outils autorises

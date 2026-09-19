@@ -120,6 +120,10 @@ class RemoteUI:
                            "danger": danger}).lower()
         if answer in ("m", "modify", "modifier"):
             return "modify"
+        # Une action sensible exige un "oui" explicite : Entree ne suffit pas
+        # (parite avec actions.py ; audit 2026-09-19).
+        if danger:
+            return answer in ("o", "oui", "y", "yes")
         return answer in ("", "o", "oui", "y", "yes")
 
     # -- Construction du UIContext pour les workflows metier -------------

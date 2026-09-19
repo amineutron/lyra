@@ -254,6 +254,9 @@ def confirm_action(tool_name: str, arguments: dict, vocal_mode: bool = False, vo
         try:
             response = input(f"{prompt}{hint} ").strip().lower()
 
+            if response == "" and is_dangerous:
+                print(colored("  Action sensible : reponds 'o' ou 'oui' explicitement.", Colors.YELLOW))
+                continue
             if response in ("", "o", "oui", "y", "yes"):
                 return True
             elif response in ("n", "non", "no"):

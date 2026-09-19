@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import yaml
 
 from lyra.core.config import RAGConfig
-from lyra.core.constants import DANGEROUS_TOOLS, PERFORMANCE_TOOLS
+from lyra.core.constants import DANGEROUS_TOOLS, PERFORMANCE_TOOLS, is_dangerous_tool  # noqa: F401
 
 # QueryType et PipelineResult importes depuis types.py (pas de torch/sentence_transformers)
 # Pipeline importe dans main() apres le banner pour ne pas bloquer le demarrage
@@ -248,8 +248,8 @@ def should_skip_confirmation(tool_name: str, mode: str) -> bool:
     Returns:
         True si on peut executer sans confirmation
     """
-    # Toujours confirmer les outils dangereux
-    if tool_name in DANGEROUS_TOOLS:
+    # Toujours confirmer les outils dangereux (nom prefixe ou non)
+    if is_dangerous_tool(tool_name):
         return False
 
     # Mode performance: skip pour les outils domotique
@@ -918,7 +918,9 @@ def run_one_shot(
         ui.print_lyra(result.response)
 
         # Determiner si confirmation necessaire
-        is_dangerous = tool_name in DANGEROUS_TOOLS
+        # Nom prefixe ("fedora.vm_destroy") : "in DANGEROUS_TOOLS" etait toujours
+        # faux et -y executait vm_destroy sans confirmation (audit 2026-09-19).
+        is_dangerous = is_dangerous_tool(tool_name)
         skip_confirm = should_skip_confirmation(tool_name, mode)
 
         if not skip_confirm and not (yes and not is_dangerous):

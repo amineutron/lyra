@@ -43,3 +43,31 @@ def test_prefixe_serveur_reconnu_dangereux():
     assert not is_dangerous_tool("fedora.vm_status")
     assert is_destructive_tool("fedora.vm_destroy")
     assert not is_destructive_tool("fedora.vm_clone_system")
+
+
+class _RemoteUIStub:
+    """RemoteUI dont ask() renvoie une reponse fixee (pas de canal)."""
+
+    def __init__(self, reponse):
+        from lyra.daemon.remote_ui import RemoteUI
+        self._ui = RemoteUI.__new__(RemoteUI)
+        self._ui.ask = lambda *a, **k: reponse
+
+    def confirm(self, tool):
+        return self._ui.confirm_action(tool, {"vm_name": "x"})
+
+
+def test_entree_vide_ne_confirme_pas_une_action_sensible():
+    # Entree = "oui" par defaut, sauf pour DANGEROUS/DESTRUCTIVE (audit 2026-09-19)
+    assert _RemoteUIStub("").confirm("fedora.vm_start") is True
+    assert _RemoteUIStub("").confirm("fedora.vm_destroy") is False
+    assert _RemoteUIStub("oui").confirm("fedora.vm_destroy") is True
+    assert _RemoteUIStub("m").confirm("fedora.vm_destroy") == "modify"
+
+
+def test_main_rag_normalise_le_prefixe_avant_le_test_de_danger():
+    # -y executait "fedora.vm_destroy" sans confirmation : "in DANGEROUS_TOOLS"
+    # comparait un nom prefixe a des noms courts.
+    import main_rag
+    assert main_rag.should_skip_confirmation("fedora.vm_destroy", "performance") is False
+    assert main_rag.should_skip_confirmation("catt.cast_youtube", "performance") is True
