@@ -135,3 +135,11 @@ class TestNoMatch:
 
     def test_empty(self):
         assert tool("") is None
+
+
+class TestJeu5:
+    def test_arreter_la_synchro_des_lampes_n_est_pas_une_tache(self):
+        assert tool("arrete la synchro des lampes avec la musique") is None
+
+    def test_kill_d_une_tache_reste_detecte(self):
+        assert tool("kill preprod-01") == "tracking.kill_task"

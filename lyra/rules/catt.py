@@ -53,6 +53,13 @@ def detect(query: str):
             re.search(r'\b(?:cast|diffusion|chromecast)\b', q):
         return make("catt.cast_stop", {}, "rule: cast_stop", 0.93)
 
+    # cast_status: "le chromecast est en pause ?" -- une question d'etat n'est pas
+    # un ordre (jeu 5, 2026-09-19)
+    if re.search(r'\b(?:cast|chromecast)\b', q) and \
+            re.search(r'^est-ce que\b|\?\s*$|\best-il\b', q) and \
+            re.search(r'\b(?:pause|lecture|lit|diffuse|tourne|en\s+cours|joue|actif|allume)\b', q):
+        return make("catt.cast_status", {}, "rule: cast_status (question)", 0.90)
+
     # cast_pause: "mets le cast en pause"
     if re.search(r'\b(?:pause|en\s+pause)\b', q) and \
             re.search(r'\b(?:cast|diffusion|chromecast)\b', q):

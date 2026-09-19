@@ -117,3 +117,12 @@ class TestSoundOnlyNoTvRequired:
 
     def test_mode_musique_sans_tv(self):
         assert tool("mode musique") == "tv.screen_off"
+
+
+class TestScreenManagerHorsRegistre:
+    """lyra#24 : le serveur n'existe pas, aucune regle ne doit renvoyer screen-manager."""
+
+    def test_ouvrir_une_app_sur_un_ecran_ne_renvoie_plus_screen_manager(self):
+        from lyra.rules import detect
+        r = detect("ouvre firefox sur l'ecran 2")
+        assert r is None or not r.tool.startswith("screen-manager")

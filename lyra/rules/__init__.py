@@ -11,7 +11,6 @@ from .catt import detect as _catt
 from .denon import detect as _denon
 from .hue import detect as _hue
 from .ironman import detect as _ironman
-from .screen_manager import detect as _screen_manager
 from .tracking import detect as _tracking
 from .tv import detect as _tv
 from .vm import detect as _vm
@@ -28,7 +27,10 @@ _REGISTRY = [
     _hue,            # HUE: scenes AVANT vm_start ("lance la scene X" sinon vm_start)
     _tv,             # TV: power, apps, volume, ambilight
     _denon,          # DENON: power, mute, volume, input (verifie AVANT TV sur "volume")
-    _screen_manager, # SCREEN-MANAGER: open_app, open_url, list_screens, list_apps, setup, update
+    # SCREEN-MANAGER (_screen_manager) retire le 2026-09-19 : le serveur n'est ni sur
+    # le disque ni dans config.yaml ; dernier du registre, il attrapait les phrases
+    # "ecran/application" et renvoyait un outil inexistant (lyra#24). A remettre
+    # avec le serveur.
 ]
 
 

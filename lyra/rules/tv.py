@@ -20,7 +20,8 @@ _AMBI_COLOR_MAP = {
 _AMBI_KW = r'\b(?:ambilight|leds?\s+(?:de\s+|derriere\s+)?(?:la\s+)?(?:tele|tv|television))\b'
 _AMBI_MODES = {"musique": "follow_audio", "audio": "follow_audio", "son": "follow_audio",
                "video": "follow_video", "film": "follow_video",
-               "lounge": "lounge_light", "ambiance": "lounge_light", "manuel": "manual"}
+               "lounge": "lounge_light", "ambiance": "lounge_light", "manuel": "manual",
+               "image": "follow_video"}
 
 
 def detect(query: str):
@@ -33,6 +34,11 @@ def detect(query: str):
         if m_mode:
             return make("tv.ambilight_mode", {"mode": _AMBI_MODES[m_mode.group(1)]},
                         f"rule: ambilight_mode {m_mode.group(1)}", 0.93)
+        # "l'ambilight qui suit la musique / la video" (jeu 5, 2026-09-19)
+        m_suit = re.search(r'\b(?:suit|suive|suivre|synchro(?:nise)?|cale)\b.{0,25}\b(musique|son|audio|video|film|image)\b', q)
+        if m_suit:
+            return make("tv.ambilight_mode", {"mode": _AMBI_MODES[m_suit.group(1)] if m_suit.group(1) in _AMBI_MODES else "follow_video"},
+                        f"rule: ambilight suit {m_suit.group(1)}", 0.92)
 
     # tv.screen_off: "son seul", "mode musique/audio" — pas besoin de "tv" dans la phrase.
     # (pylips-mcp n'a jamais expose "sound_only" : screen_off eteint l'ecran et

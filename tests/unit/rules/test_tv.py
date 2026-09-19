@@ -269,3 +269,13 @@ class TestJeu4:
     def test_question_d_etat_avec_il_est(self):
         r = detect("la tele, il est en veille ?")
         assert r is not None and r.tool == "tv.get_state"
+
+
+class TestJeu5:
+    def test_ambilight_qui_suit_la_musique(self):
+        r = detect("l'ambilight qui suit la musique")
+        assert r.tool == "tv.ambilight_mode" and r.arguments == {"mode": "follow_audio"}
+
+    def test_ambilight_cale_sur_la_video(self):
+        r = detect("cale l'ambilight sur la video")
+        assert r.tool == "tv.ambilight_mode" and r.arguments == {"mode": "follow_video"}

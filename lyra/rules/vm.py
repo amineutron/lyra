@@ -6,6 +6,7 @@ from typing import Optional
 from .base import make, normalize
 
 _VM_NAME_RE = r'([\w][\w.-]*(?:-\d+)?)'
+_PIECES_RE = r'\b(?:entree|salon|chambre|cuisine|bureau|couloir|salle|toilettes|garage|terrasse|jardin)\b'
 
 _VM_GENERIC = {'la', 'le', 'les', 'un', 'une', 'de', 'du', 'des', 'vm', 'machine',
                'serveur', 'mon', 'ma', 'mes', 'cette', 'ce', 'sa', 'son', 'ses',
@@ -176,6 +177,8 @@ def detect(query: str):
         or re.search(r'\b(?:denon|avr|amplificateur?|home.?cinema|ampli)\b', q)
         # Cast / Chromecast
         or re.search(r'\b(?:cast|chromecast|catt)\b', q)
+        # Une piece de la maison ("allume l'entree") est une lampe Hue, pas une VM (jeu 5)
+        or re.search(_PIECES_RE, q)
     )
     if not _IS_DOMOTIQUE_CONTEXT:
         # "lance uptime sur ubuntu-base" : un mot entre "lance" et "sur NOM-DE-VM"
@@ -212,6 +215,7 @@ def detect(query: str):
         or re.search(r'\b(?:cast|chromecast|catt)\b', q)
         or re.search(r'\b(?:lumiere[sz]?|lampe[sz]?|ampoule[sz]?|ambilight|hue)\b', q)
         or re.search(r'\b(?:tv|tele(?:vision)?)\b', q)
+        or re.search(_PIECES_RE, q)
     )
     if not _IS_STOP_DOMOTIQUE:
         # etein(s|t|d|dre|ds) : toutes les fautes/variantes courantes d'"eteins"

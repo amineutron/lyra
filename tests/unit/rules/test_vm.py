@@ -334,3 +334,9 @@ class TestJeu4:
 
     def test_etat_d_une_vm_reste_un_status(self):
         assert tool("etat de la vm fedora-base") == "fedora.vm_status"
+
+
+class TestJeu5:
+    def test_une_piece_n_est_pas_une_vm(self):
+        assert tool("allume l'entree") != "fedora.vm_start"
+        assert tool("eteins le salon") != "fedora.vm_stop"

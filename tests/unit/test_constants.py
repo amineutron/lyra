@@ -40,3 +40,8 @@ def test_outils_qui_ecrivent_sont_sensibles():
 def test_cast_et_denon_sans_confirmation_en_performance():
     assert is_performance_tool("catt.cast_youtube")
     assert is_performance_tool("denon.volume_up")
+
+
+def test_outils_tracking_qui_suppriment_sont_sensibles():
+    assert is_dangerous_tool("tracking.delete") and is_dangerous_tool("tracking.kill_task")
+    assert not is_dangerous_tool("tracking.list")

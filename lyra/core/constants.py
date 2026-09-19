@@ -21,6 +21,10 @@ DANGEROUS_TOOLS: frozenset[str] = frozenset({
     "vm_snapshot",      # action=revert remplace l'etat, action=delete supprime
     "vm_import",        # copie un disque dans libvirt + virsh define (sudo)
     "vm_copy",          # ecrase des fichiers sur l'hote ou dans la VM (scp)
+    # Interceptes hors MCP par HESTIA (tracking.*) : suppression d'une session
+    # de suivi, kill d'un processus enregistre (lyra#24).
+    "delete",
+    "kill_task",
 })
 
 # Sous-ensemble REELLEMENT destructif (perte/ecrasement irreversible).

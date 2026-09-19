@@ -16,7 +16,8 @@ def detect(query: str):
         r'(?:la\s+)?(?:tache\s+|task\s+)?([a-z0-9][a-z0-9_-]{3,})'
         r'|stop\s+(?:la\s+)?(?:tache|task)\s+([a-z0-9][a-z0-9_-]{3,})', q
     )
-    if m:
+    # "arrete la synchro des lampes avec la musique" n'est pas une tache (jeu 5)
+    if m and not re.search(r'\b(?:lampes?|lumieres?|musique|chromecast|cast|tele|tv|ampli|synchro|ambilight|hue|son)\b', q):
         identifier = m.group(1) or m.group(2)
         return make("tracking.kill_task", {"identifier": identifier},
                     f"rule: kill tache '{identifier}'", 0.93)

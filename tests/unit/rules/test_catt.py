@@ -200,3 +200,12 @@ class TestOngletSurLaTele:
     def test_onglet_firefox_sur_la_tele(self):
         r = detect("envoie l'onglet firefox sur la tele")
         assert r is not None and r.tool == "catt.cast_browser"
+
+
+class TestJeu5:
+    def test_question_est_un_status(self):
+        assert tool("le chromecast est en pause ?") == "catt.cast_status"
+        assert tool("est-ce que le chromecast diffuse encore") == "catt.cast_status"
+
+    def test_ordre_reste_une_pause(self):
+        assert tool("mets le chromecast en pause") == "catt.cast_pause"
