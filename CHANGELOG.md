@@ -6,7 +6,9 @@
 - `lyra --version` prints the installed `lyra-assistant` version, or the pyproject version when run from sources (#15).
 - `scripts/gen_mcp_tools_md.py` regenerates docs/user/MCP_TOOLS.md from the live MCP servers, with a confirmation column derived from `lyra/core/constants.py`.
 - EPHAISTOS variants `inventaire_vm` (real VM names from vm_status or `LYRA_VMS`), `lexique_courant` and `verbes_courants` (everyday French synonyms and verbs, written outside any test set).
-- Fourth held-out set `tests/cases_hors_regles_3.py` (50 phrasings, real machine names, ten tools never measured before).
+- Fourth held-out set `tests/cases_hors_regles_3.py` (50 phrasings, real machine names, ten tools never measured before); fifth set `tests/cases_hors_regles_4.py`, sealed before iteration 16.
+- `scripts/bench_recall.py`: mechanical recall of a set (rank of the expected tool, precision of the "net" criterion) without calling the model, the measurement to run before any bench.
+- EPHAISTOS variants `outil_par_machine`, `mots_courants_2`, `nombres_tri`, `mots_courants_3` (iterations 15-16); `net_assoupli` measured and refuted.
 
 ### Fixed
 - Security: `main_rag.py` compared a prefixed tool name (`fedora.vm_destroy`) to the short names of `DANGEROUS_TOOLS`, so `-y` skipped the confirmation of destructive tools; it now uses `is_dangerous_tool()`.
@@ -15,6 +17,7 @@
 - Rules: `tv.sound_only` and `tv.ambilight_color` do not exist in pylips-mcp; "son seul / mode musique" now maps to `tv.screen_off`, a colour request to `ambilight_mode(manual)` (pylips-mcp#7); `tv.youtube_video` sends `video` (schema name) instead of `video_id`.
 - Rules: "lance CMD sur VM" is an exec, "l'etat de la lampe" is not a VM status, "il est tard" is not a state question (found by the fourth set control).
 - `scripts/index_rag_3tier.py` ignores documents without `server_name` (a local `ironman.run_scene` would have created an UNKNOWN server); `config.yaml.example` declares the catt server.
+- Rules: the screen-manager module is out of the registry (server absent from disk and config, lyra#24); a room name is not a VM; "arrete la synchro des lampes" is not a task kill; a question about the chromecast is `cast_status`; "l'ambilight qui suit la musique" sets the mode. `tracking.delete` and `tracking.kill_task` require an explicit confirmation.
 
 ## [1.2.0] - 2026-09-10
 

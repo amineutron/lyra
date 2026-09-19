@@ -775,3 +775,35 @@ class TestIteration15:
         specs = ["fedora.vm_import: vm_import()", "fedora.vm_export: vm_export()"]
         assert exp.boost_mots(specs, "sors la machine dans une archive", courants2=True)[0].startswith("fedora.vm_export")
         assert "exporter" in exp.etendre_requete("sors la machine", courant2=True).split()
+
+
+class TestIteration16:
+    def test_un_nombre_designe_un_reglage(self):
+        specs = ["tv.power_on: power_on()", "tv.volume_set: volume_set(level: integer)"]
+        assert exp.boost_mots(specs, "mets la tele a quinze", nombres=True)[0].startswith("tv.volume_set")
+        assert exp.boost_mots(specs, "mets la tele a 15", nombres=True)[0].startswith("tv.volume_set")
+        assert exp.boost_mots(specs, "mets la tele a quinze")[0].startswith("tv.power_on")
+
+    def test_une_question_d_etat_designe_un_status(self):
+        specs = ["fedora.vm_start: vm_start(vm_name: string)", "fedora.vm_status: vm_status(vm_name?: string)"]
+        assert exp.boost_mots(specs, "fedora-base est en route ?", nombres=True)[0].startswith("fedora.vm_status")
+        assert exp.boost_mots(specs, "fedora-base en route", nombres=True)[0].startswith("fedora.vm_start")
+
+    def test_mots_courants_3(self):
+        specs = ["tv.power_on: power_on()", "tv.send_key: send_key(key: string)"]
+        assert exp.boost_mots(specs, "appuie sur pause sur la tele", courants3=True)[0].startswith("tv.send_key")
+        assert "touche" in exp.etendre_requete("appuie sur menu", courant3=True).split()
+
+
+class TestQuestionFranche:
+    def test_vraie_question(self):
+        assert exp.question_franche("fedora-base est en route ?")
+        assert exp.question_franche("est-ce que la tele est allumee")
+
+    def test_ordre_poli_ou_marqueur_faible(self):
+        assert not exp.question_franche("tu peux me mettre la tele ?")
+        assert not exp.question_franche("regarde depuis combien de temps staging-03 tourne, avec uptime")
+
+    def test_un_nombre_ne_cible_plus_seek(self):
+        specs = ["catt.cast_seek: cast_seek(seconds: integer)", "catt.cast_volume: cast_volume(level: integer)"]
+        assert exp.boost_mots(specs, "le chromecast a trente pour cent", nombres=True, catt=True)[0].startswith("catt.cast_volume")

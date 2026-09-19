@@ -13,7 +13,7 @@
   "versions": {
     "python": "3.12.13",
     "ollama": "0.14.1",
-    "lyra_commit": "5ede4ce",
+    "lyra_commit": "f66dc23",
     "noyau": "6.18.13-200.fc43.x86_64"
   },
   "modeles": {
@@ -43,8 +43,10 @@
     "lexique_courant",
     "lexique_langue",
     "mots_courants_2",
+    "mots_courants_3",
     "mots_relatifs",
     "mots_url",
+    "nombres_tri",
     "outil_force_si_net",
     "outil_par_machine",
     "poids_rares",
@@ -62,10 +64,11 @@
   "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
   "cas": 51,
   "statuts": {
-    "LLM_PASS": 51
+    "LLM_PASS": 50,
+    "LLM_FAIL": 1
   },
-  "taux_pass": 1.0,
-  "score_pondere": 100,
+  "taux_pass": 0.9804,
+  "score_pondere": 98,
   "par_categorie": {
     "CATT": {
       "LLM_PASS": 10
@@ -74,7 +77,8 @@
       "LLM_PASS": 10
     },
     "FEDORA": {
-      "LLM_PASS": 11
+      "LLM_PASS": 10,
+      "LLM_FAIL": 1
     },
     "HUE": {
       "LLM_PASS": 10
@@ -87,6 +91,6 @@
     "ephaistos": "qwen2.5-coder:0.5b",
     "lyra": "llama3.2:1b"
   },
-  "duree_s": 281.7,
+  "duree_s": 282.9,
   "duree_inclut_initialisation": true
 }

@@ -560,7 +560,9 @@ class Ephaistos:
                                                 fines="cartes_fines" in variantes,
                                                 verbes="verbes_tri" in variantes,
                                                 courants="verbes_courants" in variantes,
-                                                courants2="mots_courants_2" in variantes)
+                                                courants2="mots_courants_2" in variantes,
+                                                nombres="nombres_tri" in variantes,
+                                                courants3="mots_courants_3" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             outil_force = None
             net = (max_specs and not skip_specs
@@ -570,6 +572,8 @@ class Ephaistos:
                                       verbes="verbes_tri" in variantes,
                                       courants="verbes_courants" in variantes,
                                       courants2="mots_courants_2" in variantes,
+                                      nombres="nombres_tri" in variantes,
+                                      courants3="mots_courants_3" in variantes,
                                       seuil=1 if "net_assoupli" in variantes else 2,
                                       cibler_youtube="mots_url" in variantes))
             if "top1_si_net" in variantes and net:

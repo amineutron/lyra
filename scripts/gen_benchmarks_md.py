@@ -185,6 +185,7 @@ def section_modeles(lignes: list[str]) -> None:
     hors_regles: dict[str, dict] = {}
     tenu_a_l_ecart: dict[str, dict] = {}
     quatrieme: dict[str, dict] = {}
+    cinquieme: dict[str, dict] = {}
     for mesure in sorted(lot, key=lambda d: d["date"]):
         nom = mesure.get("modeles_mesures", {}).get("ephaistos", "?")
         if mesure.get("jeu", "modeles") == "hors_regles":
@@ -193,6 +194,8 @@ def section_modeles(lignes: list[str]) -> None:
             tenu_a_l_ecart[nom] = mesure
         elif mesure.get("jeu") == "hors_regles_3":
             quatrieme[nom] = mesure
+        elif mesure.get("jeu") == "hors_regles_4":
+            cinquieme[nom] = mesure
         else:
             (avec_variantes if mesure.get("variantes") else reference)[nom] = mesure
 
@@ -236,7 +239,12 @@ def section_modeles(lignes: list[str]) -> None:
                          "`tests/cases_hors_regles_3.py` : 50 formulations d'usage quotidien avec les vrais "
                          "noms de machines et dix outils jamais mesures, ecrites AVANT les leviers generiques "
                          "des iterations 14-15. Une seule mesure par configuration, jamais d'iteration dessus : "
-                         "c'est la mesure de generalisation de la configuration finale.")
+                         "ses echecs ont guide les hypotheses de l'iteration 16, il n'est pas remesure.")
+    if cinquieme:
+        _tableau_modeles(lignes, cinquieme, "### Cinquieme jeu, tenu a l'ecart (50 formulations)",
+                         "`tests/cases_hors_regles_4.py` : 50 formulations ecrites AVANT l'iteration 16, "
+                         "mesurees une seule fois avec la configuration finale : c'est la mesure de "
+                         "generalisation a retenir.")
 
 
 def section_boucle(lignes: list[str]) -> None:

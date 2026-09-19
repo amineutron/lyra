@@ -196,7 +196,24 @@ au soir, a fixe le protocole a trois jeux :
    **infirme** (-4 : la precision mecanique 36/5 contre 29/2 l'annoncait, trois
    faux nets imposent trois mauvais outils). It15 : **82/100** sur le jeu 3.
 5. **Une seule mesure du jeu scelle**, et c'est le seul chiffre qu'on publie
-   comme generalisation. Le jour ou on y touche, un cinquieme prend le relais.
+   comme generalisation : **41/50** sur le quatrieme jeu. Ses neuf echecs
+   (sept confusions dont trois sur un nombre, deux questions d'etat lues comme
+   des ordres) ont guide l'iteration 16 -- il ne sera donc pas remesure, et un
+   **cinquieme jeu** a ete scelle avant d'ecrire une ligne.
+6. **It16, la premiere iteration ou le mecanisme a refuse une idee avant le
+   banc** : la premiere version de `nombres_tri` creait deux faux nets ("tu
+   peux me mettre la tele ?" est un ordre poli, "combien de temps ... avec
+   uptime" une commande) et faisait cibler `seek` par "trente pour cent" ;
+   `scripts/bench_recall.py` l'a montre en vingt secondes, la version corrigee
+   a une precision inchangee (38/2) et gagne 4 rangs 1. Le banc dit ensuite
+   82 -> 83 sur le jeu 3 : les deux idees visaient les echecs du jeu 4, pas
+   ceux du jeu 3, et le jeu 2 perd un cas (50/51 : "verifie l'integrite des
+   sauvegardes ?" -- la question d'etat pousse `backup_status` devant
+   `backup_verify`, qui n'est pas dans les cibles d'etat ; prochaine
+   hypothese, pas de retouche apres coup). Cinquieme jeu, mesure unique :
+   **35/50** -- six echecs sur dix cote Hue, deux noms de machines rendus
+   comme des outils TV. Un jeu scelle mesure aussi la variance entre jeux :
+   41/50 puis 35/50 pour deux configurations a un point d'ecart sur le jeu 3.
 
 Pieges de ces deux iterations : un guetteur `until ! pgrep -f "<ligne du
 banc>"` matche sa propre ligne de commande et ne rend jamais la main (guetter

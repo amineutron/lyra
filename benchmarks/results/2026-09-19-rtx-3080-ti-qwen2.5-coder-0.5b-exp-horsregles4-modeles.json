@@ -20,7 +20,7 @@
     "ephaistos": "qwen2.5-coder:0.5b",
     "lyra": "llama3.2:1b"
   },
-  "jeu": "modeles",
+  "jeu": "hors_regles_4",
   "variantes": [
     "args_par_regex",
     "arguments_contradictoires",
@@ -62,27 +62,39 @@
     "verification_binaire"
   ],
   "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
-  "cas": 21,
+  "cas": 50,
   "statuts": {
-    "LLM_PASS": 21
+    "LLM_PASS": 35,
+    "LLM_FAIL": 15
   },
-  "taux_pass": 1.0,
-  "score_pondere": 100,
+  "taux_pass": 0.7,
+  "score_pondere": 70,
   "par_categorie": {
     "CATT": {
-      "LLM_PASS": 7
+      "LLM_PASS": 9,
+      "LLM_FAIL": 1
     },
-    "HUE": {
+    "DENON": {
+      "LLM_PASS": 9,
+      "LLM_FAIL": 1
+    },
+    "FEDORA": {
+      "LLM_FAIL": 5,
       "LLM_PASS": 5
     },
+    "HUE": {
+      "LLM_FAIL": 6,
+      "LLM_PASS": 4
+    },
     "TV": {
-      "LLM_PASS": 9
+      "LLM_PASS": 8,
+      "LLM_FAIL": 2
     }
   },
   "modeles_mesures": {
     "ephaistos": "qwen2.5-coder:0.5b",
     "lyra": "llama3.2:1b"
   },
-  "duree_s": 147.9,
+  "duree_s": 308.8,
   "duree_inclut_initialisation": true
 }

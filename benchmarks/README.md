@@ -206,10 +206,16 @@ formulations) a donne **56/100** a cette configuration en mesure unique : le
 developpement (iterations 14-15 : leviers generiques, 56 -> 70 -> 82/100), et
 un **quatrieme jeu** (`tests/cases_hors_regles_3.py`, 50 formulations, vrais
 noms de machines, dix outils jamais mesures) a ete scelle AVANT ces
-iterations : mesure unique, **41/50**, avec 21/21 et 51/51 conserves. C'est le
-chiffre de generalisation ; le jour ou on y touche, un cinquieme prend le
-relais. `scripts/controle_hors_regles.py --jeu 3` compte les phrases que les
-regles interceptent en usage reel (24/50).
+iterations : mesure unique, **41/50**, avec 21/21 et 51/51 conserves. Ses
+echecs ont guide l'iteration 16 (nombres, questions d'etat : 83/100 sur le
+jeu 3), donc un **cinquieme jeu** (`tests/cases_hors_regles_4.py`, 50
+formulations) a ete scelle avant : mesure unique, **35/50** (jeux 1 et 2 :
+21/21 et 50/51). C'est le chiffre de generalisation de la configuration
+finale (38 variantes) ; l'ecart avec le quatrieme jeu (41/50) est la variance
+entre deux jeux de 50 phrases, pas un progres ni un recul.
+`scripts/controle_hors_regles.py --jeu N` compte les phrases que les regles
+interceptent en usage reel (24/50 sur le quatrieme, 22/50 sur le cinquieme) ;
+`scripts/bench_recall.py` mesure le mecanisme sans modele avant tout banc.
 
 ## Couverture des bancs
 

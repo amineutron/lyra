@@ -222,6 +222,16 @@ de machine copies en nom d'outil, 4 absents) :
 - mots_courants_2 : deuxieme table de mots ordinaires (sors -> export, le point
   -> status, on en reste la -> stop, sans le son -> mute, prends -> source,
   dispo/connectees -> liste, danser/suivent -> beat...).
+
+Iteration 16 (jeu 4 mesure une fois a 41/50 : sept confusions entre voisins,
+deux questions d'etat lues comme des ordres) :
+
+- nombres_tri : un nombre en lettres ou en chiffres ("a quinze", "a 40")
+  designe un reglage (set/volume/brightness), et une question d'etat ("est en
+  route ?") les outils d'etat -- question_etat (it5, neutre alors) rejouee
+  avec les cartes d'aujourd'hui, fusionnee ici.
+- mots_courants_3 : troisieme table (appuie/appuyer -> touche, active/lance
+  une scene -> activate, en train de -> status, quelle entree -> status).
 """
 
 from __future__ import annotations
@@ -246,6 +256,7 @@ VARIANTES = (
     "cartes_tri", "denon_sans_veille", "cartes_fines", "verbes_tri",
     "inventaire_vm", "lexique_courant", "verbes_courants",
     "outil_par_machine", "net_assoupli", "mots_courants_2",
+    "nombres_tri", "mots_courants_3",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -400,6 +411,7 @@ _RRF_K = 60
 # devenu jeu de developpement : 56 -> 70 (inventaire_vm, lexique_courant,
 # verbes_courants) -> 82/100 (outil_par_machine, mots_courants_2).
 # Infirmee : net_assoupli (-4 : trois faux nets de plus imposent un mauvais outil).
+# Iteration 16 : nombres_tri + mots_courants_3 (83/100 ensemble ; 82 et 81 seules).
 DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
           "carte_equipements", "mots_relatifs", "expansion", "lexique",
@@ -411,7 +423,9 @@ DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "mots_url", "verbes_tri",
           # Iterations 14-15 sur le troisieme jeu (56 -> 82/100) ; net_assoupli infirmee (-4).
           "inventaire_vm", "lexique_courant", "verbes_courants",
-          "outil_par_machine", "mots_courants_2")
+          "outil_par_machine", "mots_courants_2",
+          # Iteration 16 (jeu 3 : 82 -> 83, visait les echecs du jeu 4 : nombres, questions d'etat).
+          "nombres_tri", "mots_courants_3")
 
 
 def actives() -> set[str]:
@@ -512,7 +526,8 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
                etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
-               verbes: bool = False, courants: bool = False, courants2: bool = False) -> int:
+               verbes: bool = False, courants: bool = False, courants2: bool = False,
+               nombres: bool = False, courants3: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -538,6 +553,10 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = tuple(cibles or ()) + VERBES_COURANTS[mot]
         if courants2 and mot in VERBES_COURANTS_2:
             cibles = tuple(cibles or ()) + VERBES_COURANTS_2[mot]
+        if courants3 and mot in VERBES_COURANTS_3:
+            cibles = tuple(cibles or ()) + VERBES_COURANTS_3[mot]
+        if nombres and (mot in NOMBRES or mot.isdigit()) and not question_franche(requete):
+            cibles = tuple(cibles or ()) + ("set",)
         if fines and mot in MOTS_FINS:
             cibles = tuple(cibles or ()) + MOTS_FINS[mot]
         if fines and mot == "lecture" and any(v in mots for v in VERBES_CATT):
@@ -567,6 +586,8 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
         score += 2
     if vm and noms_de_machines(requete, inventaire=courants or "inventaire_vm" in actives()) and "vm" in tokens:
         score += 2
+    if nombres and question_franche(requete) and any(c in tokens for c in _CIBLES_ETAT):
+        score += 2
     return score
 
 
@@ -574,12 +595,13 @@ def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = Fal
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
                etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
-               verbes: bool = False, courants: bool = False, courants2: bool = False) -> list[str]:
+               verbes: bool = False, courants: bool = False, courants2: bool = False,
+               nombres: bool = False, courants3: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(nom_de_spec(s), requete, poids_rares,
                                            cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri, fines,
-                                           verbes, courants, courants2),
+                                           verbes, courants, courants2, nombres, courants3),
                   reverse=True)
 
 
@@ -960,7 +982,8 @@ def inserer_bloc_denon(system_prompt: str, sans_veille: bool = False) -> str:
 
 def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
                     entites: bool = False, langue: bool = False,
-                    inventaire: bool = False, courant: bool = False, courant2: bool = False) -> str:
+                    inventaire: bool = False, courant: bool = False, courant2: bool = False,
+                    courant3: bool = False) -> str:
     """Requete + synonymes de ses mots (dictionnaire de production, repli sans accent).
 
     Meme strategie que SynonymExpander.expand (requete originale, puis les
@@ -984,6 +1007,8 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
             candidats += list(LEXIQUE_COURANT.get(mot, ()))
         if courant2:
             candidats += list(LEXIQUE_COURANT_2.get(mot, ()))
+        if courant3:
+            candidats += list(LEXIQUE_COURANT_3.get(mot, ()))
         for syn in candidats:
             cle = " ".join(normaliser(syn))
             if cle and cle not in vus and cle not in normaliser(requete):
@@ -1379,4 +1404,37 @@ VERBES_COURANTS_2: dict[str, tuple[str, ...]] = {
     "dispo": ("all", "list", "apps"), "disponibles": ("all", "list"), "connectees": ("all", "lights"),
     "danser": ("beat", "start"), "dansent": ("beat", "start"), "suivent": ("beat", "status"), "suit": ("beat", "status"),
     "ambiances": ("scenes", "all"), "avance": ("offset",), "mettre": ("on",),
+}
+
+
+# --- Iteration 16 ------------------------------------------------------------------
+
+_POLITESSE = re.compile(r"\b(?:tu peux|peux-tu|pourrais-tu|tu pourrais|tu veux bien|veux-tu|s'il te plait|stp)\b")
+
+
+def question_franche(requete: str) -> bool:
+    """Une vraie question d'etat : "?" final ou "est-ce que", sans formule de politesse
+    ("tu peux me mettre la tele ?" est un ordre ; "regarde ... avec uptime" aussi)."""
+    r = (requete or "").lower().strip()
+    if _POLITESSE.search(r):
+        return False
+    return r.endswith("?") or r.startswith("est-ce que") or r.startswith("est ce que")
+
+
+NOMBRES = {"zero", "cinq", "dix", "quinze", "vingt", "trente", "quarante", "cinquante", "soixante",
+           "septante", "huitante", "nonante", "cent", "moitie", "quart", "tiers"}
+
+LEXIQUE_COURANT_3: dict[str, tuple[str, ...]] = {
+    "appuie": ("touche", "telecommande"), "appuyer": ("touche", "telecommande"), "appuies": ("touche",),
+    "presse": ("touche", "telecommande"), "valide": ("touche", "ok"),
+    "train": ("etat", "status", "en cours"), "quelle": ("etat", "status"), "quel": ("etat", "status"),
+    "quinze": ("15", "regler"), "quarante": ("40", "regler"), "cinquante": ("50", "regler"),
+    "soixante": ("60", "regler"), "trente": ("30", "regler"), "vingt": ("20", "regler"),
+    "rythme": ("beat", "musique"), "detente": ("scene", "ambiance"), "soiree": ("scene", "ambiance"),
+}
+
+VERBES_COURANTS_3: dict[str, tuple[str, ...]] = {
+    "appuie": ("key", "send"), "appuyer": ("key", "send"), "appuies": ("key",), "presse": ("key", "send"),
+    "valide": ("key",), "train": ("status",), "rythme": ("beat", "start"),
+    "active": ("activate", "on"), "activer": ("activate",), "scene": ("scene", "activate"),
 }
