@@ -636,10 +636,6 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
             "changer le mode ambilight", "passe l'ambilight en mode lounge",
             "mets l'ambilight en mode vidéo", "ambilight mode audio",
         ],
-        "tv.ambilight_color": [
-            "changer la couleur de l'ambilight",
-            "change la couleur des LEDs", "mets l'ambilight en bleu",
-        ],
         "tv.launch_app": [
             "lancer une application", "ouvrir Netflix/YouTube",
             "lance Netflix", "ouvre YouTube", "démarre l'appli", "ouvre l'application",
@@ -862,7 +858,6 @@ def generate_french_examples(name: str, category: str) -> list[str]:
             "mets la télé en mute", "coupe le son",
             "silence la télé",
         ],
-        "tv.ambilight_color": ["change l'ambilight en bleu", "mets l'ambilight en rouge"],
         "tv.launch_app": [
             "lance Netflix", "ouvre YouTube sur la télé",
             "lance Prime Video",

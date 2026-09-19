@@ -68,7 +68,6 @@ FRENCH_ENRICHMENTS: dict[str, str] = {
     "power_off": "eteindre eteins arreter arrete fermer veille standby",
     "ambilight_on": "allumer allume activer active ambilight retroeclairage",
     "ambilight_off": "eteindre eteins desactiver desactive ambilight",
-    "ambilight_color": "couleur ambilight retroeclairage bleu rouge vert violet mettre changer",
     "youtube_video": "youtube video jouer joue url lien youtu diffuser",
     # HUE complementaire
     "turn_on_light": "allumer allume lumiere lampe ampoule chevet bureau salon",

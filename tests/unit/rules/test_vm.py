@@ -314,3 +314,23 @@ class TestEnvoyerSurLaTele:
     def test_envoyer_un_fichier_vers_une_vm_reste_une_copie(self):
         r = detect("envoie /tmp/rapport.txt sur preprod-01")
         assert r is not None and r.tool == "fedora.vm_copy"
+
+
+# ------------------------------------------------------------------- #
+# Jeu 4 (2026-09-19) : trois regles fausses trouvees par le controle   #
+# ------------------------------------------------------------------- #
+class TestJeu4:
+    def test_lance_commande_sur_vm_est_un_exec(self):
+        r = detect("lance uptime sur ubuntu-base")
+        assert r.tool == "fedora.vm_exec", r.tool
+        assert r.arguments == {"vm_name": "ubuntu-base", "command": "uptime"}
+
+    def test_lance_la_vm_reste_un_demarrage(self):
+        assert tool("lance la vm fedora-base") == "fedora.vm_start"
+        assert tool("lance fedora-base") == "fedora.vm_start"
+
+    def test_etat_d_une_lampe_n_est_pas_une_vm(self):
+        assert tool("c'est quoi l'etat de la lampe de chevet") != "fedora.vm_status"
+
+    def test_etat_d_une_vm_reste_un_status(self):
+        assert tool("etat de la vm fedora-base") == "fedora.vm_status"

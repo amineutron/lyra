@@ -113,7 +113,7 @@ class TestDenonGate:
 class TestSoundOnlyNoTvRequired:
     def test_son_seul_sans_tv(self):
         # "son seul" ne necessite pas "tv" dans la phrase
-        assert tool("son seul") == "tv.sound_only"
+        assert tool("son seul") == "tv.screen_off"
 
     def test_mode_musique_sans_tv(self):
-        assert tool("mode musique") == "tv.sound_only"
+        assert tool("mode musique") == "tv.screen_off"

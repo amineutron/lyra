@@ -34,10 +34,12 @@ def detect(query: str):
             return make("tv.ambilight_mode", {"mode": _AMBI_MODES[m_mode.group(1)]},
                         f"rule: ambilight_mode {m_mode.group(1)}", 0.93)
 
-    # tv.sound_only: "son seul", "mode musique/audio" — pas besoin de "tv" dans la phrase
+    # tv.screen_off: "son seul", "mode musique/audio" — pas besoin de "tv" dans la phrase.
+    # (pylips-mcp n'a jamais expose "sound_only" : screen_off eteint l'ecran et
+    # garde le son, c'est le mode musique ; audit 2026-09-19)
     if re.search(r'\b(?:son\s+seul|mode\s+(?:musique|audio|son|radio)|musique\s+seul(?:e|ement)?)\b', q) and \
             not re.search(_AMBI_KW, q):
-        return make("tv.sound_only", {}, "rule: tv sound_only", 0.97)
+        return make("tv.screen_off", {}, "rule: tv son seul (screen_off)", 0.97)
 
     # tv.screen_off: "coupe/eteins l'ecran/la dalle" — "dalle" et "ecran" suffisent
     if re.search(r'\b(?:etein[ts]?|coupes?|desactiv[ea]?[rz]?|mets?\s+en\s+veille)\b', q) and \
@@ -52,7 +54,10 @@ def detect(query: str):
     if re.search(_TV_KW, q):
         # tv.get_state: une question d'etat n'est pas un ordre (lyra#23 : "est-ce que
         # la tele est en veille" tombait sur power_off)
-        if re.search(r'^est-ce que\b|\?\s*$|\b(?:est-elle|est-il|elle est|il est)\b', q) and \
+        # "il est"/"elle est" ne marque une question que devant un etat ("on eteint
+        # la tele, il est tard" est un ordre : jeu 4, 2026-09-19)
+        if re.search(r'^est-ce que\b|\?\s*$|\b(?:est-elle|est-il)\b'
+                     r'|\b(?:elle|il)\s+est\s+(?:en\s+)?(?:veille|allumee?|eteinte?|marche|standby)\b', q) and \
                 re.search(r'\b(?:veille|allumee?|eteinte?|en marche|etat|standby)\b', q) and \
                 not re.search(r'^(?:allume|eteins|mets|coupe|remets|peux-tu|tu peux)\b', q):
             return make("tv.get_state", {}, "rule: tv get_state (question)", 0.92)
@@ -71,7 +76,7 @@ def detect(query: str):
         # tv.youtube_video: URL YouTube + contexte tv (pas de verbe cast)
         m_yt = re.search(r'https?://(?:www\.)?(?:youtube\.com/watch\S*|youtu\.be/[\w-]+)', q)
         if m_yt and not re.search(r'\b(?:caste?[rz]?|diffuse?[rz]?)\b', q):
-            return make("tv.youtube_video", {"video_id": m_yt.group(0)},
+            return make("tv.youtube_video", {"video": m_yt.group(0)},   # schema pylips-mcp : "video"
                         "rule: tv youtube_video URL", 0.95)
 
         # tv.launch_app: app name detecte + contexte TV
@@ -105,11 +110,14 @@ def detect(query: str):
     if re.search(r'\bambilight\b', q):
         if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|desactive[rz]?|coupe[rz]?|arrete[rz]?)\b', q):
             return make("tv.ambilight_off", {}, "rule: ambilight_off", 0.93)
+        # Une couleur ("ambilight en rouge") : pylips-mcp n'expose pas de reglage
+        # de couleur (ambilight_on/off/mode seulement) ; l'ancien tv.ambilight_color
+        # n'existait dans aucun serveur. En attendant, le mode manuel (FOLLOW_COLOR)
+        # est l'action la plus proche qui existe.
         m_ac = re.search(r'\b(rouge|verte?|bleue?|violet(?:te)?|orange|jaune|rose|blanc(?:he)?|cyan)\b', q)
         if m_ac:
-            rgb = _AMBI_COLOR_MAP.get(m_ac.group(1), (255, 255, 255))
-            return make("tv.ambilight_color", {"r": rgb[0], "g": rgb[1], "b": rgb[2]},
-                        "rule: ambilight couleur", 0.93)
+            return make("tv.ambilight_mode", {"mode": "manual"},
+                        f"rule: ambilight couleur {m_ac.group(1)} (mode manuel, couleur non reglable)", 0.80)
         return make("tv.ambilight_on", {}, "rule: ambilight_on (defaut)", 0.93)
 
     return None

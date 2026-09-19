@@ -178,6 +178,15 @@ def detect(query: str):
         or re.search(r'\b(?:cast|chromecast|catt)\b', q)
     )
     if not _IS_DOMOTIQUE_CONTEXT:
+        # "lance uptime sur ubuntu-base" : un mot entre "lance" et "sur NOM-DE-VM"
+        # est une commande a executer, pas une machine a demarrer (jeu 4, 2026-09-19)
+        m = re.search(
+            r'\blanc[ea]?[rz]?\s+(?!(?:la|le|les|l|une?|des)\s)(.+?)\s+(?:sur|dans)\s+(?:la\s+vm\s+)?'
+            r'([a-z0-9]+(?:-[a-z0-9]+)+)\b', q
+        )
+        if m and not re.search(r'\b(?:vms?|machines?|serveurs?)\b', m.group(1)):
+            return make("fedora.vm_exec", {"vm_name": m.group(2), "command": m.group(1).strip()},
+                        "rule: lance CMD sur VMNAME", 0.92)
         m = re.search(
             r'\b(?:demarr[ea]?[rz]?|lanc[ea]?[rz]?|boote?[rz]?|allum[ea]?[rz]?|start|power\s*on)\b\s+'
             r'(?:(?:la|le|les|l)\s+)?(?:(?:vm?\s+|machine(?:\s+virtuelle)?\s+|serveur\s+|hote\s+))?'
@@ -273,11 +282,12 @@ def detect(query: str):
                     "rule: c'est quoi VMNAME", 0.93)
 
     # vm_status (VM specifique): "status [detaille] de la vm VMNAME"
+    # ("l'etat de la lampe de chevet" est une question Hue, pas une VM : jeu 4)
     m = re.search(
         r'(?:status|statut|etat)\s+(?:detailles?\s+)?(?:de\s+)?(?:la\s+)?(?:vm?\s+)?'
         + _VM_NAME_RE, q
     )
-    if m:
+    if m and not _IS_DOMOTIQUE_CONTEXT:
         vm = m.group(1).strip()
         if vm not in _VM_GENERIC:
             args: dict = {"vm_name": vm}

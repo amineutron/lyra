@@ -58,16 +58,16 @@ class TestPowerOff:
 
 class TestSoundOnly:
     def test_son_seul(self):
-        assert tool("son seul") == "tv.sound_only"
+        assert tool("son seul") == "tv.screen_off"
 
     def test_mode_musique(self):
-        assert tool("mode musique") == "tv.sound_only"
+        assert tool("mode musique") == "tv.screen_off"
 
     def test_mode_audio(self):
-        assert tool("mode audio") == "tv.sound_only"
+        assert tool("mode audio") == "tv.screen_off"
 
     def test_musique_seulement(self):
-        assert tool("musique seulement") == "tv.sound_only"
+        assert tool("musique seulement") == "tv.screen_off"
 
 
 class TestScreenOff:
@@ -183,15 +183,17 @@ class TestAmbilightOff:
 
 
 class TestAmbilightColor:
+    """tv.ambilight_color n'existe dans aucun serveur (audit 2026-09-19) : une
+    couleur demande le mode manuel, l'action la plus proche que pylips-mcp expose."""
+
     def test_ambilight_rouge(self):
-        assert tool("ambilight en rouge") == "tv.ambilight_color"
+        assert tool("ambilight en rouge") == "tv.ambilight_mode"
 
     def test_ambilight_bleu(self):
-        assert tool("ambilight bleu") == "tv.ambilight_color"
+        assert tool("ambilight bleu") == "tv.ambilight_mode"
 
-    def test_rgb_extracted(self):
-        a = args("ambilight rouge")
-        assert a == {"r": 255, "g": 0, "b": 0}
+    def test_mode_manuel(self):
+        assert args("ambilight rouge") == {"mode": "manual"}
 
 
 # ------------------------------------------------------------------ #
@@ -215,13 +217,13 @@ class TestAmbilightCouleursMasculines:
     def test_ambilight_blanc(self):
         from lyra.rules import detect
         r = detect("mets l ambilight en blanc")
-        assert r is not None and r.tool == "tv.ambilight_color"
-        assert r.arguments == {"r": 255, "g": 255, "b": 255}
+        assert r is not None and r.tool == "tv.ambilight_mode"
+        assert r.arguments == {"mode": "manual"}
 
     def test_ambilight_violet(self):
         from lyra.rules import detect
         r = detect("ambilight en violet")
-        assert r is not None and r.tool == "tv.ambilight_color"
+        assert r is not None and r.tool == "tv.ambilight_mode"
 
     def test_paradigme_complet(self):
         """Chaque cle du dictionnaire de couleurs doit declencher la regle."""
@@ -229,7 +231,7 @@ class TestAmbilightCouleursMasculines:
         from lyra.rules.tv import _AMBI_COLOR_MAP
         for color in _AMBI_COLOR_MAP:
             r = detect(f"ambilight en {color}")
-            assert r is not None and r.tool == "tv.ambilight_color", color
+            assert r is not None and r.tool == "tv.ambilight_mode", color
 
 
 class TestPhrasesInedites:
@@ -245,7 +247,7 @@ class TestPhrasesInedites:
         assert r is not None and r.tool == "tv.ambilight_mode" and r.arguments.get("mode") == "follow_video"
 
     def test_mode_musique_sans_leds_reste_son_seul(self):
-        assert tool("mets la tele en mode musique") == "tv.sound_only"
+        assert tool("mets la tele en mode musique") == "tv.screen_off"
 
 
 class TestQuestionsEtat:
@@ -255,3 +257,15 @@ class TestQuestionsEtat:
         for q in ("est-ce que la tele est en veille", "la tele est en veille ?", "est-ce que la tv est allumee"):
             r = detect(q)
             assert r is None or r.tool == "tv.get_state", (q, r and r.tool)
+
+
+class TestJeu4:
+    """"il est tard" n'est pas une question d'etat (controle du jeu 4)."""
+
+    def test_on_eteint_la_tele_il_est_tard(self):
+        r = detect("on eteint la tele, il est tard")
+        assert r is None or r.tool == "tv.power_off", r and r.tool
+
+    def test_question_d_etat_avec_il_est(self):
+        r = detect("la tele, il est en veille ?")
+        assert r is not None and r.tool == "tv.get_state"
