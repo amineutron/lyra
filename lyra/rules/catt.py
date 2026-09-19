@@ -4,6 +4,8 @@ import re
 
 from .base import make, normalize
 
+_CAST_VERBS = r'\b(?:caste?[rz]?|diffuse?[rz]?|envoie[rz]?)\b'
+_CAST_DEST = r'\b(?:chromecast|cast|tele|tv|television|ecran de la tele)\b'
 _YOUTUBE_URL_RE = r'https?://(?:www\.)?(?:youtube\.com/watch\S*|youtu\.be/[\w-]+)'
 
 
@@ -24,13 +26,27 @@ def detect(query: str):
         args = {"level": level} if level is not None else {}
         return make("catt.cast_volume", args, "rule: volume du cast", 0.92)
 
-    # cast_youtube: URL YouTube + verbe cast/diffuse
-    # Doit venir APRES cast_volume pour ne pas intercepter les requetes volume
-    if re.search(_YOUTUBE_URL_RE, q) and \
-            re.search(r'\b(?:caste?[rz]?|diffuse?[rz]?|envoie[rz]?)\b', q):
-        m_cyt = re.search(_YOUTUBE_URL_RE, q)
+    # cast_youtube: URL YouTube + verbe cast/diffuse, OU destination chromecast/tele
+    # (lyra#23 : "mets ca sur le chromecast <url>" tombait sur screen-manager.open_url)
+    m_cyt = re.search(_YOUTUBE_URL_RE, q)
+    if m_cyt and (re.search(_CAST_VERBS, q) or re.search(_CAST_DEST, q)):
         return make("catt.cast_youtube", {"url": m_cyt.group(0)},
                     "rule: cast youtube URL", 0.94)
+
+    # cast_url: URL quelconque + destination chromecast/tele
+    m_url = re.search(r'https?://\S+', query)
+    if m_url and not m_cyt and re.search(_CAST_DEST, q):
+        return make("catt.cast_url", {"url": m_url.group(0).rstrip('.,;')},
+                    "rule: cast url", 0.92)
+
+    # cast_browser: "l'onglet (firefox) sur la tele/le chromecast" (lyra#23 : tombait
+    # sur screen-manager.open_app, qui ouvrirait une application)
+    if re.search(r'\bonglet\b', q) and re.search(_CAST_DEST, q) and not re.search(r'\bdual\b', q):
+        return make("catt.cast_browser", {}, "rule: cast_browser (onglet)", 0.92)
+
+    # cast_dual_stop: "arrete le dual cast" (lyra#23 : tombait sur cast_stop)
+    if re.search(r'\bdual\b', q) and re.search(r'\b(?:arrete[rz]?|stop(?:pe[rz]?)?|coupe[rz]?)\b', q):
+        return make("catt.cast_dual_stop", {}, "rule: cast_dual_stop", 0.93)
 
     # cast_stop: "arrete/stop/stoppe le cast/la diffusion"
     if re.search(r'\b(?:arrete[rz]?|stop|stoppe[rz]?)\b', q) and \

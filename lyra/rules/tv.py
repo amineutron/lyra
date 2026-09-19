@@ -50,6 +50,13 @@ def detect(query: str):
         return make("tv.screen_on", {}, "rule: tv screen_on", 0.95)
 
     if re.search(_TV_KW, q):
+        # tv.get_state: une question d'etat n'est pas un ordre (lyra#23 : "est-ce que
+        # la tele est en veille" tombait sur power_off)
+        if re.search(r'^est-ce que\b|\?\s*$|\b(?:est-elle|est-il|elle est|il est)\b', q) and \
+                re.search(r'\b(?:veille|allumee?|eteinte?|en marche|etat|standby)\b', q) and \
+                not re.search(r'^(?:allume|eteins|mets|coupe|remets|peux-tu|tu peux)\b', q):
+            return make("tv.get_state", {}, "rule: tv get_state (question)", 0.92)
+
         # tv.power_off: "eteins/veille la tv" - excl. volume/ambilight/denon/ecran
         if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|arrete[rz]?|ferme[rz]?|veille|standby)\b', q) and \
                 not re.search(r'\b(?:volume|son|ambilight|denon|ecran|affichage)\b', q):

@@ -246,3 +246,12 @@ class TestPhrasesInedites:
 
     def test_mode_musique_sans_leds_reste_son_seul(self):
         assert tool("mets la tele en mode musique") == "tv.sound_only"
+
+
+class TestQuestionsEtat:
+    """Regression lyra#23 : une question d'etat n'est pas un ordre d'extinction."""
+
+    def test_une_question_ne_coupe_pas_la_tele(self):
+        for q in ("est-ce que la tele est en veille", "la tele est en veille ?", "est-ce que la tv est allumee"):
+            r = detect(q)
+            assert r is None or r.tool == "tv.get_state", (q, r and r.tool)

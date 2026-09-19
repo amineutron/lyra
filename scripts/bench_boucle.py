@@ -87,7 +87,7 @@ def main() -> None:
     parser.add_argument("--rapide", action="store_true", help="variantes seules + toutes, sans les paires")
     parser.add_argument("--seulement", default=None,
                         help="configs a jouer, separees par ';' (ex: 'dedup;dedup,routage')")
-    parser.add_argument("--jeu", default="modeles", choices=["modeles", "hors_regles"],
+    parser.add_argument("--jeu", default="modeles", choices=["modeles", "hors_regles", "hors_regles_2"],
                         help="jeu de cas a rejouer (defaut : modeles)")
     parser.add_argument("--socle", default="",
                         help="variantes acquises, presentes dans toutes les configs (ex: exemples_cibles)")

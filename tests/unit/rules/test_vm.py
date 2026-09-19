@@ -302,3 +302,15 @@ class TestNoMatch:
 
     def test_empty(self):
         assert tool("") is None
+
+
+class TestEnvoyerSurLaTele:
+    """Regression lyra#23 : « envoie l'onglet firefox sur la tele » n'est pas une copie vers une VM."""
+
+    def test_envoyer_sans_vm_ne_copie_rien(self):
+        r = detect("envoie l'onglet firefox sur la tele")
+        assert r is None or r.tool != "fedora.vm_copy"
+
+    def test_envoyer_un_fichier_vers_une_vm_reste_une_copie(self):
+        r = detect("envoie /tmp/rapport.txt sur preprod-01")
+        assert r is not None and r.tool == "fedora.vm_copy"

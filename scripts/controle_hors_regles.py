@@ -12,6 +12,8 @@ sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "tests"))
 
 from cases_hors_regles import TESTS_HORS_REGLES  # noqa: E402
+from cases_hors_regles_2 import TESTS_HORS_REGLES_2  # noqa: E402
+from test_campaign_llm import tool_equivalent  # noqa: E402
 
 from lyra.core.pipeline import Pipeline  # noqa: E402
 from lyra.models.ephaistos_exp import normaliser  # noqa: E402
@@ -36,22 +38,31 @@ def _paraphrases_indexees() -> set[str]:
 
 
 def main() -> int:
+    jeu = TESTS_HORS_REGLES_2 if "--jeu" in sys.argv and sys.argv[sys.argv.index("--jeu") + 1] == "2" else TESTS_HORS_REGLES
     indexees = _paraphrases_indexees()
     fautes = 0
+    couvertes = 0
     outils_vus: dict[str, int] = {}
-    for cat, desc, query, attendu, *_ in TESTS_HORS_REGLES:
+    for cat, desc, query, attendu, *_ in jeu:
         outils_vus[attendu] = outils_vus.get(attendu, 0) + 1
         analyse = Pipeline._rule_based_detect(query)
         if analyse is not None:
-            print(f"  REGLE    {attendu:26s} <- {query!r} -> {analyse.tool}")
-            fautes += 1
+            # Une regle JUSTE est une information (la phrase n'atteindra plus le
+            # modele en usage reel) ; une regle FAUSSE est une faute a corriger.
+            juste = analyse.tool and tool_equivalent(analyse.tool, attendu)   # equivalences du banc
+            print(f"  {'REGLE OK ' if juste else 'REGLE KO '}{attendu:26s} <- {query!r} -> {analyse.tool}")
+            if not juste:
+                fautes += 1
+            else:
+                couvertes += 1
         if " ".join(normaliser(query)) in indexees:
             print(f"  INDEXEE  {attendu:26s} <- {query!r}")
             fautes += 1
     serveurs = {}
     for attendu in outils_vus:
         serveurs[attendu.split(".")[0]] = serveurs.get(attendu.split(".")[0], 0) + outils_vus[attendu]
-    print(f"{len(TESTS_HORS_REGLES)} phrases, {len(outils_vus)} outils distincts, par serveur : {serveurs}")
+    print(f"{len(jeu)} phrases, {len(outils_vus)} outils distincts, par serveur : {serveurs}")
+    print(f"couvertes par une regle juste : {couvertes} (ne vont plus au modele en usage reel)")
     print("controle :", "OK" if fautes == 0 else f"{fautes} faute(s)")
     return 1 if fautes else 0
 

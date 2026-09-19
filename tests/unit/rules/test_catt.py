@@ -168,3 +168,35 @@ class TestNoMatch:
 
     def test_empty(self):
         assert tool("") is None
+
+
+class TestUrlSurLeCast:
+    """Regression lyra#23 : une URL destinee au chromecast/a la tele est un cast, pas un navigateur."""
+
+    def test_url_youtube_sur_le_chromecast(self):
+        r = detect("mets ca sur le chromecast https://youtu.be/aAbBcCdDeE0")
+        assert r is not None and r.tool == "catt.cast_youtube" and r.arguments.get("url", "").startswith("https://youtu.be/")
+
+    def test_flux_quelconque_sur_la_tele(self):
+        r = detect("mets ce flux sur la tele https://example.org/stream.m3u8")
+        assert r is not None and r.tool == "catt.cast_url"
+
+
+class TestDualStop:
+    """Regression lyra#23 : arreter le dual cast n'est pas cast_stop."""
+
+    def test_arrete_le_dual_cast(self):
+        r = detect("arrete le dual cast")
+        assert r is not None and r.tool == "catt.cast_dual_stop"
+
+    def test_arrete_le_cast_reste_cast_stop(self):
+        r = detect("arrete le cast")
+        assert r is not None and r.tool == "catt.cast_stop"
+
+
+class TestOngletSurLaTele:
+    """Regression lyra#23 : « envoie l'onglet firefox sur la tele » est un cast du navigateur, pas une app a ouvrir."""
+
+    def test_onglet_firefox_sur_la_tele(self):
+        r = detect("envoie l'onglet firefox sur la tele")
+        assert r is not None and r.tool == "catt.cast_browser"

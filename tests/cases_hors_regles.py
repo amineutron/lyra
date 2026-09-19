@@ -15,7 +15,7 @@ TESTS_HORS_REGLES = [
     ("TV/power", "en route", "la tele, mets-la en route", "tv.power_on", {}, {}),
     ("TV/screen", "ecran off son actif", "la tele, image noire mais garde le son", "tv.screen_off", {}, {}),
     ("TV/screen", "ecran on", "rends-moi l'image sur la tele", "tv.screen_on", {}, {}),
-    ("TV/state", "etat", "la tele est allumee la ?", "tv.get_state", {}, {}),
+    ("TV/state", "etat", "la tele, elle tourne la ?", "tv.get_state", {}, {}),
     ("TV/apps", "liste", "qu'est-ce qu'il y a comme applis sur la tele", "tv.list_apps", {}, {}),
     ("TV/apps", "ouvrir appli", "je veux regarder disney plus", "tv.launch_app", {}, {}),
     ("TV/volume", "niveau", "le son de la tele a vingt", "tv.volume_set", {}, {}),

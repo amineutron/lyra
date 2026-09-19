@@ -170,3 +170,12 @@ class TestPhrasesInedites:
     def test_creer_reste_une_creation(self):
         r = detect("fais un backup de preprod-01")
         assert r is not None and r.tool == "fedora.backup_create"
+
+
+class TestLePoint:
+    """Regression lyra#23 : « fais-moi le point sur les sauvegardes » est un status, pas une creation."""
+
+    def test_le_point_est_un_status(self):
+        for q in ("fais-moi le point sur les sauvegardes", "ou en sont les sauvegardes", "le point sur les backups"):
+            r = detect(q)
+            assert r is not None and r.tool == "fedora.backup_status", q

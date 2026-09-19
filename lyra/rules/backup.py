@@ -16,7 +16,7 @@ def detect(query: str):
 
     # backup_status: "status/etat/dashboard + backup"
     # watch=True jamais injecte (MCP boucle infinie)
-    if re.search(r'\b(?:status|statut|etat|dashboard)\b', q):
+    if re.search(r'\b(?:status|statut|etat|dashboard|le point|ou en (?:est|sont))\b', q):
         return make("fedora.backup_status", {}, "rule: status backup sans watch", 0.92)
 
     # backup_list: "liste + backups/sauvegardes"

@@ -28,7 +28,7 @@ _URL_RE = (r'https?://\S+|localhost(?::\d+)?(?:/\S*)?|www\.\S+|'
 # Equipements pilotes par d'autres serveurs : jamais des applications a ouvrir (lyra#22)
 _NOT_APPS = {'ampli', 'amplificateur', 'denon', 'chromecast', 'cast', 'lumiere', 'lumieres',
              'lampe', 'lampes', 'ambilight', 'volume', 'son', 'image', 'video', 'musique',
-             'tv', 'tele', 'television', 'vm', 'machine', 'backup', 'sauvegarde'}
+             'tv', 'tele', 'television', 'vm', 'machine', 'backup', 'sauvegarde', 'onglet'}
 _NOT_APPS_RE = r'\b(?:' + '|'.join(sorted(w for w in _NOT_APPS if w not in {'tv', 'tele', 'television'})) + r')\b'
 
 # Prepositions de destination

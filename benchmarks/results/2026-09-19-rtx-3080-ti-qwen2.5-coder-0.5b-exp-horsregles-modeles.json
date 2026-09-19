@@ -13,7 +13,7 @@
   "versions": {
     "python": "3.12.13",
     "ollama": "0.14.1",
-    "lyra_commit": "4aa0bfe",
+    "lyra_commit": "ad9b5c0",
     "noyau": "6.18.13-200.fc43.x86_64"
   },
   "modeles": {
@@ -82,6 +82,6 @@
     "ephaistos": "qwen2.5-coder:0.5b",
     "lyra": "llama3.2:1b"
   },
-  "duree_s": 381.4,
+  "duree_s": 326.7,
   "duree_inclut_initialisation": true
 }

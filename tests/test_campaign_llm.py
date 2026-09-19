@@ -191,7 +191,7 @@ def check_args(result_args, mandatory, optional):
     return missing_mandatory, missing_optional
 
 
-JEUX = {"modeles": "TESTS_LLM", "hors_regles": "TESTS_HORS_REGLES"}
+JEUX = {"modeles": "TESTS_LLM", "hors_regles": "TESTS_HORS_REGLES", "hors_regles_2": "TESTS_HORS_REGLES_2"}
 
 
 def cas_du_jeu(jeu: str) -> list:
@@ -199,6 +199,9 @@ def cas_du_jeu(jeu: str) -> list:
     if jeu == "hors_regles":
         from cases_hors_regles import TESTS_HORS_REGLES
         return TESTS_HORS_REGLES
+    if jeu == "hors_regles_2":
+        from cases_hors_regles_2 import TESTS_HORS_REGLES_2
+        return TESTS_HORS_REGLES_2
     if jeu != "modeles":
         raise ValueError(f"jeu inconnu : {jeu} (attendu : {', '.join(JEUX)})")
     return TESTS_LLM

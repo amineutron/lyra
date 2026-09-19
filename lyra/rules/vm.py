@@ -137,6 +137,10 @@ def detect(query: str):
         r'(?:copie[rz]?|transfere[rz]?|envoie[rz]?)\s+(.+?)\s+(?:vers|sur|dans|a)\s+([\w][\w.-]*)',
         q
     )
+    # « envoie l'onglet firefox sur la tele » n'est pas une copie (lyra#23) : la
+    # source doit ressembler a un fichier, ou la destination a une machine.
+    if m and not (re.search(r'[/.]', m.group(1)) or re.search(r'^[\w]+-\d+$', m.group(2).strip())):
+        m = None
     if m:
         src = m.group(1).strip()
         vm = m.group(2).strip()
