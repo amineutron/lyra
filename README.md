@@ -192,7 +192,7 @@ Une mascotte est piquée au hasard dans la famille correspondante à chaque éta
 | Suite complète (unit + intégration + e2e) | **1 187** verts, 1 ignoré (`make test`) |
 | Latence du pipeline | mesures datées et rejouables dans [BENCHMARKS.md](BENCHMARKS.md) (`make bench-daemon`) |
 | Détection des commandes | **152/152** sur le banc de règles, sans LLM ([BENCHMARKS.md](BENCHMARKS.md), `make bench-regles`) |
-| Commandes hors règles, petit modèle | **21/21** sur le banc des modèles et **51/51** sur le jeu de formulations inédites (5 serveurs) avec `qwen2.5-coder:0.5b`, contre 5/21 et 13/51 avant la [boucle d'amélioration](docs/dev/BOUCLE_AMELIORATION.md) ; scores stricts 17/21 et 50/51 ([BENCHMARKS.md](BENCHMARKS.md), `make bench-modeles`). Graine fixe ; les cartes de tri ont été enrichies en regardant ces deux jeux : un troisième jeu tenu à l'écart donnera la vraie mesure de généralisation |
+| Commandes hors règles, petit modèle | **21/21** sur le banc des modèles et **51/51** sur le jeu de formulations inédites (5 serveurs) avec `qwen2.5-coder:0.5b`, contre 5/21 et 13/51 avant la [boucle d'amélioration](docs/dev/BOUCLE_AMELIORATION.md) ; scores stricts 17/21 et 50/51 ([BENCHMARKS.md](BENCHMARKS.md), `make bench-modeles`). Sur un **troisième jeu de 100 formulations tenu à l'écart** (jamais itéré), la même configuration fait **56/100** : c'est la mesure de généralisation à retenir, les deux autres jeux ayant servi à la boucle |
 | VRAM (mode expérimental, actuel) | ~4 Go (0.5b + 1b + embeddings) — estimation, non mesurée |
 | VRAM (mode production, backup) | ~10.5 Go (7b + 3b + embeddings) — estimation, non mesurée |
 | Outils MCP disponibles | **88**, répartis sur 5 serveurs ([MCP_TOOLS.md](docs/user/MCP_TOOLS.md), vérifiable par `make smoke`) |

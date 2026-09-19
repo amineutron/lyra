@@ -92,7 +92,7 @@ Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/res
 | `llama3.2:1b` | 51 | 23 | 45 % | 1487 s | 17 | 2026-09-18 |
 | `llama3.2:3b` | 51 | 32 | 63 % | 595 s | 17 | 2026-09-18 |
 | `mistral:7b` | 51 | 30 | 59 % | 1778 s | 17 | 2026-09-18 |
-| `qwen2.5-coder:0.5b` | 51 | 51 | 100 % | 381 s | 31 | 2026-09-19 |
+| `qwen2.5-coder:0.5b` | 51 | 51 | 100 % | 327 s | 31 | 2026-09-19 |
 | `qwen2.5-coder:1.5b` | 51 | 29 | 57 % | 331 s | 17 | 2026-09-18 |
 | `qwen2.5-coder:7b` | 51 | 36 | 71 % | 1138 s | 17 | 2026-09-18 |
 | `qwen2.5:1.5b` | 51 | 39 | 76 % | 642 s | 25 | 2026-09-19 |
@@ -109,6 +109,24 @@ Sources : [`2026-09-17-rtx-3080-ti-llama3.2-1b-exp-modeles.json`](benchmarks/res
 | pylips-mcp | 10 | 7/10 | 3/10 | 7/10 | 8/10 | 10/10 | 5/10 | 9/10 | 9/10 | 9/10 | 8/10 | 7/10 |
 
 Sources : [`2026-09-18-rtx-3080-ti-gemma3-1b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-gemma3-1b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-1b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-llama3.2-3b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-mistral-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-mistral-7b-exp-horsregles-modeles.json), [`2026-09-19-rtx-3080-ti-qwen2.5-1.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-19-rtx-3080-ti-qwen2.5-1.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-3b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-3b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-7b-exp-horsregles-modeles.json), [`2026-09-19-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-19-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-1.5b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-1.5b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen2.5-coder-7b-exp-horsregles-modeles.json), [`2026-09-18-rtx-3080-ti-qwen3-1.7b-exp-horsregles-modeles.json`](benchmarks/results/2026-09-18-rtx-3080-ti-qwen3-1.7b-exp-horsregles-modeles.json)
+
+### Troisieme jeu, tenu a l'ecart (100 formulations)
+
+`tests/cases_hors_regles_2.py` : 100 formulations ecrites APRES la boucle, dont 50 d'usage quotidien avec les noms reels. Une seule mesure par configuration, jamais d'iteration dessus : c'est la mesure de generalisation de la configuration finale. Une partie de ces phrases est couverte par une regle juste en usage reel (scripts/controle_hors_regles.py --jeu 2 les compte) ; le banc mesure le modele sur toutes.
+
+| Modele EPHAISTOS | Cas | Reussis | Taux | Duree | Variantes | Date |
+|---|---:|---:|---:|---:|---:|---|
+| `qwen2.5-coder:0.5b` | 100 | 56 | 56 % | 628 s | 31 | 2026-09-19 |
+
+| Serveur | Commandes | `qwen2.5-coder:0.5b` |
+|---|---:|---:|
+| catt-mcp | 20 | 12/20 |
+| denon-mcp | 20 | 15/20 |
+| fedora-agents | 20 | 6/20 |
+| hue-mcp | 20 | 11/20 |
+| pylips-mcp | 20 | 12/20 |
+
+Sources : [`2026-09-19-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles2-modeles.json`](benchmarks/results/2026-09-19-rtx-3080-ti-qwen2.5-coder-0.5b-exp-horsregles2-modeles.json)
 
 ## Boucle d'amelioration (variantes LYRA_EXP, inactives par defaut)
 

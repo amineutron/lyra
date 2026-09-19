@@ -183,10 +183,13 @@ def section_modeles(lignes: list[str]) -> None:
     reference: dict[str, dict] = {}
     avec_variantes: dict[str, dict] = {}
     hors_regles: dict[str, dict] = {}
+    tenu_a_l_ecart: dict[str, dict] = {}
     for mesure in sorted(lot, key=lambda d: d["date"]):
         nom = mesure.get("modeles_mesures", {}).get("ephaistos", "?")
         if mesure.get("jeu", "modeles") == "hors_regles":
             hors_regles[nom] = mesure
+        elif mesure.get("jeu") == "hors_regles_2":
+            tenu_a_l_ecart[nom] = mesure
         else:
             (avec_variantes if mesure.get("variantes") else reference)[nom] = mesure
 
@@ -216,6 +219,14 @@ def section_modeles(lignes: list[str]) -> None:
                          "ligne la plus recente correspond a la configuration par defaut actuelle. "
                          "Ce jeu a servi a onze iterations : ce n'est plus une mesure de generalisation "
                          "pour la configuration finale (voir benchmarks/README.md).")
+    if tenu_a_l_ecart:
+        _tableau_modeles(lignes, tenu_a_l_ecart, "### Troisieme jeu, tenu a l'ecart (100 formulations)",
+                         "`tests/cases_hors_regles_2.py` : 100 formulations ecrites APRES la boucle, dont 50 "
+                         "d'usage quotidien avec les noms reels. Une seule mesure par configuration, jamais "
+                         "d'iteration dessus : c'est la mesure de generalisation de la configuration finale. "
+                         "Une partie de ces phrases est couverte par une regle juste en usage reel "
+                         "(scripts/controle_hors_regles.py --jeu 2 les compte) ; le banc mesure le modele "
+                         "sur toutes.")
 
 
 def section_boucle(lignes: list[str]) -> None:

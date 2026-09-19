@@ -200,7 +200,10 @@ lisent ensemble : optimiser l'un coute a l'autre, et la derniere iteration a
 servi a les reconcilier. Une phrase du jeu ne doit jamais entrer dans
 `triggers_map` ni dans les regles ; des mots, oui (un lexique se complete) --
 mais un jeu qui a servi a onze iterations n'est plus une mesure de
-generalisation : un troisieme jeu tenu a l'ecart est la prochaine mesure.
+generalisation. Le troisieme jeu (`tests/cases_hors_regles_2.py`, 100
+formulations, jamais itere) donne **56/100** a la meme configuration : c'est
+le chiffre de generalisation, et il ne doit pas servir a une boucle -- un
+quatrieme jeu prendrait le relais le jour ou on y toucherait.
 
 ## Couverture des bancs
 
