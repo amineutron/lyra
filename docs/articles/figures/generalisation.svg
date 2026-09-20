@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="340" viewBox="0 0 760 340" font-family="sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="15" font-weight="bold">Ce que vaut un jeu scelle : mesure unique (gris) contre score apres iteration (couleur)</text>
+<line x1="60" x2="740" y1="280.0" y2="280.0" stroke="#ddd"/><text x="52" y="284.0" text-anchor="end">0 %</text>
+<line x1="60" x2="740" y1="232.0" y2="232.0" stroke="#ddd"/><text x="52" y="236.0" text-anchor="end">20 %</text>
+<line x1="60" x2="740" y1="184.0" y2="184.0" stroke="#ddd"/><text x="52" y="188.0" text-anchor="end">40 %</text>
+<line x1="60" x2="740" y1="136.0" y2="136.0" stroke="#ddd"/><text x="52" y="140.0" text-anchor="end">60 %</text>
+<line x1="60" x2="740" y1="87.99999999999999" y2="87.99999999999999" stroke="#ddd"/><text x="52" y="91.99999999999999" text-anchor="end">80 %</text>
+<line x1="60" x2="740" y1="40.0" y2="40.0" stroke="#ddd"/><text x="52" y="44.0" text-anchor="end">100 %</text>
+<rect x="80.0" y="145.6" width="65.0" height="134.4" fill="#999"/><text x="112.5" y="140.6" text-anchor="middle">56/100</text>
+<rect x="149.0" y="40.0" width="65.0" height="240.0" fill="#2ca02c"/><text x="181.5" y="35.0" text-anchor="middle">100/100</text>
+<text x="147.0" y="298" text-anchor="middle">Jeu 3 (100)</text>
+<rect x="250.0" y="83.20000000000002" width="65.0" height="196.79999999999998" fill="#999"/><text x="282.5" y="78.20000000000002" text-anchor="middle">41/50</text>
+<rect x="319.0" y="40.0" width="65.0" height="240.0" fill="#2ca02c"/><text x="351.5" y="35.0" text-anchor="middle">50/50</text>
+<text x="317.0" y="298" text-anchor="middle">Jeu 4 (50)</text>
+<rect x="420.0" y="112.00000000000001" width="65.0" height="168.0" fill="#999"/><text x="452.5" y="107.00000000000001" text-anchor="middle">35/50</text>
+<rect x="489.0" y="40.0" width="65.0" height="240.0" fill="#2ca02c"/><text x="521.5" y="35.0" text-anchor="middle">50/50</text>
+<text x="487.0" y="298" text-anchor="middle">Jeu 5 (50)</text>
+<rect x="590.0" y="78.4" width="65.0" height="201.6" fill="#999"/><text x="622.5" y="73.4" text-anchor="middle">42/50</text>
+<text x="691.5" y="272.0" text-anchor="middle" fill="#666">jamais itere</text>
+<text x="657.0" y="298" text-anchor="middle">Jeu 6 (50)</text>
+<text x="380.0" y="328" text-anchor="middle" fill="#444">Le score gris est le seul qui mesure la generalisation ; le vert mesure la boucle.</text></svg>

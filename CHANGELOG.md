@@ -11,6 +11,10 @@
 - EPHAISTOS variants `outil_par_machine`, `mots_courants_2`, `nombres_tri`, `mots_courants_3` (iterations 15-16); `net_assoupli` measured and refuted.
 - Iterations 17-21 ("99 % on every set"): variants `cartes_17`, `lumiere_sans_verbe`, `nom_de_vm` (replayed), `force_definitif`; the five development sets reach 21/21, 51/51, 100/100, 50/50, 50/50 with qwen2.5-coder:0.5b; a sixth set (`tests/cases_hors_regles_5.py`) sealed first and measured once.
 
+### Changed
+- EPHAISTOS: the 17 refuted or neutral variants are removed from the code (module 1581 -> ~810 lines); the 42 retained ones are the default configuration, still switchable one by one through `LYRA_EXP` for ablation. Word tables and lexicons move to `lyra/models/cartes.py` (data only). Mechanical recall and the benches are identical before and after (21/21, 51/51, 100/100).
+- `docs/articles/`: the write-up of the improvement loop (French draft) with two SVG figures generated from `benchmarks/results/` by `scripts/gen_figures_boucle.py`.
+
 ### Fixed
 - Security: `main_rag.py` compared a prefixed tool name (`fedora.vm_destroy`) to the short names of `DANGEROUS_TOOLS`, so `-y` skipped the confirmation of destructive tools; it now uses `is_dangerous_tool()`.
 - Security: an empty answer (Enter) no longer confirms a sensitive or destructive action in the daemon UI and the terminal UI; `o`/`oui` is required, as in `actions.py`.
