@@ -7,15 +7,15 @@ TEMPLATE = (Path(__file__).resolve().parents[2] / "install" / "lyra-daemon.servi
 
 
 def test_chemins_substitues():
-    out = render_service(TEMPLATE, "/opt/lyra", "/home/bob")
+    out = render_service(TEMPLATE, "/opt/lyra", "/srv/bob")
     assert "@LYRA_DIR@" not in out and "@HOME@" not in out
-    assert "/home/bob" in out
+    assert "/srv/bob" in out
     assert "WorkingDirectory=/opt/lyra" in out
     assert "ExecStart=/opt/lyra/.venv/bin/python -m lyra.daemon" in out
 
 
 def test_path_venv_en_tete():
-    out = render_service(TEMPLATE, "/opt/lyra", "/home/bob")
+    out = render_service(TEMPLATE, "/opt/lyra", "/srv/bob")
     path_line = next(l for l in out.splitlines()
                      if l.startswith("Environment=PATH="))
     assert path_line.split("=", 2)[2].split(":")[0] == "/opt/lyra/.venv/bin"
@@ -24,5 +24,5 @@ def test_path_venv_en_tete():
 
 
 def test_pas_de_nonewprivileges():
-    out = render_service(TEMPLATE, "/opt/lyra", "/home/bob")
+    out = render_service(TEMPLATE, "/opt/lyra", "/srv/bob")
     assert "NoNewPrivileges=true" not in out

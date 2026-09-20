@@ -10,7 +10,7 @@ from scenes.ironman.orchestrator import IronManOrchestrator, SceneState
 
 @pytest.fixture
 def config_mock():
-    return {"hue": {"bridge_ip": "192.168.1.51", "username": "u"}, "tv": {"host": "192.168.1.50", "user": "u", "pass": "p"}}
+    return {"hue": {"bridge_ip": "203.0.113.51", "username": "u"}, "tv": {"host": "203.0.113.50", "user": "u", "pass": "p"}}
 
 @pytest.fixture
 def orchestrator(config_mock):

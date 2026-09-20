@@ -112,7 +112,7 @@ class Phase1Blackout:
         Returns:
             Tuple (success: bool, latency_ms: float)
         """
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         if not username:
@@ -161,7 +161,7 @@ class Phase1Blackout:
         Non-bloquant: un echec n'empeche pas le blackout.
         Le rollback restaure la configuration sauvegardee en Phase 0.
         """
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"https://{host}:1926/6/ambilight/power"
         try:
             response = requests.post(
@@ -185,7 +185,7 @@ class Phase1Blackout:
         Returns:
             "On", "Standby", ou "unknown"
         """
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"https://{host}:1926/6/powerstate"
 
         try:
@@ -217,7 +217,7 @@ class Phase1Blackout:
             logger.debug("Etat TV inconnu, tentative extinction")
 
         # Send power off
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"https://{host}:1926/6/powerstate"
         payload = {"powerstate": "Standby"}
 

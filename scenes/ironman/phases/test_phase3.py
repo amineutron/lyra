@@ -18,7 +18,7 @@ class TestPhase3Buildup:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, "_load_config") as mock_config:
-            mock_config.return_value = {"hue": {"bridge_ip": "192.168.1.51", "username": "test"}}
+            mock_config.return_value = {"hue": {"bridge_ip": "203.0.113.51", "username": "test"}}
             with patch.object(Phase3Buildup, "_load_beats", return_value=[i * 0.638 for i in range(24)]):
                 return Phase3Buildup()
 
@@ -202,8 +202,8 @@ class TestHueBeatStateReading:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase3Buildup()
 
@@ -258,8 +258,8 @@ class TestDrivePulses:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase3Buildup()
 
@@ -335,8 +335,8 @@ class TestMeasureVideoPosition:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase3Buildup()
 
@@ -403,8 +403,8 @@ class TestSendCtrlAtomic:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase3Buildup()
 
@@ -435,8 +435,8 @@ class TestSetupConsumedBeforePulses:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase3Buildup()
 
@@ -483,8 +483,8 @@ class TestFifoChannel:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase3Buildup()
 
@@ -554,8 +554,8 @@ class TestResync:
     @pytest.fixture
     def phase3(self):
         with patch.object(Phase3Buildup, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase3Buildup()
 

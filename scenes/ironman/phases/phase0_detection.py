@@ -134,7 +134,7 @@ class Phase0Detection:
             - (True, "") si la TV est disponible
             - (False, "message d'erreur") si la TV est indisponible
         """
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         url = f"http://{host}:1925/6/system"
 
         try:
@@ -171,7 +171,7 @@ class Phase0Detection:
             - (True, "") si le Bridge est disponible
             - (False, "message d'erreur") si le Bridge est indisponible
         """
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         if not username:
@@ -215,7 +215,7 @@ class Phase0Detection:
 
     def _get_tv_state(self) -> dict:
         """Recupere l'etat actuel de la TV."""
-        host = self.tv_config.get("host", "192.168.1.50")
+        host = self.tv_config.get("host", "203.0.113.50")
         user = self.tv_config.get("user", "")
         password = self.tv_config.get("pass", "")
 
@@ -268,7 +268,7 @@ class Phase0Detection:
 
     def _get_hue_state(self) -> dict:
         """Recupere l'etat actuel des lumieres Hue."""
-        bridge_ip = self.hue_config.get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.hue_config.get("bridge_ip", "203.0.113.51")
         username = self.hue_config.get("username", "")
 
         state = {

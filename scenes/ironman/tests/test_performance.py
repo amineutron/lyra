@@ -14,8 +14,8 @@ from scenes.ironman.phases.phase1_blackout import Phase1Blackout
 @pytest.fixture
 def config_mock():
     return {
-        "hue": {"bridge_ip": "192.168.1.51", "username": "test-user"},
-        "tv": {"host": "192.168.1.50", "user": "u", "pass": "p"},
+        "hue": {"bridge_ip": "203.0.113.51", "username": "test-user"},
+        "tv": {"host": "203.0.113.50", "user": "u", "pass": "p"},
     }
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def orchestrator(config_mock):
 
 class TestTimingPrecision:
     def test_phase0_validation_fast(self):
-        with patch.object(Phase0Detection, "_load_config", return_value={"tv": {"host": "192.168.1.50"}, "hue": {"bridge_ip": "192.168.1.51", "username": "u"}}):
+        with patch.object(Phase0Detection, "_load_config", return_value={"tv": {"host": "203.0.113.50"}, "hue": {"bridge_ip": "203.0.113.51", "username": "u"}}):
             phase0 = Phase0Detection()
         with patch.object(phase0, "check_tv_available", return_value=(True, "")):
             with patch.object(phase0, "check_hue_available", return_value=(True, "")):
@@ -71,7 +71,7 @@ class TestTimingPrecision:
 
 class TestLatencyLights:
     def test_hue_command_latency_simulated(self):
-        with patch.object(Phase1Blackout, "_load_config", return_value={"hue": {"bridge_ip": "192.168.1.51", "username": "u"}}):
+        with patch.object(Phase1Blackout, "_load_config", return_value={"hue": {"bridge_ip": "203.0.113.51", "username": "u"}}):
             phase1 = Phase1Blackout()
         with patch("requests.put") as mock_put:
             mock_put.return_value = Mock(status_code=200)
@@ -83,7 +83,7 @@ class TestLatencyLights:
         assert elapsed_ms < 500.0
 
     def test_lights_off_latency_returned(self):
-        with patch.object(Phase1Blackout, "_load_config", return_value={"hue": {"bridge_ip": "192.168.1.51", "username": "u"}}):
+        with patch.object(Phase1Blackout, "_load_config", return_value={"hue": {"bridge_ip": "203.0.113.51", "username": "u"}}):
             phase1 = Phase1Blackout()
         with patch("requests.put") as mock_put:
             mock_put.return_value = Mock(status_code=200)
@@ -94,7 +94,7 @@ class TestLatencyLights:
 
 class TestLatencyTV:
     def test_tv_command_under_500ms_simulated(self):
-        with patch.object(Phase1Blackout, "_load_config", return_value={"tv": {"host": "192.168.1.50", "user": "u", "pass": "p"}, "hue": {"bridge_ip": "192.168.1.51", "username": "u"}}):
+        with patch.object(Phase1Blackout, "_load_config", return_value={"tv": {"host": "203.0.113.50", "user": "u", "pass": "p"}, "hue": {"bridge_ip": "203.0.113.51", "username": "u"}}):
             phase1 = Phase1Blackout()
         with patch.object(phase1, "_check_tv_power", return_value="On"):
             with patch("requests.put") as mock_put:

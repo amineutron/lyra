@@ -168,15 +168,15 @@ TESTS = [
      "fedora.vm_copy", {"vm_name": "preprod-01", "source": "/tmp/config.yaml"}, {}),
 
     ("FEDORA/vm_copy", "transfere vers VM",
-     "transfere /home/user/script.sh sur sandbox-02",
-     "fedora.vm_copy", {"vm_name": "sandbox-02", "source": "/home/user/script.sh"}, {}),
+     "transfere /srv/user/script.sh sur sandbox-02",
+     "fedora.vm_copy", {"vm_name": "sandbox-02", "source": "/srv/user/script.sh"}, {}),
 
     ("FEDORA/vm_copy", "envoie fichier",
      "envoie /etc/nginx.conf dans test-server",
      "fedora.vm_copy", {"vm_name": "test-server", "source": "/etc/nginx.conf"}, {}),
 
     ("FEDORA/vm_copy", "+ recursive",
-     "copie /home/user/projet vers preprod-01 en recursif",
+     "copie /srv/user/projet vers preprod-01 en recursif",
      "fedora.vm_copy", {"vm_name": "preprod-01"}, {"recursive": True}),
 
     # ================================================================
@@ -306,13 +306,13 @@ TESTS = [
     # FEDORA - vm_import
     # ================================================================
     ("FEDORA/vm_import", "importe archive",
-     "importe /home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz",
-     "fedora.vm_import", {"archive_path": "/home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz"}, {}),
+     "importe /srv/user/vm-exports/preprod-01-export-20260227-classic.tar.gz",
+     "fedora.vm_import", {"archive_path": "/srv/user/vm-exports/preprod-01-export-20260227-classic.tar.gz"}, {}),
 
     ("FEDORA/vm_import", "importe avec nouveau nom",
-     "importe /home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz sous le nom test-import",
+     "importe /srv/user/vm-exports/preprod-01-export-20260227-classic.tar.gz sous le nom test-import",
      "fedora.vm_import",
-     {"archive_path": "/home/user/vm-exports/preprod-01-export-20260227-classic.tar.gz", "new_name": "test-import"},
+     {"archive_path": "/srv/user/vm-exports/preprod-01-export-20260227-classic.tar.gz", "new_name": "test-import"},
      {}),
 
     ("FEDORA/vm_import", "charge VM",
@@ -710,7 +710,7 @@ TESTS = [
      "fedora.vm_export", {"vm_name": "system-clone-final", "mode": "exam"}, {}),
 
     ("EDGE/args", "import avec renommage",
-     "importe /home/user/vm-exports/test.tar.gz sous le nom ma-vm",
+     "importe /srv/user/vm-exports/test.tar.gz sous le nom ma-vm",
      "fedora.vm_import", {"new_name": "ma-vm"}, {}),
 
     ("EDGE/args", "vm_status global vs specifique",
@@ -722,8 +722,8 @@ TESTS = [
      None, {}, {}),  # doit demander clarification
 
     ("EDGE/args", "copie chemin complexe",
-     "copie /home/user/projet/config.json vers sandbox-02",
-     "fedora.vm_copy", {"source": "/home/user/projet/config.json", "vm_name": "sandbox-02"}, {}),
+     "copie /srv/user/projet/config.json vers sandbox-02",
+     "fedora.vm_copy", {"source": "/srv/user/projet/config.json", "vm_name": "sandbox-02"}, {}),
 
     ("EDGE/args", "exec commande avec espaces",
      "execute apt-get update sur preprod-01",

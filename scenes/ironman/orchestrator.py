@@ -191,7 +191,7 @@ class IronManOrchestrator:
 
         env = {
             **os.environ,
-            "HUE_BRIDGE_IP": hue_cfg.get("bridge_ip", "192.168.1.51"),
+            "HUE_BRIDGE_IP": hue_cfg.get("bridge_ip", "203.0.113.51"),
             "HUE_USER": hue_cfg.get("username", ""),
             "HUE_CLIENTKEY": secrets.get("clientkey", ""),
             "HUE_AREA_ID": secrets.get("area_id", ""),
@@ -536,7 +536,7 @@ class IronManOrchestrator:
             tv_power = (self._saved_state or {}).get("tv", {}).get("power", "unknown")
 
             self._anticipator = MusicAnticipator(
-                tv_host=tv_cfg.get("host", "192.168.1.50"),
+                tv_host=tv_cfg.get("host", "203.0.113.50"),
                 tv_auth=auth,
                 video_id=video_id,
                 tv_power=tv_power,
@@ -650,7 +650,7 @@ class IronManOrchestrator:
 
     def _restore_hue(self, hue_state: dict):
         """Restaure l'etat des lumieres Hue."""
-        bridge_ip = self.config.get("hue", {}).get("bridge_ip", "192.168.1.51")
+        bridge_ip = self.config.get("hue", {}).get("bridge_ip", "203.0.113.51")
         username = self.config.get("hue", {}).get("username", "")
 
         if not username:
@@ -686,7 +686,7 @@ class IronManOrchestrator:
     def _restore_tv(self, tv_state: dict):
         """Restaure l'etat de la TV."""
         tv_config = self.config.get("tv", {})
-        host = tv_config.get("host", "192.168.1.50")
+        host = tv_config.get("host", "203.0.113.50")
         user = tv_config.get("user", "")
         password = tv_config.get("pass", "")
         auth = HTTPDigestAuth(user, password) if user and password else None

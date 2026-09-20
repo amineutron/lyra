@@ -85,7 +85,7 @@ mcp:
       args:
         - /chemin/vers/hue-mcp/hue_server.py
       env:
-        HUE_BRIDGE_IP: "192.168.X.X"
+        HUE_BRIDGE_IP: "203.0.113.X"
       timeout: 10
       keep_alive: true
 
@@ -109,7 +109,7 @@ mcp:
 # TV Philips
 # =============================================================================
 tv:
-  host: "192.168.X.X"
+  host: "203.0.113.X"
   user: null          # voir secrets.yaml -> tv.user
   pass: null          # voir secrets.yaml -> tv.pass
   mac: "XX:XX:XX:XX:XX:XX"   # pour Wake-on-LAN
@@ -118,7 +118,7 @@ tv:
 # Denon AVR
 # =============================================================================
 denon:
-  host: "192.168.X.X"
+  host: "203.0.113.X"
   port: 23
   mac: "XXXXXXXXXXXX"
 
@@ -126,7 +126,7 @@ denon:
 # Philips Hue
 # =============================================================================
 hue:
-  bridge_ip: "192.168.X.X"
+  bridge_ip: "203.0.113.X"
   username: null      # voir secrets.yaml -> hue.username
 
 # Cles pour hue_beat (Entertainment API DTLS) — a placer dans secrets.yaml:

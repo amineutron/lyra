@@ -26,11 +26,11 @@ class TestPhase4Transition:
         with patch.object(Phase4Transition, '_load_config') as mock_config:
             mock_config.return_value = {
                 "hue": {
-                    "bridge_ip": "192.168.1.51",
+                    "bridge_ip": "203.0.113.51",
                     "username": "test-user-123"
                 },
                 "tv": {
-                    "host": "192.168.1.50",
+                    "host": "203.0.113.50",
                     "user": "test-user",
                     "pass": "test-pass"
                 }
@@ -236,8 +236,8 @@ class TestStopMusicBounded:
     @pytest.fixture
     def phase4(self):
         with patch.object(Phase4Transition, '_load_config', return_value={
-            'hue': {'bridge_ip': '192.168.1.51', 'username': 'testuser'},
-            'tv': {'host': '192.168.1.50'}
+            'hue': {'bridge_ip': '203.0.113.51', 'username': 'testuser'},
+            'tv': {'host': '203.0.113.50'}
         }):
             return Phase4Transition()
 

@@ -224,14 +224,14 @@ scenes:
 ### TV ne repond pas
 
 ```bash
-curl -k https://192.168.1.50:1926/6/system
-curl -k https://192.168.1.50:1926/6/powerstate
+curl -k https://203.0.113.50:1926/6/system
+curl -k https://203.0.113.50:1926/6/powerstate
 ```
 
 ### Hue ne repond pas
 
 ```bash
-curl http://192.168.1.51/api/<cle-api>/lights
+curl http://203.0.113.51/api/<cle-api>/lights
 ```
 
 ### YouTube ne demarre pas
@@ -249,8 +249,8 @@ hyprctl keyword misc:key_press_enables_dpms 0   # restaurer l'option
 ### Simuler devices offline
 
 ```bash
-sudo iptables -A OUTPUT -d 192.168.1.50 -j DROP   # bloquer TV
-sudo iptables -D OUTPUT -d 192.168.1.50 -j DROP   # debloquer
+sudo iptables -A OUTPUT -d 203.0.113.50 -j DROP   # bloquer TV
+sudo iptables -D OUTPUT -d 203.0.113.50 -j DROP   # debloquer
 ```
 
 ---

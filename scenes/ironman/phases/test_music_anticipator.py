@@ -21,7 +21,7 @@ from music_anticipator import MusicAnticipator, _adb_path
 @pytest.fixture
 def anticipator():
     return MusicAnticipator(
-        tv_host="192.168.1.50", tv_auth=None,
+        tv_host="203.0.113.50", tv_auth=None,
         video_id="test1234567", tv_power="On",
     )
 

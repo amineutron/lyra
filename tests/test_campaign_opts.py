@@ -94,7 +94,7 @@ TESTS_OPTS = [
     # vm_copy - recursive
     # ================================================================
     ("FEDORA/vm_copy", "copie recursive",
-     "copie /home/user/projet vers preprod-01 en recursif",
+     "copie /srv/user/projet vers preprod-01 en recursif",
      "fedora.vm_copy",
      {"vm_name": "preprod-01", "recursive": True}, {}),
 
@@ -192,14 +192,14 @@ TESTS_OPTS = [
     # vm_import - start / dry_run
     # ================================================================
     ("FEDORA/vm_import", "import et demarre",
-     "importe /home/user/vm-exports/test.tar.gz et demarre la vm apres",
+     "importe /srv/user/vm-exports/test.tar.gz et demarre la vm apres",
      "fedora.vm_import",
-     {"archive_path": "/home/user/vm-exports/test.tar.gz", "start": True}, {}),
+     {"archive_path": "/srv/user/vm-exports/test.tar.gz", "start": True}, {}),
 
     ("FEDORA/vm_import", "import dry_run",
-     "importe /home/user/vm-exports/test.tar.gz en dry-run pour tester",
+     "importe /srv/user/vm-exports/test.tar.gz en dry-run pour tester",
      "fedora.vm_import",
-     {"archive_path": "/home/user/vm-exports/test.tar.gz", "dry_run": True}, {}),
+     {"archive_path": "/srv/user/vm-exports/test.tar.gz", "dry_run": True}, {}),
 
     # ================================================================
     # backup_list - type / detailed
