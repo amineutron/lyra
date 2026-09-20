@@ -70,13 +70,13 @@ def detect(query: str):
 
         # tv.power_off: "eteins/veille la tv" - excl. volume/ambilight/denon/ecran
         if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|arrete[rz]?|ferme[rz]?|veille|standby)\b', q) and \
-                not re.search(r'\b(?:volume|son|ambilight|denon|ecran|affichage)\b', q):
+                not re.search(r'\b(?:volume|son|ambilight|leds?|denon|ecran|affichage)\b', q):
             return make("tv.power_off", {}, "rule: tv power_off", 0.93)
 
         # tv.power_on: "allume/reveille/demarre la tv" - excl. apps + ambilight
         if re.search(r'\b(?:allume[rz]?|active[rz]?|reveille[rz]?|demarr[ea]?[rz]?|ouvre[rz]?)\b', q) and \
                 not re.search(_APP_NAMES, q) and \
-                not re.search(r'\bambilight\b', q):
+                not re.search(r'\b(?:ambilight|leds?)\b', q):
             return make("tv.power_on", {}, "rule: tv power_on", 0.93)
 
         # tv.youtube_video: URL YouTube + contexte tv (pas de verbe cast)
@@ -113,9 +113,13 @@ def detect(query: str):
             return make("tv.volume_down", {}, "rule: tv volume_down", 0.93)
 
     # tv.ambilight: requetes sans "tv/tele" obligatoire - ambilight seul suffit
-    if re.search(r'\bambilight\b', q):
-        if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|desactive[rz]?|coupe[rz]?|arrete[rz]?)\b', q):
+    if re.search(_AMBI_KW, q):   # "ambilight" ou "les leds de la tele" (jeu 6 : "eteins les leds de la tele" -> power_off)
+        if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|desactive[rz]?|coupe[rz]?|arrete[rz]?|enleve[rzs]?|enlever|vire[rz]?|retire[rz]?|degage[rz]?)\b', q):
             return make("tv.ambilight_off", {}, "rule: ambilight_off", 0.93)
+        m_amb = re.search(r'\b(?:ambiance|style)\s+(lounge|musique|audio|video|film|manuel)\b', q)
+        if m_amb:
+            return make("tv.ambilight_mode", {"mode": _AMBI_MODES[m_amb.group(1)]},
+                        f"rule: ambilight ambiance {m_amb.group(1)}", 0.92)
         # Une couleur ("ambilight en rouge") : pylips-mcp n'expose pas de reglage
         # de couleur (ambilight_on/off/mode seulement) ; l'ancien tv.ambilight_color
         # n'existait dans aucun serveur. En attendant, le mode manuel (FOLLOW_COLOR)
@@ -124,6 +128,10 @@ def detect(query: str):
         if m_ac:
             return make("tv.ambilight_mode", {"mode": "manual"},
                         f"rule: ambilight couleur {m_ac.group(1)} (mode manuel, couleur non reglable)", 0.80)
-        return make("tv.ambilight_on", {}, "rule: ambilight_on (defaut)", 0.93)
+        # "les leds de la tele" sans verbe d'allumage : le modele decide ; "ambilight" seul reste un allumage
+        if re.search(r'\bambilight\b', q) or \
+                re.search(r'\b(?:allume[rz]?|active[rz]?|remets?|rallume[rz]?|mets?)\b', q):
+            return make("tv.ambilight_on", {}, "rule: ambilight_on (defaut)", 0.93)
+        return None
 
     return None

@@ -279,3 +279,18 @@ class TestJeu5:
     def test_ambilight_cale_sur_la_video(self):
         r = detect("cale l'ambilight sur la video")
         assert r.tool == "tv.ambilight_mode" and r.arguments == {"mode": "follow_video"}
+
+
+class TestJeu6:
+    def test_eteindre_les_leds_de_la_tele_est_ambilight_off(self):
+        assert tool("eteins les leds de la tele") == "tv.ambilight_off"
+        assert tool("allume les leds de la tele") == "tv.ambilight_on"
+
+    def test_eteindre_la_tele_reste_power_off(self):
+        assert tool("eteins la tele") == "tv.power_off"
+
+    def test_leds_sans_verbe_va_au_modele(self):
+        assert tool("les leds de la tele, tu me les enleves") == "tv.ambilight_off"
+        assert tool("vire les leds de la tele") == "tv.ambilight_off"
+        assert tool("les leds de la tele en ambiance lounge") == "tv.ambilight_mode"
+        assert detect("les leds de la tele") is None
