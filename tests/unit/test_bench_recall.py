@@ -20,5 +20,7 @@ def test_configurations_developpe_defaut():
 def test_rang_et_resume():
     assert rang_du_bon_outil(["tv.power_on", "tv.volume_set"], "tv.volume_set") == 2
     assert rang_du_bon_outil(["tv.power_on"], "tv.volume_set") is None
+    assert rang_du_bon_outil(["hue.turn_on_light", "hue.turn_on_group"], "hue.turn_on_group", {"hue.turn_on_light"}) == 1
+    assert rang_du_bon_outil(["hue.set_group_brightness"], "hue.set_brightness") is None
     r = resume([("q1", "a", 1, True), ("q2", "b", 2, True), ("q3", "c", None, False), ("q4", "d", 3, False)])
     assert r == {"r1": 1, "r3": 3, "r8": 3, "absents": 1, "net_ok": 1, "net_ko": 1}

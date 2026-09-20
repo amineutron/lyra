@@ -217,6 +217,13 @@ entre deux jeux de 50 phrases, pas un progres ni un recul.
 interceptent en usage reel (24/50 sur le quatrieme, 22/50 sur le cinquieme) ;
 `scripts/bench_recall.py` mesure le mecanisme sans modele avant tout banc.
 
+Boucle "99 % sur chaque jeu" (2026-09-20, iterations 17-21) : les jeux 1 a 5
+sont devenus jeux de developpement et un **sixieme** (`tests/cases_hors_regles_5.py`)
+a ete scelle avant. Configuration finale (42 variantes) : 21/21, 51/51,
+100/100, 50/50, 50/50 sur les cinq jeux de developpement ; sixieme jeu,
+mesure unique : **42/50**. Ce dernier chiffre est le seul qui mesure la
+generalisation.
+
 ## Couverture des bancs
 
 Aucun banc ne couvre tous les serveurs. Il faut lire les deux ensemble, et

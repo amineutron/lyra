@@ -562,7 +562,8 @@ class Ephaistos:
                                                 courants="verbes_courants" in variantes,
                                                 courants2="mots_courants_2" in variantes,
                                                 nombres="nombres_tri" in variantes,
-                                                courants3="mots_courants_3" in variantes)
+                                                courants3="mots_courants_3" in variantes,
+                                                c17="cartes_17" in variantes)
             # Limiter le nombre de specs si demande (0 = toutes)
             outil_force = None
             net = (max_specs and not skip_specs
@@ -574,6 +575,8 @@ class Ephaistos:
                                       courants2="mots_courants_2" in variantes,
                                       nombres="nombres_tri" in variantes,
                                       courants3="mots_courants_3" in variantes,
+                                      c17="cartes_17" in variantes,
+                                      vm="nom_de_vm" in variantes,   # le critere net lisait le tri sans le bonus machine
                                       seuil=1 if "net_assoupli" in variantes else 2,
                                       cibler_youtube="mots_url" in variantes))
             if "top1_si_net" in variantes and net:
@@ -660,12 +663,16 @@ class Ephaistos:
             analysis.tool = _exp.basculer_par_arguments(analysis.tool, analysis.arguments, specs_pour_index)
         if "resolution_floue" in variantes and specs_pour_index:
             analysis.tool = _exp.resoudre_flou(analysis.tool, specs_pour_index)
+        # L'outil impose s'applique AVANT le complement d'arguments : "mets
+        # staging-03 au repos" -> vm_stop impose, mais le modele avait repondu
+        # "repo_add" et vm_name n'etait jamais complete (it18).
+        if outil_force and analysis.tool is not None:
+            analysis.tool = outil_force
+        analysis.force = bool(outil_force and analysis.tool is not None)
         if "args_par_regex" in variantes and specs_pour_index:
             analysis.arguments = _exp.completer_arguments(analysis.tool, analysis.arguments,
                                                           specs_pour_index, user_query,
                                                           inventaire="inventaire_vm" in variantes)
-        if outil_force and analysis.tool is not None:
-            analysis.tool = outil_force
         analysis.rang1 = _exp.nom_de_spec(specs_pour_index[0]) if specs_pour_index else None
         return analysis
 
@@ -913,8 +920,12 @@ Valide les arguments. Reponds en JSON:
             # Variante double_passe : un second appel sur les specs suivantes ; la
             # reponse au meilleur score de mots l'emporte (un bon outil en rang 4-6
             # n'etait jamais montre, et le modele repond toujours avec confiance).
+            # Variante force_definitif : un outil impose par le tri net (outil_force_si_net)
+            # n'est pas remis en jeu par la seconde passe -- choisir_par_score le
+            # remplacait par la reponse du modele sur les specs suivantes (it18).
+            definitif = "force_definitif" in _exp.actives() and getattr(analysis, "force", False)
             if (attempt == 0 and not use_toon and "double_passe" in _exp.actives()
-                    and use_max_specs and len(mcp_specs) > use_max_specs):
+                    and use_max_specs and len(mcp_specs) > use_max_specs and not definitif):
                 seconde = self.analyze(user_query, mcp_specs, max_specs=use_max_specs,
                                        skip_specs=use_max_specs)
                 analysis = _exp.choisir_par_score(analysis, seconde, user_query)

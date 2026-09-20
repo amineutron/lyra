@@ -15,6 +15,7 @@ from cases_hors_regles import TESTS_HORS_REGLES  # noqa: E402
 from cases_hors_regles_2 import TESTS_HORS_REGLES_2  # noqa: E402
 from cases_hors_regles_3 import TESTS_HORS_REGLES_3  # noqa: E402
 from cases_hors_regles_4 import TESTS_HORS_REGLES_4  # noqa: E402
+from cases_hors_regles_5 import TESTS_HORS_REGLES_5  # noqa: E402
 from test_campaign_llm import tool_equivalent  # noqa: E402
 
 from lyra.core.pipeline import Pipeline  # noqa: E402
@@ -41,7 +42,7 @@ def _paraphrases_indexees() -> set[str]:
 
 def main() -> int:
     numero = sys.argv[sys.argv.index("--jeu") + 1] if "--jeu" in sys.argv else "1"
-    jeu = {"1": TESTS_HORS_REGLES, "2": TESTS_HORS_REGLES_2, "3": TESTS_HORS_REGLES_3, "4": TESTS_HORS_REGLES_4}[numero]
+    jeu = {"1": TESTS_HORS_REGLES, "2": TESTS_HORS_REGLES_2, "3": TESTS_HORS_REGLES_3, "4": TESTS_HORS_REGLES_4, "5": TESTS_HORS_REGLES_5}[numero]
     indexees = _paraphrases_indexees()
     fautes = 0
     couvertes = 0

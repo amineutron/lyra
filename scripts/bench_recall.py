@@ -31,7 +31,7 @@ _OPTIONS = {
     "mots_relatifs": "relatifs", "carte_son": "son", "verbes_catt": "catt", "question_etat": "etat",
     "nom_de_vm": "vm", "cartes_tri": "tri", "cartes_fines": "fines", "verbes_tri": "verbes",
     "verbes_courants": "courants", "mots_courants_2": "courants2", "nombres_tri": "nombres",
-    "mots_courants_3": "courants3",
+    "mots_courants_3": "courants3", "cartes_17": "c17",
 }
 
 
@@ -52,9 +52,13 @@ def configurations(texte: str) -> list[tuple[str, ...]]:
     return out
 
 
-def rang_du_bon_outil(noms: list[str], attendu: str):
-    court = attendu.split(".")[-1]
-    return next((i + 1 for i, n in enumerate(noms) if n.endswith(court)), None)
+def rang_du_bon_outil(noms: list[str], attendu: str, equivalents=None):
+    """Rang (1-based) du bon outil ou d'un equivalent declare par le banc (EQUIVALENCES)."""
+    courts = {attendu.split(".")[-1]} | {e.split(".")[-1] for e in (equivalents or ())}
+    for i, nom in enumerate(noms):
+        if nom.split(".")[-1] in courts:
+            return i + 1
+    return None
 
 
 def resume(releves: list[tuple]) -> dict:
@@ -85,7 +89,7 @@ def main() -> int:
     args = parser.parse_args()
 
     import yaml
-    from test_campaign_llm import _config_derivee, cas_du_jeu
+    from test_campaign_llm import EQUIVALENCES, _config_derivee, cas_du_jeu
 
     from lyra.core.config import RAGConfig
     from lyra.rag_enhanced import EnhancedPipeline
@@ -114,7 +118,7 @@ def main() -> int:
             comp = eph._boost_spec_order([eph._compact_spec(s) for s in specs], requete)
             if "carte_mots" in actives:
                 comp = _exp.boost_mots(comp, requete, **opts)
-            rang = rang_du_bon_outil([_exp.nom_de_spec(c) for c in comp], attendu)
+            rang = rang_du_bon_outil([_exp.nom_de_spec(c) for c in comp], attendu, EQUIVALENCES.get(attendu))
             net = _exp.score_net(comp, requete, seuil=1 if "net_assoupli" in actives else 2,
                                  **{**opts, "poids_rares": True, "equipements": True, "relatifs": True, "catt": True})
             releves.append((requete, attendu, rang, net))

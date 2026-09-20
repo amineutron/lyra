@@ -349,3 +349,38 @@ class TestEphaistosSystemPrompt:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestForceDefinitif:
+    """it18 : un outil impose par le tri net ne doit pas etre remplace par la seconde passe."""
+
+    def test_drapeau_force_pose_par_analyze(self, monkeypatch):
+        from unittest.mock import Mock
+
+        from lyra.models import ephaistos_exp as _exp
+        from lyra.models.ephaistos import Ephaistos
+        monkeypatch.setenv("LYRA_EXP", ",".join(_exp.DEFAUT))
+        mm = Mock()
+        mm.call_ephaistos.return_value = Mock(
+            success=True, error=None,
+            content='{"tool": "volume_up", "arguments": {}, "missing_args": [], "confidence": 0.9, "reasoning": ""}')
+        eph = Ephaistos(mm)
+        specs = ["tv.mute: mute()", "tv.volume_up: volume_up()", "tv.power_off: power_off()"]
+        a = eph.analyze("je suis au telephone, coupe le son de la tele", specs, max_specs=3)
+        assert a.tool == "tv.mute" and a.force is True
+
+    def test_outil_impose_recoit_ses_arguments(self, monkeypatch):
+        from unittest.mock import Mock
+
+        from lyra.models import ephaistos_exp as _exp
+        from lyra.models.ephaistos import Ephaistos
+        monkeypatch.setenv("LYRA_EXP", ",".join(_exp.DEFAUT))
+        mm = Mock()
+        mm.call_ephaistos.return_value = Mock(
+            success=True, error=None,
+            content='{"tool": "repo_add", "arguments": {"name": "staging-03"}, "missing_args": [], "confidence": 0.9, "reasoning": ""}')
+        eph = Ephaistos(mm)
+        specs = ["fedora.vm_stop: vm_stop(vm_name: string)", "fedora.vm_destroy: vm_destroy(vm_name: string)",
+                 "fedora.vm_start: vm_start(vm_name: string)"]
+        a = eph.analyze("mets staging-03 au repos", specs, max_specs=3)
+        assert a.tool == "fedora.vm_stop" and a.arguments.get("vm_name") == "staging-03"

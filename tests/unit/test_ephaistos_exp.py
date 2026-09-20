@@ -807,3 +807,108 @@ class TestQuestionFranche:
     def test_un_nombre_ne_cible_plus_seek(self):
         specs = ["catt.cast_seek: cast_seek(seconds: integer)", "catt.cast_volume: cast_volume(level: integer)"]
         assert exp.boost_mots(specs, "le chromecast a trente pour cent", nombres=True, catt=True)[0].startswith("catt.cast_volume")
+
+
+class TestIteration17:
+    def test_sans_le_son_est_un_mute(self):
+        specs = ["tv.volume_down: volume_down()", "tv.mute: mute()"]
+        assert exp.boost_mots(specs, "la tele, sans le son deux secondes", son=True, c17=True)[0].startswith("tv.mute")
+
+    def test_le_point_sauf_restauration(self):
+        specs = ["fedora.backup_list: backup_list()", "fedora.backup_status: backup_status()"]
+        assert exp.boost_mots(specs, "le point sur les sauvegardes", c17=True)[0].startswith("fedora.backup_status")
+        snap = ["fedora.backup_status: backup_status()", "fedora.vm_snapshot: vm_snapshot(vm_name: string)"]
+        assert exp.boost_mots(snap, "un point de restauration de test-vm", c17=True)[0].startswith("fedora.backup_status")
+
+    def test_plus_froide_est_une_temperature(self):
+        specs = ["hue.set_group_brightness: set_group_brightness(brightness: integer)",
+                 "hue.set_color_temperature: set_color_temperature(temperature: integer)"]
+        assert exp.boost_mots(specs, "une lumiere plus froide au bureau", fines=True, c17=True, equipements=True)[0].startswith("hue.set_color_temperature")
+
+    def test_lumiere_sans_verbe(self):
+        assert exp.lumiere_sans_verbe("de la lumiere dans le salon s'il te plait") == "allume allumer"
+        assert exp.lumiere_sans_verbe("plus de lumiere au salon") == "eteins eteindre"
+        assert exp.lumiere_sans_verbe("allume la lumiere du salon") is None
+        assert exp.lumiere_sans_verbe("un peu plus fort") is None
+        assert "eteindre" in exp.etendre_requete("plus de lumiere au salon", lumiere=True).split()
+
+    def test_verbe_implicite_dans_le_tri(self):
+        specs = ["hue.set_group_brightness: set_group_brightness(brightness: integer)", "hue.turn_on_light: turn_on_light(light_id: integer)"]
+        assert exp.boost_mots(specs, "de la lumiere dans le salon", c17=True, tri=True, verbes=True, equipements=True)[0].startswith("hue.turn_on_light")
+
+    def test_equipement_rend_le_tri_net(self):
+        specs = ["tv.volume_set: volume_set(level: integer)", "tv.mute: mute()"]
+        assert not exp.score_net(specs, "tele a trente", nombres=True)
+        assert exp.score_net(specs, "tele a trente", nombres=True, c17=True)
+
+    def test_pour_cent_est_un_niveau(self):
+        specs = ["hue.set_group_color_preset: set_group_color_preset(preset: string)",
+                 "hue.set_group_brightness: set_group_brightness(brightness: integer)"]
+        assert exp.boost_mots(specs, "le salon a soixante-dix pour cent", nombres=True, catt=True, tri=True, c17=True)[0].startswith("hue.set_group_brightness")
+
+    def test_la_lampe_de_la_piece_est_une_lampe(self):
+        specs = ["hue.turn_on_group: turn_on_group(group_id: integer)", "hue.turn_on_light: turn_on_light(light_id: integer)"]
+        assert exp.boost_mots(specs, "allume la lampe du bureau", tri=True, verbes=True, equipements=True, c17=True)[0].startswith("hue.turn_on_light")
+
+    def test_url_vers_la_tele_est_un_cast(self):
+        specs = ["tv.youtube_video: youtube_video(video: string)", "catt.cast_url: cast_url(url: string)"]
+        assert exp.boost_mots(specs, "balance ce lien sur la tele https://example.org/film.mp4", c17=True)[0].startswith("catt.cast_url")
+
+    def test_borg_designe_la_creation(self):
+        specs = ["fedora.backup_restore: backup_restore()", "fedora.backup_create: backup_create(type: string)"]
+        assert exp.boost_mots(specs, "lance une sauvegarde borg", equipements=True, c17=True)[0].startswith("fedora.backup_create")
+
+    def test_entree_tele_de_l_ampli(self):
+        specs = ["tv.launch_app: launch_app(app: string)", "denon.set_input: set_input(input: string)"]
+        assert exp.boost_mots(specs, "passe l'ampli sur l'entree tele", equipements=True, c17=True)[0].startswith("denon.set_input")
+
+
+class TestIteration18:
+    def test_coupe_le_son_de_l_ampli_est_net(self):
+        specs = ["denon.mute_on: mute_on()", "denon.mute_toggle: mute_toggle()", "denon.power_off: power_off()"]
+        assert exp.score_net(specs, "coupe le son de l'ampli", son=True, fines=True, equipements=True, c17=True)
+
+    def test_variante_declaree(self):
+        assert "force_definitif" in exp.VARIANTES
+
+    def test_coupe_le_son_de_la_tele_est_net(self):
+        specs = ["tv.mute: mute()", "tv.screen_on: screen_on()", "tv.power_on: power_on()"]
+        assert exp.score_net(specs, "je suis au telephone, coupe le son de la tele", son=True, fines=True, equipements=True, c17=True)
+
+    def test_enleves_les_leds(self):
+        specs = ["tv.ambilight_on: ambilight_on()", "tv.ambilight_off: ambilight_off()"]
+        assert exp.boost_mots(specs, "les leds de la tele, tu me les enleves", poids_rares=True, equipements=True, courants=True, c17=True)[0].startswith("tv.ambilight_off")
+
+    def test_la_commande_l_emporte_sur_la_question(self):
+        specs = ["fedora.vm_status: vm_status(vm_name?: string)", "fedora.vm_exec: vm_exec(vm_name: string, command: string)"]
+        assert exp.boost_mots(specs, "regarde depuis combien de temps staging-03 tourne, avec uptime", c17=True, courants=True)[0].startswith("fedora.vm_exec")
+
+
+class TestIteration20:
+    def test_tu_me_l_allumes_est_un_ordre(self):
+        assert not exp.question_franche("la tele, tu me l'allumes ?")
+
+    def test_lancer_une_scene_est_activate(self):
+        specs = ["hue.quick_scene: quick_scene(name: string)", "hue.activate_scene_by_name: activate_scene_by_name(name: string)"]
+        assert exp.boost_mots(specs, "lance la scene detente", c17=True, courants3=True, verbes=True)[0].startswith("hue.activate_scene_by_name")
+
+    def test_question_sur_la_pause_est_un_status(self):
+        specs = ["catt.cast_info: cast_info()", "catt.cast_pause: cast_pause()", "catt.cast_status: cast_status()"]
+        assert exp.boost_mots(specs, "le chromecast est en pause ?", c17=True, catt=True, nombres=True, equipements=True)[0].startswith("catt.cast_status")
+
+    def test_couleur_pese_double(self):
+        specs = ["hue.turn_on_light: turn_on_light(light_id: integer)", "hue.set_color_rgb: set_color_rgb(light_id: integer, r: integer)"]
+        assert exp.score_net(specs[::-1], "la lampe du bureau en mauve, juste celle-la", c17=True, fines=True, poids_rares=True, equipements=True)
+
+    def test_url_youtube_etend_la_requete(self):
+        assert "youtube" in exp.etendre_requete("passe-moi ca sur le chromecast https://youtu.be/abc", c17=True).split()
+
+    def test_un_peu_moins_de_lumiere_est_un_reglage(self):
+        specs = ["hue.turn_off_group: turn_off_group(group_id: integer)", "hue.set_group_brightness: set_group_brightness(brightness: integer)"]
+        assert exp.boost_mots(specs, "un peu moins de lumiere dans le salon", c17=True, relatifs=True, equipements=True, tri=True)[0].startswith("hue.set_group_brightness")
+        assert exp.lumiere_sans_verbe("un peu plus de lumiere au salon") is None
+
+    def test_une_piece_sans_lampe_est_un_groupe(self):
+        specs = ["hue.set_brightness: set_brightness(light_id: integer, brightness: integer)",
+                 "hue.set_group_brightness: set_group_brightness(brightness: integer)"]
+        assert exp.score_net(specs[::-1], "le salon a soixante-dix pour cent", c17=True, nombres=True, catt=True, tri=True, equipements=True)

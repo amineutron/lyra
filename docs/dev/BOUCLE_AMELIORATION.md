@@ -221,6 +221,47 @@ un fichier marqueur) ; un mot ordinaire peut etre nuisible sur l'autre jeu
 ("point" -> status casse "point de restauration" = snapshot) : le recall
 mecanique sur les deux jeux le voit en vingt secondes, avant le banc.
 
+## La boucle "99 % sur chaque jeu" (iterations 17 a 21)
+
+Consigne du 2026-09-20 : iterer tant que le 0.5b est sous 99 % sur chaque
+jeu. Les jeux 1 a 5 deviennent des jeux de developpement ; un sixieme est
+scelle avant d'ecrire une ligne (son controle trouve encore une regle fausse).
+
+| Iteration | Levier | Jeu 3 |
+|---|---|---|
+| depart (38 variantes) | -- | 83 |
+| 17 | `cartes_17` : les mots qui departagent les egalites a un point ("sans le son", home cinema, "un poil", pc/synchronisee, "le point", "plus froide", l'equipement designe le serveur...), `lumiere_sans_verbe`, `nom_de_vm` rejouee | 92 |
+| 18 | `force_definitif` : un outil impose par le tri net n'est plus remis en jeu par la seconde passe | 93 |
+| 19-21 | corrections trouvees en deboguant (le critere net ne lisait pas le bonus machine ; l'outil impose etait applique apres le complement d'arguments ; "coupe le son" ne cible "on" que chez Denon ; une commande l'emporte sur la question ; le niveau d'une piece est un groupe) | **100** |
+
+Resultat sur les cinq jeux de developpement : **21/21, 51/51, 100/100, 50/50, 50/50**. Sixieme jeu, scelle,
+mesure une fois : **42/50**.
+
+Ce que ces cinq iterations ont appris :
+
+- **Le mecanisme d'abord, encore.** `scripts/bench_recall.py` (avec les
+  equivalences du banc) a refuse cinq versions intermediaires en vingt
+  secondes chacune : un mot ajoute a une carte cree un faux net sur un autre
+  jeu ("mets un effet qui bouge", "la lampe du bureau" poussee vers le groupe,
+  "balance ce lien sur la tele" poussee vers la TV, "un peu moins de lumiere"
+  poussee vers l'extinction). Zero faux net sur les quatre jeux avant chaque
+  banc : le banc n'a jamais contredit la mesure mecanique.
+- **Un tri net non impose est un bug, pas une limite du modele.** Cinq echecs
+  avaient le bon outil en rang 1 avec un tri net ; le modele repondait autre
+  chose parce que la seconde passe remplacait la decision. Lire le prompt
+  exact ET le chemin du code qui suit la reponse.
+- **L'equipement designe le serveur** ("tele" -> tv, "lampe" -> hue) : ca ne
+  change pas l'ordre entre outils d'un meme serveur mais eleve le score absolu,
+  et le tri devient net la ou il ne l'etait qu'a un point. Sauf quand
+  l'equipement n'est pas l'appareil vise ("balance ce lien sur la tele",
+  "l'ampli sur l'entree tele") : la carte s'eteint si un autre appareil est nomme.
+- **Deux formulations ambigues restent ambigues** ("allume l'entree" : une
+  lampe ou un groupe ? ni l'un ni l'autre n'existe sur le pont Hue). L'inventaire
+  reel (comme pour les VM) serait la reponse generique ; ici on laisse le
+  modele trancher au lieu d'inventer une regle.
+- **100 % sur un jeu itere ne dit rien du produit** : c'est le sixieme jeu qui
+  compte, et il ne sera pas remesure.
+
 ## A industrialiser
 
 - Le releve de recall (rang du bon outil sans modele, precision du critere

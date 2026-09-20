@@ -474,7 +474,7 @@ class RAG3Tier:
         if "recall8" in variantes:
             top_k = max(top_k, 8)
         if {"expansion", "lexique", "entites_vm", "lexique_langue", "inventaire_vm", "lexique_courant",
-                "mots_courants_2", "mots_courants_3"} & variantes:
+                "mots_courants_2", "mots_courants_3", "cartes_17", "lumiere_sans_verbe"} & variantes:
             # Comme pipeline_enhanced avant l'appel : la requete enrichie de
             # synonymes sert a la fois a la semantique et au lexical.
             query = _exp.etendre_requete(query, lexique="lexique" in variantes,
@@ -483,7 +483,9 @@ class RAG3Tier:
                                          inventaire="inventaire_vm" in variantes,
                                          courant="lexique_courant" in variantes,
                                          courant2="mots_courants_2" in variantes,
-                                         courant3="mots_courants_3" in variantes)
+                                         courant3="mots_courants_3" in variantes,
+                                         lumiere="lumiere_sans_verbe" in variantes,
+                                         c17="cartes_17" in variantes)
 
         all_results = []
 

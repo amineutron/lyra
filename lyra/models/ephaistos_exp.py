@@ -232,6 +232,24 @@ deux questions d'etat lues comme des ordres) :
   avec les cartes d'aujourd'hui, fusionnee ici.
 - mots_courants_3 : troisieme table (appuie/appuyer -> touche, active/lance
   une scene -> activate, en train de -> status, quelle entree -> status).
+
+Iteration 17 (boucle "99 % sur chaque jeu", jeux 1-5 en developpement,
+sixieme jeu scelle avant) : 11 des 17 echecs du jeu 3 ont le bon outil en
+rang 1 sans que le tri soit net (egalite a 1 ou 2 points).
+
+- cartes_17 : les mots qui departagent ces egalites ("sans le son" = mute,
+  "coupe le son" cible aussi mute, home cinema = denon, "un poil" et "fort" =
+  volume, retour/menu = touche, pc/synchronisee/en meme temps = dual, "le
+  point" = status sauf "point de restauration", "plus froide" = temperature,
+  verify dans les cibles d'une question d'etat, "remettre" = fin du mute).
+- lumiere_sans_verbe : "de la lumiere dans le salon" (aucun verbe) = allumer,
+  "plus de lumiere" = eteindre, ajoutes a la requete avant le RAG.
+
+Iteration 18 : cinq echecs avaient le bon outil en rang 1 avec un tri net, et
+le modele repondait autre chose -- l'outil impose par la premiere passe etait
+remplace par la seconde passe (double_passe + choisir_par_score).
+
+- force_definitif : un outil impose par le tri net n'est plus remis en jeu.
 """
 
 from __future__ import annotations
@@ -257,6 +275,7 @@ VARIANTES = (
     "inventaire_vm", "lexique_courant", "verbes_courants",
     "outil_par_machine", "net_assoupli", "mots_courants_2",
     "nombres_tri", "mots_courants_3",
+    "cartes_17", "lumiere_sans_verbe", "force_definitif",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -376,7 +395,8 @@ MOTS_FINS: dict[str, tuple[str, ...]] = {
     "teinte": ("color", "temperature"), "chaude": ("temperature",), "chaud": ("temperature",),
     "froide": ("temperature",), "froid": ("temperature",),
 }
-_RARES_FINS = {"fige", "gele", "chaude", "froide", "chaud", "froid"}
+_RARES_FINS = {"fige", "gele", "chaude", "froide", "chaud", "froid",
+               "mauve", "violet", "rose", "cyan", "turquoise", "orange", "jaune"}
 VERBES_TRI: dict[str, tuple[str, ...]] = {
     "allume": ("on", "start"), "allumer": ("on", "start"), "active": ("on", "start"), "activer": ("on",),
     "demarre": ("on", "start"), "demarrer": ("on", "start"), "rallume": ("on",),
@@ -412,6 +432,8 @@ _RRF_K = 60
 # verbes_courants) -> 82/100 (outil_par_machine, mots_courants_2).
 # Infirmee : net_assoupli (-4 : trois faux nets de plus imposent un mauvais outil).
 # Iteration 16 : nombres_tri + mots_courants_3 (83/100 ensemble ; 82 et 81 seules).
+# Iteration 17 (boucle "99 % sur chaque jeu") : cartes_17 (91), + nom_de_vm (91),
+# + lumiere_sans_verbe (92/100). Precision du tri net mesuree sans modele : 64/0.
 DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
           "carte_equipements", "mots_relatifs", "expansion", "lexique",
@@ -425,7 +447,11 @@ DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
           "inventaire_vm", "lexique_courant", "verbes_courants",
           "outil_par_machine", "mots_courants_2",
           # Iteration 16 (jeu 3 : 82 -> 83, visait les echecs du jeu 4 : nombres, questions d'etat).
-          "nombres_tri", "mots_courants_3")
+          "nombres_tri", "mots_courants_3",
+          # Iteration 17 (jeu 3 : 83 -> 92 ; cartes_17 seule 91, nom_de_vm rejouee, lumiere_sans_verbe +1).
+          "cartes_17", "lumiere_sans_verbe", "nom_de_vm",
+          # Iteration 18 (jeu 3 : 92 -> 93, et moins d'appels au modele).
+          "force_definitif")
 
 
 def actives() -> set[str]:
@@ -527,7 +553,7 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
                etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
                verbes: bool = False, courants: bool = False, courants2: bool = False,
-               nombres: bool = False, courants3: bool = False) -> int:
+               nombres: bool = False, courants3: bool = False, c17: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
 
     Avec poids_rares, un mot de MOTS_RARES compte double. Avec cibler_youtube,
@@ -538,6 +564,12 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
     tokens = tokens_outil(nom_outil)
     youtube = cibler_youtube and url_youtube(requete)
     mots = normaliser(requete)
+    if c17:
+        # "de la lumiere dans le salon" : le verbe implicite compte dans le tri
+        # (sinon "salon" seul pousse le groupe vers set_group_brightness)
+        implicite = lumiere_sans_verbe(requete)
+        if implicite:
+            mots = mots + normaliser(implicite)
     score = 0
     for mot in mots:
         cibles = MOTS_CIBLES.get(mot)
@@ -546,7 +578,8 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
         if relatifs and mot in ("fort", "forte", "fortes") and "moins" in mots:
             cibles = None
         if son and mot == "son":
-            cibles = ("mute",) if any(v in mots for v in _VERBES_MUTE) else ("volume",)
+            verbes_mute = _VERBES_MUTE | ({"sans"} if c17 else set())   # "sans le son" (cartes_17)
+            cibles = ("mute",) if any(v in mots for v in verbes_mute) else ("volume",)
         if tri and mot in MOTS_TRI:
             cibles = tuple(cibles or ()) + MOTS_TRI[mot]
         if courants and mot in VERBES_COURANTS:
@@ -557,6 +590,23 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             cibles = tuple(cibles or ()) + VERBES_COURANTS_3[mot]
         if nombres and (mot in NOMBRES or mot.isdigit()) and not question_franche(requete):
             cibles = tuple(cibles or ()) + ("set",)
+        if c17 and mot in CARTES_17:
+            cibles = tuple(cibles or ()) + CARTES_17[mot]
+        if c17 and mot == "point" and "restauration" not in mots:
+            cibles = tuple(cibles or ()) + ("status",)
+        if c17 and mot in ("plus", "moins") and set(mots) & {"froide", "chaude", "froid", "chaud"}:
+            cibles = ("temperature",)
+        if c17 and mot in _PIECES and not set(mots) & {"ampli", "denon", "amplificateur"}:
+            # "la lampe du bureau" : une lampe ; "allume l'entree" : une piece Hue (lampe ou groupe)
+            if "lampe" in mots:
+                cibles = ("light",)
+            elif set(mots) & {"cent", "pourcent"} or any(m.isdigit() or m in NOMBRES for m in mots):
+                cibles = ("group",)   # it21 : "le salon a 70 %" regle la piece entiere
+            else:
+                cibles = ("hue", "group")   # "allume l'entree" : lampe ou groupe, le modele tranche
+        if c17 and mot in ("tele", "tv", "television") and \
+                (contient_url(requete) or set(mots) & {"chromecast", "cast", "ampli", "denon", "amplificateur", "pc"}):
+            cibles = None   # "balance ce lien sur la tele", "l'ampli sur l'entree tele" : la tele n'est pas l'appareil vise
         if fines and mot in MOTS_FINS:
             cibles = tuple(cibles or ()) + MOTS_FINS[mot]
         if fines and mot == "lecture" and any(v in mots for v in VERBES_CATT):
@@ -573,11 +623,29 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
         if son and mot in ("remets", "remettre", "remet", "rends") and "son" in mots:
             cibles = ("off",)   # "remets le son" = fin du mute : ni resume ni on (exclusif, apres les autres cartes)
         if fines and son and mot in ("coupe", "couper", "coupez") and "son" in mots:
-            cibles = ("on",)    # "coupe le son" = mute_on, pas mute_off ni power_off
+            # "coupe le son" = mute_on chez Denon ; ailleurs le mot "son" cible deja mute,
+            # et "on" ferait monter screen_on / power_on (it18)
+            cibles = ("on",) if (not c17 or set(mots) & {"ampli", "denon", "amplificateur", "home"}) else None
+        if c17 and son and mot == "sans" and "son" in mots:
+            cibles = ("mute", "on")   # "sans le son" = couper le son
+        if c17 and mot == "cent" and "pour" in mots:
+            cibles = ("brightness", "volume", "level")   # "N pour cent" est un niveau, pas un reglage quelconque (apres verbes_catt)
+        if c17 and mot in ("tourne", "tournent", "combien", "temps", "regarde") and set(mots) & _MOTS_COMMANDE:
+            cibles = None   # "depuis combien de temps ... avec uptime" : la commande decide, pas la question
+        if c17 and mot == "allumes":
+            cibles = ("on", "start")   # "tu me l'allumes ?"
+        if c17 and "scene" in mots and mot in ("lance", "mets", "active", "applique", "passe"):
+            cibles = ("activate",)   # "lance la scene detente" : activer une scene, pas en creer une
+        if c17 and question_franche(requete) and mot in ("pause", "lecture", "lit", "joue", "diffuse", "allumee", "eteinte", "allume", "eteint"):
+            cibles = ("status", "state")   # "le chromecast est en pause ?", "test-vm est allumee ?" : un etat
+        if c17 and mot in ("allumee", "eteinte", "allumees", "eteintes") and not question_franche(requete):
+            cibles = ("on",) if mot.startswith("allum") else ("off",)
         if equipements and mot in MOTS_EQUIPEMENTS:
             cibles = tuple(cibles or ()) + MOTS_EQUIPEMENTS[mot]
         if relatifs and mot in MOTS_RELATIFS:
             cibles = tuple(cibles or ()) + MOTS_RELATIFS[mot]
+        if c17 and mot in ("moins", "plus") and set(mots) & {"lumiere", "lumieres", "lampe", "lampes"} and "peu" in mots:
+            cibles = ("brightness",)   # "un peu moins de lumiere" : on tamise, on n'eteint pas (apres mots_relatifs)
         if cibles and any(c in tokens for c in cibles):
             score += 2 if (poids_rares and (mot in MOTS_RARES or (fines and mot in _RARES_FINS))) else 1
     if catt and "dual" in tokens and not (set(mots) & _MOTS_DUAL):
@@ -586,7 +654,7 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
         score += 2
     if vm and noms_de_machines(requete, inventaire=courants or "inventaire_vm" in actives()) and "vm" in tokens:
         score += 2
-    if nombres and question_franche(requete) and any(c in tokens for c in _CIBLES_ETAT):
+    if nombres and question_franche(requete) and any(c in tokens for c in _CIBLES_ETAT + (("verify",) if c17 else ())):
         score += 2
     return score
 
@@ -596,12 +664,12 @@ def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = Fal
                relatifs: bool = False, son: bool = False, catt: bool = False,
                etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
                verbes: bool = False, courants: bool = False, courants2: bool = False,
-               nombres: bool = False, courants3: bool = False) -> list[str]:
+               nombres: bool = False, courants3: bool = False, c17: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(nom_de_spec(s), requete, poids_rares,
                                            cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri, fines,
-                                           verbes, courants, courants2, nombres, courants3),
+                                           verbes, courants, courants2, nombres, courants3, c17),
                   reverse=True)
 
 
@@ -983,7 +1051,7 @@ def inserer_bloc_denon(system_prompt: str, sans_veille: bool = False) -> str:
 def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
                     entites: bool = False, langue: bool = False,
                     inventaire: bool = False, courant: bool = False, courant2: bool = False,
-                    courant3: bool = False) -> str:
+                    courant3: bool = False, lumiere: bool = False, c17: bool = False) -> str:
     """Requete + synonymes de ses mots (dictionnaire de production, repli sans accent).
 
     Meme strategie que SynonymExpander.expand (requete originale, puis les
@@ -997,6 +1065,14 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
     if (entites or inventaire) and noms_de_machines(requete, inventaire=inventaire):
         ajouts += ["vm", "machine virtuelle"]
         vus |= {"vm", "machine virtuelle"}
+    if c17 and url_youtube(requete):
+        ajouts += ["youtube", "video"]   # "passe-moi ca sur le chromecast <url youtube>" : aucun mot ne le disait
+        vus |= {"youtube", "video"}
+    if lumiere:
+        verbe = lumiere_sans_verbe(requete)
+        if verbe:
+            ajouts.append(verbe)
+            vus.add(verbe)
     for mot in normaliser(requete):
         candidats = list(dico.get(mot, ()))
         if lexique:
@@ -1009,6 +1085,8 @@ def etendre_requete(requete: str, lexique: bool = False, max_tokens: int = 15,
             candidats += list(LEXIQUE_COURANT_2.get(mot, ()))
         if courant3:
             candidats += list(LEXIQUE_COURANT_3.get(mot, ()))
+        if c17:
+            candidats += list(LEXIQUE_17.get(mot, ()))
         for syn in candidats:
             cle = " ".join(normaliser(syn))
             if cle and cle not in vus and cle not in normaliser(requete):
@@ -1334,7 +1412,7 @@ LEXIQUE_COURANT: dict[str, tuple[str, ...]] = {
 VERBES_COURANTS: dict[str, tuple[str, ...]] = {
     "reveille": ("on", "start"), "reveiller": ("on", "start"), "eclaire": ("on",), "eclairer": ("on",),
     "vire": ("off", "destroy"), "virer": ("off", "destroy"), "degage": ("destroy", "off"), "degager": ("destroy", "off"),
-    "enleve": ("off",), "enlever": ("off",), "repos": ("off", "stop"), "dodo": ("off",), "dormir": ("off",),
+    "enleve": ("off",), "enlever": ("off",), "enleves": ("off",), "repos": ("off", "stop"), "dodo": ("off",), "dormir": ("off",),
     "fini": ("off", "stop"), "ferme": ("off", "stop"),
     "pousse": ("up",), "pousser": ("up",), "descends": ("down",), "descendre": ("down",), "doucement": ("down",),
     "silence": ("mute",), "chut": ("mute",), "sourdine": ("mute",),
@@ -1409,7 +1487,8 @@ VERBES_COURANTS_2: dict[str, tuple[str, ...]] = {
 
 # --- Iteration 16 ------------------------------------------------------------------
 
-_POLITESSE = re.compile(r"\b(?:tu peux|peux-tu|pourrais-tu|tu pourrais|tu veux bien|veux-tu|s'il te plait|stp)\b")
+_POLITESSE = re.compile(r"\b(?:tu peux|peux-tu|pourrais-tu|tu pourrais|tu veux bien|veux-tu|s'il te plait|stp"
+                        r"|tu me |tu nous |tu la |tu le |tu les |tu l'|tu l )")
 
 
 def question_franche(requete: str) -> bool:
@@ -1435,6 +1514,68 @@ LEXIQUE_COURANT_3: dict[str, tuple[str, ...]] = {
 
 VERBES_COURANTS_3: dict[str, tuple[str, ...]] = {
     "appuie": ("key", "send"), "appuyer": ("key", "send"), "appuies": ("key",), "presse": ("key", "send"),
-    "valide": ("key",), "train": ("status",), "rythme": ("beat", "start"),
+    "valide": ("key",), "train": ("status",), "rythme": ("start",),
     "active": ("activate", "on"), "activer": ("activate",), "scene": ("scene", "activate"),
 }
+
+
+# --- Iteration 17 ------------------------------------------------------------------
+
+CARTES_17: dict[str, tuple[str, ...]] = {
+    "home": ("denon",), "cinema": ("denon",),
+    "poil": ("volume",), "fort": ("volume",), "forte": ("volume",),
+    "retour": ("key",), "menu": ("key",), "touche": ("key",),
+    "pc": ("dual",), "synchronisee": ("dual",), "synchronise": ("dual",), "meme": ("dual",), "decales": ("dual", "resync"),
+    "bonnes": ("verify",), "bonne": ("verify",),
+    "repos": ("stop",),
+    "uptime": ("exec",), "df": ("exec",), "free": ("exec",), "ls": ("exec",),
+    # l'equipement designe le serveur : le score absolu monte d'un cran pour
+    # tous ses outils, et le tri devient net quand il ne l'etait qu'a 1 point
+    "tele": ("tv",), "tv": ("tv",), "television": ("tv",),
+    "lampe": ("hue",), "lampes": ("hue", "lights"), "lumiere": ("hue",), "lumieres": ("hue",), "ampoule": ("hue",),
+    "toutes": ("all", "list"), "tous": ("all", "list"), "liste": ("all", "list"), "lister": ("all", "list"),
+    "quel": ("get", "status", "state"), "quelle": ("get", "status", "state"), "etat": ("get", "status", "state"),
+    "tournent": ("status", "state"), "ok": ("verify",),
+    "borg": ("create",), "timeshift": ("create",),   # pas "backup" : tous les outils backup l'ont
+    "effet": ("effect",), "bouge": ("effect",), "lien": ("url",), "balance": ("cast",),
+    "entree": ("input", "source"), "source": ("input",),
+    "vois": ("scan",), "voir": ("scan",), "combien": ("scan", "all", "list"),
+    "refais": ("clone",), "refaire": ("clone",), "nom": ("clone", "name"), "jumeau": ("clone",),
+    "coucher": ("preset",), "soleil": ("preset",), "aube": ("preset",), "mode": ("mode", "preset"),
+    "mauve": ("color", "rgb"), "violet": ("color", "rgb"), "rose": ("color", "rgb"), "cyan": ("color", "rgb"),
+    "turquoise": ("color", "rgb"), "orange": ("color", "rgb"), "jaune": ("color", "rgb"),
+}
+_COULEURS = {"mauve", "violet", "rose", "cyan", "turquoise", "orange", "jaune", "rouge", "vert", "verte", "bleu", "bleue", "blanc", "blanche"}
+_PIECES = {"bureau", "salon", "chambre", "cuisine", "entree", "couloir", "salle", "garage"}
+_MOTS_COMMANDE = {"uptime", "df", "free", "ls", "ping", "top", "cat", "systemctl", "journalctl", "uname", "ps"}
+LEXIQUE_17: dict[str, tuple[str, ...]] = {
+    "remettre": ("reprendre", "reactiver", "desactiver", "mute"),
+    "poil": ("un peu", "volume"), "home": ("ampli", "denon"), "cinema": ("ampli", "denon"),
+    "retour": ("touche", "telecommande"), "menu": ("touche", "telecommande"),
+    "pc": ("dual", "navigateur"), "synchronisee": ("dual", "synchronise"),
+    "point": ("etat", "status"), "etat": ("infos", "informations", "status", "detail"),
+}
+
+_VERBES_CONNUS = re.compile(r"\b(?:allume|allumer|eteins|eteindre|eteint|coupe|couper|mets|mettre|baisse|monte|tamise|"
+                            r"active|desactive|regle|passe|change|remets|rallume|lance|vire|enleve|met)\b")
+
+
+def lumiere_sans_verbe(requete: str) -> str | None:
+    """"de la lumiere dans le salon" -> "allumer" ; "plus de lumiere au salon" -> "eteindre" ; sinon None.
+
+    Uniquement quand la phrase parle de lumiere sans aucun verbe connu : c'est
+    l'article ("de la", "plus de") qui porte l'action.
+    """
+    mots = normaliser(requete)
+    if not ({"lumiere", "lumieres", "lampe", "lampes"} & set(mots)) or _VERBES_CONNUS.search(" ".join(mots)):
+        return None
+    if "peu" in mots:
+        return None   # "un peu plus de lumiere" est un reglage, pas un allumage
+    texte = " ".join(mots)
+    # Les deux formes : l'index lexical compare des tokens exacts ("allume" dans
+    # les paraphrases, "allumer" dans le dictionnaire de synonymes)
+    if re.search(r"\bplus (?:de|d) (?:lumiere|lampe)", texte) or "plus" in mots and "moins" not in mots and "fort" not in mots:
+        return "eteins eteindre"
+    if re.search(r"\b(?:de la|un peu de|de l) lumiere", texte):
+        return "allume allumer"
+    return None

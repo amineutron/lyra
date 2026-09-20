@@ -1,0 +1,98 @@
+{
+  "mesure": "modeles",
+  "date": "2026-09-20",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "2eccc0b",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "jeu": "hors_regles",
+  "variantes": [
+    "args_par_regex",
+    "arguments_contradictoires",
+    "carte_equipements",
+    "carte_mots",
+    "carte_son",
+    "cartes_17",
+    "cartes_fines",
+    "cartes_tri",
+    "denon_sans_veille",
+    "double_passe",
+    "entites_vm",
+    "exemple_par_spec",
+    "exemple_proche",
+    "exemples_cibles",
+    "exemples_denon",
+    "expansion",
+    "force_definitif",
+    "inventaire_vm",
+    "lexical",
+    "lexique",
+    "lexique_courant",
+    "lexique_langue",
+    "lumiere_sans_verbe",
+    "mots_courants_2",
+    "mots_courants_3",
+    "mots_relatifs",
+    "mots_url",
+    "nom_de_vm",
+    "nombres_tri",
+    "outil_force_si_net",
+    "outil_par_machine",
+    "poids_rares",
+    "recall8",
+    "resolution_arguments",
+    "signature",
+    "signature_complete",
+    "spec_description",
+    "top3_direct",
+    "verbes_catt",
+    "verbes_courants",
+    "verbes_tri",
+    "verification_binaire"
+  ],
+  "banc": "RULE_MISS via EPHAISTOS (les regles ne couvrent pas ces requetes)",
+  "cas": 51,
+  "statuts": {
+    "LLM_PASS": 51
+  },
+  "taux_pass": 1.0,
+  "score_pondere": 100,
+  "par_categorie": {
+    "CATT": {
+      "LLM_PASS": 10
+    },
+    "DENON": {
+      "LLM_PASS": 10
+    },
+    "FEDORA": {
+      "LLM_PASS": 11
+    },
+    "HUE": {
+      "LLM_PASS": 10
+    },
+    "TV": {
+      "LLM_PASS": 10
+    }
+  },
+  "modeles_mesures": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "duree_s": 198.4,
+  "duree_inclut_initialisation": true
+}
