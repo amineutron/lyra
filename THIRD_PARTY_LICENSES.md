@@ -41,7 +41,7 @@
 | pydantic_core      | 2.46.5    | MIT                                                     | https://github.com/pydantic                                           |
 | pytest             | 9.1.1     | MIT                                                     | https://docs.pytest.org/en/latest/                                    |
 | pytest-cov         | 7.1.0     | MIT                                                     | https://pytest-cov.readthedocs.io/en/latest/changelog.html            |
-| ruff               | 0.16.6    | MIT                                                     | https://docs.astral.sh/ruff                                           |
+| ruff               | 0.16.8    | MIT                                                     | https://docs.astral.sh/ruff                                           |
 | sounddevice        | 0.5.6     | MIT                                                     | https://github.com/spatialaudio/python-sounddevice/                   |
 | typing-inspection  | 0.4.4     | MIT                                                     | https://github.com/pydantic/typing-inspection                         |
 | urllib3            | 2.7.0     | MIT                                                     | https://github.com/urllib3/urllib3/blob/main/CHANGES.rst              |
