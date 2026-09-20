@@ -1,255 +1,17 @@
-"""Variantes d'EPHAISTOS et du RAG, choisies par la variable LYRA_EXP.
+"""Mecanisme d'EPHAISTOS et du RAG au-dela du prompt : tri des specs, cartes de
+mots, expansion de la requete, resolutions apres la reponse du modele.
 
-    LYRA_EXP="exemples_cibles,lexical"   # exactement ces variantes
+Chaque levier est une variante nommee, activable par LYRA_EXP :
+
+    (variable absente)                   # DEFAUT : toutes les variantes retenues
+    LYRA_EXP="exemples_cibles,lexical"   # exactement celles-la (ablation, bench)
     LYRA_EXP=""                          # aucune : le comportement d'avant la boucle
-    (variable absente)                   # DEFAUT : la configuration retenue par la boucle
 
-Chaque idee est une variante mesurable seule ou combinee, sur le meme code
-et la meme graine (scripts/bench_boucle.py). DEFAUT est la configuration
-retenue le 2026-09-17 apres cinq iterations : 21/21 sur le banc des modeles
-avec qwen2.5-coder:0.5b (5/21 au depart).
-
-Iteration 1 (roadmap-github#72, 2026-09-17) :
-
-- exemples_cibles : le prompt systeme fait ~6 100 tokens dont 44 % de FEDORA ;
-  le 0.5b s'ancre sur le premier exemple contenant le verbe de la requete
-  ("allume les lumieres" -> turn_on_group, generalise a "allume la tv").
-  On n'injecte que les blocs des serveurs presents dans les specs.
-  Seule variante gagnante : 5/21 -> 9/21.
-- dedup : jusqu'a 40 % des 5 specs remontees sont des doublons. Neutre.
-- routage : regle "tel mot-cle -> tel serveur". DEGRADE (4/21).
-- index : repondre par le numero de la spec. Annule le gain d'exemples_cibles.
-- json_format : ollama contraint la sortie a du JSON. Neutre.
-
-Iteration 2 : le releve de recall a montre que le bon outil n'est dans les
-5 specs remontees que pour 8 cas sur 21, et en tete pour 4. Le premier
-essai ne montrant qu'une spec, le modele ne peut pas choisir un outil qu'on
-ne lui presente pas. Les variantes visent donc le RAG et l'ordre des specs :
-
-- lexical : BM25 sur les documents de capabilities (accents retires), fusion
-  RRF avec la recherche semantique. "ambilight", "veille", "chevet" sont des
-  mots rares que l'embedding dilue et qu'un index lexical accroche.
-- recall8 : 8 candidats au lieu de 5 (6 cas ont le bon outil en rang 5-8).
-- carte_mots : boost par TOKENS exacts du nom d'outil (veille -> off,
-  chevet -> light, ambiance -> color...). La carte historique compare des
-  sous-chaines : "on" est dans "monitor", "light" dans "ambilight".
-- top3_direct : 3 specs des le premier essai au lieu d'une seule.
-- indice_url : consigne conditionnelle quand la requete contient une URL.
-
-Ecartee avant mesure : retirer les descriptions de serveurs (registre) de la
-cascade ne change aucun rang -- elles se classent deja sous les outils.
-
-Iteration 3 (les cinq d'iteration 2 ensemble : 14/21). Les echecs restants
-cote modele : "allume l'ambilight" -> tool "allume" (premier mot de la
-requete) ; "ambiance bleue" -> bon outil mais (0, 255, 0) ; "baisse le volume
-de la diffusion" -> denon.volume_down.
-
-- couleurs : une couleur nommee dans la requete fixe red/green/blue de facon
-  deterministe. Un 0.5b n'a pas a calculer une couleur.
-- exemple_par_spec : pour chaque spec montree, un exemple tire de sa premiere
-  paraphrase ("allume l'ambilight" -> ambilight_on). Le modele voit le verbe
-  de la requete associe au bon nom.
-- poids_rares : dans carte_mots, un mot-cible rare (ambilight, diffusion,
-  chevet) vaut 2 ; "diffusion" doit peser plus que "baisse le volume".
-- top5_direct : 5 specs des le premier essai (prime sur top3_direct).
-
-Iteration 4 (exemple_par_spec + poids_rares : 18/21). Les trois echecs ont le
-bon outil en rang 1 : "eteins la tele" -> power_on et "eteins l'ambilight" ->
-ambilight_on (biais ON/OFF ; l'exemple injecte, premiere paraphrase, ne porte
-pas le verbe de la requete) ; "mode lounge" -> bon outil, arguments vides (la
-spec montree n'a pas de signature : la fusion garde le doc capabilities).
-
-- exemple_proche : la paraphrase de chaque spec la plus proche de la requete
-  (recouvrement de tokens) sert d'exemple ; "eteins l'ambilight" existe mot
-  pour mot dans les paraphrases.
-- signature : la signature du doc parameters est jointe au doc capabilities ;
-  _compact_spec retrouve alors le format d'origine "nom: f(params)".
-- consigne_onoff : une ligne "eteins/coupe/desactive = off, allume = on",
-  seulement quand la requete contient l'un de ces verbes.
-- deux_exemples : deux paraphrases par spec au lieu d'une.
-
-Iteration 5 (exemple_proche + signature : 20/21). Dernier echec : "caste cette
-video youtube <url>" -> cast_url, qui perd YouTube Premium (cast_youtube passe
-par ADB). La consigne indice_url nomme "url", et "http" donne un point a
-cast_url dans carte_mots.
-
-- mots_url : quand l'URL est YouTube, "http" ne cible que "youtube".
-
-Jeu « hors regles » (51 formulations inedites, 2026-09-18) : 13/51 avec la
-configuration retenue, le bon outil jamais remonte pour 20 cas. Les mots
-d'equipement du langage courant ("ampli", "chromecast", "leds", "synchro")
-n'apparaissent ni dans les noms d'outils ni dans les documents.
-
-- carte_equipements : dans carte_mots, ces mots designent le serveur ou la
-  famille d'outils (ampli -> denon, chromecast -> cast, leds -> ambilight,
-  synchro -> beat, machine -> vm, sauvegardes -> backup).
-- mots_relatifs : "moins" -> down/off, "plus" -> up ("un peu moins fort la
-  tele" allait a volume_up ; "fort" ne visait que brightness).
-- expansion : la requete passee au RAG est enrichie par le SynonymExpander,
-  comme en production (le banc appelait cascade_search sur la requete brute),
-  avec un repli sans accent : le dictionnaire dit "télé", le STT dit "tele".
-- lexique : synonymes d'equipement absents du dictionnaire (ampli -> denon,
-  chromecast -> cast, leds -> ambilight, synchro -> beat...), ajoutes a
-  l'expansion. Implique expansion.
-
-Iteration 2 hors regles (14/51 : le bon outil est en tete et le modele se
-trompe quand meme). Reponses brutes : noms inventes a partir de la requete
-("image", "chromecast", "catt", "synchro_lumieres") quand l'outil en tete
-n'a pas de paraphrase donc pas d'exemple ; "gro": 1 pour group_id (spec
-tronquee a 200 caracteres) ; "coupe le son de l'ampli" -> volume_down.
-
-- exemple_description : sans paraphrase, la description de la spec sert
-  d'exemple ("Rallume l'ecran de la TV" -> screen_on).
-- signature_complete : la signature est jointe depuis toute la collection
-  parameters, pas seulement depuis les resultats remontes.
-- resolution_arguments : un nom d'outil inconnu est remplace par la spec
-  montree dont la signature contient les arguments renvoyes ("seconds" ->
-  cast_seek) ; a defaut, si le nom est un serveur ou un mot de la requete,
-  par la spec de rang 1.
-- carte_son : "son" cible le volume, sauf avec couper/remettre : le mute.
-
-Iteration 3 hors regles (21/51 ; catt 1/10, denon 3/10). Reponses brutes :
-"mets l'ampli en route" copie l'exemple "mets l'ampli en veille -> power_off"
-(quatre mots communs, le seul mot discriminant ignore) ; "regle l'ampli a 40"
--> power_on avec level: 40 ; "l'ampli est allume ?" -> power_on ; "coupe
-sandbox-02" remonte des outils Hue ; les verbes oraux du cast (fige, remets,
-coupe la lecture, a trente pour cent) ne sont dans aucune carte.
-
-- exemple_discriminant : la proximite ignore les mots presents dans toutes
-  les paraphrases candidates ("mets", "ampli", "en") ; seuls les mots qui
-  departagent comptent.
-- question_etat : une question ("... ?", "est-il", "tourne encore") cible
-  les outils status/state/info/get.
-- nom_de_vm : un motif de nom de VM ("sandbox-02") cible les outils vm.
-- verbes_catt : coupe -> stop/off, fige/gele -> pause, remets/reprends ->
-  resume, recule -> seek, "a N"/"pour cent" -> set/volume ; les outils
-  "dual" ne marquent que si la requete parle de dual/synchro/pc.
-- arguments_contradictoires : un outil sans parametre renvoye avec un
-  argument qui appartient a une seule autre spec montree bascule vers elle.
-
-Iteration 5 hors regles (26/51, plateau). Analyse des plafonds : 31/51
-requetes contiennent un mot que ni l'index, ni le dictionnaire, ni les
-cartes ne relient ; les noms de VM n'existent nulle part ; aucun bloc
-d'exemples Denon ; une seule tentative a 3 specs.
-
-- entites_vm : un motif de nom de machine ("sandbox-02") ajoute "vm machine
-  virtuelle" a la requete AVANT le RAG (nom_de_vm n'agissait qu'apres).
-- lexique_langue : synonymes de langue courante pour les mots que rien ne
-  reliait ("en route" -> allumer, "noir" -> eteindre, "un double" ->
-  clone...). Des mots, jamais une phrase du jeu.
-- exemples_denon : un bloc d'exemples Denon dans le prompt systeme.
-- double_passe : second appel sur les specs 4 a 6 ; la reponse au meilleur
-  score de mots l'emporte.
-
-Iteration 6 hors regles (34/51). Classement des 17 echecs : 11 confusions
-entre voisins du meme serveur (cast_info, power_off), 2 arguments, 2 noms
-inventes, 2 absents. lexique_langue n'agissait que cote RAG : la requete
-etendue ne servait ni au tri des specs ni au choix de l'exemple.
-
-- boost_sur_etendue : tri des specs et exemple proche calcules sur la
-  requete etendue ("fige ... pause" compte pour cast_pause).
-- top1_si_net : si la spec de rang 1 a un score de mots net (>= 2 et
-  strictement superieur au rang 2), le modele ne voit qu'elle.
-- args_par_regex : vm_name/source_vm depuis le nom de machine de la
-  requete, command depuis le segment apres "avec".
-- resolution_floue : nom inconnu -> spec montree dont le nom partage le
-  plus de tokens, sinon rang 1.
-
-Iteration 7 hors regles (35/51, 16 confusions entre voisins). Avec
-signature_complete, un outil sans parametre devient "cast_info()" : une spec
-vide, indiscernable de "cast_status()" autrement que par son nom.
-
-- spec_description : la description courte suit la signature
-  ("cast_info() -- infos detaillees du media en cours").
-- outil_force_si_net : quand le score du rang 1 est net, l'outil est impose
-  (le modele ne sert qu'aux arguments). top1_si_net laissait le modele
-  repondre un autre nom.
-- vote_rotation : trois appels, memes specs dans trois ordres, vote.
-- verification_binaire : si la reponse differe du rang 1, un second appel
-  avec deux specs (rang 1, reponse) tranche.
-
-Iteration 8 hors regles (39/51 ; 11 confusions). Dans 9 cas sur 12 le bon
-outil n'est pas au rang 1 du tri parce qu'un mot decisif ("noire",
-"route", "bascule", "chambre", "ou en est", "espace disque", "allege") n'est
-dans aucune carte de tri -- et outil_force_si_net a une precision de 100 %
-des que le tri est net.
-
-- cartes_tri : ces mots entrent dans les cartes de tri (MOTS_TRI).
-- carte_son : retestee sur ce socle ; "remets le son" -> mute_off.
-- denon_sans_veille : le bloc Denon dit "eteins l'ampli" au lieu de "mets
-  l'ampli en veille", dont la forme attirait "mets l'ampli en route".
-
-Iteration 9 hors regles (47/51). Les quatre echecs ne sont pas "nets" :
-"lecture" annule le verbe (fige, coupe) ; "chaude" ne cible rien et "salon"
-pousse vers le groupe ; "coupe" cible off et mute_off gagne a la place de
-mute_on.
-
-- cartes_fines : "lecture" ne cible rien quand un verbe d'action est la ;
-  fige/gele et chaude/froide comptent double ; teinte/chaude/froide ->
-  temperature ; "coupe le son" -> on (mute_on), exclusif.
-
-Iteration 10 (51/51 hors regles, mais 17/21 sur le premier banc). Les
-verbes on/off vivent dans _FR_ACTION_MAP (sous-chaines, ordre initial) que
-boost_mots ecrase : "allume la lumiere chevet" laisse turn_on_light et
-alert_light a egalite ; "ouvre YouTube" ne cible pas launch_app.
-
-- verbes_tri : allume/active/demarre -> on/start, eteins/arrete -> off/stop,
-  ouvre/lance -> launch/app, dans les cartes de tri.
-
-Leviers generiques (2026-09-19, apres le troisieme jeu a 56/100 : 11 outils
-jamais remontes, 24 confusions, vrais noms de machines non reconnus). Construits
-hors de tout jeu, mesures sur le troisieme (devenu jeu de developpement) et une
-seule fois sur le quatrieme, tenu a l'ecart.
-
-- inventaire_vm : les noms de machines viennent de l'inventaire reel (vm_status
-  au demarrage, ou LYRA_VMS), plus le motif "nom-NN" ; "fedora-base" et
-  "test-vm" sont reconnus par l'expansion et par args_par_regex. Le nouveau nom
-  d'un clone ("en fedora-test") est aussi lu.
-- lexique_courant : synonymes de langue courante par domaine (allumage,
-  extinction, volume, lumiere, lecture, machines, sauvegardes), ecrits a partir
-  du francais de tous les jours et non des echecs d'un banc.
-- verbes_courants : les memes verbes dans les cartes de tri (reveille -> on,
-  vire/degage -> off/destroy, pousse -> up, descends -> down, jumeau -> clone...).
-
-Iteration 15 (jeu 3 a 70/100 : 16 confusions, 4 noms inventes dont deux noms
-de machine copies en nom d'outil, 4 absents) :
-
-- outil_par_machine : un nom d'outil qui est un nom de machine ("fedora_base"
-  pour "reveille fedora-base") est remplace par la spec de rang 1, la machine
-  passant en vm_name.
-- net_assoupli : le tri est "net" des que le rang 1 a un mot-cible de plus que
-  le rang 2 (seuil 1 au lieu de 2) ; precision mesuree sans modele avant.
-- mots_courants_2 : deuxieme table de mots ordinaires (sors -> export, le point
-  -> status, on en reste la -> stop, sans le son -> mute, prends -> source,
-  dispo/connectees -> liste, danser/suivent -> beat...).
-
-Iteration 16 (jeu 4 mesure une fois a 41/50 : sept confusions entre voisins,
-deux questions d'etat lues comme des ordres) :
-
-- nombres_tri : un nombre en lettres ou en chiffres ("a quinze", "a 40")
-  designe un reglage (set/volume/brightness), et une question d'etat ("est en
-  route ?") les outils d'etat -- question_etat (it5, neutre alors) rejouee
-  avec les cartes d'aujourd'hui, fusionnee ici.
-- mots_courants_3 : troisieme table (appuie/appuyer -> touche, active/lance
-  une scene -> activate, en train de -> status, quelle entree -> status).
-
-Iteration 17 (boucle "99 % sur chaque jeu", jeux 1-5 en developpement,
-sixieme jeu scelle avant) : 11 des 17 echecs du jeu 3 ont le bon outil en
-rang 1 sans que le tri soit net (egalite a 1 ou 2 points).
-
-- cartes_17 : les mots qui departagent ces egalites ("sans le son" = mute,
-  "coupe le son" cible aussi mute, home cinema = denon, "un poil" et "fort" =
-  volume, retour/menu = touche, pc/synchronisee/en meme temps = dual, "le
-  point" = status sauf "point de restauration", "plus froide" = temperature,
-  verify dans les cibles d'une question d'etat, "remettre" = fin du mute).
-- lumiere_sans_verbe : "de la lumiere dans le salon" (aucun verbe) = allumer,
-  "plus de lumiere" = eteindre, ajoutes a la requete avant le RAG.
-
-Iteration 18 : cinq echecs avaient le bon outil en rang 1 avec un tri net, et
-le modele repondait autre chose -- l'outil impose par la premiere passe etait
-remplace par la seconde passe (double_passe + choisir_par_score).
-
-- force_definitif : un outil impose par le tri net n'est plus remis en jeu.
+Le 2026-09-20, apres 21 iterations, les 17 variantes refutees ou neutres ont
+ete retirees du code ; les 42 restantes forment la configuration retenue.
+L'histoire de chaque variante, ses mesures et ce qu'elle a appris sont dans
+docs/dev/BOUCLE_AMELIORATION.md et dans BENCHMARKS.md (scripts :
+bench_boucle.py, bench_recall.py, controle_hors_regles.py).
 """
 
 from __future__ import annotations
@@ -259,23 +21,25 @@ import os
 import re
 import unicodedata
 
+from .cartes import (  # noqa: F401  (re-exportes : les tests et les scripts lisent exp.MOTS_TRI...)
+    MOTS_CIBLES, MOTS_EQUIPEMENTS, VERBES_CATT, _MOTS_DUAL, _MARQUES_QUESTION, _CIBLES_ETAT, MOTS_TRI, MOTS_FINS, _RARES_FINS, VERBES_TRI, MOTS_RELATIFS, MOTS_RARES, _VERBES_MUTE, LEXIQUE_EQUIPEMENTS, LEXIQUE_LANGUE, EXEMPLES_DENON, _MODES_AMBILIGHT, LEXIQUE_COURANT, VERBES_COURANTS, LEXIQUE_COURANT_2, VERBES_COURANTS_2, NOMBRES, LEXIQUE_COURANT_3, VERBES_COURANTS_3, CARTES_17, _COULEURS, _PIECES, _MOTS_COMMANDE, LEXIQUE_17,
+)
+
+# Les variantes retenues, dans l'ordre ou elles sont entrees dans la configuration.
 VARIANTES = (
-    "exemples_cibles", "dedup", "routage", "index", "json_format",
-    "lexical", "recall8", "carte_mots", "top3_direct", "indice_url",
-    "couleurs", "exemple_par_spec", "poids_rares", "top5_direct",
-    "exemple_proche", "signature", "consigne_onoff", "deux_exemples",
-    "mots_url",
+    "exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
+    "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
     "carte_equipements", "mots_relatifs", "expansion", "lexique",
-    "exemple_description", "signature_complete", "resolution_arguments", "carte_son",
-    "exemple_discriminant", "question_etat", "nom_de_vm", "verbes_catt", "arguments_contradictoires",
-    "entites_vm", "lexique_langue", "exemples_denon", "double_passe",
-    "boost_sur_etendue", "top1_si_net", "args_par_regex", "resolution_floue",
-    "spec_description", "outil_force_si_net", "vote_rotation", "verification_binaire",
-    "cartes_tri", "denon_sans_veille", "cartes_fines", "verbes_tri",
+    "resolution_arguments", "signature_complete", "verbes_catt",
+    "arguments_contradictoires", "entites_vm", "lexique_langue",
+    "exemples_denon", "double_passe", "args_par_regex",
+    "spec_description", "outil_force_si_net", "verification_binaire",
+    "cartes_tri", "carte_son", "denon_sans_veille", "cartes_fines",
+    "mots_url", "verbes_tri",
     "inventaire_vm", "lexique_courant", "verbes_courants",
-    "outil_par_machine", "net_assoupli", "mots_courants_2",
+    "outil_par_machine", "mots_courants_2",
     "nombres_tri", "mots_courants_3",
-    "cartes_17", "lumiere_sans_verbe", "force_definitif",
+    "cartes_17", "lumiere_sans_verbe", "nom_de_vm", "force_definitif",
 )
 
 _BLOC_PAR_SERVEUR = {
@@ -288,170 +52,16 @@ _BLOC_PAR_SERVEUR = {
     "denon": "DENON",
 }
 
-REGLE_ROUTAGE = """ROUTAGE PAR MOT-CLE (prioritaire sur les exemples) :
-- tv, tele, television, ambilight, netflix -> un outil tv.*
-- lumiere, lampe, ampoule, luminosite, ambiance, couleur -> un outil hue.*
-- cast, caste, diffuse, diffusion, chromecast -> un outil catt.*
-- vm, machine virtuelle, preprod, sandbox -> un outil fedora.vm_*
-- backup, sauvegarde -> un outil fedora.backup_* ; snapshot -> fedora.vm_snapshot
-- denon, ampli, amplificateur -> un outil denon.*
 
-"""
-
-CONSIGNE_INDEX = ('\nReponds dans le champ "tool" par le NUMERO de la spec choisie '
-                  '(1, 2, 3...), jamais par son nom.')
-
-CONSIGNE_URL = ("\nLa requete contient une URL : choisis l'outil qui accepte une url "
-                "(youtube, url), pas un outil de navigateur.")
-
-# Mot de la requete (normalise, sans accent) -> tokens du nom d'outil qu'il
-# designe. On ne met que des mots qui nomment une CIBLE ou une PROPRIETE, pas
-# les verbes (deja couverts par _FR_ACTION_MAP), ni les mots trop larges
-# ("tv", "lumiere") qui apparaissent dans la plupart des requetes.
-MOTS_CIBLES: dict[str, tuple[str, ...]] = {
-    "ambilight": ("ambilight",),
-    "veille": ("off", "standby"),
-    "chevet": ("light",),
-    "lampe": ("light",),
-    "ampoule": ("light",),
-    "fort": ("brightness",),
-    "fortes": ("brightness",),
-    "forte": ("brightness",),
-    "faible": ("brightness",),
-    "luminosite": ("brightness",),
-    "couleur": ("color", "rgb"),
-    "ambiance": ("color", "rgb"),
-    "rouge": ("color", "rgb"),
-    "bleu": ("color", "rgb"),
-    "bleue": ("color", "rgb"),
-    "vert": ("color", "rgb"),
-    "verte": ("color", "rgb"),
-    "jaune": ("color", "rgb"),
-    "youtube": ("youtube",),
-    "http": ("youtube", "url"),
-    "https": ("youtube", "url"),
-    "diffusion": ("cast",),
-    "cast": ("cast",),
-    "chromecast": ("cast",),
-    "volume": ("volume",),
-    "son": ("volume",),
-    "secondes": ("seek",),
-    "minutes": ("seek",),
-    "netflix": ("app",),
-    "application": ("app",),
-    "appli": ("app",),
-}
-
-# Mots du langage courant -> serveur ou famille d'outils (variante carte_equipements)
-MOTS_EQUIPEMENTS: dict[str, tuple[str, ...]] = {
-    "ampli": ("denon",), "amplificateur": ("denon",), "denon": ("denon",),
-    "chromecast": ("cast", "catt"), "cast": ("cast", "catt"),
-    "leds": ("ambilight",), "led": ("ambilight",),
-    "synchro": ("beat",), "synchronisation": ("beat",),
-    "machine": ("vm",), "vm": ("vm",), "serveur": ("vm",),
-    "sauvegarde": ("backup",), "sauvegardes": ("backup",), "backup": ("backup",),
-    "lampe": ("light",), "lumiere": ("light", "group"), "lumieres": ("group",),
-    "scene": ("scene",), "ambiance": ("scene", "color"),
-    "telecommande": ("key",), "touche": ("key",),
-    "applis": ("apps",), "applications": ("apps",),
-    "ecran": ("screen",), "image": ("screen",),
-}
-
-# Verbes oraux du cast et reglages (variante verbes_catt)
-VERBES_CATT: dict[str, tuple[str, ...]] = {
-    "coupe": ("stop", "off"), "couper": ("stop", "off"), "arrete": ("stop",), "stoppe": ("stop",),
-    "fige": ("pause",), "gele": ("pause",), "pause": ("pause",),
-    "remets": ("resume", "on"), "reprends": ("resume",), "relance": ("resume",), "continue": ("resume",),
-    "recule": ("seek",), "avance": ("seek",), "secondes": ("seek",),
-    "regle": ("set",), "regler": ("set",), "cent": ("volume", "set"), "pourcent": ("volume", "set"),
-}
-_MOTS_DUAL = {"dual", "synchro", "synchronise", "synchronisee", "pc", "firefox", "decalage", "resynchronise"}
-
-# Question d'etat -> outils d'information (variante question_etat)
-_MARQUES_QUESTION = {"?", "est-il", "est-elle", "tourne", "encore", "quel", "quelle", "quels", "quelles",
-                     "combien", "ou", "quoi", "comment", "etat"}
-_CIBLES_ETAT = ("status", "state", "info", "get", "list", "scan")
 
 _NOM_DE_VM = re.compile(r"\b[a-z]+-\d{1,3}\b")
 
-# Mots decisifs du tri manquants (variante cartes_tri). Des mots de langue
-# courante, jamais une phrase du jeu ; chacun a fait rater un tri en it7.
-MOTS_TRI: dict[str, tuple[str, ...]] = {
-    "noir": ("off",), "noire": ("off",), "rien": ("off",), "eteint": ("off",),
-    "route": ("on", "start"), "marche": ("on", "start"),
-    "bascule": ("toggle",), "inverse": ("toggle",), "toggle": ("toggle",),
-    "chambre": ("group",), "salon": ("group",), "bureau": ("group",), "cuisine": ("group",),
-    "piece": ("group",), "lumieres": ("group", "lights"),
-    "quelles": ("all", "list", "get"), "quels": ("all", "list", "get"), "maison": ("all",),
-    "ou": ("status",),
-    "cinema": ("scene",), "saines": ("verify",), "saine": ("verify",), "integrite": ("verify",),
-    "comme": ("scan", "list", "apps"), "chez": ("scan",),
-    "espace": ("exec",), "disque": ("exec",), "df": ("exec",), "commande": ("exec",),
-    "allege": ("clean",), "vire": ("clean",), "nettoie": ("clean",), "menage": ("clean",),
-    "purge": ("clean",), "recentes": ("clean",), "anciennes": ("clean",),
-    "lecture": ("status", "resume"),
-}
-MOTS_FINS: dict[str, tuple[str, ...]] = {
-    "teinte": ("color", "temperature"), "chaude": ("temperature",), "chaud": ("temperature",),
-    "froide": ("temperature",), "froid": ("temperature",),
-}
-_RARES_FINS = {"fige", "gele", "chaude", "froide", "chaud", "froid",
-               "mauve", "violet", "rose", "cyan", "turquoise", "orange", "jaune"}
-VERBES_TRI: dict[str, tuple[str, ...]] = {
-    "allume": ("on", "start"), "allumer": ("on", "start"), "active": ("on", "start"), "activer": ("on",),
-    "demarre": ("on", "start"), "demarrer": ("on", "start"), "rallume": ("on",),
-    "eteins": ("off", "stop"), "eteindre": ("off", "stop"), "eteint": ("off",), "arrete": ("off", "stop"),
-    "arreter": ("off", "stop"), "stoppe": ("stop",), "desactive": ("off",),
-    "ouvre": ("launch", "app"), "ouvrir": ("launch", "app"), "lance": ("launch", "app", "start"),
-}
 
-# Quantite relative -> direction (variante mots_relatifs)
-MOTS_RELATIFS: dict[str, tuple[str, ...]] = {
-    "moins": ("down", "off"), "plus": ("up",),
-    "baisse": ("down",), "monte": ("up",),
-}
 
 _RRF_K = 60
 
-# Configuration retenue le 2026-09-18 apres la boucle sur le jeu hors regles :
-# 26/51 sur les formulations inedites et 19/21 sur le premier banc (les deux
-# cas perdus sont couverts par une regle en usage reel), contre 13/51 et 21/21
-# pour les neuf variantes du 2026-09-17. Ecartees, mesurees : dedup,
-# json_format, couleurs, mots_url, exemple_description, carte_son,
-# question_etat, nom_de_vm (neutres) ; routage, index, consigne_onoff,
-# deux_exemples, top5_direct, indice_url, exemple_discriminant (degradent).
-# Etendue le 2026-09-18 apres les iterations 5 et 6 hors regles : 35/51 avec
-# le 0.5b, 38/51 avec qwen2.5:1.5b, 44/51 avec qwen2.5:3b (la meme
-# configuration). Infirmees : boost_sur_etendue, resolution_floue, top1_si_net.
-# Configuration finale du 2026-09-19 (onze iterations hors regles) : 51/51 sur
-# le jeu hors regles et 21/21 sur le premier banc avec qwen2.5-coder:0.5b.
-# Infirmees en route : vote_rotation, boost_sur_etendue, resolution_floue,
-# top1_si_net (remplacee par outil_force_si_net).
-# Etendue le 2026-09-19 (soir) apres deux iterations sur le troisieme jeu,
-# devenu jeu de developpement : 56 -> 70 (inventaire_vm, lexique_courant,
-# verbes_courants) -> 82/100 (outil_par_machine, mots_courants_2).
-# Infirmee : net_assoupli (-4 : trois faux nets de plus imposent un mauvais outil).
-# Iteration 16 : nombres_tri + mots_courants_3 (83/100 ensemble ; 82 et 81 seules).
-# Iteration 17 (boucle "99 % sur chaque jeu") : cartes_17 (91), + nom_de_vm (91),
-# + lumiere_sans_verbe (92/100). Precision du tri net mesuree sans modele : 64/0.
-DEFAUT = ("exemples_cibles", "lexical", "recall8", "carte_mots", "top3_direct",
-          "exemple_par_spec", "poids_rares", "exemple_proche", "signature",
-          "carte_equipements", "mots_relatifs", "expansion", "lexique",
-          "resolution_arguments", "signature_complete", "verbes_catt",
-          "arguments_contradictoires", "entites_vm", "lexique_langue",
-          "exemples_denon", "double_passe", "args_par_regex",
-          "spec_description", "outil_force_si_net", "verification_binaire",
-          "cartes_tri", "carte_son", "denon_sans_veille", "cartes_fines",
-          "mots_url", "verbes_tri",
-          # Iterations 14-15 sur le troisieme jeu (56 -> 82/100) ; net_assoupli infirmee (-4).
-          "inventaire_vm", "lexique_courant", "verbes_courants",
-          "outil_par_machine", "mots_courants_2",
-          # Iteration 16 (jeu 3 : 82 -> 83, visait les echecs du jeu 4 : nombres, questions d'etat).
-          "nombres_tri", "mots_courants_3",
-          # Iteration 17 (jeu 3 : 83 -> 92 ; cartes_17 seule 91, nom_de_vm rejouee, lumiere_sans_verbe +1).
-          "cartes_17", "lumiere_sans_verbe", "nom_de_vm",
-          # Iteration 18 (jeu 3 : 92 -> 93, et moins d'appels au modele).
-          "force_definitif")
+# La configuration par defaut = toutes les variantes retenues (LYRA_EXP absente).
+DEFAUT = VARIANTES
 
 
 def actives() -> set[str]:
@@ -492,36 +102,6 @@ def exemples_cibles(system_prompt: str, serveurs: set[str]) -> str:
     return "".join(garde)
 
 
-def dedupliquer(specs_compactes: list[str]) -> list[str]:
-    """Une seule spec par nom d'outil, la premiere l'emporte (ordre conserve)."""
-    vus: set[str] = set()
-    out = []
-    for spec in specs_compactes:
-        nom = spec.split(":")[0].strip()
-        if nom in vus:
-            continue
-        vus.add(nom)
-        out.append(spec)
-    return out
-
-
-def numeroter(specs_compactes: list[str]) -> list[str]:
-    return [f"{i}. {spec}" for i, spec in enumerate(specs_compactes, 1)]
-
-
-def resoudre_index(tool, specs_compactes: list[str]):
-    """Un numero de spec devient le nom de l'outil ; tout autre tool est rendu tel quel."""
-    if tool is None:
-        return None
-    m = re.fullmatch(r"\s*(\d+)\s*\.?\s*", str(tool))
-    if not m:
-        return tool
-    i = int(m.group(1))
-    if 1 <= i <= len(specs_compactes):
-        return specs_compactes[i - 1].split(":")[0].strip()
-    return tool
-
-
 # --- Iteration 2 : texte, boost par tokens, URL -------------------------------
 
 def normaliser(texte: str) -> list[str]:
@@ -540,9 +120,6 @@ def url_youtube(requete: str) -> bool:
     return bool(re.search(r"https?://(?:www\.)?(?:youtube\.com|youtu\.be)/", requete or ""))
 
 
-_VERBES_MUTE = {"coupe", "couper", "coupez", "remets", "remettre", "remet", "rends", "mute", "sourdine"}
-
-
 def question_d_etat(requete: str) -> bool:
     r = (requete or "").lower()
     return "?" in r or any(m in set(normaliser(r)) for m in _MARQUES_QUESTION if m != "?")
@@ -551,7 +128,7 @@ def question_d_etat(requete: str) -> bool:
 def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
+               vm: bool = False, tri: bool = False, fines: bool = False,
                verbes: bool = False, courants: bool = False, courants2: bool = False,
                nombres: bool = False, courants3: bool = False, c17: bool = False) -> int:
     """Nombre de mots-cibles de la requete qui designent un token du nom.
@@ -650,8 +227,6 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
             score += 2 if (poids_rares and (mot in MOTS_RARES or (fines and mot in _RARES_FINS))) else 1
     if catt and "dual" in tokens and not (set(mots) & _MOTS_DUAL):
         score -= 1
-    if etat and question_d_etat(requete) and any(c in tokens for c in _CIBLES_ETAT):
-        score += 2
     if vm and noms_de_machines(requete, inventaire=courants or "inventaire_vm" in actives()) and "vm" in tokens:
         score += 2
     if nombres and question_franche(requete) and any(c in tokens for c in _CIBLES_ETAT + (("verify",) if c17 else ())):
@@ -662,13 +237,13 @@ def score_mots(nom_outil: str, requete: str, poids_rares: bool = False,
 def boost_mots(specs_compactes: list[str], requete: str, poids_rares: bool = False,
                cibler_youtube: bool = False, equipements: bool = False,
                relatifs: bool = False, son: bool = False, catt: bool = False,
-               etat: bool = False, vm: bool = False, tri: bool = False, fines: bool = False,
+               vm: bool = False, tri: bool = False, fines: bool = False,
                verbes: bool = False, courants: bool = False, courants2: bool = False,
                nombres: bool = False, courants3: bool = False, c17: bool = False) -> list[str]:
     """Re-trie les specs par mots-cibles (tri stable : l'ordre precedent departage)."""
     return sorted(specs_compactes,
                   key=lambda s: score_mots(nom_de_spec(s), requete, poids_rares,
-                                           cibler_youtube, equipements, relatifs, son, catt, etat, vm, tri, fines,
+                                           cibler_youtube, equipements, relatifs, son, catt, vm, tri, fines,
                                            verbes, courants, courants2, nombres, courants3, c17),
                   reverse=True)
 
@@ -761,39 +336,6 @@ def fusion_rrf(semantique: list[dict], lexical: list[dict], k: int = _RRF_K) -> 
 
 # --- Iteration 3 : couleurs, exemples par spec, mots rares -----------------------
 
-COULEURS: dict[str, tuple[int, int, int]] = {
-    "rouge": (255, 0, 0), "bleu": (0, 0, 255), "bleue": (0, 0, 255),
-    "vert": (0, 255, 0), "verte": (0, 255, 0), "jaune": (255, 255, 0),
-    "blanc": (255, 255, 255), "blanche": (255, 255, 255), "orange": (255, 165, 0),
-    "rose": (255, 105, 180), "violet": (128, 0, 128), "violette": (128, 0, 128),
-    "cyan": (0, 255, 255), "turquoise": (64, 224, 208),
-}
-
-MOTS_RARES = {"ambilight", "diffusion", "chevet", "veille", "cast", "chromecast",
-              "youtube", "netflix", "lounge"}
-
-
-def couleur_nommee(requete: str):
-    for mot in normaliser(requete):
-        if mot in COULEURS:
-            return COULEURS[mot]
-    return None
-
-
-def corriger_couleur(tool, arguments: dict, requete: str) -> dict:
-    """Pour un outil *color_rgb*, la couleur nommee dans la requete fixe les composantes.
-
-    Renvoie un nouveau dict ; les cles existantes (red/green/blue ou r/g/b)
-    sont respectees, sinon red/green/blue sont ajoutees.
-    """
-    arguments = dict(arguments or {})
-    if not tool or "color_rgb" not in str(tool):
-        return arguments
-    rgb = couleur_nommee(requete)
-    if rgb is None:
-        return arguments
-    cles = ("r", "g", "b") if {"r", "g", "b"} & set(arguments) else ("red", "green", "blue")
-    return {**arguments, **dict(zip(cles, rgb))}
 
 
 def paraphrases(spec_brute: str) -> list[str]:
@@ -818,27 +360,10 @@ def premiere_paraphrase(spec_brute: str):
     return liste[0] if liste else None
 
 
-def paraphrases_proches(spec_brute: str, requete: str, ignorer: set[str] | None = None) -> list[str]:
-    """Paraphrases triees par recouvrement de tokens avec la requete (tri stable).
-
-    `ignorer` : mots qui ne departagent rien (presents dans toutes les specs
-    montrees : "mets", "ampli", "en") -- variante exemple_discriminant.
-    """
-    mots = set(normaliser(requete)) - (ignorer or set())
-    liste = paraphrases(spec_brute)
-    return sorted(liste, key=lambda p: -len(mots & set(normaliser(p))))
-
-
-def mots_communs(specs_brutes: list[str]) -> set[str]:
-    """Mots presents dans les paraphrases de TOUTES les specs : ils ne departagent rien."""
-    ensembles = []
-    for brute in specs_brutes:
-        mots = set()
-        for ph in paraphrases(brute):
-            mots |= set(normaliser(ph))
-        if mots:
-            ensembles.append(mots)
-    return set.intersection(*ensembles) if len(ensembles) > 1 else set()
+def paraphrases_proches(spec_brute: str, requete: str) -> list[str]:
+    """Paraphrases triees par recouvrement de tokens avec la requete (tri stable)."""
+    mots = set(normaliser(requete))
+    return sorted(paraphrases(spec_brute), key=lambda p: -len(mots & set(normaliser(p))))
 
 
 def description_courte(spec_brute: str):
@@ -850,9 +375,8 @@ def description_courte(spec_brute: str):
 
 
 def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum: int = 3,
-                      requete: str | None = None, nb: int = 1,
-                      description_si_vide: bool = False, discriminant: bool = False) -> str:
-    """`nb` exemple(s) par spec montree, tires de ses paraphrases. Vide si aucune.
+                      requete: str | None = None) -> str:
+    """Un exemple par spec montree, tire de ses paraphrases. Vide si aucune.
 
     Avec `requete`, la paraphrase la plus proche de la requete passe en premier
     (variante exemple_proche) ; sinon c'est la premiere du document.
@@ -862,34 +386,18 @@ def exemples_par_spec(specs_brutes: list[str], noms_montres: list[str], maximum:
         nom = brute.split(":")[0].strip()
         par_nom.setdefault(nom, brute)
     lignes = []
-    montrees = [par_nom.get(n, "") for n in noms_montres[:maximum]]
-    ignorer = mots_communs(montrees) if (requete and discriminant) else set()
     for nom in noms_montres[:maximum]:
         brute = par_nom.get(nom, "")
-        phrases = paraphrases_proches(brute, requete, ignorer) if requete else paraphrases(brute)
-        if not phrases and description_si_vide:
-            desc = description_courte(brute)
-            phrases = [desc] if desc else []
+        phrases = paraphrases_proches(brute, requete) if requete else paraphrases(brute)
         court = nom.split(".")[-1]
-        for phrase in phrases[:max(1, nb)]:
-            lignes.append(f'Requete: "{phrase}" -> {{"tool": "{court}"}}')
+        if phrases:
+            lignes.append(f'Requete: "{phrases[0]}" -> {{"tool": "{court}"}}')
     if not lignes:
         return ""
     return "EXEMPLES POUR CES SPECS:\n" + "\n".join(lignes) + "\n\n"
 
 
-# --- Iteration 4 : signature jointe, consigne on/off ------------------------------
-
-_VERBES_OFF = {"eteins", "eteindre", "eteint", "coupe", "couper", "desactive", "desactiver", "arrete"}
-_VERBES_ON = {"allume", "allumer", "active", "activer", "enclenche", "demarre"}
-CONSIGNE_ONOFF = ("\nRAPPEL : eteindre, couper, desactiver = outil *_off ; "
-                  "allumer, activer = outil *_on.")
-
-
-def verbe_onoff(requete: str) -> bool:
-    mots = set(normaliser(requete))
-    return bool(mots & (_VERBES_OFF | _VERBES_ON))
-
+# --- Iteration 4 : signature jointe ------------------------------
 
 def extraire_signature(document: str):
     m = re.search(r"Signature:\s+(\S+\(.*?\))", document or "", re.DOTALL)
@@ -923,97 +431,9 @@ def joindre_signatures(items: list[dict]) -> list[dict]:
 
 # --- Jeu hors regles : expansion de la requete avant le RAG ------------------------
 
-# Synonymes d'equipement absents de data/synonym_dict.json (variante lexique).
-# Des MOTS, jamais des phrases du jeu de test : on complete un lexique, on
-# n'apprend pas le banc.
-LEXIQUE_EQUIPEMENTS: dict[str, tuple[str, ...]] = {
-    "tele": ("tv", "television"), "tv": ("tele", "television"),
-    "ampli": ("denon", "amplificateur"), "amplificateur": ("denon", "ampli"),
-    "chromecast": ("cast", "diffusion"), "cast": ("chromecast",),
-    "leds": ("ambilight", "retroeclairage"), "led": ("ambilight",),
-    "synchro": ("hue_beat", "beat", "synchronisation"),
-    "machine": ("vm", "machine virtuelle"), "serveur": ("vm",),
-    "sauvegardes": ("backup", "backups"), "sauvegarde": ("backup",),
-    "restauration": ("snapshot", "restore"),
-    "tar": ("archive", "export"), "archive": ("export",),
-    "clignoter": ("alert", "identifier"),
-    "applis": ("applications", "apps"), "appli": ("application", "app"),
-    "teinte": ("couleur", "temperature"),
-    "ip": ("status", "adresse"),
-    "image": ("ecran",),
-}
 
-# Synonymes de langue courante (variante lexique_langue) : des mots que ni
-# l'index ni le dictionnaire ne relient a un outil. Registre oral -> registre
-# des paraphrases. Jamais une phrase du jeu de test.
-LEXIQUE_LANGUE: dict[str, tuple[str, ...]] = {
-    "route": ("allumer", "demarrer", "marche"),
-    "noir": ("eteindre", "eteins", "off"), "noire": ("eteindre", "ecran", "off"),
-    "moitie": ("luminosite", "50", "tamiser"),
-    "double": ("clone", "cloner", "dupliquer"),
-    "restauration": ("snapshot", "instantane"), "point": ("snapshot",),
-    "emporter": ("exporter", "archive"), "tar": ("archive", "exporter"),
-    "saines": ("verifier", "integrite"), "saine": ("verifier", "integrite"),
-    "allege": ("nettoyer", "supprimer", "purger"), "stock": ("liste", "anciens"),
-    "recentes": ("anciens", "nettoyer"),
-    "console": ("game", "source", "entree"), "cran": ("volume", "monter"),
-    "lien": ("url",), "balance": ("caster", "envoyer", "diffuser"),
-    "fige": ("pause",), "gele": ("pause",), "remets": ("reprendre", "reactiver", "desactiver", "mute"),
-    "regarde": ("regarder", "video", "youtube"),
-    "passe": ("joue", "lecture", "media"), "moment": ("cours", "actuel"),
-    "regarder": ("lancer", "application", "app"), "veux": ("lance",),
-    "repere": ("identifier", "clignoter"), "clignoter": ("identifier", "alert"),
-    "maison": ("toutes", "liste"), "quelles": ("liste",),
-    "ambiance": ("scene", "activer"), "cinema": ("scene",),
-    "mauve": ("violet", "couleur"), "celle": ("lampe",),
-    "encore": ("etat", "status"), "tourne": ("etat", "actif"),
-    "comme": ("liste",), "applis": ("applications",),
-    "espace": ("commande", "executer"), "disque": ("commande", "executer"),
-    "depose": ("copier", "fichier"), "rapport": ("fichier",),
-    "vingt": ("20", "niveau"), "trente": ("30", "niveau"), "dix": ("10",),
-    "suit": ("mode",), "derriere": ("ambilight",),
-}
 _MOTIF_VM = re.compile(r"\b[a-z]+-\d{1,3}\b")
 
-# Bloc d'exemples Denon (variante exemples_denon) : le prompt systeme n'en avait aucun
-EXEMPLES_DENON = """=== EXEMPLES DENON (Home cinema) ===
-
-Requete: "allume l'ampli"
-Specs: power_on(), power_off()
-Reponse:
-{"tool": "power_on", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "allumer = ON"}
-
-Requete: "__VEILLE__"
-Specs: power_on(), power_off()
-Reponse:
-{"tool": "power_off", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "eteindre = OFF"}
-
-Requete: "coupe le son de l'ampli"
-Specs: mute_on(), mute_off(), volume_down()
-Reponse:
-{"tool": "mute_on", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "couper le son = mute"}
-
-Requete: "remets le son sur l'ampli"
-Specs: mute_on(), mute_off(), volume_up()
-Reponse:
-{"tool": "mute_off", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "remettre le son = fin du mute"}
-
-Requete: "regle l'ampli a 40"
-Specs: volume_set(level: integer), power_on()
-Reponse:
-{"tool": "volume_set", "arguments": {"level": 40}, "missing_args": [], "confidence": 0.95, "reasoning": "niveau explicite"}
-
-Requete: "l'ampli sur la console"
-Specs: set_input(source: string), power_on()
-Reponse:
-{"tool": "set_input", "arguments": {"source": "GAME"}, "missing_args": [], "confidence": 0.9, "reasoning": "console = entree GAME"}
-
-Requete: "l'ampli est allume ?"
-Specs: get_status(), power_on()
-Reponse:
-{"tool": "get_status", "arguments": {}, "missing_args": [], "confidence": 0.95, "reasoning": "question d'etat"}
-
-"""
 
 _expander = None
 
@@ -1255,24 +675,6 @@ def completer_arguments(tool, arguments: dict, specs_compactes: list[str], reque
     return arguments
 
 
-_MODES_AMBILIGHT = {"lounge": "lounge_light", "musique": "follow_audio", "audio": "follow_audio",
-                    "video": "follow_video", "film": "follow_video", "manuel": "manual"}
-
-
-def resoudre_flou(tool, specs_compactes: list[str]):
-    """Nom inconnu -> spec montree dont le nom partage le plus de tokens ; a defaut, rang 1."""
-    if not tool or not specs_compactes:
-        return tool
-    noms = [nom_de_spec(sp) for sp in specs_compactes]
-    court = str(tool).split(".")[-1].lower()
-    if any(n.split(".")[-1].lower() == court for n in noms):
-        return tool
-    mots = set(court.split("_"))
-    scores = [len(mots & set(n.split(".")[-1].lower().split("_"))) for n in noms]
-    meilleur = max(scores)
-    if meilleur > 0 and scores.count(meilleur) == 1:
-        return noms[scores.index(meilleur)]
-    return noms[0]
 
 
 # --- Iteration 7 hors regles ---------------------------------------------------------
@@ -1286,27 +688,6 @@ def avec_description(spec_compacte: str, spec_brute: str, maximum: int = 70) -> 
         return spec_compacte
     desc = desc[:maximum].rstrip()
     return f"{spec_compacte} -- {desc}"
-
-
-def rotation(liste: list, k: int) -> list:
-    """Rotation de k positions vers la gauche ([a, b, c], 1) -> [b, c, a]."""
-    if not liste:
-        return []
-    k %= len(liste)
-    return list(liste[k:]) + list(liste[:k])
-
-
-def vote(analyses: list, requete: str):
-    """Vote majoritaire sur le nom court de l'outil ; a egalite, la premiere analyse."""
-    valides = [a for a in analyses if a is not None and getattr(a, "tool", None)]
-    if not valides:
-        return analyses[0] if analyses else None
-    comptes: dict[str, int] = {}
-    for a in valides:
-        court = str(a.tool).split(".")[-1].lower()
-        comptes[court] = comptes.get(court, 0) + 1
-    gagnant = max(comptes.items(), key=lambda kv: kv[1])[0]
-    return next(a for a in valides if str(a.tool).split(".")[-1].lower() == gagnant)
 
 
 # --- Leviers generiques (2026-09-19, apres le troisieme jeu) --------------------------
@@ -1359,80 +740,6 @@ def nouveau_nom(requete: str, source: str) -> str | None:
     return None
 
 
-# Synonymes de langue courante par domaine (variante lexique_courant). Ecrits a
-# partir du francais de tous les jours, domaine par domaine, pas des echecs d'un
-# banc : chaque entree relie un mot ordinaire au registre des paraphrases indexees.
-LEXIQUE_COURANT: dict[str, tuple[str, ...]] = {
-    # allumage / extinction
-    "reveille": ("allumer", "demarrer"), "reveiller": ("allumer", "demarrer"), "reveilles": ("allumer",),
-    "eclaire": ("allumer", "lumiere"), "eclairer": ("allumer", "lumiere"), "eclairage": ("lumiere", "lampe"),
-    "vire": ("eteindre", "supprimer"), "virer": ("eteindre", "supprimer"), "degage": ("supprimer", "eteindre"),
-    "degager": ("supprimer", "eteindre"), "enleve": ("eteindre", "desactiver"), "enlever": ("eteindre", "desactiver"),
-    "repos": ("eteindre", "arreter", "veille"), "dodo": ("veille", "eteindre"), "dormir": ("veille", "eteindre"),
-    "nuit": ("eteindre", "veille"), "fini": ("eteindre", "arreter"), "ferme": ("eteindre", "arreter"),
-    "obscurite": ("eteindre",), "sombre": ("baisser", "luminosite"),
-    # volume / son
-    "fort": ("volume", "monter"), "forte": ("volume", "monter"), "pousse": ("monter", "volume"),
-    "pousser": ("monter", "volume"), "descends": ("baisser", "volume"), "descendre": ("baisser", "volume"),
-    "doucement": ("baisser", "volume"), "silence": ("mute", "couper le son"), "chut": ("mute", "couper le son"),
-    "sourdine": ("mute",), "cran": ("volume",), "niveau": ("volume",),
-    # lumiere
-    "tamise": ("luminosite", "baisser"), "tamiser": ("luminosite", "baisser"), "moitie": ("luminosite", "50"),
-    "fond": ("luminosite", "maximum"), "couleur": ("couleur", "rgb"), "teinte": ("couleur", "temperature"),
-    "preset": ("preset", "couleur"), "predefini": ("preset",), "groupe": ("groupe", "piece"),
-    "groupes": ("groupes", "pieces"), "pieces": ("groupes",), "nommee": ("nom", "chercher"), "nomme": ("nom", "chercher"),
-    "appelle": ("nom", "chercher"), "connectees": ("liste", "toutes"), "clignote": ("alert", "identifier"),
-    # lecture / cast
-    "attends": ("pause",), "patiente": ("pause",), "reprends": ("reprendre", "lecture"), "repartir": ("reprendre",),
-    "saute": ("avancer", "secondes"), "arriere": ("reculer", "secondes"), "titre": ("info", "en cours"),
-    "morceau": ("info", "en cours"), "onglet": ("navigateur", "browser"), "navigateur": ("browser", "onglet"),
-    "firefox": ("navigateur", "browser"), "recale": ("resynchroniser", "decalage"), "decales": ("resynchroniser",),
-    "decale": ("decalage", "offset"), "avance": ("decalage", "avancer"), "retard": ("decalage",),
-    "flux": ("url", "diffuser"), "lien": ("url",), "video": ("youtube", "url"),
-    # applications / entrees
-    "netflix": ("application", "app"), "plex": ("application", "app"), "disney": ("application", "app"),
-    "prime": ("application", "app"), "twitch": ("application", "app"), "spotify": ("application", "app"),
-    "youtube": ("application", "app"), "playstation": ("game", "source", "entree"), "ps5": ("game", "source"),
-    "xbox": ("game", "source"), "switch": ("game", "source"), "console": ("game", "source", "entree"),
-    "bluray": ("bd", "source", "entree"), "lecteur": ("source", "entree"), "media": ("mplay", "source"),
-    # machines
-    "jumeau": ("clone", "cloner"), "jumelle": ("clone",), "duplique": ("clone", "cloner"), "copie": ("clone", "copier"),
-    "instantane": ("snapshot",), "photo": ("snapshot",), "image": ("snapshot", "ecran"),
-    "supprime": ("supprimer", "detruire"), "efface": ("supprimer", "detruire"), "detruis": ("detruire",),
-    "place": ("commande", "df"), "espace": ("commande", "df"), "uptime": ("commande", "executer"),
-    "tourne": ("etat", "status"), "route": ("allumer", "demarrer", "etat"),
-    # sauvegardes
-    "restaure": ("restaurer", "restore"), "recupere": ("restaurer", "restore"), "hier": ("sauvegarde", "restaurer"),
-    "menage": ("nettoyer", "supprimer"), "nettoie": ("nettoyer", "purger"), "purge": ("nettoyer",),
-    "vieilles": ("anciennes", "nettoyer"), "timeshift": ("sauvegarde", "backup"), "borg": ("sauvegarde", "backup"),
-    "bonnes": ("verifier", "integrite"), "fiables": ("verifier", "integrite"),
-}
-
-# Les memes verbes dans les cartes de tri (variante verbes_courants) : cibles = tokens des noms d'outils.
-VERBES_COURANTS: dict[str, tuple[str, ...]] = {
-    "reveille": ("on", "start"), "reveiller": ("on", "start"), "eclaire": ("on",), "eclairer": ("on",),
-    "vire": ("off", "destroy"), "virer": ("off", "destroy"), "degage": ("destroy", "off"), "degager": ("destroy", "off"),
-    "enleve": ("off",), "enlever": ("off",), "enleves": ("off",), "repos": ("off", "stop"), "dodo": ("off",), "dormir": ("off",),
-    "fini": ("off", "stop"), "ferme": ("off", "stop"),
-    "pousse": ("up",), "pousser": ("up",), "descends": ("down",), "descendre": ("down",), "doucement": ("down",),
-    "silence": ("mute",), "chut": ("mute",), "sourdine": ("mute",),
-    "tamise": ("brightness",), "tamiser": ("brightness",), "fond": ("brightness",),
-    "preset": ("preset",), "predefini": ("preset",), "groupes": ("groups",), "pieces": ("groups",),
-    "nommee": ("find", "name"), "nomme": ("find", "name"), "appelle": ("find", "name"),
-    "attends": ("pause",), "patiente": ("pause",), "reprends": ("resume",), "repartir": ("resume",),
-    "saute": ("seek",), "arriere": ("seek",), "titre": ("info",), "morceau": ("info",),
-    "onglet": ("browser",), "navigateur": ("browser",), "recale": ("resync",), "decale": ("offset",),
-    "retard": ("offset",), "flux": ("url",),
-    "playstation": ("input",), "ps5": ("input",), "xbox": ("input",), "console": ("input",),
-    "bluray": ("input",), "lecteur": ("input",),
-    "jumeau": ("clone",), "jumelle": ("clone",), "duplique": ("clone",), "instantane": ("snapshot",),
-    "photo": ("snapshot",), "supprime": ("destroy", "clean"), "efface": ("destroy",), "detruis": ("destroy",),
-    "place": ("exec",), "uptime": ("exec",), "tourne": ("status", "state"),
-    "restaure": ("restore",), "recupere": ("restore",), "menage": ("clean",), "nettoie": ("clean",),
-    "purge": ("clean",), "vieilles": ("clean",), "bonnes": ("verify",), "fiables": ("verify",),
-}
-
-
 # --- Iteration 15 ------------------------------------------------------------------
 
 def outil_par_machine(tool, arguments: dict, specs_compactes: list[str], requete: str):
@@ -1460,31 +767,6 @@ def outil_par_machine(tool, arguments: dict, specs_compactes: list[str], requete
     return nouveau, args
 
 
-LEXIQUE_COURANT_2: dict[str, tuple[str, ...]] = {
-    "sors": ("exporter", "archive"), "sortir": ("exporter", "archive"), "sortie": ("exporter",),
-    "bilan": ("etat", "status"),   # pas "point" : "point de restauration" est un snapshot
-    "reste": ("arreter", "stop"), "restons": ("arreter", "stop"), "termine": ("arreter", "stop"),
-    "sans": ("couper", "mute"), "silencieux": ("mute",),
-    "prends": ("source", "entree"), "prend": ("source", "entree"), "prendre": ("source", "entree"),
-    "dispo": ("liste", "disponibles"), "disponibles": ("liste",), "disponible": ("liste",),
-    "connectees": ("liste", "toutes"), "connectes": ("liste", "toutes"),
-    "danser": ("beat", "synchro", "musique"), "dansent": ("beat", "synchro"),
-    "suivent": ("beat", "etat"), "suit": ("beat", "etat"),
-    "ambiances": ("scenes", "liste"), "froide": ("temperature", "froid"), "chaude": ("temperature", "chaud"),
-    "avance": ("decalage", "offset"), "mettre": ("allumer", "lancer"),
-}
-
-VERBES_COURANTS_2: dict[str, tuple[str, ...]] = {
-    "sors": ("export",), "sortir": ("export",), "bilan": ("status",),
-    "reste": ("stop",), "restons": ("stop",), "termine": ("stop", "off"),
-    "sans": ("mute",), "silencieux": ("mute",),
-    "prends": ("input",), "prend": ("input",), "prendre": ("input",),
-    "dispo": ("all", "list", "apps"), "disponibles": ("all", "list"), "connectees": ("all", "lights"),
-    "danser": ("beat", "start"), "dansent": ("beat", "start"), "suivent": ("beat", "status"), "suit": ("beat", "status"),
-    "ambiances": ("scenes", "all"), "avance": ("offset",), "mettre": ("on",),
-}
-
-
 # --- Iteration 16 ------------------------------------------------------------------
 
 _POLITESSE = re.compile(r"\b(?:tu peux|peux-tu|pourrais-tu|tu pourrais|tu veux bien|veux-tu|s'il te plait|stp"
@@ -1500,61 +782,10 @@ def question_franche(requete: str) -> bool:
     return r.endswith("?") or r.startswith("est-ce que") or r.startswith("est ce que")
 
 
-NOMBRES = {"zero", "cinq", "dix", "quinze", "vingt", "trente", "quarante", "cinquante", "soixante",
-           "septante", "huitante", "nonante", "cent", "moitie", "quart", "tiers"}
-
-LEXIQUE_COURANT_3: dict[str, tuple[str, ...]] = {
-    "appuie": ("touche", "telecommande"), "appuyer": ("touche", "telecommande"), "appuies": ("touche",),
-    "presse": ("touche", "telecommande"), "valide": ("touche", "ok"),
-    "train": ("etat", "status", "en cours"), "quelle": ("etat", "status"), "quel": ("etat", "status"),
-    "quinze": ("15", "regler"), "quarante": ("40", "regler"), "cinquante": ("50", "regler"),
-    "soixante": ("60", "regler"), "trente": ("30", "regler"), "vingt": ("20", "regler"),
-    "rythme": ("beat", "musique"), "detente": ("scene", "ambiance"), "soiree": ("scene", "ambiance"),
-}
-
-VERBES_COURANTS_3: dict[str, tuple[str, ...]] = {
-    "appuie": ("key", "send"), "appuyer": ("key", "send"), "appuies": ("key",), "presse": ("key", "send"),
-    "valide": ("key",), "train": ("status",), "rythme": ("start",),
-    "active": ("activate", "on"), "activer": ("activate",), "scene": ("scene", "activate"),
-}
 
 
 # --- Iteration 17 ------------------------------------------------------------------
 
-CARTES_17: dict[str, tuple[str, ...]] = {
-    "home": ("denon",), "cinema": ("denon",),
-    "poil": ("volume",), "fort": ("volume",), "forte": ("volume",),
-    "retour": ("key",), "menu": ("key",), "touche": ("key",),
-    "pc": ("dual",), "synchronisee": ("dual",), "synchronise": ("dual",), "meme": ("dual",), "decales": ("dual", "resync"),
-    "bonnes": ("verify",), "bonne": ("verify",),
-    "repos": ("stop",),
-    "uptime": ("exec",), "df": ("exec",), "free": ("exec",), "ls": ("exec",),
-    # l'equipement designe le serveur : le score absolu monte d'un cran pour
-    # tous ses outils, et le tri devient net quand il ne l'etait qu'a 1 point
-    "tele": ("tv",), "tv": ("tv",), "television": ("tv",),
-    "lampe": ("hue",), "lampes": ("hue", "lights"), "lumiere": ("hue",), "lumieres": ("hue",), "ampoule": ("hue",),
-    "toutes": ("all", "list"), "tous": ("all", "list"), "liste": ("all", "list"), "lister": ("all", "list"),
-    "quel": ("get", "status", "state"), "quelle": ("get", "status", "state"), "etat": ("get", "status", "state"),
-    "tournent": ("status", "state"), "ok": ("verify",),
-    "borg": ("create",), "timeshift": ("create",),   # pas "backup" : tous les outils backup l'ont
-    "effet": ("effect",), "bouge": ("effect",), "lien": ("url",), "balance": ("cast",),
-    "entree": ("input", "source"), "source": ("input",),
-    "vois": ("scan",), "voir": ("scan",), "combien": ("scan", "all", "list"),
-    "refais": ("clone",), "refaire": ("clone",), "nom": ("clone", "name"), "jumeau": ("clone",),
-    "coucher": ("preset",), "soleil": ("preset",), "aube": ("preset",), "mode": ("mode", "preset"),
-    "mauve": ("color", "rgb"), "violet": ("color", "rgb"), "rose": ("color", "rgb"), "cyan": ("color", "rgb"),
-    "turquoise": ("color", "rgb"), "orange": ("color", "rgb"), "jaune": ("color", "rgb"),
-}
-_COULEURS = {"mauve", "violet", "rose", "cyan", "turquoise", "orange", "jaune", "rouge", "vert", "verte", "bleu", "bleue", "blanc", "blanche"}
-_PIECES = {"bureau", "salon", "chambre", "cuisine", "entree", "couloir", "salle", "garage"}
-_MOTS_COMMANDE = {"uptime", "df", "free", "ls", "ping", "top", "cat", "systemctl", "journalctl", "uname", "ps"}
-LEXIQUE_17: dict[str, tuple[str, ...]] = {
-    "remettre": ("reprendre", "reactiver", "desactiver", "mute"),
-    "poil": ("un peu", "volume"), "home": ("ampli", "denon"), "cinema": ("ampli", "denon"),
-    "retour": ("touche", "telecommande"), "menu": ("touche", "telecommande"),
-    "pc": ("dual", "navigateur"), "synchronisee": ("dual", "synchronise"),
-    "point": ("etat", "status"), "etat": ("infos", "informations", "status", "detail"),
-}
 
 _VERBES_CONNUS = re.compile(r"\b(?:allume|allumer|eteins|eteindre|eteint|coupe|couper|mets|mettre|baisse|monte|tamise|"
                             r"active|desactive|regle|passe|change|remets|rallume|lance|vire|enleve|met)\b")

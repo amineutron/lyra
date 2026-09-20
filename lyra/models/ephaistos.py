@@ -506,7 +506,6 @@ class Ephaistos:
         specs_toon: Optional[str] = None,
         max_specs: int = 0,
         skip_specs: int = 0,
-        rotation_specs: int = 0,
         seulement: Optional[list] = None
     ) -> EphaistosAnalysis:
         """Analyse une requete avec les specs MCP.
@@ -537,13 +536,9 @@ class Ephaistos:
             compact_specs = [self._compact_spec(s) for s in mcp_specs]
             if "spec_description" in variantes:
                 compact_specs = [_exp.avec_description(c, b) for c, b in zip(compact_specs, mcp_specs)]
-            # Variante boost_sur_etendue : le tri et l'exemple proche lisent la
-            # requete etendue de synonymes (lexique_langue n'agissait que cote RAG)
+            # Le tri et l'exemple proche lisent la requete telle quelle (l'etendre
+            # de synonymes bruitait le tri : boost_sur_etendue, refutee).
             requete_tri = user_query
-            if "boost_sur_etendue" in variantes:
-                requete_tri = _exp.etendre_requete(user_query, lexique="lexique" in variantes,
-                                                   entites="entites_vm" in variantes,
-                                                   langue="lexique_langue" in variantes)
             # Re-trier: mettre en premier la spec qui correspond au verbe d'action
             compact_specs = self._boost_spec_order(compact_specs, requete_tri)
             if "carte_mots" in variantes:
@@ -554,7 +549,6 @@ class Ephaistos:
                                                 relatifs="mots_relatifs" in variantes,
                                                 son="carte_son" in variantes,
                                                 catt="verbes_catt" in variantes,
-                                                etat="question_etat" in variantes,
                                                 vm="nom_de_vm" in variantes,
                                                 tri="cartes_tri" in variantes,
                                                 fines="cartes_fines" in variantes,
@@ -577,22 +571,12 @@ class Ephaistos:
                                       courants3="mots_courants_3" in variantes,
                                       c17="cartes_17" in variantes,
                                       vm="nom_de_vm" in variantes,   # le critere net lisait le tri sans le bonus machine
-                                      seuil=1 if "net_assoupli" in variantes else 2,
                                       cibler_youtube="mots_url" in variantes))
-            if "top1_si_net" in variantes and net:
-                max_specs = 1
             if "outil_force_si_net" in variantes and net:
                 max_specs = 1
                 outil_force = _exp.nom_de_spec(compact_specs[0])
-            if rotation_specs and max_specs:
-                compact_specs = _exp.rotation(_exp.fenetre(compact_specs, max_specs, skip_specs), rotation_specs)
-            else:
-                compact_specs = _exp.fenetre(compact_specs, max_specs, skip_specs)
-            if "dedup" in variantes:
-                compact_specs = _exp.dedupliquer(compact_specs)
+            compact_specs = _exp.fenetre(compact_specs, max_specs, skip_specs)
             specs_pour_index = list(compact_specs)
-            if "index" in variantes:
-                compact_specs = _exp.numeroter(compact_specs)
             specs_text = "\n".join(compact_specs)
             label = "SPECS MCP"
 
@@ -600,11 +584,7 @@ class Ephaistos:
         if "exemple_par_spec" in variantes and specs_pour_index:
             exemples_specs = _exp.exemples_par_spec(
                 list(mcp_specs), [c.split(":")[0].strip() for c in specs_pour_index],
-                requete=(requete_tri if "boost_sur_etendue" in variantes else user_query)
-                if "exemple_proche" in variantes else None,
-                nb=2 if "deux_exemples" in variantes else 1,
-                description_si_vide="exemple_description" in variantes,
-                discriminant="exemple_discriminant" in variantes)
+                requete=user_query if "exemple_proche" in variantes else None)
 
         prompt = f"""{label}:
 {specs_text}
@@ -614,12 +594,6 @@ class Ephaistos:
         if known_args:
             prompt += f"\nARGS CONNUS: {json.dumps(known_args, ensure_ascii=False)}"
 
-        if "index" in variantes and specs_pour_index:
-            prompt += _exp.CONSIGNE_INDEX
-        if "indice_url" in variantes and _exp.contient_url(user_query):
-            prompt += _exp.CONSIGNE_URL
-        if "consigne_onoff" in variantes and _exp.verbe_onoff(user_query):
-            prompt += _exp.CONSIGNE_ONOFF
         prompt += "\nJSON:"
 
         system = EPHAISTOS_SYSTEM_PROMPT
@@ -627,9 +601,6 @@ class Ephaistos:
             system = _exp.inserer_bloc_denon(system, sans_veille="denon_sans_veille" in variantes)
         if "exemples_cibles" in variantes and specs_pour_index:
             system = _exp.exemples_cibles(system, _exp.serveurs_des_specs(specs_pour_index))
-        if "routage" in variantes:
-            system = system.replace("STRUCTURE DE REPONSE:",
-                                    _exp.REGLE_ROUTAGE + "STRUCTURE DE REPONSE:", 1)
 
         # Appeler EPHAISTOS
         response = self.model_manager.call_ephaistos(
@@ -649,10 +620,6 @@ class Ephaistos:
 
         # Parser la reponse JSON
         analysis = self._parse_response(response.content)
-        if "index" in variantes and specs_pour_index:
-            analysis.tool = _exp.resoudre_index(analysis.tool, specs_pour_index)
-        if "couleurs" in variantes:
-            analysis.arguments = _exp.corriger_couleur(analysis.tool, analysis.arguments, user_query)
         if "outil_par_machine" in variantes and specs_pour_index:
             analysis.tool, analysis.arguments = _exp.outil_par_machine(
                 analysis.tool, analysis.arguments, specs_pour_index, user_query)
@@ -661,8 +628,6 @@ class Ephaistos:
                                                         specs_pour_index, user_query)
         if "arguments_contradictoires" in variantes and specs_pour_index:
             analysis.tool = _exp.basculer_par_arguments(analysis.tool, analysis.arguments, specs_pour_index)
-        if "resolution_floue" in variantes and specs_pour_index:
-            analysis.tool = _exp.resoudre_flou(analysis.tool, specs_pour_index)
         # L'outil impose s'applique AVANT le complement d'arguments : "mets
         # staging-03 au repos" -> vm_stop impose, mais le modele avait repondu
         # "repo_add" et vm_name n'etait jamais complete (it18).
@@ -912,8 +877,6 @@ Valide les arguments. Reponds en JSON:
                 from . import ephaistos_exp as _exp
                 if "top3_direct" in _exp.actives():
                     use_max_specs = 3
-                if "top5_direct" in _exp.actives():
-                    use_max_specs = 5
 
             analysis = self.analyze(user_query, mcp_specs, specs_toon=use_toon, max_specs=use_max_specs)
 
@@ -929,11 +892,6 @@ Valide les arguments. Reponds en JSON:
                 seconde = self.analyze(user_query, mcp_specs, max_specs=use_max_specs,
                                        skip_specs=use_max_specs)
                 analysis = _exp.choisir_par_score(analysis, seconde, user_query)
-
-            if attempt == 0 and not use_toon and "vote_rotation" in _exp.actives() and use_max_specs:
-                autres = [self.analyze(user_query, mcp_specs, max_specs=use_max_specs, rotation_specs=k)
-                          for k in (1, 2)]
-                analysis = _exp.vote([analysis] + autres, user_query)
 
             if (attempt == 0 and not use_toon and "verification_binaire" in _exp.actives()
                     and analysis.tool and getattr(analysis, "rang1", None)

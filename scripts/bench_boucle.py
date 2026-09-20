@@ -86,7 +86,7 @@ def main() -> None:
     parser.add_argument("--iteration", type=int, default=1, help="numero de la boucle (pour le nom du fichier)")
     parser.add_argument("--rapide", action="store_true", help="variantes seules + toutes, sans les paires")
     parser.add_argument("--seulement", default=None,
-                        help="configs a jouer, separees par ';' (ex: 'dedup;dedup,routage')")
+                        help="configs a jouer, separees par ';' (ex: 'lexical;lexical,recall8')")
     parser.add_argument("--jeu", default="modeles", choices=["modeles", "hors_regles", "hors_regles_2", "hors_regles_3", "hors_regles_4", "hors_regles_5"],
                         help="jeu de cas a rejouer (defaut : modeles)")
     parser.add_argument("--socle", default="",

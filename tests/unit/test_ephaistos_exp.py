@@ -23,8 +23,8 @@ class TestActivation:
         assert exp.actives() == set()
 
     def test_lit_la_variable(self, monkeypatch):
-        monkeypatch.setenv("LYRA_EXP", "dedup, routage ,inconnue")
-        assert exp.actives() == {"dedup", "routage"}
+        monkeypatch.setenv("LYRA_EXP", "lexical, recall8 ,inconnue")
+        assert exp.actives() == {"lexical", "recall8"}
 
 
 class TestExemplesCibles:
@@ -54,34 +54,6 @@ class TestSpecs:
 
     def test_serveurs(self):
         assert exp.serveurs_des_specs(self.SPECS) == {"catt", "tv"}
-
-    def test_dedup_garde_la_premiere_et_l_ordre(self):
-        assert exp.dedupliquer(self.SPECS) == [self.SPECS[0], self.SPECS[1], self.SPECS[3]]
-
-    def test_numerotation(self):
-        assert exp.numeroter(self.SPECS[:2]) == ["1. catt.cast_stop: cast_stop()",
-                                                 "2. tv.power_on: power_on()"]
-
-
-class TestIndex:
-    SPECS = ["catt.cast_stop: cast_stop()", "tv.power_on: power_on()"]
-
-    def test_numero_valide(self):
-        assert exp.resoudre_index("2", self.SPECS) == "tv.power_on"
-        assert exp.resoudre_index(1, self.SPECS) == "catt.cast_stop"
-        assert exp.resoudre_index(" 1. ", self.SPECS) == "catt.cast_stop"
-
-    def test_numero_hors_borne_rendu_tel_quel(self):
-        assert exp.resoudre_index("9", self.SPECS) == "9"
-
-    def test_nom_non_numerique_inchange(self):
-        assert exp.resoudre_index("cast_stop", self.SPECS) == "cast_stop"
-
-    def test_none(self):
-        assert exp.resoudre_index(None, self.SPECS) is None
-
-
-# --- Iteration 2 --------------------------------------------------------------
 
 class TestNormalisation:
     def test_accents_et_ponctuation(self):
@@ -200,28 +172,6 @@ class TestFusionRRF:
 
 # --- Iteration 3 --------------------------------------------------------------
 
-class TestCouleurs:
-    def test_bleu_fixe_les_composantes(self):
-        r = exp.corriger_couleur("hue.set_group_color_rgb", {"red": 0, "green": 255, "blue": 0}, "mets une ambiance bleue")
-        assert (r["red"], r["green"], r["blue"]) == (0, 0, 255)
-
-    def test_cles_courtes_respectees(self):
-        r = exp.corriger_couleur("set_color_rgb", {"r": 1, "g": 2, "b": 3}, "mets en rouge")
-        assert (r["r"], r["g"], r["b"]) == (255, 0, 0) and "red" not in r
-
-    def test_sans_couleur_nommee_inchange(self):
-        args = {"red": 1, "green": 2, "blue": 3}
-        assert exp.corriger_couleur("set_color_rgb", args, "change la couleur") == args
-
-    def test_outil_sans_couleur_inchange(self):
-        assert exp.corriger_couleur("tv.power_on", {}, "mets la tv en bleu") == {}
-
-    def test_ne_mute_pas_l_entree(self):
-        args = {"red": 1}
-        exp.corriger_couleur("set_color_rgb", args, "vert")
-        assert args == {"red": 1}
-
-
 class TestExemplesParSpec:
     BRUTES = ["tv.ambilight_on: Active l'Ambilight | Utilise pour: allume l'ambilight. active les LEDs",
               "tv.power_on: Allume la TV",
@@ -286,11 +236,6 @@ class TestExempleProche:
         r = exp.exemples_par_spec([self.BRUTE], ["tv.ambilight_off"])
         assert "désactiver l'ambilight" in r.splitlines()[1]
 
-    def test_deux_exemples(self):
-        r = exp.exemples_par_spec([self.BRUTE], ["tv.ambilight_off"], nb=2)
-        assert len(r.strip().splitlines()) == 3
-
-
 class TestSignature:
     CAP = {"source": "capabilities", "metadata": {"tool_name": "tv.ambilight_mode"},
            "document": "Change le mode Ambilight | Utilise pour: changer le mode ambilight", "score": 0.6}
@@ -314,12 +259,6 @@ class TestSignature:
     def test_ne_mute_pas_l_entree(self):
         exp.joindre_signatures([self.CAP, self.PAR])
         assert "Signature" not in self.CAP["document"]
-
-
-class TestConsigneOnOff:
-    def test_detecte_les_verbes(self):
-        assert exp.verbe_onoff("éteins la télé") and exp.verbe_onoff("allume l ambilight")
-        assert not exp.verbe_onoff("monte le volume")
 
 
 class TestMotsUrl:
@@ -409,17 +348,6 @@ class TestResolutionParArguments:
         assert exp.resoudre_par_arguments("synchro_lumieres", {}, self.SPECS, "lance la synchro") == "synchro_lumieres"
 
 
-class TestExempleDescription:
-    BRUTE = "tv.screen_on: Rallume l'ecran de la TV apres un screen_off "
-
-    def test_description_sert_d_exemple_sans_paraphrase(self):
-        r = exp.exemples_par_spec([self.BRUTE], ["tv.screen_on"], description_si_vide=True)
-        assert 'Requete: "Rallume l\'ecran de la TV apres un screen_off" -> {"tool": "screen_on"}' in r
-
-    def test_sans_option_rien(self):
-        assert exp.exemples_par_spec([self.BRUTE], ["tv.screen_on"]) == ""
-
-
 class TestCarteSon:
     def test_couper_le_son_vise_mute(self):
         assert exp.score_mots("denon.mute_on", "coupe le son de l'ampli", son=True) >= 1
@@ -442,26 +370,8 @@ class TestSignatureComplete:
         assert "Args" not in r and not r.endswith("gro") and len(r) <= 220
 
 
-class TestExempleDiscriminant:
-    ON = "denon.power_on: Allume | Utilise pour: allumer l'ampli. mettre l'ampli en marche"
-    OFF = "denon.power_off: Eteint | Utilise pour: mets l'ampli en veille. éteindre l'ampli"
-
-    def test_mots_communs_a_toutes_les_specs(self):
-        assert {"l", "ampli"} <= exp.mots_communs([self.ON, self.OFF])
-
-    def test_la_proximite_ignore_les_mots_communs(self):
-        r = exp.exemples_par_spec([self.ON, self.OFF], ["denon.power_on", "denon.power_off"],
-                                  requete="mets l'ampli en route", discriminant=True)
-        # sans discriminant, "mets l'ampli en veille" serait le plus proche pour power_off ;
-        # avec, "mets"/"en" comptent encore pour power_off : on verifie surtout que power_on
-        # ne recoit pas un exemple trompeur et que le bloc reste bien forme
-        assert '{"tool": "power_on"}' in r and '{"tool": "power_off"}' in r
-
-
 class TestQuestionEtat:
-    def test_question_cible_les_outils_d_etat(self):
-        specs = ["denon.power_on: power_on()", "denon.get_status: get_status()"]
-        assert exp.boost_mots(specs, "l'ampli est allume ?", etat=True)[0].startswith("denon.get_status")
+    def test_question_d_etat(self):
         assert exp.question_d_etat("la synchro lumiere tourne encore ?")
         assert not exp.question_d_etat("allume la tele")
 
@@ -568,12 +478,6 @@ class TestIteration6:
         specs = ["fedora.vm_stop: vm_stop(vm_name: string)"]
         assert exp.completer_arguments("vm_stop", {"vm_name": "x"}, specs, "coupe sandbox-02")["vm_name"] == "x"
 
-    def test_resolution_floue(self):
-        specs = ["hue.set_group_color_rgb: f()", "hue.refresh_lights: f()", "hue.get_all_lights: f()"]
-        assert exp.resoudre_flou("get_lights", specs) == "hue.get_all_lights"
-        assert exp.resoudre_flou("zzz", specs) == "hue.set_group_color_rgb"
-        assert exp.resoudre_flou("refresh_lights", specs) == "refresh_lights"
-
     def test_lexique_relie_remets_et_regarde(self):
         assert "mute" in exp.etendre_requete("remets le son sur l'ampli", langue=True).split()
         assert "youtube" in exp.etendre_requete("regarde-moi ca sur le chromecast", langue=True).split()
@@ -585,25 +489,6 @@ class TestIteration7:
         assert r == "catt.cast_info: cast_info() -- Retourne les infos detaillees du media en cours"
         assert exp.nom_de_spec(r) == "catt.cast_info" and exp._parametres_de(r) == set()
         assert exp.avec_description(r, "x") == r
-
-    def test_rotation(self):
-        assert exp.rotation(["a", "b", "c"], 1) == ["b", "c", "a"]
-        assert exp.rotation(["a", "b", "c"], 2) == ["c", "a", "b"]
-        assert exp.rotation([], 1) == []
-
-    def test_vote_majoritaire(self):
-        from types import SimpleNamespace as N
-        a, b, c = N(tool="cast_pause"), N(tool="catt.cast_info"), N(tool="cast_pause")
-        assert exp.vote([b, a, c], "x") is a
-        assert exp.vote([a, b, N(tool="cast_scan")], "x") is a   # egalite : la premiere
-        assert exp.vote([N(tool=None), b], "x") is b
-
-    def test_analysis_accepte_rang1(self):
-        from lyra.models._analysis import EphaistosAnalysis
-        a = EphaistosAnalysis(tool="x", arguments={}, missing_args=[], confidence=0.9, reasoning="", raw_response="")
-        a.rang1 = "catt.cast_pause"
-        assert a.rang1 == "catt.cast_pause"
-
 
 class TestIteration8:
     OPTS = dict(poids_rares=True, equipements=True, relatifs=True, catt=True, tri=True)

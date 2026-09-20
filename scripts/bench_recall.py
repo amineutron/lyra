@@ -28,7 +28,7 @@ from lyra.models import ephaistos_exp as _exp  # noqa: E402
 # Nom de variante -> option de score_mots / score_net
 _OPTIONS = {
     "poids_rares": "poids_rares", "mots_url": "cibler_youtube", "carte_equipements": "equipements",
-    "mots_relatifs": "relatifs", "carte_son": "son", "verbes_catt": "catt", "question_etat": "etat",
+    "mots_relatifs": "relatifs", "carte_son": "son", "verbes_catt": "catt",
     "nom_de_vm": "vm", "cartes_tri": "tri", "cartes_fines": "fines", "verbes_tri": "verbes",
     "verbes_courants": "courants", "mots_courants_2": "courants2", "nombres_tri": "nombres",
     "mots_courants_3": "courants3", "cartes_17": "c17",
@@ -119,7 +119,7 @@ def main() -> int:
             if "carte_mots" in actives:
                 comp = _exp.boost_mots(comp, requete, **opts)
             rang = rang_du_bon_outil([_exp.nom_de_spec(c) for c in comp], attendu, EQUIVALENCES.get(attendu))
-            net = _exp.score_net(comp, requete, seuil=1 if "net_assoupli" in actives else 2,
+            net = _exp.score_net(comp, requete,
                                  **{**opts, "poids_rares": True, "equipements": True, "relatifs": True, "catt": True})
             releves.append((requete, attendu, rang, net))
         r = resume(releves)

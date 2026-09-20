@@ -12,7 +12,6 @@ from typing import Optional
 import httpx
 
 from ..core.config import RAGConfig
-from .ephaistos_exp import actives as _variantes_actives
 
 # Fenetre de contexte demandee a ollama.
 #
@@ -181,9 +180,6 @@ class ModelManager:
             "keep_alive": -1,  # garder le modele en VRAM indefiniment
             "options": _options_generation(temperature)
         }
-        if "json_format" in _variantes_actives():
-            payload["format"] = "json"   # ollama contraint la sortie a du JSON
-
         try:
             response = self._http.post(
                 f"{self.base_url}/api/chat",

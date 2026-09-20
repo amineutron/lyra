@@ -262,6 +262,27 @@ Ce que ces cinq iterations ont appris :
 - **100 % sur un jeu itere ne dit rien du produit** : c'est le sixieme jeu qui
   compte, et il ne sera pas remesure.
 
+## Consolidation (2026-09-20, apres la boucle)
+
+Le module des variantes etait devenu une dette : 1 581 lignes, 59 variantes
+declarees dont 17 refutees ou neutres encore branchees. Le lot G a retire ces
+17 du code (`dedup`, `routage`, `index`, `json_format`, `indice_url`,
+`couleurs`, `top5_direct`, `consigne_onoff`, `deux_exemples`,
+`exemple_description`, `exemple_discriminant`, `question_etat`,
+`boost_sur_etendue`, `top1_si_net`, `resolution_floue`, `vote_rotation`,
+`net_assoupli`) : leurs mesures restent dans `benchmarks/results/` et dans ce
+document, c'est leur seule trace utile. Les 42 retenues forment `DEFAUT` et
+restent activables une a une par `LYRA_EXP` : c'est ce qui permet l'ablation
+(« que perd-on si on retire celle-ci ? ») et la prochaine boucle. Les tables
+de mots (cartes de tri, lexiques, exemples Denon) sont dans
+`lyra/models/cartes.py`, donnees seules ; la logique fait environ 800 lignes.
+Preuve d'equivalence : recall mecanique identique sur les quatre jeux, banc
+21/21, 51/51, 100/100.
+
+Regle pour la suite : une variante refutee est retiree du code a l'iteration
+suivante, pas conservee « au cas ou ». Le code porte la configuration ; le
+document et les resultats portent l'histoire.
+
 ## A industrialiser
 
 - Le releve de recall (rang du bon outil sans modele, precision du critere

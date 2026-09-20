@@ -10,11 +10,11 @@ from lyra.models.ephaistos_exp import DEFAUT  # noqa: E402
 
 
 def test_configurations_developpe_defaut():
-    cfgs = configurations("DEFAUT;DEFAUT,net_assoupli;a,b")
+    cfgs = configurations("DEFAUT;DEFAUT,essai;a,b")
     assert cfgs[0] == tuple(DEFAUT)
-    assert cfgs[1] == tuple(DEFAUT) + ("net_assoupli",)
+    assert cfgs[1] == tuple(DEFAUT) + ("essai",)
     assert cfgs[2] == ("a", "b")
-    assert etiquette(cfgs[0]) == "DEFAUT" and etiquette(cfgs[1]) == "DEFAUT+net_assoupli" and etiquette(cfgs[2]) == "a+b"
+    assert etiquette(cfgs[0]) == "DEFAUT" and etiquette(cfgs[1]) == "DEFAUT+essai" and etiquette(cfgs[2]) == "a+b"
 
 
 def test_rang_et_resume():
