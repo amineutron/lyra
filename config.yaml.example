@@ -176,11 +176,7 @@ security:
   require_snapshot_before_delete: true
   snapshot_max_age_minutes: 5
   read_first_enabled: true
-  destructive_tools:
-    - vm_destroy
-    - vm_delete
-    - backup_restore
-    - backup_clean
+  # Les outils a confirmer sont dans lyra/core/constants.py (DANGEROUS_TOOLS).
 
 # =============================================================================
 # Audio

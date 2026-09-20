@@ -20,6 +20,7 @@
 - `scripts/index_rag_3tier.py` ignores documents without `server_name` (a local `ironman.run_scene` would have created an UNKNOWN server); `config.yaml.example` declares the catt server.
 - EPHAISTOS: a tool imposed by a net sort was overridden by the second pass (`double_passe`) and applied after the argument completion; the net criterion ignored the machine bonus. Three fixes with unit tests.
 - Rules: "eteins les leds de la tele" was a power_off (sixth set control).
+- Config: the dead `security.destructive_tools` list (never read, listed a non-existent `vm_delete`) is removed from config.yaml.example; `lyra/core/constants.py` is the only source. `docs/dev/INDEX_RAG.md` documents the v2 -> v3 regeneration order.
 - Rules: the screen-manager module is out of the registry (server absent from disk and config, lyra#24); a room name is not a VM; "arrete la synchro des lampes" is not a task kill; a question about the chromecast is `cast_status`; "l'ambilight qui suit la musique" sets the mode. `tracking.delete` and `tracking.kill_task` require an explicit confirmation.
 
 ## [1.2.0] - 2026-09-10

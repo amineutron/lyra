@@ -681,7 +681,9 @@ class MCPScriptClient(MCPSessionClient):
         self.script_path = script_path
 
 
-# Tools pre-definis pour eviter l'appel tools/list si le serveur ne le supporte pas
+# Catalogue statique : utilise UNIQUEMENT par le mode --legacy (main.py), qui ne
+# lit pas tools/list. Il ne couvre ni catt ni denon et ne porte aucune annotation ;
+# le mode par defaut passe par MCPManager.get_all_tools() (audit 2026-09-19).
 FEDORA_AGENTS_TOOLS = [
     MCPTool(
         name="vm_status",
