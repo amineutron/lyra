@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-24
+
 ### Added
 - `lyra --version` prints the installed `lyra-assistant` version, or the pyproject version when run from sources (#15).
 - `scripts/gen_mcp_tools_md.py` regenerates docs/user/MCP_TOOLS.md from the live MCP servers, with a confirmation column derived from `lyra/core/constants.py`.
