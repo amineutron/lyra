@@ -78,6 +78,8 @@ git clone https://github.com/amineutron/lyra.git && cd lyra
 ./installer/install.sh
 ```
 
+Le paquet Python seul (client, démon, règles, bancs) s'installe aussi depuis PyPI, sans les modèles ni les serveurs MCP : `uv tool install lyra-assistant` puis `lyra --version` (après publication ; en attendant : `uv tool install git+https://github.com/amineutron/lyra`). L'installeur reste le chemin complet.
+
 L'installeur (TUI Rich interactif, ou `--app` pour une version graphique locale) détecte ta distro (Fedora/Debian/Arch), installe les dépendances système, crée le venv, télécharge Piper + une voix française, installe le client Ollama et pull deux modèles légers par défaut — **`qwen2.5-coder:0.5b`** (Apache-2.0) et **`llama3.2:1b`** (« Built with Llama », [licence](docs/licenses/LLAMA-3.2-COMMUNITY-LICENSE.txt)), environ **4 Go de VRAM** au total. Les voix Piper et leurs licences sont listées dans [VOICES.md](VOICES.md). Ça tourne sans GPU dédié : `--ollama-host <ip>` pointe vers une machine distante qui héberge Ollama (validé le 2026-08-24 en conditions réelles sur 3 VMs Fedora, Ubuntu et Arch sans GPU : voir [docs/user/VM_INSTALL_TESTS.md](docs/user/VM_INSTALL_TESTS.md)).
 
 Aucune commande à copier-coller à la main pour les permissions sudo — l'installeur génère lui-même les règles `sudoers` pour ton utilisateur, pas un nom codé en dur.
