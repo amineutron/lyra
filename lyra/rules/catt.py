@@ -28,7 +28,7 @@ def detect(query: str):
 
     # cast_youtube: URL YouTube + verbe cast/diffuse, OU destination chromecast/tele
     # (lyra#23 : "mets ca sur le chromecast <url>" tombait sur screen-manager.open_url)
-    m_cyt = re.search(_YOUTUBE_URL_RE, q)
+    m_cyt = re.search(_YOUTUBE_URL_RE, query, re.IGNORECASE)   # requete d'origine : la casse de l'id compte (recette 2026-09-23)
     if m_cyt and (re.search(_CAST_VERBS, q) or re.search(_CAST_DEST, q)):
         return make("catt.cast_youtube", {"url": m_cyt.group(0)},
                     "rule: cast youtube URL", 0.94)

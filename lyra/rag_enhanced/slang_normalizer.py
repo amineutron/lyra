@@ -138,6 +138,9 @@ class SlangNormalizer:
     # Pattern pour les identifiants techniques avec tirets (noms de VMs, snapshots, etc.)
     # Ex: "preprod-09", "system-clone-final", "copy-on-write"
     _HYPHEN_IDENT_RE = re.compile(r'\b\w+(?:-\w+)+\b')
+    # URL : jamais mise en minuscules ni normalisee (un identifiant YouTube est
+    # sensible a la casse : "dQw4w9WgXcQ" devenait "dqw4w9wgxcq", recette 2026-09-23)
+    _URL_RE = re.compile(r'(?:https?://|www\.)\S+')
 
     def normalize(self, query: str) -> str:
         """Normalise anglicismes dans la requête.
@@ -177,7 +180,8 @@ class SlangNormalizer:
             placeholders[key] = m.group(0)
             return key
 
-        protected = self._HYPHEN_IDENT_RE.sub(_protect, query)
+        protected = self._URL_RE.sub(_protect, query)
+        protected = self._HYPHEN_IDENT_RE.sub(_protect, protected)
 
         # Normaliser en minuscules pour uniformité
         normalized = protected.lower()

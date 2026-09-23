@@ -498,6 +498,84 @@ class Ephaistos:
         coupe = corps[:200]
         return coupe[:coupe.rfind(" ")].strip() if " " in coupe else coupe
 
+    def trier_specs(self, user_query: str, mcp_specs: list[str], variantes=None):
+        """Specs compactes triees par les cartes de mots, et si le tri est net.
+
+        "Net" = la spec de rang 1 a au moins deux points de mots-cibles et un
+        de plus que la suivante : l'outil est alors impose sans le modele
+        (outil_force_si_net). Meme code pour analyze() et pour le pipeline
+        enrichi, qui s'en sert pour ne pas laisser le classificateur
+        d'intention ranger en "discussion" une commande que le tri reconnait.
+        """
+        from . import ephaistos_exp as _exp
+        variantes = _exp.actives() if variantes is None else variantes
+        compact_specs = [self._compact_spec(s) for s in mcp_specs]
+        if "spec_description" in variantes:
+            compact_specs = [_exp.avec_description(c, b) for c, b in zip(compact_specs, mcp_specs)]
+        # Le tri et l'exemple proche lisent la requete telle quelle (l'etendre
+        # de synonymes bruitait le tri : boost_sur_etendue, refutee).
+        compact_specs = self._boost_spec_order(compact_specs, user_query)
+        if "carte_mots" in variantes:
+            compact_specs = _exp.boost_mots(compact_specs, user_query,
+                                            poids_rares="poids_rares" in variantes,
+                                            cibler_youtube="mots_url" in variantes,
+                                            equipements="carte_equipements" in variantes,
+                                            relatifs="mots_relatifs" in variantes,
+                                            son="carte_son" in variantes,
+                                            catt="verbes_catt" in variantes,
+                                            vm="nom_de_vm" in variantes,
+                                            tri="cartes_tri" in variantes,
+                                            fines="cartes_fines" in variantes,
+                                            verbes="verbes_tri" in variantes,
+                                            courants="verbes_courants" in variantes,
+                                            courants2="mots_courants_2" in variantes,
+                                            nombres="nombres_tri" in variantes,
+                                            courants3="mots_courants_3" in variantes,
+                                            c17="cartes_17" in variantes)
+        net = bool(compact_specs) and _exp.score_net(
+            compact_specs, user_query, poids_rares=True, equipements=True,
+            relatifs=True, catt=True, son="carte_son" in variantes,
+            tri="cartes_tri" in variantes, fines="cartes_fines" in variantes,
+            verbes="verbes_tri" in variantes,
+            courants="verbes_courants" in variantes,
+            courants2="mots_courants_2" in variantes,
+            nombres="nombres_tri" in variantes,
+            courants3="mots_courants_3" in variantes,
+            c17="cartes_17" in variantes,
+            vm="nom_de_vm" in variantes,
+            cibler_youtube="mots_url" in variantes)
+        return compact_specs, bool(net)
+
+    def est_net(self, user_query: str, mcp_specs: list[str]) -> bool:
+        """Vrai si le tri des specs designe un outil sans ambiguite (voir trier_specs)."""
+        return self.trier_specs(user_query, mcp_specs)[1] if mcp_specs else False
+
+    def evoque_un_outil(self, user_query: str, mcp_specs: list[str]) -> bool:
+        """Vrai si un mot de la phrase designe un outil (score de mots du premier spec trie >= 1).
+
+        "salut" et "merci beaucoup" font 0 ; "l'ampli, un poil moins" fait 3. Le
+        classificateur d'intention (1b) rangeait ces phrases en discussion ou en
+        info et aucune action n'etait proposee (recette 2026-09-23).
+        """
+        from . import ephaistos_exp as _exp
+        if not mcp_specs:
+            return False
+        variantes = _exp.actives()
+        compact_specs, _ = self.trier_specs(user_query, mcp_specs, variantes)
+        if not compact_specs:
+            return False
+        score = _exp.score_mots(_exp.nom_de_spec(compact_specs[0]), user_query,
+                                poids_rares=True, equipements=True, relatifs=True, catt=True,
+                                son="carte_son" in variantes, tri="cartes_tri" in variantes,
+                                fines="cartes_fines" in variantes, verbes="verbes_tri" in variantes,
+                                courants="verbes_courants" in variantes,
+                                courants2="mots_courants_2" in variantes,
+                                nombres="nombres_tri" in variantes,
+                                courants3="mots_courants_3" in variantes,
+                                c17="cartes_17" in variantes, vm="nom_de_vm" in variantes,
+                                cibler_youtube="mots_url" in variantes)
+        return score >= 1
+
     def analyze(
         self,
         user_query: str,
@@ -533,45 +611,9 @@ class Ephaistos:
             specs_text = specs_toon
             label = "SPECS MCP (TOON)"
         else:
-            compact_specs = [self._compact_spec(s) for s in mcp_specs]
-            if "spec_description" in variantes:
-                compact_specs = [_exp.avec_description(c, b) for c, b in zip(compact_specs, mcp_specs)]
-            # Le tri et l'exemple proche lisent la requete telle quelle (l'etendre
-            # de synonymes bruitait le tri : boost_sur_etendue, refutee).
-            requete_tri = user_query
-            # Re-trier: mettre en premier la spec qui correspond au verbe d'action
-            compact_specs = self._boost_spec_order(compact_specs, requete_tri)
-            if "carte_mots" in variantes:
-                compact_specs = _exp.boost_mots(compact_specs, requete_tri,
-                                                poids_rares="poids_rares" in variantes,
-                                                cibler_youtube="mots_url" in variantes,
-                                                equipements="carte_equipements" in variantes,
-                                                relatifs="mots_relatifs" in variantes,
-                                                son="carte_son" in variantes,
-                                                catt="verbes_catt" in variantes,
-                                                vm="nom_de_vm" in variantes,
-                                                tri="cartes_tri" in variantes,
-                                                fines="cartes_fines" in variantes,
-                                                verbes="verbes_tri" in variantes,
-                                                courants="verbes_courants" in variantes,
-                                                courants2="mots_courants_2" in variantes,
-                                                nombres="nombres_tri" in variantes,
-                                                courants3="mots_courants_3" in variantes,
-                                                c17="cartes_17" in variantes)
-            # Limiter le nombre de specs si demande (0 = toutes)
+            compact_specs, net_tri = self.trier_specs(user_query, mcp_specs, variantes)
             outil_force = None
-            net = (max_specs and not skip_specs
-                   and _exp.score_net(compact_specs, requete_tri, poids_rares=True, equipements=True,
-                                      relatifs=True, catt=True, son="carte_son" in variantes,
-                                      tri="cartes_tri" in variantes, fines="cartes_fines" in variantes,
-                                      verbes="verbes_tri" in variantes,
-                                      courants="verbes_courants" in variantes,
-                                      courants2="mots_courants_2" in variantes,
-                                      nombres="nombres_tri" in variantes,
-                                      courants3="mots_courants_3" in variantes,
-                                      c17="cartes_17" in variantes,
-                                      vm="nom_de_vm" in variantes,   # le critere net lisait le tri sans le bonus machine
-                                      cibler_youtube="mots_url" in variantes))
+            net = bool(max_specs and not skip_specs and net_tri)
             if "outil_force_si_net" in variantes and net:
                 max_specs = 1
                 outil_force = _exp.nom_de_spec(compact_specs[0])

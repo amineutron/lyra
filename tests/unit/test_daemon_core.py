@@ -206,3 +206,12 @@ class TestRemoteUI:
                      "confirm_action", "ask_input", "println"):
             assert callable(getattr(uic, name))
         assert uic.colored("texte", "red") == "texte"
+
+
+class TestMessageExecution:
+    """Mode performance : on dit ce qu'on fait, pas "Tu confirmes ?" (recette 2026-09-23)."""
+
+    def test_message(self):
+        from lyra.daemon.actions import _message_execution
+        assert _message_execution("tv.power_on", {}) == "J'execute tv.power_on."
+        assert _message_execution("fedora.vm_start", {"vm_name": "x"}) == "J'execute fedora.vm_start (vm_name=x)."

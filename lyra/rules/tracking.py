@@ -46,7 +46,7 @@ def detect(query: str):
 
         # list : taches en cours / liste / quoi tourne
         if re.search(r'(?:taches?|operations?)\s+(?:en\s+cours|actives?|lancees?)'
-                     r'|liste\s+(?:(?:les?|mes|des)\s+)?taches?'
+                     r'|(?:liste|affiche|montre|voir|donne)\s+(?:moi\s+)?(?:(?:les?|mes|des)\s+)?taches?'
                      r'|qu(?:e|\')\s+est.ce\s+(?:que\s+)?tu\s+suis'
                      r'|quoi\s+(?:en\s+cours|tourne)', q):
             return make("tracking.list",
@@ -67,7 +67,7 @@ def detect(query: str):
     # tracking_list sans mot-cle "track*" : "quoi en cours", "liste mes taches", etc.
     if re.search(r'quoi\s+(?:en\s+cours|tourne)'
                  r'|qu(?:e|\')\s+est.ce\s+(?:que\s+)?tu\s+suis'
-                 r'|liste\s+(?:(?:les?|mes|des)\s+)?taches?'
+                 r'|(?:liste|affiche|montre|voir|donne)\s+(?:moi\s+)?(?:(?:les?|mes|des)\s+)?taches?'
                  r'|taches?\s+(?:en\s+cours|actives?|lancees?)', q):
         return make("tracking.list",
                     {"template": "lyra_task", "status": "running"},

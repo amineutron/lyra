@@ -294,3 +294,8 @@ class TestJeu6:
         assert tool("vire les leds de la tele") == "tv.ambilight_off"
         assert tool("les leds de la tele en ambiance lounge") == "tv.ambilight_mode"
         assert detect("les leds de la tele") is None
+
+
+class TestCasseDesUrl:
+    def test_id_youtube_garde_sa_casse(self):
+        assert args("mets cette video sur la tele https://www.youtube.com/watch?v=jNQXAC9IVRw") == {"video": "https://www.youtube.com/watch?v=jNQXAC9IVRw"}

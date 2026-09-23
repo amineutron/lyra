@@ -25,6 +25,12 @@ def _actual(pipeline):
     return pipeline._pipeline_v2 if hasattr(pipeline, "_pipeline_v2") else pipeline
 
 
+def _message_execution(tool_name: str, arguments: dict) -> str:
+    """"J'execute tv.power_on." / "J'execute fedora.vm_start (vm_name=x)." (sans question)."""
+    args_txt = ", ".join(f"{k}={v}" for k, v in list((arguments or {}).items())[:3])
+    return f"J'execute {tool_name}" + (f" ({args_txt})." if args_txt else ".")
+
+
 def _should_skip_confirmation(tool_name: str, mode: str) -> bool:
     """Parite avec main_rag.should_skip_confirmation."""
     if is_dangerous_tool(tool_name):
@@ -101,6 +107,7 @@ def run_request(
             return 0  # la session garde le pending, le prochain tour complete
         rui.warning(f"One-shot: arguments manquants ({', '.join(result.pending_args)})")
         rui.warning("Relancez avec la requete complete ou utilisez le mode interactif.")
+        _oublier_les_questions(v2, session_id)
         return 3
 
     # Cas 3 : action prete -> confirmation puis execution
@@ -112,7 +119,25 @@ def run_request(
 
     # Cas 4 : pas de match -> reponse directe
     rui.lyra(result.response)
+    if not interactive:
+        _oublier_les_questions(v2, session_id)
     return 0
+
+
+def _oublier_les_questions(v2, session_id: str) -> None:
+    """En one-shot, une question restee en attente (clarification, choix)
+    etait relue comme la suite du dialogue par l'appel suivant : "le chromecast
+    a fond" laissait "chromecast" manquant, et "mets staging-03 au repos"
+    recevait "Qu'est-ce que tu veux faire sur la VM preprod-10 ?" (recette
+    2026-09-23). Personne ne repondra : on oublie la question."""
+    try:
+        with v2.session_scope(session_id):
+            session = v2._session
+            if session is not None:
+                session.clear_pending_action()
+                session.clear_pending_choice()
+    except Exception:
+        pass
 
 
 def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
@@ -145,12 +170,16 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
         except RequestCancelled:
             raise
 
-    rui.lyra(result.response)
-
     is_dangerous = is_dangerous_tool(tool_name)
     skip_confirm = _should_skip_confirmation(tool_name, mode)
+    sans_confirmation = skip_confirm or (yes and not is_dangerous)
 
-    if not skip_confirm and not (yes and not is_dangerous):
+    # En mode performance (ou -y), LYRA affichait "Je vais executer X. Tu
+    # confirmes ?" puis executait sans attendre (recette 2026-09-23) : on dit
+    # ce qu'on fait, pas ce qu'on demande.
+    rui.lyra(_message_execution(tool_name, arguments) if sans_confirmation else result.response)
+
+    if not sans_confirmation:
         rui.tool_call(tool_name, arguments)
         # meme prompt explicite que remote_ui.confirm_action (outil + cible,
         # mise en avant destructive) — les deux chemins etaient incoherents

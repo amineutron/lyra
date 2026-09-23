@@ -16,6 +16,14 @@
 - `docs/articles/`: the write-up of the improvement loop (French draft) with two SVG figures generated from `benchmarks/results/` by `scripts/gen_figures_boucle.py`.
 
 ### Fixed
+- **The daemon did not run the path the bench measured.** `EnhancedPipeline` sent EPHAISTOS a single spec, without the `tool_name:` prefix, then let a session-context injection and the intent classifier override the result: "reveille fedora-base" gave `tv.power_on`, "archive test-vm" gave `tv.mute`, "de la lumiere dans le salon" was answered as small talk (manual acceptance test, 2026-09-23). The pipeline now builds the specs exactly like the bench (`specs_pour_ephaistos`, shared), passes all of them, skips the context injection when the variants are active, and treats a query as a command when the spec sort is unambiguous (`Ephaistos.est_net`). `tests/test_campaign_llm.py --reel` measures this real path (one session per case, correct refusals of unknown VMs counted apart): 21/21, 43/43 and 91/92 on the three development sets.
+- One-shot calls: a pending clarification or choice left in the shared session polluted the next call ("mets staging-03 au repos" was read as an answer about preprod-10). It is cleared when nobody can answer.
+- Argument names invented by the 0.5b in `missing_args` ("chromecast") no longer trigger a clarification; only real parameters of the tool count.
+- Hue: a `group_id` that does not exist on the bridge is replaced by the default group (real groups read at startup).
+- Performance mode (`-p`) and `-y`: LYRA printed "Tu confirmes ?" then executed without waiting; it now says what it does.
+- Slang normalizer: URLs are no longer lowercased (a YouTube id is case-sensitive).
+- A matching rule, or a spec sort that recognises a tool word, is a command whatever the intent classifier says ("silence sur l'ampli" and "les leds de la tele, tu me les enleves" got no action); a tool imposed by a net sort no longer triggers the disambiguation question.
+- Rules: "affiche les taches" lists the running tasks; the Denon rule also answers to "ampli", "AVR" and "home cinema" ("l'ampli sur game"), a state question gives `get_status`, "bascule ... sur le bluray" is a source change.
 - Security: `main_rag.py` compared a prefixed tool name (`fedora.vm_destroy`) to the short names of `DANGEROUS_TOOLS`, so `-y` skipped the confirmation of destructive tools; it now uses `is_dangerous_tool()`.
 - Security: an empty answer (Enter) no longer confirms a sensitive or destructive action in the daemon UI and the terminal UI; `o`/`oui` is required, as in `actions.py`.
 - Security: `vm_snapshot` (revert/delete), `vm_import` and `vm_copy` are now in `DANGEROUS_TOOLS`; `PERFORMANCE_TOOLS` entries are prefixed (the eight `cast_*` never matched), Denon and read-only tools added; `main.py` (legacy) no longer keeps its own diverging lists.

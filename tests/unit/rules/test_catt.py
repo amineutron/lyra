@@ -209,3 +209,10 @@ class TestJeu5:
 
     def test_ordre_reste_une_pause(self):
         assert tool("mets le chromecast en pause") == "catt.cast_pause"
+
+
+class TestCasseDesUrl:
+    """Recette 2026-09-23 : l'id YouTube etait extrait de la requete normalisee (minuscules)."""
+
+    def test_id_youtube_garde_sa_casse(self):
+        assert args("mets ca sur le chromecast https://youtu.be/aAbBcCdDeE0") == {"url": "https://youtu.be/aAbBcCdDeE0"}

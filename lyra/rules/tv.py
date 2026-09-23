@@ -80,7 +80,7 @@ def detect(query: str):
             return make("tv.power_on", {}, "rule: tv power_on", 0.93)
 
         # tv.youtube_video: URL YouTube + contexte tv (pas de verbe cast)
-        m_yt = re.search(r'https?://(?:www\.)?(?:youtube\.com/watch\S*|youtu\.be/[\w-]+)', q)
+        m_yt = re.search(r'https?://(?:www\.)?(?:youtube\.com/watch\S*|youtu\.be/[\w-]+)', query, re.IGNORECASE)   # casse de l'id conservee
         if m_yt and not re.search(r'\b(?:caste?[rz]?|diffuse?[rz]?)\b', q):
             return make("tv.youtube_video", {"video": m_yt.group(0)},   # schema pylips-mcp : "video"
                         "rule: tv youtube_video URL", 0.95)

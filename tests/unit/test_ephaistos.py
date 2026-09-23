@@ -384,3 +384,33 @@ class TestForceDefinitif:
                  "fedora.vm_start: vm_start(vm_name: string)"]
         a = eph.analyze("mets staging-03 au repos", specs, max_specs=3)
         assert a.tool == "fedora.vm_stop" and a.arguments.get("vm_name") == "staging-03"
+
+
+class TestTriPartage:
+    """Recette 2026-09-23 : le pipeline enrichi lit le meme tri que analyze()."""
+
+    def _eph(self, monkeypatch):
+        from unittest.mock import Mock
+
+        from lyra.models import ephaistos_exp as _exp
+        from lyra.models.ephaistos import Ephaistos
+        monkeypatch.setenv("LYRA_EXP", ",".join(_exp.DEFAUT))
+        return Ephaistos(Mock())
+
+    def test_est_net_sur_un_ordre_clair(self, monkeypatch):
+        eph = self._eph(monkeypatch)
+        specs = ["tv.volume_down: volume_down()", "tv.mute: mute()", "tv.power_off: power_off()"]
+        assert eph.est_net("je suis au telephone, coupe le son de la tele", specs)
+        assert eph.trier_specs("je suis au telephone, coupe le son de la tele", specs)[0][0].startswith("tv.mute")
+
+    def test_pas_net_sur_une_egalite(self, monkeypatch):
+        eph = self._eph(monkeypatch)
+        assert not eph.est_net("salut", ["tv.power_on: power_on()", "tv.power_off: power_off()"])
+        assert not eph.est_net("salut", [])
+
+    def test_evoque_un_outil(self, monkeypatch):
+        eph = self._eph(monkeypatch)
+        specs = ["denon.volume_down: volume_down()", "denon.power_off: power_off()", "hue.alert_light: alert_light(light_id: integer)"]
+        assert eph.evoque_un_outil("l'ampli, un poil moins", specs)
+        assert not eph.evoque_un_outil("salut", specs)
+        assert not eph.evoque_un_outil("merci beaucoup", [])

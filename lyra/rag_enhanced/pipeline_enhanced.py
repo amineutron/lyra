@@ -300,22 +300,13 @@ class EnhancedPipeline:
                     "server": server,
                     "score": 1.0,
                 })
-            # Intent classifier (pour demande/info/discussion)
+            # Une regle qui matche EST une demande : le classificateur (1b) rangeait
+            # "silence sur l'ampli" en discussion et "les leds de la tele, tu me les
+            # enleves" en info, et aucune action n'etait proposee (recette 2026-09-23).
             t0 = time.time()
-            if self._pipeline_v2._intent_classifier is not None:
-                classification = self._pipeline_v2._intent_classifier.classify(normalized_query)
-                if classification.intent.value == "discussion":
-                    result_v2 = self._pipeline_v2._process_discussion(normalized_query)
-                elif classification.intent.value == "info":
-                    result_v2 = self._pipeline_v2._process_knowledge(normalized_query)
-                else:
-                    result_v2 = self._pipeline_v2._process_action(
-                        normalized_query, precomputed_analysis=precheck_analysis
-                    )
-            else:
-                result_v2 = self._pipeline_v2._process_action(
-                    normalized_query, precomputed_analysis=precheck_analysis
-                )
+            result_v2 = self._pipeline_v2._process_action(
+                normalized_query, precomputed_analysis=precheck_analysis
+            )
             metrics['v2_pipeline_latency_ms'] = (time.time() - t0) * 1000
             metrics['rag_source'] = "rule"
             # Feedback loop pour les regles aussi
@@ -343,11 +334,16 @@ class EnhancedPipeline:
         rag_score = 0.0
         rag_results = []
 
+        from ..models import ephaistos_exp as _exp
+        variantes_actives = bool(_exp.actives())
+
         if self._rag_3tier:
-            # Utiliser RAG 3-Tier (avec callback verbose M1)
+            # Utiliser RAG 3-Tier (avec callback verbose M1). Avec les variantes,
+            # cascade_search etend lui-meme la requete (lexiques) : lui passer la
+            # requete deja gonflee de synonymes bruitait le tri (recette 2026-09-23).
             t0 = time.time()
             rag_results = self._rag_3tier.cascade_search(
-                expanded_query,
+                normalized_query if variantes_actives else expanded_query,
                 strategy="early_stop",
                 top_k=5,
                 on_step=rag_step_callback
@@ -459,7 +455,10 @@ class EnhancedPipeline:
         context_injected = False
         enriched_query = None
 
-        if should_inject_context and self._context_injector:
+        # Avec les variantes, le contexte "[ctx: last_mcp=...]" ajoute a la requete
+        # finissait copie tel quel dans les arguments par le 0.5b ("l'ampli sur
+        # game" -> denon.power_on(ctx=last_mcp=hue.turn_on_group)) : pas d'injection.
+        if should_inject_context and self._context_injector and not variantes_actives:
             t0 = time.time()
             # Déterminer N selon cascade_result
             n = 10 if cascade_action == "propose" else 5
@@ -491,20 +490,25 @@ class EnhancedPipeline:
         # Passer les specs RAG déjà récupérées pour éviter un double retrieval
         t0 = time.time()
 
-        # Toujours envoyer top 1 spec à EPHAISTOS
-        # Même pour LOW confidence: EPHAISTOS se perd avec plusieurs candidats
-        # Si le RAG trouve le bon outil en #1, mieux vaut lui donner juste celui-là
-        num_specs = 1
-
-        # Convertir rag_results en FusedResult pour _process_action
+        # Toutes les specs remontees, au format "tool_name: document" : c'est le
+        # chemin que le banc mesure (tri par cartes, outil impose si net, exemples
+        # par spec). Le pipeline n'envoyait que la premiere, sans prefixe : le
+        # modele ne voyait jamais le bon outil et lisait le premier mot de la
+        # description comme nom d'outil (recette du 2026-09-23).
         from ..rag.fusion import FusedResult
+        from .rag_3tier import specs_pour_ephaistos
         precomputed_specs = []
-        for r in rag_results[:num_specs]:
+        for r in rag_results:
+            spec = specs_pour_ephaistos([r])
+            if not spec:
+                continue   # entree registry (serveur), pas un outil
+            meta = dict(r['metadata'])
+            meta.setdefault('name', meta.get('tool_name'))
             precomputed_specs.append(FusedResult(
-                document=r['document'],
-                metadata=r['metadata'],
+                document=spec[0],
+                metadata=meta,
                 rrf_score=r.get('rrf_score', 0.0),
-                id=r['metadata'].get('name', 'unknown'),
+                id=meta.get('name', 'unknown'),
                 semantic_rank=None,
                 keyword_rank=None
             ))
@@ -512,10 +516,19 @@ class EnhancedPipeline:
         # Classifier l'intention
         if self._pipeline_v2._intent_classifier is not None:
             classification = self._pipeline_v2._intent_classifier.classify(query_for_pipeline)
+            intent = classification.intent.value
+            # Le classificateur (1b) rangeait "de la lumiere dans le salon s'il te
+            # plait" en discussion. Quand le tri des specs designe un outil sans
+            # ambiguite, c'est une demande, quoi qu'en dise le classificateur.
+            if intent != "demande" and precomputed_specs:
+                docs = [s.document for s in precomputed_specs]
+                eph = self._pipeline_v2._ephaistos
+                if eph.est_net(query_for_pipeline, docs) or eph.evoque_un_outil(query_for_pipeline, docs):
+                    intent = "demande"
 
-            if classification.intent.value == "discussion":
+            if intent == "discussion":
                 result_v2 = self._pipeline_v2._process_discussion(query_for_pipeline)
-            elif classification.intent.value == "info":
+            elif intent == "info":
                 result_v2 = self._pipeline_v2._process_knowledge(query_for_pipeline)
             else:  # demande
                 # Passer les specs pré-calculées à _process_action

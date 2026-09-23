@@ -17,8 +17,25 @@ _DENON_INPUT_MAP = [
 def detect(query: str):
     q = normalize(query)
 
-    if not re.search(r'\bdenon\b', q):
+    # "l'ampli sur game" allait au RAG puis a get_status : l'ampli, l'AVR et le
+    # home cinema designent le Denon (recette 2026-09-23)
+    if not re.search(r'\b(?:denon|ampli|amplificateur|avr|home.?cinema)\b', q):
         return None
+
+    # get_status : une question d'etat n'est pas un ordre ("l'ampli est allume ?"
+    # tombait sur power_on -- controle des jeux apres l'elargissement du garde)
+    if re.search(r'^est-ce que\b|\?\s*$|\b(?:est-il|est-elle)\b', q) and \
+            re.search(r'\b(?:allume|eteint|veille|marche|etat|standby|entree|source|combien)\b', q) and \
+            not re.search(r'^(?:allume|eteins|mets|coupe|remets|peux-tu|tu peux)\b', q):
+        return make("denon.get_status", {}, "rule: denon get_status (question)", 0.90)
+
+    # set_input AVANT mute_toggle : "bascule l'ampli sur le bluray" est un changement
+    # de source, pas un mute_toggle (controle des jeux, 2026-09-23)
+    if re.search(r'\b(?:source|entree|input|change|passe|mets?|bascule|sur|vers)\b', q):
+        for alias_re, src_val in _DENON_INPUT_MAP:
+            if re.search(alias_re, q):
+                return make("denon.set_input", {"input": src_val},
+                            f"rule: denon set_input {src_val}", 0.92)
 
     # power_off: "eteins/arrete/stop" SANS contexte volume/mute
     if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|stop|stoppe|arrete)\b', q) and \
@@ -52,13 +69,6 @@ def detect(query: str):
             not re.search(r'\d', q) and \
             not re.search(r'\b(?:monte|augmente|hausse|baisse|diminue|reduis)\b', q):
         return make("denon.get_status", {}, "rule: denon get_status", 0.88)
-
-    # set_input: "change la source en bluray/hdmi/tv"
-    if re.search(r'\b(?:source|entree|input|change|passe|mets?|bascule)\b', q):
-        for alias_re, src_val in _DENON_INPUT_MAP:
-            if re.search(alias_re, q):
-                return make("denon.set_input", {"input": src_val},
-                            f"rule: denon set_input {src_val}", 0.92)
 
     # volume_set: extrait le nombre ("volume denon a 50", "50 de volume")
     m_vol = re.search(r'(?:volume|son)[^0-9]*(\d+)|(\d+)[^0-9]*(?:volume|son)', q)

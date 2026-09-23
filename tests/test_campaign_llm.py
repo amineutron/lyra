@@ -219,7 +219,7 @@ def cas_du_jeu(jeu: str) -> list:
     return TESTS_LLM
 
 
-def run_llm_tests(config_path=None, jeu: str = "modeles"):
+def run_llm_tests(config_path=None, jeu: str = "modeles", reel: bool = False):
     G = "\033[32m"
     Y = "\033[33m"
     R = "\033[31m"
@@ -266,23 +266,44 @@ def run_llm_tests(config_path=None, jeu: str = "modeles"):
     erreurs_techniques: list[str] = []
 
     cas = cas_du_jeu(jeu)
+    if reel:
+        print(f"{C}[MODE]{RESET} chemin reel : EnhancedPipeline.process (classificateur, contexte, LYRA) -- une session par cas\n")
     for i, (cat, desc, query, expected_tool, mandatory_args, optional_args) in enumerate(cas, 1):
         print(f"{DIM}[{i:02d}/{len(cas)}] {desc}: {query[:55]}...{RESET}" if len(query) > 55
               else f"{DIM}[{i:02d}/{len(cas)}] {desc}: {query}{RESET}")
 
         t_start = time.time()
+        refus_vm = False
         try:
+          if reel:
+            # Le chemin de production, de bout en bout jusqu'a la proposition
+            # d'action (pas d'execution : le tool_call attend une confirmation
+            # que personne ne donne). Une session neuve par cas.
+            # process() ouvre lui-meme le scope de session_id ("default" sinon) :
+            # sans session propre, la question laissee par un cas (choix, clarification)
+            # etait relue comme la reponse du cas suivant, et tout partait en vm_clone.
+            res = enhanced.process(query, session_id=f"bench-reel-{i}")
+            result_tool = (res.tool_call or {}).get("name")
+            result_args = (res.tool_call or {}).get("arguments") or {}
+            # Le chemin reel verifie que la VM existe : "staging-03" (jeux 3) et
+            # "preprod-01" (jeu 2) n'existent pas ici, la reponse "La VM n'existe pas"
+            # est la bonne. Compte a part, hors du score.
+            refus_vm = bool(res.error) and "n'existe pas" in (res.response or "")
+            if not refus_vm and str(expected_tool).startswith("fedora.vm_"):
+                from lyra.models import ephaistos_exp as _exp
+                cites = _exp.noms_de_machines(query, inventaire=True)
+                if cites and not any(n in _exp.inventaire_vm() for n in cites):
+                    refus_vm = True   # workflow (clone) : la source n'existe pas, il questionne
+            if result_tool is None and res.error is None and res.pending_args:
+                result_tool = None   # clarification demandee : compte comme echec sauf expected None
+          else:
             # Recuperer les specs RAG
             resultats = pipeline._rag_3tier.cascade_search(query)
-            specs = []
-            noms_outils = []
-            for item in (resultats or []):
-                meta = item.get("metadata", {}) if isinstance(item, dict) else {}
-                doc = item.get("document", "") if isinstance(item, dict) else str(item)
-                nom = meta.get("tool_name") or meta.get("name") or "?"
-                specs.append(f"{nom}: {doc}")
-                if nom != "?":
-                    noms_outils.append(nom)
+            # Meme construction que le pipeline enrichi (specs_pour_ephaistos) :
+            # le banc et la production ne doivent plus pouvoir diverger.
+            from lyra.rag_enhanced.rag_3tier import specs_pour_ephaistos
+            specs = specs_pour_ephaistos(resultats)
+            noms_outils = [s.split(":", 1)[0].strip() for s in specs]
 
             if not specs:
                 result = {"tool": None, "arguments": {}, "error": "Aucun spec RAG"}
@@ -332,7 +353,9 @@ def run_llm_tests(config_path=None, jeu: str = "modeles"):
         tool_ok = tool_equivalent(result_tool, expected_tool)
         missing_mand, missing_opt = check_args(result_args, mandatory_args, optional_args)
 
-        if result_tool is None:
+        if refus_vm:
+            status = "LLM_REFUS"
+        elif result_tool is None:
             status = "LLM_FAIL"
         elif not tool_ok:
             status = "LLM_FAIL"
@@ -343,7 +366,7 @@ def run_llm_tests(config_path=None, jeu: str = "modeles"):
         else:
             status = "LLM_PASS"
 
-        color = G if status == "LLM_PASS" else (Y if status == "LLM_PARTIAL" else R)
+        color = G if status == "LLM_PASS" else (Y if status == "LLM_PARTIAL" else (DIM if status == "LLM_REFUS" else R))
         tool_str = (result_tool or "NONE").split(".")[-1][:18].ljust(19)
         pad = desc[:35].ljust(36)
         args_str = ""
@@ -374,9 +397,11 @@ def run_llm_tests(config_path=None, jeu: str = "modeles"):
     print(f"{BOLD}  SCORES PAR CATEGORIE (LLM){RESET}")
     print(f"{BOLD}{'='*70}{RESET}")
 
-    total_pass = total_partial = total_fail = 0
+    total_pass = total_partial = total_fail = total_refus = 0
     for cat_name, entries in sorted(categories.items()):
-        n = len(entries)
+        refus = sum(1 for e in entries if e["status"] == "LLM_REFUS")
+        total_refus += refus
+        n = len(entries) - refus
         p = sum(1 for e in entries if e["status"] == "LLM_PASS")
         pa = sum(1 for e in entries if e["status"] == "LLM_PARTIAL")
         f = sum(1 for e in entries if e["status"] == "LLM_FAIL")
@@ -386,8 +411,10 @@ def run_llm_tests(config_path=None, jeu: str = "modeles"):
         print(f"  {BOLD}{cat_name:<8}{RESET} {bar} "
               f"{G}{p}P{RESET} {Y}{pa}~{RESET} {R}{f}F{RESET} / {n}  [{score_pct}%]")
 
-    total = len(results)
+    total = len(results) - total_refus
     score_final = round(100 * (total_pass + 0.5 * total_partial) / total) if total else 0
+    if total_refus:
+        print(f"\n  {DIM}{total_refus} cas hors score : VM inexistante, refus correct du chemin reel{RESET}")
     print(f"\n{BOLD}{'='*70}{RESET}")
     print(f"{BOLD}  SCORE LLM : {G}{total_pass}{RESET}{BOLD} LLM_PASS  "
           f"{Y}{total_partial}{RESET}{BOLD} LLM_PARTIAL  "
@@ -459,6 +486,8 @@ def main() -> None:
                         help="Publie le resultat dans benchmarks/results/")
     parser.add_argument("--jeu", default="modeles", choices=sorted(JEUX),
                         help="jeu de cas : modeles (21, proches des regles) ou hors_regles (inedites)")
+    parser.add_argument("--reel", action="store_true",
+                        help="passer par EnhancedPipeline.process (le chemin du demon) au lieu d'appeler EPHAISTOS directement")
     args = parser.parse_args()
 
     chemin = _config_derivee(args.ephaistos, args.lyra)
@@ -466,7 +495,7 @@ def main() -> None:
         print(f"Configuration derivee : ephaistos={args.ephaistos or '(inchange)'}")
 
     debut = time.time()
-    results, categories, score_final, pannes = run_llm_tests(chemin, jeu=args.jeu)
+    results, categories, score_final, pannes = run_llm_tests(chemin, jeu=args.jeu, reel=args.reel)
     duree = time.time() - debut
 
     if args.json and pannes:

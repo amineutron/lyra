@@ -283,6 +283,37 @@ Regle pour la suite : une variante refutee est retiree du code a l'iteration
 suivante, pas conservee « au cas ou ». Le code porte la configuration ; le
 document et les resultats portent l'histoire.
 
+## Le banc mesurait un chemin que le demon n'executait pas (recette du 2026-09-23)
+
+La recette manuelle (vingt phrases, page Notion « batterie test complet »,
+section 15) a donne des reponses qui n'avaient rien a voir avec le banc :
+« reveille fedora-base » -> tv.power_on, « archive test-vm » -> tv.mute,
+« de la lumiere dans le salon » -> bavardage. Cause : le banc appelait
+EPHAISTOS directement avec les huit specs prefixees `tool_name:` ; le pipeline
+enrichi (celui du demon) lui envoyait **une** spec, **sans prefixe** (le
+modele lisait le premier mot de la description comme nom d'outil), puis
+laissait le contexte de session (`[ctx: last_mcp=...]`, copie tel quel dans
+les arguments par le 0.5b) et le classificateur d'intention (1b, qui range
+« silence sur l'ampli » en discussion) ecraser le resultat. Deux defauts
+d'etat s'ajoutaient : une question laissee en attente par un appel one-shot
+etait relue comme la reponse de l'appel suivant, et le normaliseur d'argot
+mettait les URL en minuscules (un identifiant YouTube est sensible a la casse).
+
+Corrections : une fonction partagee construit les specs pour le banc ET le
+pipeline (`specs_pour_ephaistos`), toutes sont transmises, pas d'injection
+de contexte avec les variantes, une regle qui matche ou un tri qui reconnait
+un mot d'outil est une demande quoi qu'en dise le classificateur, les
+questions en attente sont oubliees en one-shot, les URL sont protegees.
+
+**La regle qui manquait : mesurer le chemin de production, pas un chemin
+parallele.** `tests/test_campaign_llm.py --reel` passe maintenant par
+`EnhancedPipeline.process`, une session par cas, et compte a part les refus
+corrects (VM absente de l'inventaire reel). Resultat sur le chemin reel,
+configuration finale : 21/21, 43/43 (+8 refus corrects), 91/92 (+8 refus).
+Le seul echec restant (« fais danser les lumieres avec la musique » ->
+hue_beat_set au lieu de hue_beat_start) est une confusion du modele, pas
+un defaut de chemin.
+
 ## A industrialiser
 
 - Le releve de recall (rang du bon outil sans modele, precision du critere

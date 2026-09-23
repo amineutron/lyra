@@ -810,3 +810,53 @@ def lumiere_sans_verbe(requete: str) -> str | None:
     if re.search(r"\b(?:de la|un peu de|de l) lumiere", texte):
         return "allume allumer"
     return None
+
+
+# --- Inventaire Hue (recette 2026-09-23) --------------------------------------------
+
+_INVENTAIRE_HUE: dict[str, str] = {}
+
+
+def definir_inventaire_hue(groupes) -> None:
+    """Enregistre les groupes Hue reels {id: nom} (hue.get_all_groups au demarrage)."""
+    global _INVENTAIRE_HUE
+    _INVENTAIRE_HUE = {str(k): str(v) for k, v in dict(groupes or {}).items()}
+
+
+def inventaire_hue() -> dict[str, str]:
+    return dict(_INVENTAIRE_HUE)
+
+
+def corriger_groupe_hue(tool, arguments: dict, defaut: str = "81") -> dict:
+    """Un group_id qui n'existe pas sur le pont est remplace par le groupe par defaut.
+
+    "de la lumiere dans le salon" -> turn_on_group(group_id=1) : le 0.5b invente
+    un identifiant, le pont repond "Error executing tool". Sans inventaire, rien
+    n'est change.
+    """
+    if not tool or not _INVENTAIRE_HUE or "group" not in str(tool).split(".")[-1]:
+        return arguments
+    arguments = dict(arguments or {})
+    gid = arguments.get("group_id")
+    if gid is not None and str(gid) in _INVENTAIRE_HUE:
+        return arguments
+    choix = defaut if defaut in _INVENTAIRE_HUE else next(iter(_INVENTAIRE_HUE))
+    arguments["group_id"] = int(choix) if choix.isdigit() else choix
+    return arguments
+
+
+def filtrer_missing_args(tool, missing_args, specs_compactes: list[str]) -> list:
+    """Ne garde que les arguments manquants qui existent dans la signature de l'outil.
+
+    "le chromecast a fond" -> cast_scan avec missing_args=["chromecast"] : le
+    0.5b invente un nom, et le pipeline posait une question sans objet
+    (recette 2026-09-23). Sans spec de l'outil, la liste est rendue telle quelle.
+    """
+    if not tool or not missing_args or not specs_compactes:
+        return list(missing_args or [])
+    court = str(tool).split(".")[-1].lower()
+    params = next((_parametres_de(sp) for sp in specs_compactes
+                   if nom_de_spec(sp).split(".")[-1].lower() == court), None)
+    if params is None:
+        return list(missing_args)
+    return [a for a in missing_args if str(a) in params]

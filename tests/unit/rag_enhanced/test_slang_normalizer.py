@@ -207,3 +207,11 @@ class TestSlangNormalizerIntegration:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+def test_une_url_garde_sa_casse():
+    """Recette 2026-09-23 : l'identifiant YouTube etait mis en minuscules."""
+    normalizer = SlangNormalizer()
+    out = normalizer.normalize("start la vm et regarde https://youtu.be/dQw4w9WgXcQ sur la tele")
+    assert "https://youtu.be/dQw4w9WgXcQ" in out
+    assert out.startswith("d")   # "start" normalise en "demarre"

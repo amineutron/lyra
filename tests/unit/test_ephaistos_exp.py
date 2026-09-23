@@ -797,3 +797,38 @@ class TestIteration20:
         specs = ["hue.set_brightness: set_brightness(light_id: integer, brightness: integer)",
                  "hue.set_group_brightness: set_group_brightness(brightness: integer)"]
         assert exp.score_net(specs[::-1], "le salon a soixante-dix pour cent", c17=True, nombres=True, catt=True, tri=True, equipements=True)
+
+
+class TestInventaireHue:
+    def setup_method(self):
+        exp.definir_inventaire_hue({"81": "Chambre a coucher", "83": "TV"})
+
+    def teardown_method(self):
+        exp.definir_inventaire_hue({})
+
+    def test_groupe_inconnu_remplace_par_le_defaut(self):
+        assert exp.corriger_groupe_hue("hue.turn_on_group", {"group_id": 1}) == {"group_id": 81}
+        assert exp.corriger_groupe_hue("hue.set_group_brightness", {"brightness": 50}) == {"brightness": 50, "group_id": 81}
+
+    def test_groupe_connu_inchange(self):
+        assert exp.corriger_groupe_hue("hue.turn_off_group", {"group_id": 83}) == {"group_id": 83}
+
+    def test_outil_sans_groupe_inchange(self):
+        assert exp.corriger_groupe_hue("hue.turn_on_light", {"light_id": 1}) == {"light_id": 1}
+
+    def test_sans_inventaire_rien(self):
+        exp.definir_inventaire_hue({})
+        assert exp.corriger_groupe_hue("hue.turn_on_group", {"group_id": 1}) == {"group_id": 1}
+
+
+class TestMissingArgsInventes:
+    SPECS = ["catt.cast_scan: cast_scan(timeout?: integer)", "fedora.vm_stop: vm_stop(vm_name: string)"]
+
+    def test_argument_inconnu_retire(self):
+        assert exp.filtrer_missing_args("catt.cast_scan", ["chromecast"], self.SPECS) == []
+
+    def test_argument_reel_garde(self):
+        assert exp.filtrer_missing_args("vm_stop", ["vm_name"], self.SPECS) == ["vm_name"]
+
+    def test_sans_spec_inchange(self):
+        assert exp.filtrer_missing_args("tv.mute", ["x"], self.SPECS) == ["x"]

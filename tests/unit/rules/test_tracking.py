@@ -143,3 +143,9 @@ class TestJeu5:
 
     def test_kill_d_une_tache_reste_detecte(self):
         assert tool("kill preprod-01") == "tracking.kill_task"
+
+
+class TestRecette2026_09_23:
+    def test_affiche_les_taches_est_une_liste(self):
+        assert tool("affiche les taches") == "tracking.list"
+        assert tool("montre moi mes taches") == "tracking.list"

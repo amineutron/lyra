@@ -592,6 +592,28 @@ class RAG3Tier:
 _instance: Optional[RAG3Tier] = None
 
 
+def specs_pour_ephaistos(rag_results: list) -> list[str]:
+    """Specs textuelles pour EPHAISTOS depuis les resultats de cascade_search.
+
+    Format "tool_name: document", le seul que _compact_spec et le tri des
+    variantes lisent correctement (sans prefixe, le nom d'outil devenait le
+    premier mot de la description). Les entrees sans tool_name (registry)
+    sont ecartees. Le banc (tests/test_campaign_llm.py) et le pipeline
+    (pipeline_enhanced.py) passent tous deux par ici : la recette du
+    2026-09-23 a montre que le pipeline envoyait une seule spec sans prefixe
+    alors que le banc en envoyait huit avec.
+    """
+    specs = []
+    for item in rag_results or []:
+        meta = item.get("metadata", {}) if isinstance(item, dict) else {}
+        nom = meta.get("tool_name") or meta.get("name")
+        if not nom:
+            continue
+        doc = item.get("document", "") if isinstance(item, dict) else str(item)
+        specs.append(f"{nom}: {doc}")
+    return specs
+
+
 def get_rag_3tier(persist_directory: str = ".chromadb") -> RAG3Tier:
     """
     Retourne instance singleton du RAG3Tier.

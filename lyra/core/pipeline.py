@@ -58,6 +58,7 @@ from .validation import (
     VM_TOOLS_REQUIRE_VM_NAME,
     VM_TOOLS_SHOW_STATE,
     get_existing_vm_names,
+    get_hue_groups,
     get_vm_state,
     validate_vm_existence,
 )
@@ -153,6 +154,8 @@ class Pipeline:
         from lyra.models import ephaistos_exp as _exp
         if "inventaire_vm" in _exp.actives():
             _exp.definir_inventaire_vm(get_existing_vm_names(self._hestia))
+            if "hue" in (self.config.mcp.get("servers", {}) if isinstance(self.config.mcp, dict) else {}):
+                _exp.definir_inventaire_hue(get_hue_groups(self._hestia))
 
         # Model Manager + EPHAISTOS + LYRA + Intent Classifier (sequentiel, rapide)
         self._model_manager = ModelManager(self.config)
@@ -535,9 +538,15 @@ class Pipeline:
                 mcp_specs=specs,
                 specs_toon=specs_toon
             )
+            if analysis.tool and analysis.arguments:
+                analysis.arguments = _exp.corriger_groupe_hue(analysis.tool, analysis.arguments)
+            if analysis.tool and analysis.missing_args:
+                analysis.missing_args = _exp.filtrer_missing_args(
+                    analysis.tool, analysis.missing_args,
+                    [self._ephaistos._compact_spec(s) for s in specs])
 
         # Disambiguation: si EPHAISTOS est peu confiant et les top candidats sont de serveurs differents
-        if fused and not analysis.no_match and analysis.confidence < 0.70:
+        if fused and not analysis.no_match and analysis.confidence < 0.70 and not getattr(analysis, "force", False):
             candidates = _extract_disambiguation_candidates(fused)
             if len(candidates) >= 2:
                 question = _build_disambiguation_question(candidates)

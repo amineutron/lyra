@@ -192,3 +192,20 @@ class TestNoMatch:
 
     def test_empty(self):
         assert tool("") is None
+
+
+class TestRecette2026_09_23:
+    def test_l_ampli_sur_game(self):
+        r = detect("l'ampli sur game")
+        assert r is not None and r.tool == "denon.set_input" and r.arguments == {"input": "GAME"}
+
+    def test_l_ampli_sur_le_bluray(self):
+        assert detect("l'ampli sur le bluray").arguments == {"input": "BD"}
+
+    def test_question_d_etat(self):
+        assert detect("l'ampli est allume ?").tool == "denon.get_status"
+        assert detect("est-ce que le denon est en veille").tool == "denon.get_status"
+
+    def test_bascule_vers_une_entree_est_un_set_input(self):
+        assert detect("bascule l'entree de l'ampli vers la tele").tool == "denon.set_input"
+        assert detect("bascule le mute de l'ampli").tool == "denon.mute_toggle"

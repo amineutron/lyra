@@ -68,6 +68,20 @@ def get_existing_vm_names(hestia: "HestiaExecutor") -> list[str]:
     return []
 
 
+def get_hue_groups(hestia: "HestiaExecutor") -> dict:
+    """Groupes Hue reels {id: nom} via hue.get_all_groups (vide si echec)."""
+    try:
+        result = hestia.execute("hue.get_all_groups", {})
+        if result.success:
+            import json
+            data = json.loads(result.content)
+            if isinstance(data, dict):
+                return {str(k): str((v or {}).get("name", k)) for k, v in data.items()}
+    except Exception:
+        pass
+    return {}
+
+
 def get_vm_state(hestia: "HestiaExecutor", vm_name: str) -> dict:
     """Recupere l'etat courant d'une VM.
 
