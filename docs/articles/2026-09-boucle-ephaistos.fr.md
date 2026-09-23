@@ -1,6 +1,6 @@
 # Faire choisir le bon outil a un modele de 0,5 milliard de parametres : une boucle d'amelioration mesuree, mecanisme avant modele
 
-*Amine Arouabah (amineutron), septembre 2026. Version de travail, non relue par des pairs. Code, jeux de test et resultats bruts : https://github.com/amineutron/lyra (AGPL-3.0).*
+*Amine Arouabah (amineutron), septembre 2026. Version de travail, non relue par des pairs. Code, jeux de test et resultats bruts : https://github.com/amineutron/lyra (AGPL-3.0). English version: [2026-09-boucle-ephaistos.en.md](2026-09-boucle-ephaistos.en.md).*
 
 ## Resume
 
