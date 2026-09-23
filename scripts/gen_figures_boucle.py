@@ -119,12 +119,64 @@ def figure_generalisation(uniques, finaux) -> str:
     return _svg(L, H, "\n".join(corps))
 
 
+def figure_barres(titre: str, lignes: list[tuple[str, int, int]], couleur: str = "#2ca02c",
+                  note: str = "") -> str:
+    """Barres horizontales : (etiquette, valeur, total)."""
+    L, ml, mr, h = 760, 330, 30, 26
+    H = 50 + h * len(lignes) + (36 if note else 14)
+    corps = [f'<text x="{L/2}" y="22" text-anchor="middle" font-size="15" font-weight="bold">{titre}</text>']
+    larg = L - ml - mr
+    for k, (nom, val, tot) in enumerate(lignes):
+        y = 40 + k * h
+        w = larg * val / tot if tot else 0
+        corps.append(f'<text x="{ml-8}" y="{y+16}" text-anchor="end">{nom}</text>'
+                     f'<rect x="{ml}" y="{y+3}" width="{w:.1f}" height="{h-8}" fill="{couleur}"/>'
+                     f'<text x="{ml+w+6:.1f}" y="{y+16}">{val}/{tot}</text>')
+    if note:
+        corps.append(f'<text x="{L/2}" y="{H-10}" text-anchor="middle" fill="#444">{note}</text>')
+    return _svg(L, H, "\n".join(corps))
+
+
+def iteration(numero: int, jeu: str) -> list[tuple[str, int, int]]:
+    """(variantes ajoutees au socle, reussis, cas) des configurations d'une iteration."""
+    fichiers = [f for f in RESULTS.glob(f"*it{numero}-*boucle*.json") if "ancienindex" not in f.name]
+    for f in fichiers:
+        d = json.loads(f.read_text())
+        if d.get("jeu", "modeles") != jeu:
+            continue
+        confs = [c for c in d.get("configurations", []) if "panne" not in c]
+        socle = set(confs[0]["variantes"]) if confs else set()
+        return [("+".join(v for v in c["variantes"] if v not in socle) or "socle", c["reussis"], c["cas"]) for c in confs]
+    return []
+
+
+def modeles_jeu2() -> list[tuple[str, int, int]]:
+    """Comparaison de modeles sur le jeu 2 (mesures du 2026-09-18, configuration intermediaire)."""
+    out = {}
+    for f in sorted(RESULTS.glob("2026-09-18-*-exp-horsregles-modeles.json")):
+        d = json.loads(f.read_text())
+        out[d["modeles_mesures"]["ephaistos"]] = (int(d["statuts"].get("LLM_PASS", 0)), int(d["cas"]))
+    return sorted(((m, r, c) for m, (r, c) in out.items()), key=lambda t: t[1])
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     series = series_boucle()
     (OUT / "progression.svg").write_text(figure_progression(series))
     uniques, finaux = mesures_scellees()
     (OUT / "generalisation.svg").write_text(figure_generalisation(uniques, finaux))
+    (OUT / "ablation_it14.svg").write_text(figure_barres(
+        "Iteration 14, jeu 3 : chaque levier seul, par paire, puis les trois (socle = 31 variantes)",
+        iteration(14, "hors_regles_2"),
+        note="Les trois leviers se cumulent presque parfaitement : +2, +8, +8 seuls ; +14 ensemble."))
+    (OUT / "modeles_jeu2.svg").write_text(figure_barres(
+        "Onze modeles sur le jeu 2, configuration intermediaire du 2026-09-18",
+        modeles_jeu2(), couleur="#1f77b4",
+        note="A ce stade la taille compte (23 a 44) ; avec le tri net impose, le 0.5b atteint 51/51."))
+    (OUT / "seules_vs_paires_it2.svg").write_text(figure_barres(
+        "Iteration 2, jeu 1 : les idees seules trompent (socle = exemples_cibles)",
+        iteration(2, "modeles")[:12], couleur="#d62728",
+        note="lexical seule degrade (8/21) et devient decisive en paire avec top3_direct (13/21) ; toutes ensemble : 14/21."))
     print(f"{len(series)} series, {len(uniques)} jeux scelles -> {OUT}")
     return 0
 

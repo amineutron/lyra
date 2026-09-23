@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="372" viewBox="0 0 760 372" font-family="sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="15" font-weight="bold">Onze modeles sur le jeu 2, configuration intermediaire du 2026-09-18</text>
+<text x="322" y="56" text-anchor="end">gemma3:1b</text><rect x="330" y="43" width="180.4" height="18" fill="#1f77b4"/><text x="516.4" y="56">23/51</text>
+<text x="322" y="82" text-anchor="end">llama3.2:1b</text><rect x="330" y="69" width="180.4" height="18" fill="#1f77b4"/><text x="516.4" y="82">23/51</text>
+<text x="322" y="108" text-anchor="end">qwen2.5-coder:0.5b</text><rect x="330" y="95" width="203.9" height="18" fill="#1f77b4"/><text x="539.9" y="108">26/51</text>
+<text x="322" y="134" text-anchor="end">qwen2.5-coder:1.5b</text><rect x="330" y="121" width="227.5" height="18" fill="#1f77b4"/><text x="563.5" y="134">29/51</text>
+<text x="322" y="160" text-anchor="end">mistral:7b</text><rect x="330" y="147" width="235.3" height="18" fill="#1f77b4"/><text x="571.3" y="160">30/51</text>
+<text x="322" y="186" text-anchor="end">llama3.2:3b</text><rect x="330" y="173" width="251.0" height="18" fill="#1f77b4"/><text x="587.0" y="186">32/51</text>
+<text x="322" y="212" text-anchor="end">qwen3:1.7b</text><rect x="330" y="199" width="251.0" height="18" fill="#1f77b4"/><text x="587.0" y="212">32/51</text>
+<text x="322" y="238" text-anchor="end">qwen2.5:7b</text><rect x="330" y="225" width="266.7" height="18" fill="#1f77b4"/><text x="602.7" y="238">34/51</text>
+<text x="322" y="264" text-anchor="end">qwen2.5-coder:7b</text><rect x="330" y="251" width="282.4" height="18" fill="#1f77b4"/><text x="618.4" y="264">36/51</text>
+<text x="322" y="290" text-anchor="end">qwen2.5:1.5b</text><rect x="330" y="277" width="298.0" height="18" fill="#1f77b4"/><text x="634.0" y="290">38/51</text>
+<text x="322" y="316" text-anchor="end">qwen2.5:3b</text><rect x="330" y="303" width="345.1" height="18" fill="#1f77b4"/><text x="681.1" y="316">44/51</text>
+<text x="380.0" y="362" text-anchor="middle" fill="#444">A ce stade la taille compte (23 a 44) ; avec le tri net impose, le 0.5b atteint 51/51.</text></svg>

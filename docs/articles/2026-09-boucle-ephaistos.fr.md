@@ -20,7 +20,11 @@ La boucle applique cinq regles, dans cet ordre.
 
 1. **Hypothese ecrite avant la mesure**, avec l'impact attendu en nombre de cas. Sans hypothese prealable, un chiffre qui bouge n'enseigne rien.
 2. **Mesurer le mecanisme avant le modele.** Le rang du bon outil parmi les candidats presentes, et la precision du critere qui decide d'imposer un outil, se calculent sans appel au modele, en vingt secondes par configuration (`scripts/bench_recall.py`). Une idee sans effet mecanique n'est pas mesuree au banc.
-3. **Une idee est une variante nommee**, activable par une variable d'environnement (`LYRA_EXP`), implementee par une fonction pure testee. Le banc (`scripts/bench_boucle.py`) mesure chaque variante seule, par paire, et toutes ensemble, au-dessus de l'acquis des iterations precedentes, a graine fixe (`LYRA_SEED=42`). Sans graine, le meme banc varie de plus ou moins un cas sur sept.
+3. **Une idee est une variante nommee**, activable par une variable d'environnement (`LYRA_EXP`), implementee par une fonction pure testee. Le banc (`scripts/bench_boucle.py`) mesure chaque variante seule, par paire, et toutes ensemble, au-dessus de l'acquis des iterations precedentes, a graine fixe (`LYRA_SEED=42`). Sans graine, le meme banc varie de plus ou moins un cas sur sept. La figure 1 montre pourquoi les paires sont indispensables : une variante peut degrader seule et etre decisive combinee.
+
+![Seules contre paires, iteration 2](figures/seules_vs_paires_it2.svg)
+
+*Figure 1. Iteration 2 sur le jeu 1 : les douze premieres configurations mesurees (socle, variantes seules, paires). La recherche lexicale seule fait perdre un cas ; associee a la fenetre de trois specs elle en gagne quatre.*
 4. **Classer chaque echec restant** automatiquement : le bon outil etait-il montre au modele, a quel rang ; le modele a-t-il invente un nom, choisi un voisin, rate un argument. La reponse brute et le prompt exact sont conserves.
 5. **Recommencer** tant que le seuil (99 %) n'est pas atteint, et consigner hypotheses et resultats de chaque iteration dans un journal public (issue de suivi).
 
@@ -40,7 +44,7 @@ RTX 3080 Ti (12 Go), ollama, `qwen2.5-coder:0.5b` pour EPHAISTOS et `llama3.2:1b
 
 ![Meilleure configuration par iteration](figures/progression.svg)
 
-*Figure 1. Meilleure configuration de chaque iteration, par jeu de developpement. Les nombres sont lus dans `benchmarks/results/` par `scripts/gen_figures_boucle.py`.*
+*Figure 2. Meilleure configuration de chaque iteration, par jeu de developpement. Les nombres sont lus dans `benchmarks/results/` par `scripts/gen_figures_boucle.py`.*
 
 | Jeu | Depart | Final | Iterations |
 |---|---|---|---|
@@ -65,7 +69,11 @@ RTX 3080 Ti (12 Go), ollama, `qwen2.5-coder:0.5b` pour EPHAISTOS et `llama3.2:1b
 
 **Quand le tri est net, ne pas demander au modele.** Les candidats sont retries par des cartes de mots (« moins » designe `down`, « sans le son » designe `mute`, « le point » designe `status`). Quand le premier candidat a au moins deux points et un de plus que le suivant, l'outil est impose et le modele ne fait que les arguments. La precision de ce critere, mesuree sans modele, est de 27/27 au moment de son introduction et de 70/0 (nets corrects / nets faux) a la fin. C'est ce qui a mene le jeu 2 de 39 a 51/51, la ou un modele de 1,5 milliard ne faisait pas mieux que celui de 0,5.
 
-**Les leviers qui generalisent ne dependent pas des phrases.** Apres la mesure unique du jeu 3 (56/100), trois leviers ecrits sans regarder ses echecs : l'inventaire reel des machines lu au demarrage (a la place d'un motif de nom), un lexique de langue courante ecrit domaine par domaine, les memes verbes dans les cartes de tri. Jeu 3 : 56, 70, puis 82.
+**Les leviers qui generalisent ne dependent pas des phrases.** Apres la mesure unique du jeu 3 (56/100), trois leviers ecrits sans regarder ses echecs : l'inventaire reel des machines lu au demarrage (a la place d'un motif de nom), un lexique de langue courante ecrit domaine par domaine, les memes verbes dans les cartes de tri. La figure 3 donne leur ablation complete ; ils se cumulent presque additivement (56, 70, puis 82 a l'iteration suivante).
+
+![Ablation des trois leviers generiques](figures/ablation_it14.svg)
+
+*Figure 3. Iteration 14 sur le jeu 3 : chaque levier seul, chaque paire, les trois ensemble, au-dessus du socle de 31 variantes.*
 
 **Un defaut de code, pas de modele.** A l'iteration 18, cinq echecs avaient le bon outil en premiere position avec un tri net, et le modele repondait autre chose : l'outil impose par la premiere passe etait remis en jeu par une seconde passe. Le corriger a rapporte un point et 30 % d'appels au modele en moins (543 s a 381 s pour 100 requetes).
 
@@ -73,7 +81,7 @@ RTX 3080 Ti (12 Go), ollama, `qwen2.5-coder:0.5b` pour EPHAISTOS et `llama3.2:1b
 
 ![Generalisation](figures/generalisation.svg)
 
-*Figure 2. Pour chaque jeu scelle : mesure unique (gris) et score apres iteration (vert). Seul le gris mesure la generalisation.*
+*Figure 4. Pour chaque jeu scelle : mesure unique (gris) et score apres iteration (vert). Seul le gris mesure la generalisation.*
 
 Le 21/21 du jeu 1 et le 51/51 du jeu 2 mesuraient la boucle, pas le produit : la configuration qui faisait 72/72 a donne 56/100 sur le jeu 3 ecrit apres coup. Trois jeux scelles de 50 phrases, mesures une fois chacun avec des configurations a un point d'ecart sur le jeu de developpement, ont donne 41, 35 et 42. Nous en tirons deux conclusions : la generalisation de ce mecanisme avec un modele de 0,5 milliard se situe entre 70 et 85 % sur du langage libre ; et un chiffre sur 50 phrases porte plusieurs points d'incertitude, ce qui interdit de comparer deux configurations sur un seul jeu de cette taille.
 
@@ -81,21 +89,9 @@ En usage reel, entre 16 et 24 phrases sur 50 de chaque jeu sont prises par une r
 
 ### 3.4 Comparaison de modeles
 
-Sur le jeu 2 avec une configuration intermediaire (17 a 22 variantes, 2026-09-18) :
+![Onze modeles sur le jeu 2](figures/modeles_jeu2.svg)
 
-| Modele | Score /51 |
-|---|---|
-| gemma3:1b | 23 |
-| llama3.2:1b | 23 |
-| qwen2.5-coder:0.5b | 26 |
-| qwen2.5-coder:1.5b | 29 |
-| mistral:7b | 30 |
-| llama3.2:3b | 32 |
-| qwen3:1.7b | 32 |
-| qwen2.5:7b | 34 |
-| qwen2.5-coder:7b | 36 |
-| qwen2.5:1.5b | 38 |
-| qwen2.5:3b | 44 |
+*Figure 5. Onze modeles sur le jeu 2, configuration intermediaire du 2026-09-18 (17 a 22 variantes). Les trois modeles de 7 milliards sont battus par un 3 milliards de la meme famille.*
 
 A ce stade la taille comptait, dans une fourchette de 23 a 44. Une fois le tri net et l'outil impose en place, le modele de 0,5 milliard a atteint 51/51 sur ce meme jeu, et le 1,5 milliard ne faisait pas mieux a configuration egale. Le mecanisme a rendu la taille du modele secondaire.
 

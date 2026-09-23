@@ -13,7 +13,7 @@
 
 ### Changed
 - EPHAISTOS: the 17 refuted or neutral variants are removed from the code (module 1581 -> ~810 lines); the 42 retained ones are the default configuration, still switchable one by one through `LYRA_EXP` for ablation. Word tables and lexicons move to `lyra/models/cartes.py` (data only). Mechanical recall and the benches are identical before and after (21/21, 51/51, 100/100).
-- `docs/articles/`: the write-up of the improvement loop (French draft) with two SVG figures generated from `benchmarks/results/` by `scripts/gen_figures_boucle.py`.
+- `docs/articles/2026-09-boucle-ephaistos.fr.md`: the improvement loop written up as a research report (abstract, method, results, limits, reproduction), with five SVG figures generated from `benchmarks/results/` by `scripts/gen_figures_boucle.py`.
 
 ### Fixed
 - **The daemon did not run the path the bench measured.** `EnhancedPipeline` sent EPHAISTOS a single spec, without the `tool_name:` prefix, then let a session-context injection and the intent classifier override the result: "reveille fedora-base" gave `tv.power_on`, "archive test-vm" gave `tv.mute`, "de la lumiere dans le salon" was answered as small talk (manual acceptance test, 2026-09-23). The pipeline now builds the specs exactly like the bench (`specs_pour_ephaistos`, shared), passes all of them, skips the context injection when the variants are active, and treats a query as a command when the spec sort is unambiguous (`Ephaistos.est_net`). `tests/test_campaign_llm.py --reel` measures this real path (one session per case, correct refusals of unknown VMs counted apart): 21/21, 43/43 and 91/92 on the three development sets.

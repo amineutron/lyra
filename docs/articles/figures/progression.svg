@@ -43,7 +43,7 @@
 <circle cx="481.0" cy="40.0" r="3.5" fill="#1f77b4"/>
 <circle cx="740.0" cy="40.0" r="3.5" fill="#1f77b4"/>
 <rect x="510" y="251" width="12" height="12" fill="#1f77b4"/><text x="528" y="262">Jeu 1 (21, proche des regles)</text>
-<path d="M60.0,250.4 L92.4,210.6 L124.8,182.2 L157.1,182.2 L189.5,136.7 L221.9,131.0 L254.3,113.9 L286.7,108.2 L319.0,62.7 L351.4,40.0 L383.8,40.0 L416.2,40.0 L448.6,40.0 L481.0,45.7" fill="none" stroke="#d62728" stroke-width="2.5"/>
+<path d="M60.0,250.4 L92.4,210.6 L124.8,182.2 L157.1,182.2 L189.5,136.7 L221.9,131.0 L254.3,113.9 L286.7,108.2 L319.0,62.7 L351.4,40.0 L383.8,40.0 L416.2,40.0 L448.6,40.0 L481.0,45.7 L740.0,40.0" fill="none" stroke="#d62728" stroke-width="2.5"/>
 <circle cx="60.0" cy="250.4" r="3.5" fill="#d62728"/>
 <circle cx="92.4" cy="210.6" r="3.5" fill="#d62728"/>
 <circle cx="124.8" cy="182.2" r="3.5" fill="#d62728"/>
@@ -58,8 +58,9 @@
 <circle cx="416.2" cy="40.0" r="3.5" fill="#d62728"/>
 <circle cx="448.6" cy="40.0" r="3.5" fill="#d62728"/>
 <circle cx="481.0" cy="45.7" r="3.5" fill="#d62728"/>
+<circle cx="740.0" cy="40.0" r="3.5" fill="#d62728"/>
 <rect x="510" y="269" width="12" height="12" fill="#d62728"/><text x="528" y="280">Jeu 2 (51, inedites)</text>
-<path d="M481.0,127.0 L513.3,92.2 L545.7,89.3 L578.1,63.2 L610.5,60.3 L642.9,40.0 L675.2,40.0" fill="none" stroke="#2ca02c" stroke-width="2.5"/>
+<path d="M481.0,127.0 L513.3,92.2 L545.7,89.3 L578.1,63.2 L610.5,60.3 L642.9,40.0 L675.2,40.0 L740.0,40.0" fill="none" stroke="#2ca02c" stroke-width="2.5"/>
 <circle cx="481.0" cy="127.0" r="3.5" fill="#2ca02c"/>
 <circle cx="513.3" cy="92.2" r="3.5" fill="#2ca02c"/>
 <circle cx="545.7" cy="89.3" r="3.5" fill="#2ca02c"/>
@@ -67,4 +68,5 @@
 <circle cx="610.5" cy="60.3" r="3.5" fill="#2ca02c"/>
 <circle cx="642.9" cy="40.0" r="3.5" fill="#2ca02c"/>
 <circle cx="675.2" cy="40.0" r="3.5" fill="#2ca02c"/>
+<circle cx="740.0" cy="40.0" r="3.5" fill="#2ca02c"/>
 <rect x="510" y="287" width="12" height="12" fill="#2ca02c"/><text x="528" y="298">Jeu 3 (100, quotidien)</text></svg>
