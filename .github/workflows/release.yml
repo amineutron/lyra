@@ -1,12 +1,42 @@
-# À chaque tag v* : build du wheel, publication PyPI (Trusted Publishing,
-# environnement "pypi"), release GitHub avec les fichiers.
+# À chaque tag v* : build du wheel, publication PyPI par Trusted Publishing
+# (environnement "pypi" déclaré côté PyPI et côté dépôt), release GitHub avec
+# le wheel et le sdist attachés.
+#
+# Le workflow est volontairement autonome : PyPI refuse les jetons OIDC émis
+# depuis un workflow réutilisable (claim job_workflow_ref différent du dépôt,
+# erreur invalid-publisher, constatée le 2026-09-24).
 name: release
 on:
   push:
     tags: ["v*"]
 jobs:
-  release:
-    uses: amineutron/.github/.github/workflows/release-pypi.yml@main
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
     permissions:
       id-token: write
       contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Release GitHub avec les fichiers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 \
+            || gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" --clobber
