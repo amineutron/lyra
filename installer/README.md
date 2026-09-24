@@ -85,6 +85,32 @@ frontaux et les tests le prennent en compte automatiquement.
 - Repos prives : pre-vol SSH GitHub, fallback https+PAT saisi a la volee
   (jamais ecrit sur disque).
 
+## Derrière un proxy d'entreprise
+
+L'installeur et Lyra ne lisent aucune variable qui leur soit propre pour le
+réseau : ils respectent celles que les outils sous-jacents lisent déjà.
+
+| Variable | Lue par | Effet |
+|---|---|---|
+| `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` | curl, pip/uv, requests, le script d'installation d'Ollama | tout le trafic sortant passe par le proxy |
+| `PIP_INDEX_URL` (ou `UV_INDEX_URL`) | pip / uv | miroir PyPI interne pour le venv |
+| `HF_ENDPOINT` | huggingface_hub (modèles Whisper, MiniLM) et le téléchargement des voix Piper | miroir Hugging Face interne |
+| `OLLAMA_HOST` | le client `ollama` et Lyra (`get_ollama_base_url`, prime sur `llm.base_url` de config.yaml) | Ollama distant, machine sans GPU, Codespace |
+
+Exemple :
+
+```bash
+export HTTPS_PROXY=http://proxy.interne:3128 NO_PROXY=localhost,127.0.0.1,.interne
+export PIP_INDEX_URL=https://nexus.interne/repository/pypi/simple
+export HF_ENDPOINT=https://hf-mirror.interne
+export OLLAMA_HOST=gpu-box.interne:11434
+python3 installer/install.py
+```
+
+Limite connue : il n'existe pas de bundle hors-ligne complet (modèles Ollama,
+Whisper, Piper et paquets Python dans une archive). Suivi dans l'issue
+[lyra#25](https://github.com/amineutron/lyra/issues/25).
+
 ## Rebuild du frontend app
 
 ```

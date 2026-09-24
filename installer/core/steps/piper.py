@@ -5,6 +5,7 @@ Les voix vont dans {lyra}/models/ : c'est la que /setting scanne les
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from ..events import Output
@@ -13,8 +14,9 @@ from ..runner import run
 
 _PIPER_URL = ("https://github.com/rhasspy/piper/releases/download/"
               "2023.11.14-2/piper_linux_x86_64.tar.gz")
-_VOICE_BASE = ("https://huggingface.co/rhasspy/piper-voices/resolve/main/"
-               "fr/fr_FR/upmc/medium/fr_FR-upmc-medium")
+# HF_ENDPOINT : miroir Hugging Face d'entreprise (meme variable que huggingface_hub)
+_VOICE_BASE = (os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/")
+               + "/rhasspy/piper-voices/resolve/main/fr/fr_FR/upmc/medium/fr_FR-upmc-medium")
 
 
 def run_piper(ctx: StepContext) -> None:

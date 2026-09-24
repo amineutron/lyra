@@ -4,11 +4,27 @@ Lyra RAG - Configuration centralisee.
 Charge et valide la configuration RAG depuis config.yaml.
 """
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
 import yaml
+
+
+def ollama_url_depuis_env(valeur: Optional[str]) -> Optional[str]:
+    """Normalise OLLAMA_HOST en URL de base ; None si vide.
+
+    "gpu-box" -> "http://gpu-box:11434", "gpu-box:11435" -> "http://gpu-box:11435",
+    "https://ollama.example" conserve tel quel (sans barre finale).
+    """
+    if not valeur or not valeur.strip():
+        return None
+    v = valeur.strip().rstrip("/")
+    if v.startswith(("http://", "https://")):
+        return v
+    hote, _, port = v.partition(":")
+    return f"http://{hote}:{port or '11434'}"
 
 
 @dataclass
@@ -203,7 +219,16 @@ class RAGConfig:
         return config
 
     def get_ollama_base_url(self) -> str:
-        """Retourne l'URL de base Ollama."""
+        """Retourne l'URL de base Ollama.
+
+        OLLAMA_HOST (la variable que lit le client ollama lui-meme) prime sur
+        config.yaml : un Codespace, un conteneur ou une machine sans GPU
+        pointent ainsi sur un Ollama distant sans editer de fichier
+        (roadmap #44). Formes acceptees : "hote", "hote:port", "http(s)://...".
+        """
+        depuis_env = ollama_url_depuis_env(os.environ.get("OLLAMA_HOST"))
+        if depuis_env:
+            return depuis_env
         return self.llm.get("base_url", "http://localhost:11434")
 
     def get_ollama_timeout(self) -> int:
