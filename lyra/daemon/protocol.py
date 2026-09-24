@@ -7,6 +7,10 @@ Client -> demon :
   {"type": "hello",  "session": str, "client": "oneshot|repl|vocal"}
   {"type": "request", "text": str, "options": {"mode","yes","verbose","interactive"}}
   {"type": "answer",  "value": str}          # reponse a un "ask"
+  {"type": "tool",    "name": str, "arguments": dict, "options": {"confirmed": bool}}
+                                             # execution directe d'un outil MCP, sans
+                                             # modele (neutroncore, roadmap #73) ;
+                                             # un outil dangereux non confirme -> "ask"
   {"type": "tasks_poll"}
   {"type": "health"}
   {"type": "ping"}

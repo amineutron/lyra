@@ -1,6 +1,6 @@
 # Lyra - Liste des outils MCP
 
-Genere le 2026-09-19 par `scripts/gen_mcp_tools_md.py` depuis les serveurs configures (88 outils, 5 serveurs). Ne pas editer a la main : relancer le script.
+Genere le 2026-09-24 par `scripts/gen_mcp_tools_md.py` depuis les serveurs configures (88 outils, 5 serveurs). Ne pas editer a la main : relancer le script.
 
 Colonne confirmation (source : `lyra/core/constants.py`) :
 
@@ -40,7 +40,7 @@ Colonne confirmation (source : `lyra/core/constants.py`) :
 | `tv.ambilight_mode` | Change le mode Ambilight | `mode` (string: follow_video/follow_audio/lounge_light/manual/video_immersive/audio_spectrum) | sans confirmation en mode performance (-p) |
 | `tv.ambilight_off` | Desactive l'Ambilight de la TV | - | sans confirmation en mode performance (-p) |
 | `tv.ambilight_on` | Active l'Ambilight de la TV | - | sans confirmation en mode performance (-p) |
-| `tv.get_state` | Retourne l'etat actuel de la TV (allumee/standby) | - | sans confirmation en mode performance (-p) |
+| `tv.get_state` | Retourne l'etat actuel de la TV : powerstate (On/Standby), volume, muted, ambilight_on, ambilight_mode | - | sans confirmation en mode performance (-p) |
 | `tv.launch_app` | Lance une application sur la TV | `app` (string: netflix/youtube/plex/disney/prime) | sans confirmation en mode performance (-p) |
 | `tv.list_apps` | Liste les applications disponibles sur la TV | - | sans confirmation en mode performance (-p) |
 | `tv.mute` | Coupe ou remet le son de la TV | - | sans confirmation en mode performance (-p) |
@@ -91,7 +91,7 @@ Colonne confirmation (source : `lyra/core/constants.py`) :
 
 | Outil | Description | Arguments | Confirmation |
 |---|---|---|---|
-| `denon.get_status` | Retourne le statut du Denon (volume, power, etc.). | - | sans confirmation en mode performance (-p) |
+| `denon.get_status` | Retourne le statut du Denon : volume, power (on/standby/unknown), muted, source (BD, TV, GAME...), reachable. | - | sans confirmation en mode performance (-p) |
 | `denon.mute_off` | Desactive le mute du Denon. | - | sans confirmation en mode performance (-p) |
 | `denon.mute_on` | Active le mute du Denon. | - | sans confirmation en mode performance (-p) |
 | `denon.mute_toggle` | Toggle le mute du Denon (on/off). | - | sans confirmation en mode performance (-p) |

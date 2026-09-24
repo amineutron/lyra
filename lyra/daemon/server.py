@@ -161,6 +161,72 @@ class LyraDaemon:
             "notifications": [n for n in manager.get_completed_notifications()],
         }
 
+    # -- Appel direct d'un outil (sans modele) -----------------------------
+
+    def handle_tool(self, channel: LineChannel, message: dict,
+                    session_id: str) -> None:
+        """Execute un outil MCP nomme, sans passer par le modele.
+
+        Message : {"type": "tool", "name": "tv.power_on", "arguments": {...},
+        "options": {"confirmed": bool}}. Meme regle de confirmation que la
+        voix : un outil dangereux exige un ask "confirm" acquitte par "o"/"oui",
+        sauf si le client se declare deja confirme (jeton HMAC verifie de son
+        cote, cas de neutroncore). Reponse : {"type": "tool_result", ...} puis
+        {"type": "result", "exit_code"}. C'est la route de neutroncore
+        (roadmap #73) : un seul processus parle aux appareils.
+        """
+        from lyra.core.constants import is_dangerous_tool
+        rui = RemoteUI(channel)
+        name = str(message.get("name", "")).strip()
+        arguments = message.get("arguments") or {}
+        options = message.get("options", {})
+        if not name or not isinstance(arguments, dict):
+            channel.send({"type": "error", "text": "tool: name et arguments requis"})
+            channel.send({"type": "result", "exit_code": 1, "executed": False})
+            return
+        try:
+            self.wait_ready()
+        except RuntimeError as e:
+            rui.error(str(e))
+            channel.send({"type": "result", "exit_code": 1, "executed": False})
+            return
+        v2 = self.pipeline._pipeline_v2 if hasattr(self.pipeline, "_pipeline_v2") else self.pipeline
+        catalogue = {t.get("name") for t in (v2._hestia.get_available_tools() or [])}
+        if name not in catalogue and not name.startswith("tracking."):
+            channel.send({"type": "error", "text": f"outil inconnu: {name}"})
+            channel.send({"type": "result", "exit_code": 1, "executed": False})
+            return
+        try:
+            if is_dangerous_tool(name) and not bool(options.get("confirmed", False)):
+                if not rui.confirm_action(name, arguments):
+                    rui.warning("Action annulee.")
+                    channel.send({"type": "result", "exit_code": 2, "executed": False})
+                    return
+            with self._busy:
+                self._busy_with = f"outil {name}"
+                try:
+                    res = v2.execute_action(name, arguments, skip_lyra_format=True,
+                                            session_id=session_id)
+                finally:
+                    self._busy_with = ""
+            ok = bool(res.executed) and res.error is None
+            rui.tool_result(res.response or "", success=ok, raw_error=res.error)
+            channel.send({"type": "result", "exit_code": 0 if ok else 1, "executed": True})
+        except RequestCancelled:
+            try:
+                channel.send({"type": "result", "exit_code": 2, "executed": False})
+            except ChannelClosed:
+                pass
+        except ChannelClosed:
+            pass
+        except Exception as e:  # noqa: BLE001 - jamais tuer le demon
+            logger.error("erreur outil %s: %s\n%s", name, e, traceback.format_exc())
+            try:
+                rui.error(f"Erreur interne du demon: {e}")
+                channel.send({"type": "result", "exit_code": 1, "executed": False})
+            except ChannelClosed:
+                pass
+
     # -- Traitement d'une requete ----------------------------------------
 
     def handle_request(self, channel: LineChannel, message: dict,
@@ -241,6 +307,8 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
                     channel.send({"type": "tasks", **daemon.tasks_snapshot()})
                 elif mtype == "request":
                     daemon.handle_request(channel, message, session_id)
+                elif mtype == "tool":
+                    daemon.handle_tool(channel, message, session_id)
                 elif mtype in ("cancel", "answer"):
                     # Message d'annulation/reponse arrive apres la fin de la
                     # requete (client qui a annule tardivement) : ignorer.

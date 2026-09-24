@@ -215,3 +215,74 @@ class TestMessageExecution:
         from lyra.daemon.actions import _message_execution
         assert _message_execution("tv.power_on", {}) == "J'execute tv.power_on."
         assert _message_execution("fedora.vm_start", {"vm_name": "x"}) == "J'execute fedora.vm_start (vm_name=x)."
+
+
+class TestHandleTool:
+    """Route directe (roadmap #73) : un outil nomme, sans modele, meme confirmation que la voix."""
+
+    def _daemon(self, executed=True, error=None, dangerous_confirmed=None):
+        from types import SimpleNamespace as N
+        from unittest.mock import Mock
+
+        from lyra.daemon.server import LyraDaemon
+        d = LyraDaemon.__new__(LyraDaemon)
+        d._init_done = threading.Event()
+        d._init_done.set()
+        d._init_error = [None]
+        d._busy = threading.Lock()
+        d._busy_with = ""
+        v2 = Mock()
+        v2._hestia.get_available_tools.return_value = [{"name": "tv.power_on"}, {"name": "fedora.vm_destroy"}]
+        v2.execute_action.return_value = N(executed=executed, error=error, response="TV allumee")
+        d.pipeline = N(_pipeline_v2=v2)
+        return d, v2
+
+    def _echange(self, d, message, reponses=()):
+        """Envoie `message` au demon dans un thread, repond aux ask avec `reponses`, rend les messages recus."""
+        server_sock, client_sock = socket.socketpair()
+        server, client = LineChannel(server_sock), LineChannel(client_sock)
+        recus = []
+        t = threading.Thread(target=d.handle_tool, args=(server, message, "s"))
+        t.start()
+        it = iter(reponses)
+        while True:
+            m = client.recv(timeout=5)
+            recus.append(m)
+            if m.get("type") == "ask":
+                client.send({"type": "answer", "value": next(it)})
+            if m.get("type") == "result":
+                break
+        t.join(5)
+        return recus
+
+    def test_outil_simple_execute_sans_confirmation(self):
+        d, v2 = self._daemon()
+        recus = self._echange(d, {"type": "tool", "name": "tv.power_on", "arguments": {}})
+        assert [m["type"] for m in recus] == ["output", "result"]
+        assert recus[0]["kind"] == "tool_result" and recus[0]["success"] is True and recus[1]["exit_code"] == 0
+        v2.execute_action.assert_called_once()
+
+    def test_outil_dangereux_demande_confirmation(self):
+        d, v2 = self._daemon()
+        recus = self._echange(d, {"type": "tool", "name": "fedora.vm_destroy", "arguments": {"vm_name": "x"}}, reponses=["n"])
+        assert recus[0]["type"] == "ask" and recus[0]["kind"] == "confirm" and recus[0]["payload"]["danger"] is True
+        assert recus[-1]["exit_code"] == 2
+        v2.execute_action.assert_not_called()
+
+    def test_outil_dangereux_deja_confirme_par_le_client(self):
+        d, v2 = self._daemon()
+        recus = self._echange(d, {"type": "tool", "name": "fedora.vm_destroy", "arguments": {"vm_name": "x"},
+                                  "options": {"confirmed": True}})
+        assert [m["type"] for m in recus] == ["output", "result"]
+        v2.execute_action.assert_called_once()
+
+    def test_outil_inconnu_refuse(self):
+        d, v2 = self._daemon()
+        recus = self._echange(d, {"type": "tool", "name": "tv.teleporter", "arguments": {}})
+        assert recus[0]["type"] == "error" and recus[-1]["exit_code"] == 1
+        v2.execute_action.assert_not_called()
+
+    def test_echec_d_execution(self):
+        d, _ = self._daemon(executed=True, error="Error executing tool")
+        recus = self._echange(d, {"type": "tool", "name": "tv.power_on", "arguments": {}})
+        assert recus[0]["success"] is False and recus[-1]["exit_code"] == 1
