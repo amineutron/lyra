@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-09-24
+
+### Added
+- Daemon: `tool` message on the socket for clients that only need one MCP call (name, arguments, `confirmed` option). The daemon checks the HESTIA catalogue, asks for confirmation when the tool is dangerous and not confirmed, runs it under the busy lock and streams `tool_result` then `result`. No model in the loop; used by neutroncore (roadmap issue 73).
+
+### Changed
+- MCP_TOOLS.md regenerated: `tv.get_state` now reports volume, mute and ambilight; `denon.get_status` reports mute, source and reachability (pylips-mcp 0.2.0, denon-mcp 0.2.0).
+- First release built and published by the shared release workflow (PyPI Trusted Publishing); 1.3.0 was tagged before the workflow existed.
+
 ## [1.3.0] - 2026-09-24
 
 ### Added

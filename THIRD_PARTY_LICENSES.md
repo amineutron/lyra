@@ -21,7 +21,7 @@
 | pycparser          | 3.0       | BSD-3-Clause                                            | https://github.com/eliben/pycparser                                   |
 | python-dotenv      | 1.2.3     | BSD-3-Clause                                            | https://github.com/theskumar/python-dotenv                            |
 | numpy              | 2.5.3     | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0      | https://numpy.org                                                     |
-| lyra-assistant     | 1.3.0     | GNU Affero General Public License v3 or later (AGPLv3+) | https://github.com/amineutron/lyra                                    |
+| lyra-assistant     | 1.3.1     | GNU Affero General Public License v3 or later (AGPLv3+) | https://github.com/amineutron/lyra                                    |
 | piper-tts          | 1.8.0     | GPL-3.0-or-later                                        | http://github.com/OHF-voice/piper1-gpl                                |
 | pexpect            | 4.9.0     | ISC License (ISCL)                                      | https://pexpect.readthedocs.io/                                       |
 | ptyprocess         | 0.7.0     | ISC License (ISCL)                                      | https://github.com/pexpect/ptyprocess                                 |
