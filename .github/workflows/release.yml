@@ -1,6 +1,7 @@
 # À chaque tag v* : build du wheel, publication PyPI par Trusted Publishing
 # (environnement "pypi" déclaré côté PyPI et côté dépôt), release GitHub avec
-# le wheel et le sdist attachés.
+# des notes générées par git-cliff depuis les commits conventionnels, le wheel
+# et le sdist attachés.
 #
 # Le workflow est volontairement autonome : PyPI refuse les jetons OIDC émis
 # depuis un workflow réutilisable (claim job_workflow_ref différent du dépôt,
@@ -28,15 +29,21 @@ jobs:
       id-token: write
       contents: write
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # git-cliff lit l'historique jusqu'au tag précédent
+      - uses: astral-sh/setup-uv@v7
       - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
-      - name: Release GitHub avec les fichiers
+      - name: Notes de release (git-cliff, cliff.toml)
+        run: uvx git-cliff@2.14.2 --latest --strip all -o RELEASE_NOTES.md
+      - name: Release GitHub avec les notes et les fichiers
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 \
-            || gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --generate-notes
+            || gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --notes-file RELEASE_NOTES.md
           gh release upload "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" --clobber
