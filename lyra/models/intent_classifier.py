@@ -8,10 +8,10 @@ Utilise LYRA (Llama 3B) pour une classification rapide.
 import json
 import re
 import unicodedata
-from enum import Enum
-from typing import Optional
 from dataclasses import dataclass
+from enum import Enum
 
+from ..core.types import EXPLICIT_KNOWLEDGE_PATTERNS
 from .model_manager import ModelManager
 
 
@@ -58,7 +58,6 @@ EXEMPLES:
 # Evite que Llama 1b classe "c'est quoi vm_clone" comme "demande" -> fallback
 # "je n'ai pas compris". Teste AVANT les verbes d'action car une vraie question
 # peut contenir un verbe ("comment cloner une vm" reste une question).
-from ..core.types import EXPLICIT_KNOWLEDGE_PATTERNS
 
 _KNOWLEDGE_RE = re.compile(
     "|".join(re.escape(p) for p in EXPLICIT_KNOWLEDGE_PATTERNS),

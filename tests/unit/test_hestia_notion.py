@@ -64,7 +64,7 @@ class TestNotionLogger:
             # Cleanup: re-importer avec l'etat original
             try:
                 importlib.reload(notion_module)
-            except:
+            except Exception:
                 pass
 
     def test_init_missing_token(self, mock_notion_module):
@@ -310,7 +310,7 @@ class TestNotionLoggerIntegration:
 
             try:
                 importlib.reload(notion_module)
-            except:
+            except Exception:
                 pass
 
     def test_full_logging_workflow(self, mock_notion_module):

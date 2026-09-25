@@ -13,12 +13,6 @@ import contextvars
 from contextlib import contextmanager
 from typing import Optional
 
-# Session active pour la requete en cours (permet N sessions sur 1 pipeline,
-# utilise par le demon ; None -> session par defaut du pipeline)
-_current_session: contextvars.ContextVar = contextvars.ContextVar(
-    "lyra_current_session", default=None
-)
-
 from ..hestia.executor import ExecutionContext, HestiaExecutor
 from ..models.ephaistos import Ephaistos, EphaistosAnalysis
 from ..models.intent_classifier import Intent, IntentClassifier
@@ -72,6 +66,12 @@ from .workflows.vm_snapshot import (
 )
 from .workflows.vm_start import handle_vm_start_confirm
 from .workflows.vm_stop import handle_vm_stop_choice
+
+# Session active pour la requete en cours (permet N sessions sur 1 pipeline,
+# utilise par le demon ; None -> session par defaut du pipeline)
+_current_session: contextvars.ContextVar = contextvars.ContextVar(
+    "lyra_current_session", default=None
+)
 
 
 class Pipeline:

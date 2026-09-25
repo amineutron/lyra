@@ -254,7 +254,6 @@ def get_action_variants(tool_name: str) -> list[str]:
 def categorize_tool(name: str, desc: str) -> str:
     """Détermine la catégorie d'un outil."""
     name_lower = name.lower()
-    desc_lower = desc.lower()
 
     # Catégories par serveur
     if name.startswith('fedora.vm_'):

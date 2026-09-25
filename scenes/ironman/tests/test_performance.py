@@ -28,13 +28,20 @@ class TestTimingPrecision:
     def test_phase0_validation_fast(self):
         with patch.object(Phase0Detection, "_load_config", return_value={"tv": {"host": "203.0.113.50"}, "hue": {"bridge_ip": "203.0.113.51", "username": "u"}}):
             phase0 = Phase0Detection()
-        with patch.object(phase0, "check_tv_available", return_value=(True, "")):
-            with patch.object(phase0, "check_hue_available", return_value=(True, "")):
-                with patch.object(phase0, "save_current_state", return_value={"tv": {}, "hue": {}}):
-                    start = time.perf_counter()
-                    ok, msg, state = phase0.validate_and_prepare()
-                    elapsed = time.perf_counter() - start
+        # validate_and_prepare lit l'etat TV/Hue en parallele (_get_tv_state/_get_hue_state)
+        # depuis que save_current_state n'est plus appele : les simuler, sinon le test fait de
+        # vraies requetes vers les adresses de test et mesure leur delai d'attente (~2 s).
+        with patch.object(phase0, "check_tv_available", return_value=(True, "")), \
+                patch.object(phase0, "check_hue_available", return_value=(True, "")), \
+                patch.object(phase0, "_get_tv_state", return_value={}), \
+                patch.object(phase0, "_get_hue_state", return_value={}), \
+                patch.object(phase0, "_write_rollback") as write_rollback:
+            start = time.perf_counter()
+            ok, msg, state = phase0.validate_and_prepare()
+            elapsed = time.perf_counter() - start
         assert ok is True
+        assert state["tv"] == {} and state["hue"] == {}
+        write_rollback.assert_called_once()
         assert elapsed < 2.0
 
     def test_trigger_detection_fast(self):

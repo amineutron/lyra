@@ -109,12 +109,6 @@ class MCPIndexer:
             re.DOTALL
         )
 
-        # Pattern alternatif pour Zod schemas
-        zod_pattern = re.compile(
-            r'(\w+)Schema\s*=\s*z\.object\(\s*({[^}]+})\s*\)',
-            re.DOTALL
-        )
-
         # Extraire les tools
         for match in tool_pattern.finditer(content):
             name = match.group(1)

@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
-
 """
 Lyra RAG - Point d'entree principal.
 
@@ -18,11 +16,16 @@ Architecture:
     USER INPUT -> RAG -> EPHAISTOS -> [clarification?] -> LYRA -> HESTIA -> LYRA -> OUTPUT
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:  # annotations seulement : l'import reel reste paresseux (dependances lourdes)
+    from lyra.core.pipeline import Pipeline
 
 # Ajouter le package lyra au path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -454,7 +457,6 @@ def _generate_context_confirmation_message(result, tool_name: str, arguments: di
 
     # Construire message selon contexte
     last_mcp = context_parts.get("last_mcp", "")
-    last_server = context_parts.get("last_server", "")
     last_vm = context_parts.get("last_vm", "")
 
     # Action formatée
@@ -1256,15 +1258,6 @@ def main():
             step: Nom de l'etape
             data: Donnees de l'etape (score, server, tool, confidence_level...)
         """
-        score = data.get("score", 0.0)
-        # Couleur selon score: vert=high, jaune=medium, rouge=low
-        if score > 0.80:
-            color = ui.Colors.GREEN
-        elif score >= 0.50:
-            color = ui.Colors.YELLOW
-        else:
-            color = ui.Colors.RED
-
         if step == "rule_matched":
             # Regle statique matchee : RAG skipee, message direct
             import random as _random

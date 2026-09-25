@@ -193,7 +193,7 @@ class TestScenario05_BackwardCompatibility:
 
         query = "demarre preprod-09"
 
-        result_v2 = pipeline_v2.process(query)
+        pipeline_v2.process(query)
         result_enhanced = pipeline_enhanced_disabled.process_query(query, session_id)
 
         # Les résultats doivent être identiques

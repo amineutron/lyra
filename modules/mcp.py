@@ -346,7 +346,7 @@ class MCPManager:
                 tool = client.get_tool_by_name(tool_name)
                 if tool:
                     return client.call_tool(tool_name, arguments)
-            except:
+            except Exception:
                 continue
 
         return MCPResult(
@@ -552,7 +552,7 @@ class MCPSessionClient:
             try:
                 self._process.terminate()
                 self._process.wait(timeout=2)
-            except:
+            except Exception:
                 self._process.kill()
             self._process = None
             self._initialized = False

@@ -15,6 +15,8 @@ import threading
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+from lyra.core.paths import backup_manager_dir, kvm_dir
+
 try:
     import requests
     HAS_REQUESTS = True
@@ -320,7 +322,6 @@ _INT_RE = re.compile(r'^\d{1,6}$')
 
 # Scripts systeme : /usr/local/lib/lyra/scripts (ou paths.scripts / LYRA_SCRIPTS_DIR),
 # voir lyra/core/paths.py. Resolu a l'appel pour respecter la config courante.
-from lyra.core.paths import backup_manager_dir, kvm_dir
 
 
 def _build_fallback_cmd(tool_name: str, arguments: dict) -> Optional[list]:

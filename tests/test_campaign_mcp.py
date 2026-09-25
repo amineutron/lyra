@@ -872,7 +872,10 @@ def print_report(results, categories):
         pa = sum(1 for e in entries if e["status"] == "PARTIAL")
         f = sum(1 for e in entries if e["status"] == "FAIL")
         m = sum(1 for e in entries if e["status"] == "RULE_MISS")
-        total_pass += p; total_partial += pa; total_fail += f; total_miss += m
+        total_pass += p
+        total_partial += pa
+        total_fail += f
+        total_miss += m
         score_pct = round(100 * (p + 0.5 * pa) / n) if n else 0
         bar = f"{G}{'#' * (p)}{Y}{'~' * pa}{B}{'?' * m}{R}{'-' * f}{RESET}"
         print(f"  {BOLD}{cat_name:<8}{RESET} {bar} "

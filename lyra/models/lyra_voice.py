@@ -5,11 +5,10 @@ Frontend Llama (1B actif, 3B backup) pour le dialogue friendly et la personnalit
 """
 
 import random
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
 
 from .model_manager import ModelManager
-
 
 # System prompt pour LYRA - Mode TTS (Text-to-Speech / Vocal)
 LYRA_SYSTEM_PROMPT_TTS = """Tu es LYRA, une assistante vocale DevOps amicale.

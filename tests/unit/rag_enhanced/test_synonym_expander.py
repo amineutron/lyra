@@ -139,7 +139,7 @@ class TestSynonymExpander:
         def expand_all():
             return [expander.expand(q) for q in queries]
 
-        result = benchmark(expand_all)
+        benchmark(expand_all)
 
         # Médiane <1ms pour 100 requêtes → <0.01ms par requête
         assert benchmark.stats.stats.median < 0.001  # <1ms total
@@ -158,7 +158,7 @@ class TestSynonymExpander:
         for _ in range(10):
             start = time.perf_counter()
             for _ in range(1000):
-                result = expander.expand(query)
+                expander.expand(query)
             elapsed = (time.perf_counter() - start) * 1000  # ms
             times.append(elapsed)
 

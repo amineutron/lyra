@@ -9,8 +9,8 @@ jobs:
     uses: amineutron/.github/.github/workflows/python-ci.yml@main
     with:
       python-versions: '["3.11", "3.12"]'
-      test-command: "uv run --frozen python -m pytest tests/unit tests/installer -q -p no:cacheprovider"
-      lint: false   # 231 avertissements ruff historiques : rendu bloquant en v1.3 (voir ROADMAP)
+      test-command: "uv run --frozen python -m pytest tests/unit tests/installer scenes/ironman -q -p no:cacheprovider"
+      # lint ruff bloquant depuis 2026-09-25 (dette de 240 remarques soldee, voir CHANGELOG)
   licences-tierces:
     runs-on: ubuntu-latest
     steps:

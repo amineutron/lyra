@@ -39,9 +39,8 @@ class TestScenario13_PerformanceSlangSynonym:
             if pipeline._slang_normalizer:
                 normalized = pipeline._slang_normalizer.normalize(query)
 
-            expanded = normalized
             if pipeline._synonym_expander:
-                expanded = pipeline._synonym_expander.expand(normalized)
+                pipeline._synonym_expander.expand(normalized)
 
             latency = (time.time() - start) * 1000  # ms
             latencies.append(latency)

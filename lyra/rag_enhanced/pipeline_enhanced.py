@@ -58,9 +58,9 @@ class EnhancedPipelineResult(PipelineResult):
 
 class EnhancedPipeline:
     """Pipeline Enhanced avec feature flags granulaires.
-    
+
     Encapsule le Pipeline V2 et ajoute les composants RAG Enhanced.
-    
+
     Workflow:
         USER QUERY
             ↓
@@ -80,7 +80,7 @@ class EnhancedPipeline:
         6. FeedbackLoop.record()              <2ms
             ↓
         RESULT
-        
+
     Exemples:
         >>> pipeline = EnhancedPipeline(enabled=True)
         >>> pipeline.initialize()
@@ -96,7 +96,7 @@ class EnhancedPipeline:
         tts_mode: bool = False
     ):
         """Initialise le pipeline enhanced.
-        
+
         Args:
             config: Configuration RAG V2 (si None, chargé depuis config.yaml)
             enhanced_config: Configuration RAG Enhanced (si None, défauts)
@@ -616,7 +616,7 @@ class EnhancedPipeline:
 
     def reload_config(self, new_config: RAGEnhancedConfig):
         """Recharge la configuration enhanced.
-        
+
         Args:
             new_config: Nouvelle configuration
         """

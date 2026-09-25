@@ -378,9 +378,7 @@ def print_report(dry_results: list, one_results: list,
             continue
         cat = dry["cat"]
         top_cat = cat.split("/")[0]
-        sub_cat = cat.split("/")[1] if "/" in cat else ""
         query = dry["query"]
-        desc = dry["desc"]
 
         ds = dry["status"]
         os_ = one["status"] if one else "SKIP"

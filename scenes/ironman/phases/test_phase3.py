@@ -60,7 +60,8 @@ class TestPhase3Buildup:
             phase3._execute_beat()
         first_call = mock_put.call_args_list[0]
         payload = first_call.kwargs.get("json") or first_call[1].get("json")
-        xy_rouge = rgb_to_xy(*RED_INTENSE_RGB)
+        # le flash doit etre rouge : avant, la couleur etait calculee sans etre verifiee
+        assert payload["xy"] == pytest.approx(list(rgb_to_xy(*RED_INTENSE_RGB)))
         assert payload["bri"] == 254
         assert payload["transitiontime"] == 0
 

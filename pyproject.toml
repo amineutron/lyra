@@ -63,6 +63,14 @@ target-version = "py311"
 select = ["E", "F", "W", "I"]
 ignore = ["E501"]
 
+[tool.ruff.lint.per-file-ignores]
+# Scripts d'animation Manim : `from manim import *` est l'usage documente de la bibliotheque.
+"intro/*.py" = ["F403", "F405"]
+# Les chemins des bibliotheques CUDA (LD_LIBRARY_PATH) doivent etre poses avant les imports GPU.
+"main.py" = ["E402"]
+# Scripts de test/campagne : sys.path est ajuste avant d'importer les modules du depot.
+"tests/test_campaign_*.py" = ["E402"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests", "scenes/ironman"]
 python_files = ["test_*.py"]

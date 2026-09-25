@@ -306,7 +306,6 @@ def run_llm_tests(config_path=None, jeu: str = "modeles", reel: bool = False):
             noms_outils = [s.split(":", 1)[0].strip() for s in specs]
 
             if not specs:
-                result = {"tool": None, "arguments": {}, "error": "Aucun spec RAG"}
                 result_tool = None
                 result_args = {}
             else:
@@ -405,7 +404,9 @@ def run_llm_tests(config_path=None, jeu: str = "modeles", reel: bool = False):
         p = sum(1 for e in entries if e["status"] == "LLM_PASS")
         pa = sum(1 for e in entries if e["status"] == "LLM_PARTIAL")
         f = sum(1 for e in entries if e["status"] == "LLM_FAIL")
-        total_pass += p; total_partial += pa; total_fail += f
+        total_pass += p
+        total_partial += pa
+        total_fail += f
         score_pct = round(100 * (p + 0.5 * pa) / n) if n else 0
         bar = f"{G}{'#' * p}{Y}{'~' * pa}{R}{'-' * f}{RESET}"
         print(f"  {BOLD}{cat_name:<8}{RESET} {bar} "

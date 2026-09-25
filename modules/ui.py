@@ -487,7 +487,6 @@ def _build_banner_lines(active_tasks: list, task_manager=None, expanded: bool = 
     failed_tasks = failed_tasks or []
     n_active = len(active_tasks)
     n_failed = len(failed_tasks)
-    n_total = n_active + n_failed
 
     lines = []
     if not expanded:

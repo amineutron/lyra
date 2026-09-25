@@ -2,18 +2,15 @@
 Tests unitaires pour le Slang Normalizer.
 """
 
+import importlib.util
 import time
 
 import pytest
 
 from lyra.rag_enhanced.slang_normalizer import SlangNormalizer
 
-# Vérifier si pytest-benchmark est disponible
-try:
-    import pytest_benchmark
-    BENCHMARK_AVAILABLE = True
-except ImportError:
-    BENCHMARK_AVAILABLE = False
+# Vérifier si pytest-benchmark est disponible (sans l'importer)
+BENCHMARK_AVAILABLE = importlib.util.find_spec("pytest_benchmark") is not None
 
 
 class TestSlangNormalizer:

@@ -9,6 +9,7 @@ ou via MCPManager pour les autres) et envoie une notification Discord a la fin.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -49,7 +50,6 @@ ASYNC_TOOLS = {
 # mais les scripts bash en aval ne sont pas garantis safe : on refuse ici
 # tout caractere hors whitelist (defense en profondeur).
 
-import re
 
 # Nom de VM / identifiant / taille disque : alphanumerique + . _ -
 # Premier caractere alphanumerique (empeche une valeur interpretee comme option)

@@ -144,7 +144,7 @@ class TestHestiaExecutor:
             "database_id": "db-id-123"
         }
 
-        executor = HestiaExecutor(
+        HestiaExecutor(
             config,
             notion_enabled=True,
             notion_config=notion_config

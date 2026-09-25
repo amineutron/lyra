@@ -8,9 +8,8 @@ import json
 import re
 from typing import Optional
 
-from .model_manager import ModelManager
 from ._analysis import EphaistosAnalysis  # noqa: F401 (re-export)
-
+from .model_manager import ModelManager
 
 # System prompt pour EPHAISTOS
 EPHAISTOS_SYSTEM_PROMPT = """Tu es EPHAISTOS, le moteur d'analyse de Lyra.
@@ -762,7 +761,7 @@ class Ephaistos:
             if isinstance(confidence, str):
                 try:
                     confidence = float(confidence)
-                except:
+                except (ValueError, TypeError):
                     confidence = 0.5
 
             return EphaistosAnalysis(
@@ -882,7 +881,7 @@ Valide les arguments. Reponds en JSON:
             content = re.sub(r'```json\s*', '', content)
             content = re.sub(r'```\s*', '', content)
             return json.loads(content)
-        except:
+        except Exception:
             return {"valid": True, "errors": [], "warnings": []}
 
     def analyze_with_retry(

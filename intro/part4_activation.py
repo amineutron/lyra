@@ -54,15 +54,12 @@ class LyraActivation(Scene):
             node_labels.append(lbl)
             node_subs.append(sublbl)
 
-        nodes_g = VGroup(*nodes)
         labels_g = VGroup(*node_labels)
         subs_g = VGroup(*node_subs)
 
         # Centre -- noyau LYRA (dormant)
         core = Circle(radius=0.18, color=BLUE2, fill_color=DIM,
                       fill_opacity=1, stroke_width=1.5)
-        core_glow = Circle(radius=0.18, color=BLUE, fill_color=BLUE,
-                           fill_opacity=0, stroke_width=0)
 
         # Lignes grises (inactives) entre chaque module et le centre
         base_lines = VGroup(*[

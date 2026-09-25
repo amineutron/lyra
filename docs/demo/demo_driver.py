@@ -16,8 +16,11 @@ os.chdir(LYRA)
 
 def say(text):
     for ch in text:
-        sys.stdout.write(ch); sys.stdout.flush(); time.sleep(0.03)
-    sys.stdout.write("\n"); sys.stdout.flush()
+        sys.stdout.write(ch)
+        sys.stdout.flush()
+        time.sleep(0.03)
+    sys.stdout.write("\n")
+    sys.stdout.flush()
 
 
 def run(cmd, answers=(), timeout=120):
@@ -37,7 +40,8 @@ def run(cmd, answers=(), timeout=120):
     except pexpect.TIMEOUT:
         child.sendintr()
     child.close()
-    sys.stdout.write("\n"); sys.stdout.flush()
+    sys.stdout.write("\n")
+    sys.stdout.flush()
     time.sleep(1.5)
 
 

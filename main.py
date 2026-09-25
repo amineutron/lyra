@@ -37,7 +37,10 @@ import argparse
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:  # annotations seulement : l'import reel reste paresseux (dependances lourdes)
+    from modules.audio import VoiceInterface
 
 # Ajouter le dossier modules au path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -721,7 +724,7 @@ class Lyra:
             try:
                 # Verifier si c'est une operation async
                 if self.n8n and should_use_async(tc.name, tc.arguments):
-                    result_msg = self._handle_async_operation(tc.name, tc.arguments)
+                    self._handle_async_operation(tc.name, tc.arguments)
                     results.append(f"{vm_name}: lance en arriere-plan")
                 else:
                     # Utiliser _call_mcp_tool pour router vers le bon serveur (Phase 5.4)

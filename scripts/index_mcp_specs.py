@@ -137,7 +137,6 @@ def parse_tool_definitions(content: str, filename: str) -> list[dict]:
     )
 
     for match in tool_pattern.finditer(content):
-        var_name = match.group(1)
         tool_name = match.group(2)
         # Unescape la description
         description = match.group(3).replace("\\'", "'").replace("\\n", " ")

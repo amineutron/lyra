@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Changed
+- CI: ruff lint is now blocking (240 findings cleared: 139 were the documented `from manim import *` of the intro animations, now a per-file ignore; `main.py` keeps its CUDA-before-imports order under a justified E402 ignore). The test job also runs `scenes/ironman`.
+
+### Fixed
+- `main_rag.py`: the module docstring sat after `from __future__ import annotations`, so it was not the docstring (and flagged every import); it is first again.
+- Bare `except:` in ephaistos and the MCP client no longer swallow Ctrl+C.
+- Tests: the Iron Man red-flash test now checks the colour sent to the lamp (it computed it without asserting); the phase 0 timing test mocks the parallel state reads added with the refactor (it made real requests and measured their 2 s timeout).
+- Dead code removed: an unused Zod pattern in the indexer, an unused score colour in the step display.
+
 ## [1.3.1] - 2026-09-24
 
 ### Added
