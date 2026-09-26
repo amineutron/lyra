@@ -18,6 +18,23 @@ Windows : le NOUVEL installeur n'y tourne pas (bash, termios pour les
 fleches, dnf/apt/pacman). Seul le legacy install-lyra-windows.ps1 reste
 testable depuis snap-windows-ssh-ready-20260311.
 
+## Campagne automatique (roadmap #44)
+
+`tests/installer/vm_install_test.sh` joue la boucle ci-dessous sans
+intervention, en pilotant les scripts vm-controller de fedora-agents (ceux des
+outils MCP `vm_snapshot` / `vm_exec`) : restauration de la baseline, clone du
+commit teste, `./installer/install.sh --headless --ollama-host <hote>`,
+verifications (demon actif, config.yaml, `lyra --version`, une requete texte),
+re-restauration. Rapport date dans `docs/user/vm-install-reports/`.
+
+```bash
+tests/installer/vm_install_test.sh --dry-run                    # plan, rien n'est lance
+tests/installer/vm_install_test.sh --ollama-host 192.168.122.1  # Fedora + Ubuntu
+tests/installer/vm_install_test.sh --vm arch-base --ollama-host 192.168.122.1
+```
+
+Le commit teste doit etre pousse (les VM clonent depuis GitHub).
+
 ## La boucle de test (par VM)
 
 ```bash
