@@ -8,6 +8,7 @@
 #
 # --tui (defaut) : installeur terminal (Rich)
 # --app          : installeur graphique local (http://127.0.0.1:9877/ui/)
+# --headless     : sans interface, reponses par defaut (tests en VM, CI)
 # --demo         : simulation complete, aucune commande reelle
 set -euo pipefail
 
@@ -20,6 +21,7 @@ for arg in "$@"; do
     case "$arg" in
         --tui) MODE="tui" ;;
         --app) MODE="app" ;;
+        --headless) MODE="headless" ;;
         *) PASSTHRU+=("$arg") ;;
     esac
 done
@@ -45,6 +47,8 @@ fi
 cd "$LYRA_ROOT"
 if [ "$MODE" = "app" ]; then
     exec "$PY" -m installer.app "${PASSTHRU[@]+"${PASSTHRU[@]}"}"
+elif [ "$MODE" = "headless" ]; then
+    exec "$PY" -m installer.headless "${PASSTHRU[@]+"${PASSTHRU[@]}"}"
 else
     exec "$PY" -m installer.tui "${PASSTHRU[@]+"${PASSTHRU[@]}"}"
 fi
