@@ -74,12 +74,14 @@ CHECKS=(
     "cd ~ && timeout 120 .local/bin/lyra -y 'liste les taches'"
 )
 
-# 3 essais espaces de 10 s : le reseau de la VM peut mettre un peu plus que prevu
+# Jusqu'a 3 min, un essai toutes les 10 s : apres restauration, ubuntu-base a mis plus
+# de 2 min a retrouver le reseau (campagne du 2026-09-26) ; fedora-base ~15 s.
+SSH_WAIT_S=180
 ssh_ready() {
     if $DRY_RUN; then step "$SCRIPTS_DIR/vm-exec.sh" "$1" "true" --timeout=30; return 0; fi
-    local _
-    for _ in 1 2 3; do
-        "$SCRIPTS_DIR/vm-exec.sh" "$1" "true" --timeout=30 >/dev/null 2>&1 && return 0
+    local deadline=$(( $(date +%s) + SSH_WAIT_S ))
+    while [ "$(date +%s)" -lt "$deadline" ]; do
+        "$SCRIPTS_DIR/vm-exec.sh" "$1" "true" --timeout=15 >/dev/null 2>&1 && return 0
         sleep 10
     done
     return 1
