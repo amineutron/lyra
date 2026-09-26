@@ -68,8 +68,9 @@ install_cmd() {
 CHECKS=(
     "systemctl --user is-active lyra-daemon"
     "test -f ~/lyra/config.yaml && echo config.yaml present"
-    "cd ~/lyra && .venv/bin/lyra --version"
-    "cd ~/lyra && timeout 120 .venv/bin/lyra -y 'liste les taches'"
+    # la commande la ou l'installeur la pose (et l'annonce) : ~/.local/bin/lyra
+    "cd ~ && .local/bin/lyra --version"
+    "cd ~ && timeout 120 .local/bin/lyra -y 'liste les taches'"
 )
 
 # 3 essais espaces de 10 s : le reseau de la VM peut mettre un peu plus que prevu
