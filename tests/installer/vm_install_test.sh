@@ -83,6 +83,17 @@ ssh_ready() {
     return 1
 }
 
+# Horloge de la VM a l'heure de l'hote : agent invite QEMU (virsh domtime), sinon
+# sudo date dans la VM. Echec si l'ecart reste superieur a 5 minutes.
+sync_clock() {
+    local vm="$1" now
+    if $DRY_RUN; then step virsh -c qemu:///system domtime "$vm" --now; return 0; fi
+    virsh -c qemu:///system domtime "$vm" --now >/dev/null 2>&1 \
+        || "$SCRIPTS_DIR/vm-exec.sh" "$vm" "sudo -n date -u -s @$(date +%s)" --timeout=30 >/dev/null 2>&1
+    now="$("$SCRIPTS_DIR/vm-exec.sh" "$vm" "date +%s" --timeout=30 2>/dev/null | grep -Eo '^[0-9]{9,}$' | head -1)"
+    [ -n "$now" ] && [ $(( $(date +%s) - now )) -lt 300 ] && [ $(( now - $(date +%s) )) -lt 300 ]
+}
+
 run_vm() {
     local vm="$1" status=OK
     echo "== $vm"
@@ -93,6 +104,13 @@ run_vm() {
     if ! ssh_ready "$vm"; then
         echo "SSH refuse sur $vm : la baseline $SNAPSHOT doit autoriser la cle des VM (~/.ssh/config)" >&2
         RESULTS+=("| $vm | acces SSH | ECHEC |"); SUMMARY+=("| $vm | ECHEC (SSH refuse) |")
+        $KEEP || step "$SCRIPTS_DIR/vm-snapshot.sh" "$vm" restore "$SNAPSHOT" -y
+        return 1
+    fi
+    # Un snapshot a chaud restaure aussi l'horloge de la VM (mars 2026 pour la baseline) :
+    # sans remise a l'heure, TLS refuse les certificats « pas encore valides » (git clone).
+    if ! sync_clock "$vm"; then
+        RESULTS+=("| $vm | remise a l'heure | ECHEC |"); SUMMARY+=("| $vm | ECHEC (horloge) |")
         $KEEP || step "$SCRIPTS_DIR/vm-snapshot.sh" "$vm" restore "$SNAPSHOT" -y
         return 1
     fi
