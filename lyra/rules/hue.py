@@ -16,11 +16,13 @@ _RGB_COLOR_MAP = {
 # Groupe Hue par defaut (piece principale), comme turn_on_group / turn_off_group
 _DEFAULT_GROUP = 81
 _BEAT_PALETTES = ("ironman", "fire", "neon", "cool", "sunset", "arctic", "auto")
-# Presets de hue.set_group_color_preset (hue-mcp) accessibles par la teinte du blanc
+# Presets de hue.set_group_color_preset (hue-mcp) accessibles par la teinte du blanc.
+# Teinte ABSOLUE seulement : « plus chaude / plus froide » decale la temperature
+# (hue.set_color_temperature pour les jeux hors regles) et reste au modele.
 _WHITE_PRESETS = (
     (r'\blumieres?\s+(?:du|de)\s+jour\b', "daylight"),
-    (r'\blumieres?\s+(?:plus\s+)?chaudes?\b', "warm"),
-    (r'\blumieres?\s+(?:plus\s+)?froides?\b', "cool"),
+    (r'\blumieres?\s+chaudes?\b', "warm"),
+    (r'\blumieres?\s+froides?\b', "cool"),
 )
 
 

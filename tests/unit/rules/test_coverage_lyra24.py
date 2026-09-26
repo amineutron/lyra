@@ -81,12 +81,22 @@ def test_alert_light(q, light):
 
 @pytest.mark.parametrize("q,preset", [
     ("lumiere chaude", "warm"),
-    ("mets une lumiere plus froide", "cool"),
+    ("mets une lumiere froide", "cool"),
     ("lumieres froides", "cool"),
     ("lumiere du jour", "daylight"),
 ])
 def test_teinte_du_groupe(q, preset):
     assert route(q) == ("hue.set_group_color_preset", {"group_id": 81, "preset": preset})
+
+
+@pytest.mark.parametrize("q", [
+    "une lumiere plus froide au bureau", "une lumiere plus chaude dans la chambre", "mets une lumiere plus froide",
+])
+def test_teinte_relative_laissee_au_modele(q):
+    # « plus chaude / plus froide » decale la temperature (hue.set_color_temperature,
+    # jeux hors regles 2, 4 et 5) : la regle du preset de groupe ne doit pas l'attraper
+    hit = route(q)
+    assert hit is None or hit[0] != "hue.set_group_color_preset"
 
 
 def test_ambiance_nommee_reste_une_scene():
