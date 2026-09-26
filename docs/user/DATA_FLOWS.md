@@ -1,5 +1,7 @@
 # Flux de données de Lyra : ce qui est capté, ce qui est gardé, ce qui sort
 
+*English version: [DATA_FLOWS.en.md](DATA_FLOWS.en.md).*
+
 Lyra est **locale par défaut** : le traitement de la voix, le LLM, la recherche et l'exécution des outils tournent sur votre machine. Ce document répond aux questions qu'un responsable informatique pose avant d'installer un assistant qui écoute et agit.
 
 ## Ce que Lyra capte et où ça va
