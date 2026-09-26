@@ -77,3 +77,38 @@ def test_local_sans_host_installe_et_active_service():
 
     assert mock_run.called
     assert mock_systemctl.called
+
+
+class _Proc:
+    def __init__(self, code, out=""):
+        self.returncode, self.stdout, self.stderr = code, out, ""
+
+
+def test_regression_script_officiel_reessaye_apres_echec_ponctuel():
+    # 2026-09-26, campagne VM : le script d'ollama.com a teste le .tar.zst, raté
+    # ponctuellement, s'est rabattu sur le .tgz qui n'existe plus -> 404 -> INSTALLATION
+    # ECHOUEE, alors que le passage precedent avait reussi.
+    ctx, events = _ctx("192.168.122.1", _FakeBroker())
+    runs = [_Proc(1, "curl: (22) The requested URL returned error: 404"), _Proc(0, "Install complete")]
+    with patch("installer.core.steps.ollama.shutil.which", return_value=None), \
+         patch("subprocess.run", side_effect=runs) as mock_run, \
+         patch("installer.core.steps.ollama.time.sleep") as mock_sleep:
+        ollama.run_ollama(ctx)
+    assert mock_run.call_count == 2
+    mock_sleep.assert_called_once_with(ollama.INSTALL_RETRY_PAUSE_S)
+    outputs = [e.line for e in events if isinstance(e, Output)]
+    assert any("nouvel essai" in line for line in outputs)
+
+
+def test_script_officiel_abandonne_apres_trois_echecs():
+    ctx, _events = _ctx("192.168.122.1", _FakeBroker())
+    with patch("installer.core.steps.ollama.shutil.which", return_value=None), \
+         patch("subprocess.run", return_value=_Proc(1, "404")) as mock_run, \
+         patch("installer.core.steps.ollama.time.sleep"):
+        try:
+            ollama.run_ollama(ctx)
+        except RuntimeError as e:
+            assert "3 essais" in str(e)
+        else:
+            raise AssertionError("l'echec definitif aurait du lever RuntimeError")
+    assert mock_run.call_count == ollama.INSTALL_ATTEMPTS

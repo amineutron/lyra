@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import shutil
+import time
 from pathlib import Path
 
 from ..events import Output
@@ -11,6 +12,10 @@ from ..runner import run
 from ..sources import MODELS
 
 OLLAMA_DROPIN = "/etc/systemd/system/ollama.service.d/proxy.conf"
+# Le script officiel teste le .tar.zst puis se rabat sur un .tgz qui n'est plus publie :
+# un test rate ponctuellement donne un 404 (campagne VM du 2026-09-26). On reessaie.
+INSTALL_ATTEMPTS = 3
+INSTALL_RETRY_PAUSE_S = 10
 
 
 
@@ -31,22 +36,13 @@ def run_ollama(ctx: StepContext) -> None:
     if shutil.which("ollama"):
         ctx.emit(Output("Ollama deja installe"))
     else:
-        prompt = ("Installer le client Ollama (script officiel ollama.ai, "
+        prompt = ("Installer le client Ollama (script officiel ollama.com, "
                   "sudo) pour parler au serveur distant ?" if host else
-                  "Installer Ollama (script officiel ollama.ai, sudo) ?")
+                  "Installer Ollama (script officiel ollama.com, sudo) ?")
         ok = ctx.broker.confirm(prompt, True)
         if not ok:
             raise RuntimeError("Ollama requis (ou relancer avec --ollama-host)")
-        # Seul usage shell=True du projet : le script officiel s'installe
-        # via curl | sh. Isole et volontaire.
-        import subprocess
-        proc = subprocess.run(
-            "curl -fsSL https://ollama.ai/install.sh | sh",
-            shell=True, capture_output=True, text=True)
-        for line in (proc.stdout + proc.stderr).splitlines()[-10:]:
-            ctx.emit(Output(line))
-        if proc.returncode != 0:
-            raise RuntimeError("echec installation Ollama")
+        _install_official(ctx)
 
     if host:
         bashrc = Path.home() / ".bashrc"
@@ -59,6 +55,26 @@ def run_ollama(ctx: StepContext) -> None:
     _install_proxy_dropin(ctx)
     run(["sudo", "systemctl", "enable", "--now", "ollama"],
         ctx.emit, step_id=ctx.step_id, check=False)
+
+
+def _install_official(ctx: StepContext) -> None:
+    """Script officiel d'Ollama, jusqu'a INSTALL_ATTEMPTS essais."""
+    # Seul usage shell=True du projet : le script officiel s'installe
+    # via curl | sh. Isole et volontaire.
+    import subprocess
+    for attempt in range(1, INSTALL_ATTEMPTS + 1):
+        proc = subprocess.run(
+            "curl -fsSL https://ollama.com/install.sh | sh",
+            shell=True, capture_output=True, text=True)
+        for line in (proc.stdout + proc.stderr).splitlines()[-10:]:
+            ctx.emit(Output(line))
+        if proc.returncode == 0:
+            return
+        if attempt < INSTALL_ATTEMPTS:
+            ctx.emit(Output(f"Installation d'Ollama ratee (essai {attempt}/{INSTALL_ATTEMPTS}), "
+                            f"nouvel essai dans {INSTALL_RETRY_PAUSE_S} s"))
+            time.sleep(INSTALL_RETRY_PAUSE_S)
+    raise RuntimeError(f"echec installation Ollama apres {INSTALL_ATTEMPTS} essais")
 
 
 def _install_proxy_dropin(ctx: StepContext) -> None:
