@@ -24,8 +24,29 @@ _AMBI_MODES = {"musique": "follow_audio", "audio": "follow_audio", "son": "follo
                "image": "follow_video"}
 
 
+# Touches de telecommande (noms valides de pylips-mcp send_key) : on ne devine jamais
+_TV_KEYS = {
+    "retour": "Back", "back": "Back", "accueil": "Home", "home": "Home", "ok": "Confirm",
+    "valide": "Confirm", "entree": "Confirm", "haut": "CursorUp", "bas": "CursorDown",
+    "gauche": "CursorLeft", "droite": "CursorRight", "pause": "Pause", "lecture": "Play",
+    "play": "Play", "stop": "Stop", "info": "Info", "options": "Options", "source": "Source",
+    "quitter": "Exit", "sortie": "Exit",
+}
+
+
 def detect(query: str):
     q = normalize(query)
+
+    # tv.list_apps (lyra#24) : applis installees sur la TV
+    if re.search(r'\b(?:applis?|applications?)\b', q) and re.search(r'\b(?:tele|tv|televiseur)\b', q) and \
+            re.search(r'\b(?:quell(?:es?)?|liste[rz]?|affiche[rz]?|montre[rz]?)\b', q):
+        return make("tv.list_apps", {}, "rule: liste les applis de la tele", 0.91)
+
+    # tv.send_key (lyra#24) : "appuie sur X" / "touche X (sur la tele)", X parmi les touches connues
+    m_key = re.search(r'\b(?:appuie[rz]?\s+sur(?:\s+la\s+touche)?|touche)\s+(\w+)', q)
+    if m_key and m_key.group(1) in _TV_KEYS:
+        return make("tv.send_key", {"key": _TV_KEYS[m_key.group(1)]},
+                    f"rule: touche {m_key.group(1)}", 0.90)
 
     # tv.ambilight_mode: "ambilight/leds en mode musique|video|lounge" (lyra#22 : "les leds
     # de la tele en mode musique" tombait sur sound_only, qui coupe l'image)

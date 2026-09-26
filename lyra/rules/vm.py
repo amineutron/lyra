@@ -67,6 +67,11 @@ def _extract_vm_name(phrase: str) -> Optional[str]:
 def detect(query: str):
     q = normalize(query)
 
+    # fedora.help (lyra#24) : ce que le serveur des VM sait faire
+    if re.search(r'\baide\s+(?:fedora|vms?)\b', q) or \
+            re.search(r"\b(?:qu.?est.?ce\s+que\s+tu\s+sais\s+faire|que\s+sais.?tu\s+faire)\b.*\b(?:vms?|machines?\s+virtuelles|fedora)\b", q):
+        return make("fedora.help", {}, "rule: aide fedora-agents", 0.92)
+
     # vm_clone_system: la source est TOUJOURS le PC hote
     # Doit venir AVANT vm_clone (qui exclut "system").
     # Gate double : mot "systeme" ISOLE (pas "system-clone-final" — les

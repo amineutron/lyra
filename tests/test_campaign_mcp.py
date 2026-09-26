@@ -657,11 +657,11 @@ TESTS = [
     # ================================================================
     ("HUE/brightness", "luminosite 50%",
      "mets la luminosite a 50 pour cent",
-     "hue.set_brightness", {}, {}),
+     "hue.set_group_brightness", {}, {}),
 
     ("HUE/brightness", "lumiere plus forte",
      "mets les lumieres plus fortes",
-     "hue.set_brightness", {}, {}),
+     "hue.set_group_brightness", {}, {}),
 
     ("HUE/color", "couleur rouge",
      "mets les lumieres en rouge",

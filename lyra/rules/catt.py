@@ -12,6 +12,12 @@ _YOUTUBE_URL_RE = r'https?://(?:www\.)?(?:youtube\.com/watch\S*|youtu\.be/[\w-]+
 def detect(query: str):
     q = normalize(query)
 
+    # cast_info (lyra#24) : infos detaillees du media en cours, avant cast_status
+    if re.search(r'\binfos?\b.*\b(?:video|media|film|chromecast|cast)\b.*\ben\s+cours\b', q) or \
+            re.search(r'\binfos?\s+(?:du|de\s+la|sur\s+la)\s+(?:media|video)\s+en\s+cours\b', q) or \
+            re.search(r"\b(?:qu.?est.?ce|c.?est\s+quoi)\s+qu[ie]\s+(?:passe|joue)\s+sur\s+(?:le\s+)?chromecast\b", q):
+        return make("catt.cast_info", {}, "rule: infos du media en cours", 0.91)
+
     # cast_scan: "scan les appareils cast"
     # Note: SlangNorm peut transformer "cast" -> "diffuse"
     if re.search(r'\b(?:scan|cherche|liste|trouve|recherche|detecte)\b', q) and \

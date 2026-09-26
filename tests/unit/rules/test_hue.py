@@ -124,28 +124,33 @@ class TestTurnOffLight:
 
 
 # ------------------------------------------------------------------ #
-# set_brightness                                                       #
+# luminosite sans lampe nommee -> groupe (lyra#24)                     #
 # ------------------------------------------------------------------ #
 
-class TestSetBrightness:
-    def test_luminosite_pct(self):
-        assert tool("luminosite a 50%") == "hue.set_brightness"
+class TestGroupBrightness:
+    """Avant lyra#24 : hue.set_brightness sans light_id (appel impossible), echelle 0-255."""
 
-    def test_luminosite_value(self):
+    def test_luminosite_pct(self):
+        assert tool("luminosite a 50%") == "hue.set_group_brightness"
+
+    def test_luminosite_value_echelle_hue(self):
         a = args("luminosite a 50%")
-        assert a.get("brightness") == 127  # 50 * 255 // 100
+        assert a == {"group_id": 81, "brightness": 127}  # round(50 * 254 / 100)
+
+    def test_jamais_hors_limites(self):
+        assert args("luminosite a 100%")["brightness"] == 254
 
     def test_lumieres_a_80_pct(self):
-        assert tool("lumieres a 80 pour cent") == "hue.set_brightness"
+        assert tool("lumieres a 80 pour cent") == "hue.set_group_brightness"
 
     def test_monte_luminosite(self):
-        assert tool("monte la luminosite") == "hue.set_brightness"
+        assert tool("monte la luminosite") == "hue.set_group_brightness"
 
     def test_baisse_luminosite(self):
-        assert tool("baisse la luminosite") == "hue.set_brightness"
+        assert tool("baisse la luminosite") == "hue.set_group_brightness"
 
     def test_lumieres_plus_douces(self):
-        assert tool("lumieres plus douces") == "hue.set_brightness"
+        assert tool("lumieres plus douces") == "hue.set_group_brightness"
 
 
 # ------------------------------------------------------------------ #

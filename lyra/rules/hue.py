@@ -13,8 +13,61 @@ _RGB_COLOR_MAP = {
 }
 
 
+# Groupe Hue par defaut (piece principale), comme turn_on_group / turn_off_group
+_DEFAULT_GROUP = 81
+_BEAT_PALETTES = ("ironman", "fire", "neon", "cool", "sunset", "arctic", "auto")
+# Presets de hue.set_group_color_preset (hue-mcp) accessibles par la teinte du blanc
+_WHITE_PRESETS = (
+    (r'\blumieres?\s+(?:du|de)\s+jour\b', "daylight"),
+    (r'\blumieres?\s+(?:plus\s+)?chaudes?\b', "warm"),
+    (r'\blumieres?\s+(?:plus\s+)?froides?\b', "cool"),
+)
+
+
+def _pct_to_bri(pct: int) -> int:
+    """Pourcentage -> luminosite Hue (0-254 : 255 est hors limites pour le pont)."""
+    return round(max(0, min(100, pct)) * 254 / 100)
+
+
+def _detect_beat_and_reads(q: str):
+    """Outils sans regle jusqu'a lyra#24 : hue beat, lectures, clignotement, teinte du blanc."""
+    if re.search(r'\bhue[\s_-]?beat\b', q):
+        if re.search(r'\b(?:arrete[rz]?|stop(?:pe[rz]?)?|coupe[rz]?|eteins?|desactive[rz]?)\b', q):
+            return make("hue.hue_beat_stop", {}, "rule: arrete hue beat", 0.93)
+        if re.search(r'\b(?:etat|statut|tourne|actif|marche|en\s+cours)\b', q):
+            return make("hue.hue_beat_status", {}, "rule: etat de hue beat", 0.92)
+        if re.search(r'\b(?:lance[rz]?|demarre[rz]?|active[rz]?|allume[rz]?|mets?)\b', q):
+            palette = next((p for p in _BEAT_PALETTES if re.search(rf'\b{p}\b', q)), None)
+            return make("hue.hue_beat_start", {"palette": palette} if palette else {},
+                        f"rule: lance hue beat{' ' + palette if palette else ''}", 0.93)
+
+    m = re.search(r'\b(?:fais|fait)\s+clignoter\s+la\s+(?:lampe|lumiere|ampoule)\s+(\d+)'
+                  r'|\bidentifie[rz]?\s+la\s+(?:lampe|lumiere|ampoule)\s+(\d+)', q)
+    if m:
+        return make("hue.alert_light", {"light_id": int(m.group(1) or m.group(2))},
+                    "rule: fais clignoter la lampe N", 0.92)
+
+    if re.search(r'\bgroupes?\b', q) and re.search(r'\b(?:liste[rz]?|affiche[rz]?|quels?|montre[rz]?)\b', q) \
+            and re.search(r'\b(?:lumieres?|lampes?|hue)\b', q):
+        return make("hue.get_all_groups", {}, "rule: liste les groupes hue", 0.91)
+
+    if re.search(r'\b(?:liste[rz]?|affiche[rz]?|montre[rz]?)\s+(?:les|mes|toutes?\s+les)\s+(?:lumieres|lampes)\b', q) \
+            or re.search(r'\bquell(?:es?)?\s+(?:lumieres|lampes)\b', q):
+        return make("hue.get_all_lights", {}, "rule: liste les lumieres", 0.91)
+
+    for pattern, preset in _WHITE_PRESETS:
+        if re.search(pattern, q):
+            return make("hue.set_group_color_preset", {"group_id": _DEFAULT_GROUP, "preset": preset},
+                        f"rule: lumiere {preset} -> preset du groupe", 0.90)
+    return None
+
+
 def detect(query: str):
     q = normalize(query)
+
+    hit = _detect_beat_and_reads(q)
+    if hit is not None:
+        return hit
 
     # hue.activate_scene_by_name (Cas A: avec groupe specifique)
     # Doit venir AVANT vm_start ET AVANT set_color_rgb
@@ -82,31 +135,24 @@ def detect(query: str):
         return make("hue.turn_on_light", {"light_name": m.group(1).strip()},
                     "rule: allume la lumiere NAME", 0.90)
 
-    # hue.set_brightness (Cas 1a: "luminosite a N pour cent / N%")
-    m_pct = re.search(r'luminosite?\s+a\s+(\d+)\s*(?:pour\s*cent|%)?', q)
+    # Luminosite sans lampe nommee = le groupe (lyra#24). Avant : hue.set_brightness sans
+    # light_id (obligatoire, l'appel echouait) et une echelle 0-255 (Hue : 0-254).
+    m_pct = re.search(r'luminosite?\s+a\s+(\d+)\s*(?:pour\s*cent|%)?', q) or \
+        re.search(r'(?:lumieres?|lampes?)\s+a\s+(\d+)\s*(?:pour\s*cent|%)', q)
     if m_pct:
-        brightness = int(int(m_pct.group(1)) * 255 // 100)
-        return make("hue.set_brightness", {"brightness": brightness},
-                    f"rule: set_brightness {brightness}", 0.92)
+        brightness = _pct_to_bri(int(m_pct.group(1)))
+        return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": brightness},
+                    f"rule: luminosite du groupe {brightness}", 0.92)
 
-    # hue.set_brightness (Cas 1b: "lumieres/lampes a N%")
-    m_lum_pct = re.search(r'(?:lumieres?|lampes?)\s+a\s+(\d+)\s*(?:pour\s*cent|%)', q)
-    if m_lum_pct:
-        brightness = int(int(m_lum_pct.group(1)) * 255 // 100)
-        return make("hue.set_brightness", {"brightness": brightness},
-                    f"rule: set_brightness {brightness} (lumieres a N%)", 0.91)
-
-    # hue.set_brightness (Cas 2a: relatif haut)
     if re.search(r'\b(?:lumieres?|lampes?|lumiere)\s+plus\s+(?:fort[esz]*|intens[aeés]*|haut[esz]*|viv[esz]*)', q) or \
             re.search(r'\b(?:monte|augmente|hausse|eleve)\b.*\bluminosite\b|\bluminosite\b.*\b(?:monte|augmente|hausse|eleve)\b', q):
-        return make("hue.set_brightness", {"brightness": 200},
-                    "rule: set_brightness high (relative)", 0.88)
+        return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": 200},
+                    "rule: luminosite du groupe haute (relative)", 0.88)
 
-    # hue.set_brightness (Cas 2b: relatif bas)
     if re.search(r'\b(?:lumieres?|lampes?|lumiere)\s+plus\s+(?:doux|douce[sz]*|faible[sz]*|bas[esz]*)', q) or \
             re.search(r'\b(?:baisse|diminue|reduis|attenues?)\b.*\bluminosite\b|\bluminosite\b.*\b(?:baisse|diminue|reduis|attenues?)\b', q):
-        return make("hue.set_brightness", {"brightness": 50},
-                    "rule: set_brightness low (relative)", 0.88)
+        return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": 50},
+                    "rule: luminosite du groupe basse (relative)", 0.88)
 
     # hue.set_group_color_rgb: "lumieres en rouge/bleu/..." (pluriel/ambiance =
     # tout le groupe). Arguments au format MCP complet (red/green/blue, PAS

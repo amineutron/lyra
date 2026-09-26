@@ -3,6 +3,14 @@
 Chaque module expose detect(query) -> Optional[EphaistosAnalysis].
 L'ordre dans _REGISTRY est identique a l'ancien _rule_based_detect() dans pipeline.py.
 Premier match gagne.
+
+Couverture (lyra#24, 2026-09-26) : 73 des 88 outils reels ont une regle. Les 15 autres
+passent volontairement par le RAG et le modele : arguments structures qu'une regex
+devinerait mal (hue.get_light/get_group/find_light_by_name, set_brightness,
+set_color_preset, set_color_temperature et set_light_effect d'une lampe precise,
+create_group, set_scene, quick_scene, refresh_lights), reglage fin hue.hue_beat_set,
+et le double ecran catt.cast_browser_dual/cast_dual_offset/cast_dual_resync (session
+de bureau). Recompter : tests/unit/rules/test_coverage_lyra24.py et docs/user/MCP_TOOLS.md.
 """
 
 
