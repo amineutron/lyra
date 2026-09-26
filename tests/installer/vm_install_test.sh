@@ -50,7 +50,8 @@ fi
 
 STAMP="$(date +%Y-%m-%d)"
 REPORT_DIR="$ROOT/docs/user/vm-install-reports"
-REPORT="$REPORT_DIR/$STAMP-${REF:0:7}.md"
+# les VM testees dans le nom : deux campagnes separees du meme commit ne s'ecrasent plus
+REPORT="$REPORT_DIR/$STAMP-${REF:0:7}-$(IFS=-; echo "${VMS[*]}").md"
 
 # Une etape = une commande ; en --dry-run on l'affiche seulement.
 step() {
