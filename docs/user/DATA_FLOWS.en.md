@@ -17,6 +17,8 @@ Lyra is **local by default**: speech processing, the LLM, search and tool execut
 | Daemon socket | daemon | `~/.lyra/lyra.sock` (UNIX, mode 0600) | while running | automatic |
 | Log of MCP actions | mcp-tracking | `~/.local/state/tracking/` (through the local API 127.0.0.1:8765) | purged automatically (7 days after completion) | tracking API |
 
+Purge everything at once, with a check: `lyra --purge --dry-run` lists what would be erased (history, feedback, MCP error logs), `lyra --purge` erases, recounts and must show zero everywhere. Optionally, `privacy.purge_on_stop: true` in `config.yaml` purges on every daemon stop, for the end of an engagement (off by default). The daemon's systemd journal is not covered: it follows journald retention.
+
 None of these files is sent anywhere. Secrets (tokens, device passwords) live in `secrets.yaml`, never in the logs.
 
 ## Network outputs, all optional

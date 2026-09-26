@@ -252,6 +252,15 @@ notion:
   token: null
 
 # =============================================================================
+# Confidentialite
+# =============================================================================
+# Purge de l'historique des echanges, du feedback et des journaux d'erreurs MCP
+# a l'arret du demon (fin de mission). Desactivee par defaut ; a la main :
+# `lyra --purge --dry-run` (liste) puis `lyra --purge` (efface et verifie).
+privacy:
+  purge_on_stop: false
+
+# =============================================================================
 # RAG Enhanced
 # =============================================================================
 rag_enhanced:

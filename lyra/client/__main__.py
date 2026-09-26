@@ -147,7 +147,15 @@ def main() -> int:
     parser.add_argument("--yes", "-y", action="store_true")
     parser.add_argument("--standalone", action="store_true",
                         help="Forcer le mode historique sans demon")
+    parser.add_argument("--purge", action="store_true",
+                        help="Effacer l'historique, le feedback et les journaux d'erreurs (verifie)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Avec --purge : lister ce qui serait efface, sans rien toucher")
     args, unknown = parser.parse_known_args()
+
+    if args.purge:
+        from lyra.client.purge_cmd import run as run_purge
+        return run_purge(dry_run=args.dry_run, assume_yes=args.yes, root=REPO_ROOT)
 
     from lyra.utils.netenv import proteger_services_locaux
     proteger_services_locaux()  # herite aussi par le mode standalone (execv)

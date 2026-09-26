@@ -46,6 +46,31 @@ class LyraDaemon:
         self._busy = threading.Lock()
         self._busy_with: str = ""  # requete en cours (pour le message busy)
         self._stop = threading.Event()
+        self.purge_on_stop = False  # privacy.purge_on_stop (roadmap #54), desactive par defaut
+
+    # -- Purge des donnees en clair (roadmap #54) --------------------------
+
+    def purge_data(self, dry_run: bool = False) -> dict:
+        """Plan / purge / verification des magasins en clair (lyra.utils.purge).
+
+        Passe par le demon quand il tourne : il garde le feedback en memoire et
+        le reecrirait sur disque apres une purge faite de l'exterieur. Attend la
+        fin de la requete en cours pour ne pas purger au milieu d'un echange."""
+        from lyra.utils import purge
+
+        root, home = Path.cwd(), Path.home()
+        if dry_run:
+            return {"dry_run": True, "items": _items(purge.plan(root, home))}
+        if not self._busy.acquire(timeout=120):
+            raise TimeoutError("une requete est toujours en cours, purge reportee")
+        try:
+            _forget_feedback_in_memory()
+            before = purge.purge(root, home)
+            after = purge.plan(root, home)
+        finally:
+            self._busy.release()
+        return {"dry_run": False, "items": _items(before), "remaining": _items(after),
+                "clean": purge.is_clean(after)}
 
     # -- Initialisation ---------------------------------------------------
 
@@ -65,6 +90,7 @@ class LyraDaemon:
             config = RAGConfig.from_yaml(self.config_path)
             with open(self.config_path) as f:
                 raw = yaml.safe_load(f)
+            self.purge_on_stop = bool((raw.get("privacy") or {}).get("purge_on_stop", False))
             discord = raw.get("discord", {})
             if discord.get("enabled"):
                 self.webhook_url = discord.get("webhook_url", "")
@@ -304,6 +330,25 @@ class LyraDaemon:
             self._busy.release()
 
 
+def _items(items) -> list[dict]:
+    return [{"label": i.label, "path": str(i.path), "count": i.count, "unit": i.unit} for i in items]
+
+
+def _forget_feedback_in_memory() -> None:
+    """Vide le feedback deja charge par le demon (sinon il le reecrit sur disque)."""
+    from lyra.rag_enhanced import feedback_loop
+
+    loop = feedback_loop._instance
+    if loop is None:
+        return
+    timer = getattr(loop, "_save_timer", None)
+    if timer is not None:
+        timer.cancel()
+    loop._interactions = []
+    loop._hits.clear()
+    loop._enrichments = {}
+
+
 class _ConnectionHandler(socketserver.StreamRequestHandler):
     """Une connexion client : boucle de messages jusqu'a deconnexion."""
 
@@ -329,6 +374,12 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
                     daemon.handle_request(channel, message, session_id)
                 elif mtype == "tool":
                     daemon.handle_tool(channel, message, session_id)
+                elif mtype == "purge":
+                    try:
+                        result = daemon.purge_data(dry_run=bool(message.get("dry_run")))
+                        channel.send({"type": "purge_result", **result})
+                    except (TimeoutError, OSError) as e:
+                        channel.send({"type": "error", "text": f"purge: {e}"})
                 elif mtype in ("cancel", "answer"):
                     # Message d'annulation/reponse arrive apres la fin de la
                     # requete (client qui a annule tardivement) : ignorer.
@@ -403,4 +454,10 @@ def serve(config_path: str = "config.yaml",
     finally:
         server.server_close()
         socket_path.unlink(missing_ok=True)
+        if daemon.purge_on_stop:  # option a activer : fin de mission = arret du demon
+            try:
+                result = daemon.purge_data()
+                logger.info("purge a l'arret : %s", "ok" if result["clean"] else "incomplete")
+            except (TimeoutError, OSError) as e:
+                logger.error("purge a l'arret impossible : %s", e)
     return 0

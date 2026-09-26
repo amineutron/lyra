@@ -17,6 +17,8 @@ Lyra est **locale par défaut** : le traitement de la voix, le LLM, la recherche
 | Socket du démon | démon | `~/.lyra/lyra.sock` (UNIX, droits 0600) | durée d'exécution | automatique |
 | Journal des actions MCP | mcp-tracking | `~/.local/state/tracking/` (via l'API locale 127.0.0.1:8765) | purge automatique (7 jours après la fin) | API tracking |
 
+Tout purger d'un coup, avec vérification : `lyra --purge --dry-run` liste ce qui serait effacé (historique, retours, journaux d'erreurs MCP), `lyra --purge` efface puis recompte et doit tout donner à zéro. En option, `privacy.purge_on_stop: true` dans `config.yaml` purge à chaque arrêt du démon, pour une fin de mission (désactivé par défaut). Le journal systemd du démon n'est pas concerné : il suit la rétention de journald.
+
 Aucun de ces fichiers n'est envoyé ailleurs. Les secrets (jetons, mots de passe d'équipements) sont dans `secrets.yaml`, jamais dans les journaux.
 
 ## Les sorties réseau, toutes optionnelles
