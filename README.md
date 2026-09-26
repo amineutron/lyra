@@ -56,6 +56,8 @@ Executer ? [T]out / [1] par 1 / [n]on : t
 [+] Todo list terminee: 2/2 actions
 ```
 
+**Aucune donnée client n'est utilisée dans les démonstrations.** Les démos tournent sur une entreprise fictive, générée par [`scripts/synthetic_demo_data.py`](scripts/synthetic_demo_data.py) (utilisateurs, parc de postes et serveurs, VM, sauvegardes, tickets, cohérents entre eux, toujours identiques pour une graine donnée, adresses réservées à la documentation). Après une démo ou une mission, `lyra --purge` efface et vérifie ce que Lyra a gardé en clair.
+
 ## Prérequis
 
 | Composant | Minimum | Confortable |
