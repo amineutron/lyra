@@ -72,11 +72,30 @@ CHECKS=(
     "cd ~/lyra && timeout 120 .venv/bin/lyra -y 'liste les taches'"
 )
 
+# 3 essais espaces de 10 s : le reseau de la VM peut mettre un peu plus que prevu
+ssh_ready() {
+    if $DRY_RUN; then step "$SCRIPTS_DIR/vm-exec.sh" "$1" "true" --timeout=30; return 0; fi
+    local _
+    for _ in 1 2 3; do
+        "$SCRIPTS_DIR/vm-exec.sh" "$1" "true" --timeout=30 >/dev/null 2>&1 && return 0
+        sleep 10
+    done
+    return 1
+}
+
 run_vm() {
     local vm="$1" status=OK
     echo "== $vm"
     step "$SCRIPTS_DIR/vm-snapshot.sh" "$vm" restore "$SNAPSHOT" -y || return 1
     step sleep 20   # reseau de la VM apres restauration (~15 s mesure)
+    # Acces SSH d'abord : une baseline qui ne connait pas la cle des VM faisait echouer
+    # toutes les etapes une par une (2026-09-26 : cle creee le 15/09, baseline du 24/08).
+    if ! ssh_ready "$vm"; then
+        echo "SSH refuse sur $vm : la baseline $SNAPSHOT doit autoriser la cle des VM (~/.ssh/config)" >&2
+        RESULTS+=("| $vm | acces SSH | ECHEC |"); SUMMARY+=("| $vm | ECHEC (SSH refuse) |")
+        $KEEP || step "$SCRIPTS_DIR/vm-snapshot.sh" "$vm" restore "$SNAPSHOT" -y
+        return 1
+    fi
     if ! step "$SCRIPTS_DIR/vm-exec.sh" "$vm" "$(install_cmd)" --timeout=3600; then status=ECHEC; fi
     for check in "${CHECKS[@]}"; do
         if step "$SCRIPTS_DIR/vm-exec.sh" "$vm" "$check" --timeout=180; then
