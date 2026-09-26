@@ -149,6 +149,9 @@ def main() -> int:
                         help="Forcer le mode historique sans demon")
     args, unknown = parser.parse_known_args()
 
+    from lyra.utils.netenv import proteger_services_locaux
+    proteger_services_locaux()  # herite aussi par le mode standalone (execv)
+
     # Reconstituer les argv a transmettre au standalone (sans --standalone)
     passthrough = [a for a in sys.argv[1:] if a not in ("--standalone", "--rag-enhanced")]
 

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from .events import Emit, Output, Progress
+from .proxyenv import with_preserved_env
 
 
 class CommandError(RuntimeError):
@@ -35,6 +36,8 @@ def run(cmd: list[str], emit: Emit, *,
     full_env = os.environ.copy()
     if env:
         full_env.update(env)
+    # sudo efface l'environnement : sans ca, dnf/apt perdent le proxy d'entreprise
+    cmd = with_preserved_env(cmd, full_env)
 
     proc = subprocess.Popen(
         cmd, cwd=str(cwd) if cwd else None, env=full_env,

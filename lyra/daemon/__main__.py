@@ -25,6 +25,9 @@ def main() -> int:
         stream=sys.stderr,  # journald via systemd
     )
 
+    from lyra.utils.netenv import proteger_services_locaux
+    proteger_services_locaux()  # proxy d'entreprise : Ollama et MCP locaux en direct
+
     from lyra.daemon.server import serve
     return serve(config_path=args.config)
 

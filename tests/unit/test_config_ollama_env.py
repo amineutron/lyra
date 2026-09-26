@@ -22,3 +22,13 @@ def test_env_prime_sur_config(monkeypatch):
     assert config.get_ollama_base_url() == "http://fichier:11434"
     monkeypatch.setenv("OLLAMA_HOST", "distant:11434")
     assert config.get_ollama_base_url() == "http://distant:11434"
+
+
+def test_defaut_sans_env_ni_config(monkeypatch):
+    # priorite : OLLAMA_HOST > config.yaml (llm.base_url) > defaut local
+    monkeypatch.delenv("OLLAMA_HOST", raising=False)
+    config = RAGConfig()
+    config.llm = {}
+    assert config.get_ollama_base_url() == "http://localhost:11434"
+    monkeypatch.setenv("OLLAMA_HOST", "   ")
+    assert config.get_ollama_base_url() == "http://localhost:11434"

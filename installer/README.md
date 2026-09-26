@@ -97,6 +97,28 @@ réseau : ils respectent celles que les outils sous-jacents lisent déjà.
 | `HF_ENDPOINT` | huggingface_hub (modèles Whisper, MiniLM) et le téléchargement des voix Piper | miroir Hugging Face interne |
 | `OLLAMA_HOST` | le client `ollama` et Lyra (`get_ollama_base_url`, prime sur `llm.base_url` de config.yaml) | Ollama distant, machine sans GPU, Codespace |
 
+Trois endroits ne voyaient pas ces variables ; ils sont traités
+(`installer/core/proxyenv.py`, `lyra/utils/netenv.py`) :
+
+- **sudo** remet l'environnement à zéro : `sudo dnf install` / `sudo apt-get
+  install` partaient sans proxy. Toute commande `sudo` de l'installeur reçoit
+  `--preserve-env=<variables définies>`. Si ta politique sudoers l'interdit
+  (utilisateur sans droit `SETENV`), ajoute
+  `Defaults env_keep += "HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy"`
+  via `visudo`.
+- **le service `ollama`** (systemd) n'hérite pas du shell, or c'est lui qui
+  télécharge lors d'un `ollama pull`. Avec un proxy défini, l'installeur écrit
+  `/etc/systemd/system/ollama.service.d/proxy.conf` (`Environment=HTTPS_PROXY...`),
+  recharge systemd et redémarre le service s'il tournait.
+- **Lyra elle-même** : avec `HTTP_PROXY` seul, httpx et requests enverraient aussi
+  au proxy les appels à l'Ollama local, à l'API tracking (127.0.0.1:8765) et
+  aux serveurs MCP locaux. Le client et le démon ajoutent `localhost,127.0.0.1,::1`
+  à `NO_PROXY` au démarrage (seulement si un proxy est défini) ; les MCP lancés
+  par le démon en héritent.
+
+Les mots de passe éventuels dans l'URL du proxy sont masqués dans les messages
+de l'installeur.
+
 Exemple :
 
 ```bash
