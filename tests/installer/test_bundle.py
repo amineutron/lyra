@@ -100,3 +100,25 @@ def test_bundle_altere_refuse_avant_toute_copie(tmp_path):
 def test_parties_inconnues_refusees():
     with pytest.raises(SystemExit):
         bundle.main(["create", "--parts", "ollama,inconnu"])
+
+
+def test_regression_bundle_python_nu():
+    # 'bundle.py install' tourne avec le Python du systeme, sans pyyaml : l'import
+    # des constantes passait par steps/ -> pipeline -> catalog -> yaml et echouait.
+    import subprocess
+    import sys
+    from pathlib import Path
+    garde = (
+        "import builtins,sys\n"
+        "reel=builtins.__import__\n"
+        "def g(n,*a,**k):\n"
+        "    if n.split('.')[0] in ('yaml','requests','huggingface_hub','rich','httpx'):\n"
+        "        raise ImportError('hors bibliotheque standard : '+n)\n"
+        "    return reel(n,*a,**k)\n"
+        "builtins.__import__=g\n"
+        "import installer.bundle, installer.core.pipplan\n"
+    )
+    racine = Path(__file__).resolve().parents[2]
+    r = subprocess.run([sys.executable, "-I", "-c", f"import sys; sys.path.insert(0, {str(racine)!r})\n" + garde],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr

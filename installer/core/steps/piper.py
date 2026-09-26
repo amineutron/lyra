@@ -11,12 +11,8 @@ from pathlib import Path
 from ..events import Output
 from ..pipeline import StepContext
 from ..runner import run
-
-_PIPER_URL = ("https://github.com/rhasspy/piper/releases/download/"
-              "2023.11.14-2/piper_linux_x86_64.tar.gz")
-# HF_ENDPOINT : miroir Hugging Face d'entreprise (meme variable que huggingface_hub)
-_VOICE_BASE = (os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/")
-               + "/rhasspy/piper-voices/resolve/main/fr/fr_FR/upmc/medium/fr_FR-upmc-medium")
+from ..sources import PIPER_URL as _PIPER_URL
+from ..sources import VOICE_BASE as _VOICE_BASE
 
 
 def run_piper(ctx: StepContext) -> None:
@@ -37,7 +33,6 @@ def run_piper(ctx: StepContext) -> None:
     # un lien existant AU LIEU de descendre dedans (une vieille install
     # laissait /usr/local/bin/piper pointer sur le DOSSIER ~/.local/piper/
     # piper -> "same file" avec -sf).
-    import os
     target = Path("/usr/local/bin/piper")
     link_ok = (target.is_file() and os.access(target, os.X_OK)
                and target.resolve() == piper_bin.resolve())

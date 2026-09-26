@@ -32,9 +32,10 @@ import tempfile
 import time
 from pathlib import Path
 
-from installer.core.steps.ollama import MODELS as OLLAMA_MODELS
-from installer.core.steps.piper import _PIPER_URL, _VOICE_BASE
-from installer.core.steps.venv import _PIP_CORE, _PIP_ST_DEPS
+from installer.core.pipplan import _PIP_CORE, _PIP_ST_DEPS
+from installer.core.sources import MODELS as OLLAMA_MODELS
+from installer.core.sources import PIPER_URL as _PIPER_URL
+from installer.core.sources import VOICE_BASE as _VOICE_BASE
 
 FORMAT = 1
 ST_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"

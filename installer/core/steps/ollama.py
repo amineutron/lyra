@@ -8,10 +8,10 @@ from ..events import Output
 from ..pipeline import StepContext
 from ..proxyenv import ollama_proxy_dropin, proxy_display
 from ..runner import run
+from ..sources import MODELS
 
 OLLAMA_DROPIN = "/etc/systemd/system/ollama.service.d/proxy.conf"
 
-MODELS = ["qwen2.5-coder:0.5b", "llama3.2:1b"]
 
 
 def _append_once(path: Path, marker: str, block: str) -> bool:

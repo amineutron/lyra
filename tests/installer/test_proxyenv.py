@@ -136,3 +136,13 @@ def test_sans_proxy_pas_de_dropin():
         ollama.run_ollama(_ctx())
     assert not tee.called
     assert [c.args[0] for c in run.call_args_list] == [["sudo", "systemctl", "enable", "--now", "ollama"]]
+
+
+def test_plan_pip_unique_et_index_torch():
+    from installer.core.pipplan import TORCH_CPU_INDEX, pip_install_commands
+    cmds = pip_install_commands("pip", {})
+    assert cmds[1] == ["pip", "install", "torch", "--index-url", TORCH_CPU_INDEX]
+    assert cmds[2] == ["pip", "install", "--no-deps", "sentence-transformers"]
+    miroir = pip_install_commands("pip", {"LYRA_TORCH_INDEX_URL": "https://nexus.corp/torch-cpu"})
+    assert miroir[1][-1] == "https://nexus.corp/torch-cpu"
+
