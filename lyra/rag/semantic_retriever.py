@@ -11,6 +11,8 @@ import warnings
 from dataclasses import dataclass
 from typing import Optional
 
+from lyra.utils.hf_local import charger_local_puis_reseau
+
 # Supprimer TOUS les warnings HuggingFace AVANT import
 os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
@@ -165,9 +167,10 @@ class SemanticRetriever:
 
         # Charger sans barre de progression ni messages
         with redirect_stderr(StringIO()):
-            self._embedding_model = SentenceTransformer(
+            # cache local d'abord : pas de requete huggingface.co a chaque demarrage (lyra#25)
+            self._embedding_model = charger_local_puis_reseau(
+                lambda **kw: SentenceTransformer(self.embedding_model_name, device="cpu", **kw),
                 self.embedding_model_name,
-                device="cpu"  # CPU pour embeddings (leger)
             )
 
     def _get_embeddings(self, texts: list[str]) -> list[list[float]]:

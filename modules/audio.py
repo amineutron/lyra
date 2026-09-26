@@ -65,10 +65,12 @@ class STT:
         """
         from faster_whisper import WhisperModel
 
-        self.model = WhisperModel(
-            model,
-            device=device,
-            compute_type=compute_type
+        from lyra.utils.hf_local import charger_local_puis_reseau
+
+        # cache local d'abord : pas de requete huggingface.co a chaque lancement (lyra#25)
+        self.model = charger_local_puis_reseau(
+            lambda **kw: WhisperModel(model, device=device, compute_type=compute_type, **kw),
+            f"whisper-{model}",
         )
         self.language = language
 

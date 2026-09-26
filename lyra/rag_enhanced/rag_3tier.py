@@ -12,6 +12,8 @@ SESSION 5 (P4)
 import logging
 from typing import Callable, Literal, Optional
 
+from lyra.utils.hf_local import charger_local_puis_reseau
+
 logger = logging.getLogger(__name__)
 
 # Import conditionnel ChromaDB — paresseux (~8s d'import torch inclus),
@@ -139,9 +141,10 @@ class RAG3Tier:
             self.embedding_model = _EMBEDDING_MODEL_CACHE[self.embedding_model_name]
         else:
             with redirect_stderr(StringIO()):
-                self.embedding_model = SentenceTransformer(
+                # cache local d'abord : pas de requete huggingface.co a chaque demarrage (lyra#25)
+                self.embedding_model = charger_local_puis_reseau(
+                    lambda **kw: SentenceTransformer(self.embedding_model_name, device="cpu", **kw),
                     self.embedding_model_name,
-                    device="cpu"
                 )
             _EMBEDDING_MODEL_CACHE[self.embedding_model_name] = self.embedding_model
 

@@ -107,9 +107,34 @@ export OLLAMA_HOST=gpu-box.interne:11434
 python3 installer/install.py
 ```
 
-Limite connue : il n'existe pas de bundle hors-ligne complet (modèles Ollama,
-Whisper, Piper et paquets Python dans une archive). Suivi dans l'issue
-[lyra#25](https://github.com/amineutron/lyra/issues/25).
+## Machine sans Internet : bundle hors ligne
+
+`installer/bundle.py` met dans une seule archive (environ 3 Go) tout ce que
+l'installeur télécharge : modèles Ollama, MiniLM (RAG) et Whisper (micro),
+binaire et voix Piper, wheels Python du venv. Chaque fichier est contrôlé par
+sha256 avant toute copie : une archive altérée ou tronquée est refusée en entier.
+
+```bash
+# machine connectée, depuis le dépôt (le venv fournit huggingface_hub)
+.venv/bin/python -m installer.bundle create --out lyra-bundle.tar
+#   --parts ollama,hf,piper,wheels   --whisper base|small|...|aucun
+
+# machine sans réseau (python3 du système suffit)
+python3 -m installer.bundle install lyra-bundle.tar --lyra-dir ~/lyra
+LYRA_OFFLINE=1   # ensuite : interdit tout téléchargement de modèle
+```
+
+- Les modèles Ollama sont téléchargés par un serveur Ollama privé et temporaire
+  (`OLLAMA_MODELS` pointé vers le bundle) : ni sudo ni lecture du dossier du
+  service. À l'installation, la copie vers `/usr/share/ollama/.ollama/models`
+  passe par sudo si ce dossier n'est pas inscriptible.
+- Les wheels sont celles de la plateforme de la machine qui crée le bundle
+  (même architecture et même version de Python attendues).
+- Hors bundle : les paquets système (portaudio, git, nodejs...) et le binaire
+  Ollama, à installer depuis le média de la distribution ; les serveurs MCP.
+- Au démarrage, Lyra charge les modèles Hugging Face depuis le cache local sans
+  interroger huggingface.co (`lyra/utils/hf_local.py`) ; le réseau ne sert que
+  si le modèle manque, et jamais avec `LYRA_OFFLINE=1` ou `HF_HUB_OFFLINE=1`.
 
 ## Rebuild du frontend app
 
