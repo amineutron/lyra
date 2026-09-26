@@ -55,9 +55,25 @@ def run_step(ctx: StepContext) -> None:
 
     # Reindexation RAG des specs MCP
     python = str(ctx.state.venv_python)
-    reindex = lyra / "scripts" / "reindex_mcp_rag_optimized.py"
-    fallback = lyra / "scripts" / "index_mcp_specs.py"
-    script = reindex if reindex.exists() else fallback
-    if script.exists():
-        ctx.emit(Output("Reindexation RAG des specs MCP..."))
-        run([python, str(script)], ctx.emit, step_id=ctx.step_id, check=False)
+    for label, cmd in rag_index_commands(lyra, python):
+        ctx.emit(Output(label))
+        run(cmd, ctx.emit, step_id=ctx.step_id, check=False)
+
+
+def rag_index_commands(lyra: Path, python: str) -> list[tuple[str, list[str]]]:
+    """Commandes d'indexation RAG, dans l'ordre de docs/dev/INDEX_RAG.md.
+
+    La v2 interroge les serveurs MCP ; la v3 (lue par le pipeline de production)
+    en derive. Avant 2026-09-26 seule la v2 etait construite : sur une
+    installation neuve, les collections v3 restaient vides et le RAG ne
+    proposait aucun outil hors regles."""
+    scripts = lyra / "scripts"
+    v2 = scripts / "reindex_mcp_rag_optimized.py"
+    if not v2.exists():
+        legacy = scripts / "index_mcp_specs.py"
+        return [("Reindexation RAG des specs MCP...", [python, str(legacy)])] if legacy.exists() else []
+    commands = [("Reindexation RAG des specs MCP (v2)...", [python, str(v2)])]
+    v3 = scripts / "index_rag_3tier.py"
+    if v3.exists():
+        commands.append(("Index RAG 3 niveaux (v3, derive de la v2)...", [python, str(v3), "--clear"]))
+    return commands
