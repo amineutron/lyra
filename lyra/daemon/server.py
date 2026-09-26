@@ -77,7 +77,6 @@ class LyraDaemon:
                 tts_mode=False,
             )
             self.pipeline.initialize()
-            self.pipeline.preload_models()
 
             self.task_manager = BackgroundTaskManager()
             restored = self.task_manager.restore_from_registry()
@@ -93,6 +92,7 @@ class LyraDaemon:
             self.status = daemon_state.READY
             daemon_state.write_state(daemon_state.READY)
             logger.info("demon pret en %.1fs", time.time() - self.started_at)
+            self._preload_in_background()
         except Exception as e:  # noqa: BLE001 - remonte aux clients
             self._init_error[0] = e
             logger.error("echec init: %s\n%s", e, traceback.format_exc())
@@ -100,6 +100,26 @@ class LyraDaemon:
                                     reason=f"echec init: {e}")
         finally:
             self._init_done.set()
+
+    def _preload_in_background(self) -> threading.Thread:
+        """Prechauffe les modeles Ollama APRES READY.
+
+        Avant (jusqu'au 2026-09-26), le prechauffage precedait READY : un Ollama
+        bloque retenait le demon 2 x 120 s (timeout client par modele), et avec lui
+        les outils sans modele (TV, Hue, Denon de neutroncore) et les regles.
+        """
+        def _run() -> None:
+            t0 = time.time()
+            try:
+                self.pipeline.preload_models()
+            except Exception as e:  # noqa: BLE001 - prechauffage facultatif
+                logger.warning("prechauffage des modeles Ollama echoue : %s", e)
+            else:
+                logger.info("modeles Ollama prechauffes en %.1fs", time.time() - t0)
+
+        thread = threading.Thread(target=_run, daemon=True, name="lyra-preload")
+        thread.start()
+        return thread
 
     def _watch_tasks(self) -> None:
         """Poll les taches async : check_task detecte les fins et notifie le

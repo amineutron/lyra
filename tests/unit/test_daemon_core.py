@@ -286,3 +286,37 @@ class TestHandleTool:
         d, _ = self._daemon(executed=True, error="Error executing tool")
         recus = self._echange(d, {"type": "tool", "name": "tv.power_on", "arguments": {}})
         assert recus[0]["success"] is False and recus[-1]["exit_code"] == 1
+
+
+class TestPrechauffage:
+    """Le prechauffage Ollama ne retient plus le demon (2026-09-26 : Ollama bloque = 240 s d'indisponibilite)."""
+
+    def _daemon(self, preload):
+        from types import SimpleNamespace as N
+
+        from lyra.daemon.server import LyraDaemon
+        d = LyraDaemon.__new__(LyraDaemon)
+        d.pipeline = N(preload_models=preload)
+        return d
+
+    def test_rend_la_main_pendant_que_le_modele_charge(self):
+        libere = threading.Event()
+        appele = threading.Event()
+
+        def preload():
+            appele.set()
+            libere.wait(5)
+
+        thread = self._daemon(preload)._preload_in_background()
+        assert appele.wait(2) and thread.is_alive()
+        libere.set()
+        thread.join(2)
+        assert not thread.is_alive()
+
+    def test_echec_journalise_sans_lever(self, caplog):
+        def preload():
+            raise RuntimeError("ollama injoignable")
+
+        with caplog.at_level("WARNING", logger="lyra.daemon"):
+            self._daemon(preload)._preload_in_background().join(2)
+        assert "ollama injoignable" in caplog.text
