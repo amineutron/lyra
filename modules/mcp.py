@@ -7,6 +7,7 @@ Phase 5 ajoute le MCPManager pour gerer plusieurs serveurs MCP avec prefixage.
 Phase 5.4 ajoute MCPSessionClient pour les serveurs MCP async (Python).
 """
 
+import collections
 import json
 import os
 import subprocess
@@ -417,6 +418,24 @@ class MCPSessionClient:
         self._tools_cache: Optional[list[MCPTool]] = None
         self._initialized = False
         self._lock = threading.Lock()
+        self._stderr_tail: "collections.deque[str]" = collections.deque(maxlen=self.STDERR_TAIL_LINES)
+
+    # Lignes de stderr gardees pour expliquer la mort d'un serveur (le reste est jete)
+    STDERR_TAIL_LINES = 50
+
+    @staticmethod
+    def _drain_stderr(stream, tail: "collections.deque") -> None:
+        """Vide stderr en continu. Sans ce lecteur, un serveur bavard remplit le tube
+        (64 Ko), se bloque en ecriture et ne lit plus ses requetes : l'appel en cours
+        garde le verrou des outils et fige le demon (hue-mcp, 2026-09-27)."""
+        try:
+            for line in stream:
+                tail.append(line.rstrip("\n"))
+        except (OSError, ValueError):
+            pass  # tube ferme a l'arret du processus
+
+    def _stderr_excerpt(self, limit: int = 200) -> str:
+        return "\n".join(self._stderr_tail)[-limit:]
 
     def _start_process(self):
         """Demarre le processus MCP si pas deja actif."""
@@ -435,6 +454,9 @@ class MCPSessionClient:
             env=env,
             bufsize=1  # Line buffered
         )
+        self._stderr_tail = collections.deque(maxlen=self.STDERR_TAIL_LINES)
+        threading.Thread(target=self._drain_stderr, args=(self._process.stderr, self._stderr_tail),
+                         name=f"mcp-stderr-{self.name}", daemon=True).start()
         self._initialized = False
 
     def _send_request(self, method: str, params: dict) -> dict:
@@ -524,9 +546,10 @@ class MCPSessionClient:
 
             line = self._process.stdout.readline()
             if not line:
-                # Process termine
-                stderr = self._process.stderr.read() if self._process.stderr else ""
-                return {"error": f"Process termine: {stderr[:200]}"}
+                # Process termine : le lecteur de stderr a garde les dernieres lignes
+                self._process.wait(timeout=2)
+                time.sleep(0.05)  # laisse le lecteur finir de vider le tube
+                return {"error": f"Process termine: {self._stderr_excerpt()}"}
 
             line = line.strip()
             if not line:
