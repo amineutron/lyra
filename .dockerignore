@@ -1,0 +1,31 @@
+# Contexte de build de deploy/eval/Containerfile (lu par docker ET podman) : JAMAIS
+# de config ni de secret de la machine qui construit l image, ni de donnees generees.
+config.yaml
+config.yaml.bak*
+config.yaml.installer*
+secrets.yaml
+secrets.yaml.bak*
+.env
+.venv/
+.venv-installer/
+.chromadb/
+models/
+voices/
+logs/
+data/session_history.db
+data/feedback.json
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.git/
+installer/app/frontend/node_modules/
+benchmarks/results/
+assets/*.mp3
+docs/*.png
+.venv-*/
+demandes/
+intro/
+readme/
+to-synthese/
+lyra-v1-CDC/

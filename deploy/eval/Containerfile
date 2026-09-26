@@ -1,0 +1,45 @@
+# Lyra en mode texte pour evaluation (roadmap #44) : sans GPU, sans micro,
+# sans haut-parleur. Construite depuis la racine du depot :
+#   podman build -f deploy/eval/Containerfile -t lyra-eval .
+# Utilisee par docker-compose.sovereign.yml et par .devcontainer/.
+FROM docker.io/library/python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HF_HOME=/var/cache/lyra/hf \
+    TRACKING_TOKEN_FILE=/run/tracking/token \
+    TRACKING_STATE_DIR=/var/lib/tracking
+
+# libportaudio2 : sounddevice l'ouvre a l'import, meme en mode texte.
+# Utilisateur cree d'abord : tout s'installe sous son identite (un chown -R
+# final recopiait les ~2 Go du venv dans une couche de plus).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libportaudio2 ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --create-home --uid 1000 lyra \
+ && mkdir -p /opt/lyra/.chromadb /opt/lyra/logs /opt/mcp /opt/tracking \
+             /var/cache/lyra /var/lib/tracking /run/tracking \
+ && chown -R lyra:lyra /opt /var/cache/lyra /var/lib/tracking /run/tracking
+
+USER lyra
+WORKDIR /opt/lyra
+
+# Dependances d'abord (couche en cache) : meme liste que l'installeur
+COPY --chown=lyra:lyra installer/ installer/
+RUN python -m venv /opt/lyra/.venv \
+ && /opt/lyra/.venv/bin/pip install --upgrade pip wheel \
+ && python -m installer.core.pipplan --pip /opt/lyra/.venv/bin/pip
+
+# MCP d'exemple et API tracking, chacun dans son venv (mcp-tracking installe
+# des modules de premier niveau, server, models, storage... qui entreraient en
+# collision avec ceux de Lyra)
+RUN python -m venv /opt/mcp/denon && /opt/mcp/denon/bin/pip install "denon-mcp==0.3.2" \
+ && python -m venv /opt/tracking && /opt/tracking/bin/pip install "mcp-tracking==0.2.1"
+
+COPY --chown=lyra:lyra . .
+RUN /opt/lyra/.venv/bin/pip install --no-deps -e .
+
+ENV PATH=/opt/lyra/.venv/bin:$PATH
+CMD ["python", "deploy/eval/bootstrap.py"]

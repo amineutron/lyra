@@ -1,0 +1,29 @@
+{
+  "name": "Lyra (mode texte, évaluation)",
+  "build": {
+    "dockerfile": "../deploy/eval/Containerfile",
+    "context": ".."
+  },
+  "remoteUser": "lyra",
+  "containerUser": "lyra",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "secrets": {
+    "OLLAMA_HOST": {
+      "description": "URL d'un serveur Ollama joignable depuis GitHub (ex. https://ollama.example.org). Codespaces n'a pas de GPU : Lyra y appelle un Ollama distant. Les modèles qwen2.5-coder:0.5b et llama3.2:1b y sont téléchargés s'ils manquent.",
+      "documentationUrl": "https://github.com/amineutron/lyra/blob/main/deploy/eval/README.md"
+    }
+  },
+  "postCreateCommand": "/opt/lyra/.venv/bin/pip install --no-deps -e .",
+  "postStartCommand": "bash deploy/eval/start-devcontainer.sh",
+  "customizations": {
+    "codespaces": {
+      "openFiles": ["deploy/eval/README.md"]
+    },
+    "vscode": {
+      "extensions": ["ms-python.python"],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/lyra/.venv/bin/python"
+      }
+    }
+  }
+}

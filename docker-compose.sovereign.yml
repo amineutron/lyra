@@ -1,0 +1,75 @@
+# Chemin d'evaluation de Lyra, mode texte (roadmap #44).
+# Tout reste sur la machine : Ollama, Lyra, l'API mcp-tracking et un MCP
+# d'exemple (denon-mcp, sans appareil : ses outils repondent « DENON_HOST not
+# configured »). Aucune installation sur l'hote, aucun port publie.
+#
+#   podman compose -f docker-compose.sovereign.yml --profile cpu up -d --build
+#   podman compose -f docker-compose.sovereign.yml logs -f lyra     # 1er demarrage : modeles + index
+#   podman compose -f docker-compose.sovereign.yml exec lyra lyra "liste les taches"
+#   podman compose -f docker-compose.sovereign.yml --profile cpu down     # -v efface aussi les volumes
+#
+# Profil gpu a la place de cpu : NVIDIA via CDI (nvidia-container-toolkit).
+# Ollama deja installe ailleurs : ne lancer aucun profil et definir LYRA_EVAL_OLLAMA_HOST.
+# Un vrai ampli Denon a tester : LYRA_EVAL_DENON_HOST=<ip>.
+name: lyra-eval
+
+x-ollama: &ollama
+  image: docker.io/ollama/ollama:0.34.4
+  volumes:
+    - ollama-models:/root/.ollama
+  networks:
+    lyra:
+      aliases: [ollama]
+  restart: unless-stopped
+
+services:
+  ollama-cpu:
+    <<: *ollama
+    profiles: [cpu]
+
+  ollama-gpu:
+    <<: *ollama
+    profiles: [gpu]
+    devices:
+      - nvidia.com/gpu=all
+
+  lyra:
+    build:
+      context: .
+      dockerfile: deploy/eval/Containerfile
+    image: localhost/lyra-eval:latest
+    environment:
+      # noms dedies : un OLLAMA_HOST ou DENON_HOST du shell de l'hote vise autre chose
+      OLLAMA_HOST: ${LYRA_EVAL_OLLAMA_HOST:-http://ollama:11434}
+      DENON_HOST: ${LYRA_EVAL_DENON_HOST:-}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-}
+    volumes:
+      - lyra-index:/opt/lyra/.chromadb
+      - lyra-hf:/var/cache/lyra
+      - tracking-run:/run/tracking
+    networks: [lyra]
+    restart: unless-stopped
+
+  # L'API refuse tout hote non local (protection DNS rebinding) : elle partage
+  # donc l'espace reseau de Lyra et lui repond sur 127.0.0.1:8765.
+  tracking:
+    image: localhost/lyra-eval:latest
+    command: ["/opt/tracking/bin/mcp-tracking-api"]
+    network_mode: "service:lyra"
+    volumes:
+      - tracking-run:/run/tracking
+      - tracking-state:/var/lib/tracking
+    depends_on: [lyra]
+    restart: unless-stopped
+
+networks:
+  lyra: {}
+
+volumes:
+  ollama-models: {}
+  lyra-index: {}
+  lyra-hf: {}
+  tracking-run: {}
+  tracking-state: {}

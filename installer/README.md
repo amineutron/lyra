@@ -10,6 +10,9 @@ Deux frontaux consomment exactement le meme pipeline :
 - `--app` : lance directement l'installeur graphique local (design
   neutroncore) sur `http://127.0.0.1:9877/ui/` — backend Python stdlib,
   frontend React pre-builde et commite dans `app/backend/static/`.
+- `--headless` : sans interface, chaque question recoit sa valeur par defaut
+  (journalisee), sortie texte ; MCP par `--mcps id1,id2`. Pour les tests en VM
+  (`tests/installer/vm_install_test.sh`) et les machines sans terminal.
 
 `--demo` simule tout le parcours sans executer une seule commande.
 
@@ -130,6 +133,10 @@ python3 installer/install.py
 ```
 
 ## Machine sans Internet : bundle hors ligne
+
+Limite actuelle : le bundle est une commande séparée, pas encore proposée par
+l'installeur, et il n'a pas été rejoué de bout en bout sur une VM sans réseau
+(suivi : issue [#25](https://github.com/amineutron/lyra/issues/25)).
 
 `installer/bundle.py` met dans une seule archive (environ 3 Go) tout ce que
 l'installeur télécharge : modèles Ollama, MiniLM (RAG) et Whisper (micro),

@@ -1,6 +1,6 @@
 # Lyra
 
-[![Tests](https://github.com/amineutron/lyra/actions/workflows/tests.yml/badge.svg)](https://github.com/amineutron/lyra/actions/workflows/tests.yml) [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://github.com/amineutron/lyra/actions/workflows/tests.yml/badge.svg)](https://github.com/amineutron/lyra/actions/workflows/tests.yml) [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/) [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/amineutron/lyra)
 
 **English summary.** Lyra is a voice-driven DevOps assistant that runs locally by default: Ollama models, faster-whisper speech-to-text, Piper text-to-speech, a three-tier RAG over MCP tool specs, and a resident daemon with text, voice and web clients. It drives KVM virtual machines, backups and home devices through MCP servers, and never runs a sensitive action without a human confirmation. AGPL-3.0 with a commercial option; French-first interface. What is captured and what leaves the machine: [docs/user/DATA_FLOWS.en.md](docs/user/DATA_FLOWS.en.md) (French: [DATA_FLOWS.md](docs/user/DATA_FLOWS.md)).
 
@@ -70,6 +70,19 @@ Executer ? [T]out / [1] par 1 / [n]on : t
 Les valeurs par défaut sont volontairement petites ; les modèles plus gros sont commentés dans `config.yaml.example`.
 
 Installation sans carte graphique vérifiée le 2026-09-13 : `pip install .` dans un conteneur `python:3.12-slim` n'installe aucun paquet `nvidia-*` (48 paquets, faster-whisper sur CPU via ctranslate2) et `lyra --help` répond.
+
+## Essayer sans rien installer
+
+Trois chemins d'évaluation en mode texte, sans toucher à ta machine : un
+Codespace GitHub branché sur un Ollama distant, une pile de conteneurs
+(`docker-compose.sovereign.yml` : Ollama, Lyra, l'API mcp-tracking et un MCP
+d'exemple, profils `cpu` et `gpu`), ou le vrai installeur rejoué dans une VM
+propre. Mode d'emploi : [deploy/eval/README.md](deploy/eval/README.md).
+
+```bash
+podman compose -f docker-compose.sovereign.yml --profile cpu up -d --build
+podman compose -f docker-compose.sovereign.yml exec lyra lyra "liste les taches"
+```
 
 ## Démarrage rapide
 
