@@ -2,15 +2,19 @@
 
 Les VMs de test vivent sur le disque externe `/mnt/ext-backup/vms/`
 (brancher le disque avant tout). Baseline commune : snapshot
-`installer-clean-20260824` — etat VIERGE verifie (0 trace lyra/piper/
-ollama), VM en marche, cle SSH de l'hote injectee.
+`installer-clean-20260926` — etat VIERGE verifie (0 trace lyra/piper/
+ollama), VM en marche, cle SSH des VM (`~/.ssh/id_ed25519_vms`) autorisee.
+C'est `installer-clean-20260824` plus cette cle : creee le 2026-09-15, elle
+est la seule que `~/.ssh/config` presente aux VM, et l'ancienne baseline la
+refusait (premiere campagne automatique du 2026-09-26 : SSH refuse partout).
+arch-base n'a pas encore la nouvelle baseline.
 
 ## VMs et acces
 
 | VM | User SSH | OS | Snapshot baseline |
 |---|---|---|---|
-| fedora-base | fedora | Fedora 42 Cloud | installer-clean-20260824 |
-| ubuntu-base | ubuntu | Ubuntu 24.04.4 LTS | installer-clean-20260824 |
+| fedora-base | fedora | Fedora 42 Cloud | installer-clean-20260926 |
+| ubuntu-base | ubuntu | Ubuntu 24.04.4 LTS | installer-clean-20260926 |
 | arch-base | arch | Arch (python 3.14) | installer-clean-20260824 |
 | windows-11-test | - | Windows 11 | snap-windows-ssh-ready-20260311 |
 
@@ -39,7 +43,7 @@ Le commit teste doit etre pousse (les VM clonent depuis GitHub).
 
 ```bash
 # 1. Restaurer la baseline (VM revient EN MARCHE, reseau ~15s)
-#    -> via Lyra/MCP : vm_snapshot restore <vm> installer-clean-20260824
+#    -> via Lyra/MCP : vm_snapshot restore <vm> installer-clean-20260926
 
 # 2. Dans la VM (vm_exec ou ssh user@IP) :
 git clone https://<PAT>@github.com/marouabah/lyra.git ~/lyra
@@ -50,7 +54,7 @@ cd ~/lyra && ./installer/install.sh --tui --ollama-host 192.168.122.1
 #    (echouera sur virsh dans la VM — verifier plutot le demon + un
 #    MCP domotique si le reseau local est accessible)
 
-# 4. Re-restaurer installer-clean-20260824 et iterer.
+# 4. Re-restaurer installer-clean-20260926 et iterer.
 ```
 
 Notes :

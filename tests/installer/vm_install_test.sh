@@ -10,14 +10,14 @@
 #   tests/installer/vm_install_test.sh --ollama-host 192.0.2.1   # campagne reelle (Fedora + Ubuntu)
 #
 # Options : --vm NOM (repetable ; defaut fedora-base et ubuntu-base)
-#           --snapshot NOM (defaut installer-clean-20260824)
+#           --snapshot NOM (defaut installer-clean-20260926)
 #           --ref REF (defaut : commit courant, qui doit etre pousse)
 #           --repo URL   --ollama-host HOTE   --scripts-dir DIR   --keep (ne pas re-restaurer)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VMS=()
-SNAPSHOT="installer-clean-20260824"
+SNAPSHOT="installer-clean-20260926"
 REPO="https://github.com/amineutron/lyra.git"
 REF=""
 OLLAMA_HOST_ARG=""
