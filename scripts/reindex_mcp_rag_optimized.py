@@ -16,6 +16,7 @@ Usage:
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -103,10 +104,27 @@ def expand_text_with_synonyms(text: str) -> list[str]:
     return variants[:6]  # Max 6 variantes
 
 
-# Limites du generateur, mesurees comme un plafond le 2026-09-18 (mediane 5
-# paraphrases par outil) : reglables pour la boucle d'amelioration.
-_TRIGGERS_MAX = int(os.environ.get("LYRA_TRIGGERS_MAX", "3"))
-_VARIANTES_MAX = int(os.environ.get("LYRA_VARIANTES_MAX", "8"))
+# Limites du generateur. L'index de production est construit en 6 x 16 depuis
+# le 2026-09-18 (83c202d, mediane 8 paraphrases par outil) ; les defauts
+# etaient restes a 3 x 8, si bien qu'une reindexation « normale » degradait le
+# RAG sans rien dire (constate 2026-09-26, lyra#24). Reglables pour la boucle
+# d'amelioration.
+TRIGGERS_MAX_DEFAUT = 6
+VARIANTES_MAX_DEFAUT = 16
+_TRIGGERS_MAX = int(os.environ.get("LYRA_TRIGGERS_MAX", str(TRIGGERS_MAX_DEFAUT)))
+_VARIANTES_MAX = int(os.environ.get("LYRA_VARIANTES_MAX", str(VARIANTES_MAX_DEFAUT)))
+
+
+# Avertissement que fedora-agents ajoute aux outils destructifs : du bruit pour
+# la recherche (memes mots sur huit outils), le danger est porte par
+# DANGEROUS_TOOLS / SENSITIVE_TOOLS, pas par l'index.
+_AVERTISSEMENT_RE = re.compile(
+    r"\s*(?:\u26a0\ufe0f?)?\s*\(?ATTENTION\s*:[^|()]*?(?:destructive|irr[ée]versible)\s*!?\)?", re.IGNORECASE)
+
+
+def description_indexable(description: str) -> str:
+    """Description d'outil sans l'avertissement de danger (sans effet sur la confirmation)."""
+    return _AVERTISSEMENT_RE.sub("", description or "").strip()
 
 
 def generate_rich_document(tool: dict) -> str:
@@ -124,7 +142,7 @@ def generate_rich_document(tool: dict) -> str:
          active l'éclairage du salon | démarre les lampes du bureau"
     """
     name = tool['name']
-    desc = tool.get('description', '')
+    desc = description_indexable(tool.get('description', ''))
     # Les tools HESTIA utilisent 'parameters' au lieu de 'inputSchema'
     schema = tool.get('parameters', tool.get('inputSchema', {}))
 
@@ -191,12 +209,12 @@ def generate_rich_document(tool: dict) -> str:
     if triggers:
         # Générer variantes pour chaque trigger
         all_trigger_variants = []
-        for trigger in triggers[:_TRIGGERS_MAX]:  # 3 par defaut (LYRA_TRIGGERS_MAX)
+        for trigger in triggers[:_TRIGGERS_MAX]:  # 6 par defaut (LYRA_TRIGGERS_MAX)
             variants = expand_text_with_synonyms(trigger)
             all_trigger_variants.extend(variants)
 
         if all_trigger_variants:
-            parts.append(f"Utilise pour: {'. '.join(all_trigger_variants[:_VARIANTES_MAX])}")  # 8 par defaut (LYRA_VARIANTES_MAX)
+            parts.append(f"Utilise pour: {'. '.join(all_trigger_variants[:_VARIANTES_MAX])}")  # 16 par defaut (LYRA_VARIANTES_MAX)
 
     # Exemples concrets avec VARIANTES NATURELLES
     if examples:
@@ -736,6 +754,9 @@ def generate_trigger_phrases(name: str, category: str) -> list[str]:
         "denon.get_status": [
             "voir l'état du Denon", "statut de l'ampli",
             "état du home cinéma", "volume du Denon",
+            # un seul outil lit l'ampli (marche, volume, source) : la description
+            # serveur, liste de champs techniques, ne suffit plus (2026-09-26)
+            "le Denon est-il en veille", "réglages actuels de l'ampli",
         ],
 
         # MERMAID
@@ -778,6 +799,7 @@ def generate_french_examples(name: str, category: str) -> list[str]:
         ],
         "fedora.vm_exec": [
             "exécute 'uptime' sur preprod-09", "lance systemctl status dans la VM",
+            "tape une commande dans sandbox-01",
         ],
         "fedora.vm_destroy": [
             "supprime sandbox-01", "détruis la VM test", "efface la machine sandbox",
@@ -790,6 +812,7 @@ def generate_french_examples(name: str, category: str) -> list[str]:
         ],
         "fedora.backup_restore": [
             "restaure le backup backup-001", "récupère la sauvegarde d'hier",
+            "reviens à la sauvegarde de la VM",
         ],
         "fedora.backup_list": [
             "liste les backups", "quels backups sont disponibles",
@@ -798,7 +821,7 @@ def generate_french_examples(name: str, category: str) -> list[str]:
 
         # HUE
         "turn_on_light": [
-            "allume la lampe du bureau",
+            "allume la lampe de chevet",
             "mets la lumière dans le bureau", "éclaire la pièce",
         ],
         "turn_off_light": [
@@ -861,7 +884,7 @@ def generate_french_examples(name: str, category: str) -> list[str]:
             "lance Netflix", "ouvre YouTube sur la télé",
             "lance Prime Video",
         ],
-        "tv.youtube_video": ["lance cette vidéo YouTube sur la télé"],
+        "tv.youtube_video": ["lance cette vidéo YouTube sur la télé", "ouvre ce lien YouTube sur la TV", "joue cette vidéo YouTube sur le téléviseur"],
 
         # CAST
         "catt.cast_youtube": [
@@ -876,9 +899,9 @@ def generate_french_examples(name: str, category: str) -> list[str]:
             "coupe le cast",
         ],
         "cast_stop": ["arrête le cast", "stoppe la diffusion"],
-        "catt.cast_pause": ["mets le cast en pause", "pause le cast"],
+        "catt.cast_pause": ["mets le cast en pause", "pause le cast", "fige la vidéo sur le Chromecast"],
         "cast_pause": ["mets le cast en pause"],
-        "catt.cast_volume": ["monte le volume du cast à 50", "baisse le volume du cast"],
+        "catt.cast_volume": ["monte le volume du cast à 50", "baisse le volume du cast", "son du Chromecast à 30"],
         "cast_volume": ["monte le volume du cast à 50"],
         "catt.cast_status": [
             "quel est le statut du cast", "qu'est-ce qui est casté",
@@ -886,8 +909,8 @@ def generate_french_examples(name: str, category: str) -> list[str]:
         ],
 
         # DENON
-        "denon.power_on": ["allume le Denon", "démarre l'ampli", "allume le home cinéma"],
-        "denon.power_off": ["éteins le Denon", "coupe l'ampli"],
+        "denon.power_on": ["allume le Denon", "démarre l'ampli", "réveille l'amplificateur"],
+        "denon.power_off": ["éteins le Denon", "arrête l'amplificateur", "mets le Denon en veille"],
         "denon.volume_up": [
             "monte le volume de l'ampli", "augmente le son du Denon",
             "plus fort l'ampli",
@@ -904,6 +927,65 @@ def generate_french_examples(name: str, category: str) -> list[str]:
             "quel est le statut du Denon", "état de l'ampli",
             "volume actuel du Denon",
         ],
+        "denon.volume_down": ["baisse le son de l'ampli", "moins fort sur le Denon", "diminue le volume du home cinéma"],
+        "denon.volume_set": ["mets l'ampli à 40", "règle le Denon sur 35", "volume du home cinéma à 50"],
+        "denon.mute_off": ["rends le son au Denon", "enlève le mute du Denon", "réactive le son du home cinéma"],
+        "denon.mute_toggle": ["change l'état du mute du Denon", "inverse la sourdine du Denon", "mute ou démute le home cinéma"],
+
+        # CAST (suite)
+        "catt.cast_browser": ["partage l'onglet du navigateur sur la TV", "caste la vidéo du navigateur", "mets la vidéo de Firefox sur la TV"],
+        "catt.cast_browser_dual": ["lance la vidéo sur le PC et la télé en même temps", "double diffusion synchronisée pour LightBeat", "joue la vidéo Firefox sur les deux écrans"],
+        "catt.cast_dual_offset": ["décale la télé de 200 millisecondes", "la télé est en retard, ajuste le décalage", "règle l'offset du double cast"],
+        "catt.cast_dual_resync": ["resynchronise le PC et la télé", "les deux écrans sont décalés, recale-les", "remets la télé à la position de Firefox"],
+        "catt.cast_dual_stop": ["arrête la double diffusion", "coupe le cast synchronisé", "stoppe le dual cast"],
+        "catt.cast_info": ["infos sur la vidéo castée", "titre et durée du média diffusé", "détails du média en cours de diffusion"],
+        "catt.cast_resume": ["reprends le cast", "relance la lecture sur le Chromecast", "continue la diffusion"],
+        "catt.cast_scan": ["cherche les appareils de cast du réseau", "quels récepteurs de diffusion sont disponibles", "scanne les appareils DLNA"],
+        "catt.cast_seek": ["avance de 30 secondes", "recule d'une minute dans la vidéo", "saute 2 minutes plus loin dans le cast"],
+        "catt.cast_url": ["caste ce lien sur la télé", "mets ce flux radio sur le cast", "diffuse cette adresse http sur la TV"],
+
+        # BACKUP / VM (suite)
+        "fedora.backup_clean": ["nettoie les vieux backups", "applique la rétention des sauvegardes", "supprime les anciennes sauvegardes borg"],
+        "fedora.backup_status": ["tableau de bord des sauvegardes", "espace utilisé par les backups", "où en sont mes sauvegardes"],
+        "fedora.backup_verify": ["vérifie l'intégrité des backups", "contrôle la sauvegarde borg", "les sauvegardes sont-elles intactes"],
+        "fedora.help": ["quels outils VM as-tu", "aide sur la gestion des machines virtuelles", "liste les commandes fedora disponibles"],
+        "fedora.vm_clone_system": ["clone mon système entier dans une VM", "fais une VM bootable à partir de l'hôte", "copie tout le PC dans une machine virtuelle"],
+        "fedora.vm_copy": ["copie ce fichier dans la VM preprod-09", "récupère le dossier logs depuis la VM", "envoie le script sur sandbox-01 par scp"],
+        "fedora.vm_export": ["exporte preprod-09 en archive", "fais une archive portable de la VM", "exporte la machine en mode examen"],
+        "fedora.vm_import": ["importe l'archive de VM", "restaure la VM depuis l'archive exportée", "importe preprod-09 sous un nouveau nom"],
+        "fedora.vm_verify": ["vérifie que le clone est fidèle", "contrôle la VM clonée", "compare la VM clonée avec l'hôte"],
+
+        # HUE (suite)
+        "hue.alert_light": ["fais clignoter la lampe 3", "identifie la lampe du bureau en la faisant flasher", "quelle lampe est la numéro 5, fais-la clignoter"],
+        "hue.create_group": ["crée un groupe lecture avec les lampes 2 et 4", "regroupe les lampes du salon", "nouveau groupe de lumières pour le bureau"],
+        "hue.find_light_by_name": ["trouve la lampe qui s'appelle bureau", "cherche la lumière nommée plafond", "quelle lampe porte le nom chevet"],
+        "hue.get_all_groups": ["liste les groupes de lumières", "quelles pièces ont des lampes", "montre les groupes Hue"],
+        "hue.get_all_lights": ["liste toutes les lampes", "quelles lumières sont connectées au pont", "inventaire des ampoules Hue"],
+        "hue.get_all_scenes": ["liste les scènes Hue", "quelles ambiances sont disponibles", "montre les scènes enregistrées"],
+        "hue.get_group": ["état du groupe salon", "infos sur le groupe 81", "quelles lampes dans le groupe chambre"],
+        "hue.get_light": ["état de la lampe 3", "infos sur la lumière du bureau", "la lampe du chevet est-elle allumée"],
+        "hue.hue_beat_set": ["passe hue beat en palette feu", "rends hue beat plus sensible aux basses", "baisse la luminosité de hue beat"],
+        "hue.hue_beat_start": ["lance hue beat", "fais danser les lumières sur la musique", "lumières en rythme avec le son"],
+        "hue.hue_beat_status": ["hue beat tourne-t-il", "état de hue beat", "quel BPM détecte hue beat"],
+        "hue.hue_beat_stop": ["arrête hue beat", "stoppe les lumières musicales", "plus de lumières en rythme"],
+        "hue.quick_scene": ["enregistre une nouvelle scène rouge tamisée", "fais une scène douce à 30 pour cent", "prépare une scène lecture en blanc chaud"],
+        "hue.refresh_lights": ["rafraîchis la liste des lampes", "j'ai ajouté une ampoule, mets à jour", "recharge les lumières du pont"],
+        "hue.set_color_preset": ["mets la lampe 3 en blanc chaud", "lampe du bureau en lumière du jour", "passe la lampe 2 en preset concentration"],
+        "hue.set_color_temperature": ["règle la lampe 3 à 2700 kelvins", "lumière plus chaude sur le bureau", "température de couleur froide sur la lampe 2"],
+        "hue.set_group_color_preset": ["passe la pièce en blanc chaud", "lumière du jour dans toute la pièce", "blanc froid sur toutes les lampes"],
+        "hue.set_light_effect": ["effet boucle de couleurs sur la lampe 3", "lance l'effet colorloop", "arrête l'effet de la lampe du bureau"],
+        "hue.set_scene": ["applique la scène 5 au salon", "mets la scène enregistrée sur le groupe", "active la scène par son identifiant"],
+
+        # TV (suite)
+        "tv.ambilight_mode": ["mets l'ambilight en mode audio", "ambilight qui suit la vidéo", "passe l'ambilight en lounge"],
+        "tv.ambilight_off": ["éteins l'ambilight", "coupe les lumières derrière la télé", "désactive l'ambilight"],
+        "tv.ambilight_on": ["allume l'ambilight", "active les lumières de la télé", "remets l'ambilight"],
+        "tv.get_state": ["état de la télé", "la télé est-elle allumée", "quel volume sur la TV"],
+        "tv.list_apps": ["quelles applis sur la télé", "liste les applications de la TV", "montre les apps installées sur la télé"],
+        "tv.screen_off": ["écran noir mais le son continue", "mode musique, image coupée", "coupe juste l'écran, pas le son"],
+        "tv.screen_on": ["rallume l'écran seul", "remets l'image, le son tourne déjà", "sors du mode écran noir"],
+        "tv.send_key": ["appuie sur retour sur la télécommande", "touche accueil de la télé", "envoie la touche pause à la TV"],
+        "tv.volume_set": ["mets la télé à 20", "règle le son de la TV sur 15", "volume de la télé à 10"],
     }
 
     # Chercher d'abord avec le nom complet, sinon avec le short_name
@@ -956,13 +1038,13 @@ def main():
         # Metadata
         name = tool['name']
         server = name.split('.')[0] if '.' in name else 'unknown'
-        category = categorize_tool(name, tool.get('description', ''))
+        category = categorize_tool(name, description_indexable(tool.get('description', '')))
 
         meta = {
             'name': name,
             'server_name': server,
             'category': category,
-            'description': tool.get('description', '')
+            'description': description_indexable(tool.get('description', ''))
         }
 
         documents.append(doc)

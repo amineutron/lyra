@@ -112,13 +112,16 @@ def main() -> int:
         actives = set(cfg)
         opts = options_de(actives)
         releves = []
+        tetes: dict[str, list[str]] = {}
         for _cat, _desc, requete, attendu, *_ in cas:
             res = rag.cascade_search(requete) or []
             specs = [f"{(it.get('metadata') or {}).get('tool_name') or '?'}: {it.get('document', '')}" for it in res]
             comp = eph._boost_spec_order([eph._compact_spec(s) for s in specs], requete)
             if "carte_mots" in actives:
                 comp = _exp.boost_mots(comp, requete, **opts)
-            rang = rang_du_bon_outil([_exp.nom_de_spec(c) for c in comp], attendu, EQUIVALENCES.get(attendu))
+            noms = [_exp.nom_de_spec(c) for c in comp]
+            tetes[requete] = noms[:3]
+            rang = rang_du_bon_outil(noms, attendu, EQUIVALENCES.get(attendu))
             net = _exp.score_net(comp, requete,
                                  **{**opts, "poids_rares": True, "equipements": True, "relatifs": True, "catt": True})
             releves.append((requete, attendu, rang, net))
@@ -128,6 +131,7 @@ def main() -> int:
             for requete, attendu, rang, net in releves:
                 if rang != 1 or (net and rang != 1):
                     print(f"    r={rang!s:4} net={int(bool(net))} {attendu:26s} <- {requete[:60]}")
+                    print(f"         tete : {', '.join(tetes[requete])}")
     return 0
 
 

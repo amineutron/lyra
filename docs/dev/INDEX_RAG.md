@@ -26,8 +26,19 @@ Pieges connus :
   main en v2) est perdu. `index_rag_3tier.py` ignore les documents sans
   `server_name` pour ne pas creer un serveur fantome.
 - Seules les premieres phrases de `triggers_map` sont indexees
-  (`LYRA_TRIGGERS_MAX`, `LYRA_VARIANTES_MAX`) : mettre les formulations
-  decisives en tete. Jamais une phrase d'un jeu de test
+  (`LYRA_TRIGGERS_MAX`, `LYRA_VARIANTES_MAX`, 6 et 16 par defaut : ce sont les
+  valeurs de production ; jusqu'au 2026-09-26 les defauts etaient 3 et 8 et une
+  reindexation sans variable degradait le RAG) : mettre les formulations
+  decisives en tete.
+- La v3 (production) ne reprend que la section « Utilise pour » (`triggers_map`).
+  `examples_map` (section « Exemples ») n'alimente que la v2, lue par le repli
+  sans RAG 3-tier. Mesure du 2026-09-26 : recopier les exemples dans la v3
+  fait baisser le rappel sur les cinq jeux (r@1 274 -> 267, index 3 x 8). `tests/unit/
+  test_reindex_examples.py` impose au moins trois exemples par outil reel et
+  aucune phrase d'un jeu de test.
+- L'avertissement « ATTENTION: Operation potentiellement destructive » des
+  descriptions fedora-agents est retire a l'indexation (`description_indexable`) :
+  la confirmation depend de `DANGEROUS_TOOLS`, pas de l'index. Jamais une phrase d'un jeu de test
   (`scripts/controle_hors_regles.py --jeu N` le verifie).
 - Verifier le resultat sans modele : `scripts/bench_recall.py --jeu hors_regles_2`
   (rang du bon outil, precision du tri net), avant tout banc.
