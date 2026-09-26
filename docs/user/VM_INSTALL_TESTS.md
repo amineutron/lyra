@@ -39,6 +39,12 @@ tests/installer/vm_install_test.sh --vm arch-base --ollama-host 192.168.122.1
 
 Le commit teste doit etre pousse (les VM clonent depuis GitHub).
 
+Derniere campagne : **2026-09-26, Fedora 42 et Ubuntu 24.04 OK** (installeur
+`--headless`, demon actif, `lyra --version`, requete texte) :
+[rapport](vm-install-reports/2026-09-26-f65452e-fedora-base-ubuntu-base.md).
+Hote sous VPN (NordVPN) : autoriser le reseau des VM, sinon SSH est coupe
+(`nordvpn allowlist add subnet 192.168.122.0/24`).
+
 ## La boucle de test (par VM)
 
 ```bash
