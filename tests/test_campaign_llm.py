@@ -71,12 +71,15 @@ TESTS_LLM = [
      "eteins l ambilight",
      "tv.ambilight_off", {}, {}),
 
-    # "mets l ambilight en bleu" attendait tv.ambilight_set_color, qui n'existe
-    # pas dans pylips-mcp (ambilight_on/off/mode seulement) : cas irrealisable,
-    # remplace le 2026-09-17 par le seul reglage d'ambilight disponible.
     ("TV/ambilight", "mode ambilight",
      "passe l ambilight en mode lounge",
      "tv.ambilight_mode", {}, {"mode": "lounge_light"}),
+
+    # Couleur fixe : tv.ambilight_color existe depuis pylips-mcp 0.4.0 (le cas
+    # avait ete retire le 2026-09-17 faute d'outil, rendu le 2026-09-27).
+    ("TV/ambilight", "ambilight couleur",
+     "mets l ambilight en bleu",
+     "tv.ambilight_color", {"r": 0, "g": 0, "b": 255}, {}),
 
     # ================================================================
     # HUE - lumiere individuelle

@@ -3,6 +3,7 @@
 import re
 
 from .base import make, normalize
+from .tv import _AMBI_KW
 
 _RGB_COLOR_MAP = {
     "rouge": (255, 0, 0), "vert": (0, 255, 0), "verte": (0, 255, 0),
@@ -159,8 +160,10 @@ def detect(query: str):
     # hue.set_group_color_rgb: "lumieres en rouge/bleu/..." (pluriel/ambiance =
     # tout le groupe). Arguments au format MCP complet (red/green/blue, PAS
     # r/g/b : set_color_rgb exigeait light_id et plantait en validation).
+    # "ambilight couleur verte" / "leds de la tele en rouge" : c'est la TV (tv.ambilight_color)
     m_rgb = re.search(r'\b(rouge|verte?|bleue?|violet(?:te)?|orange|jaune|rose|blanc(?:he)?|cyan)\b', q)
-    if m_rgb and re.search(r'\b(?:lumieres?|lampes?|ambiance|atmosphere|couleur|mode)\b', q):
+    if m_rgb and re.search(r'\b(?:lumieres?|lampes?|ambiance|atmosphere|couleur|mode)\b', q) \
+            and not re.search(_AMBI_KW, q):
         rgb = _RGB_COLOR_MAP.get(m_rgb.group(1), (255, 255, 255))
         # Une lampe precise ("la lampe du bureau", "juste celle-la") n'est pas le
         # groupe (lyra#22) : set_color_rgb, et l'identifiant reste a demander.

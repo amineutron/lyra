@@ -7,13 +7,16 @@ from .base import make, normalize
 _TV_KW = r'\b(?:tv|t[eé]l[eé](?:vision)?)\b'
 _APP_NAMES = r'\b(?:netflix|youtube|spotify|prime|disney|plex|arte|twitch|tubi|dazn)\b'
 
+# Couleurs nommees -> RVB pour tv.ambilight_color (pylips-mcp >= 0.4.0). Seule table :
+# l'expression reguliere de la regle est construite depuis ses cles.
 _AMBI_COLOR_MAP = {
     "rouge": (255, 0, 0), "vert": (0, 255, 0), "verte": (0, 255, 0),
     "bleu": (0, 0, 255), "bleue": (0, 0, 255), "violet": (128, 0, 128),
     "violette": (128, 0, 128), "orange": (255, 165, 0), "jaune": (255, 255, 0),
     "rose": (255, 192, 203), "blanc": (255, 255, 255), "blanche": (255, 255, 255),
-    "cyan": (0, 255, 255)
+    "cyan": (0, 255, 255), "turquoise": (64, 224, 208), "magenta": (255, 0, 255),
 }
+_AMBI_COLOR_RE = r'\b(' + '|'.join(sorted(_AMBI_COLOR_MAP, key=len, reverse=True)) + r')\b'
 
 
 # Ambilight, ou "les leds de/derriere la tele"
@@ -141,14 +144,15 @@ def detect(query: str):
         if m_amb:
             return make("tv.ambilight_mode", {"mode": _AMBI_MODES[m_amb.group(1)]},
                         f"rule: ambilight ambiance {m_amb.group(1)}", 0.92)
-        # Une couleur ("ambilight en rouge") : pylips-mcp n'expose pas de reglage
-        # de couleur (ambilight_on/off/mode seulement) ; l'ancien tv.ambilight_color
-        # n'existait dans aucun serveur. En attendant, le mode manuel (FOLLOW_COLOR)
-        # est l'action la plus proche qui existe.
-        m_ac = re.search(r'\b(rouge|verte?|bleue?|violet(?:te)?|orange|jaune|rose|blanc(?:he)?|cyan)\b', q)
+        # Une couleur ("ambilight en rouge") : tv.ambilight_color de pylips-mcp 0.4.0
+        # (couleur fixe, style de la TV detecte, application verifiee par relecture).
+        # Avant 0.4.0 on se rabattait sur ambilight_mode(manual), sans effet sur la
+        # 55OLED705 qui n'a pas de style FOLLOW_COLOR (pylips-mcp#7).
+        m_ac = re.search(_AMBI_COLOR_RE, q)
         if m_ac:
-            return make("tv.ambilight_mode", {"mode": "manual"},
-                        f"rule: ambilight couleur {m_ac.group(1)} (mode manuel, couleur non reglable)", 0.80)
+            r, g, b = _AMBI_COLOR_MAP[m_ac.group(1)]
+            return make("tv.ambilight_color", {"r": r, "g": g, "b": b},
+                        f"rule: ambilight couleur {m_ac.group(1)}", 0.93)
         # "les leds de la tele" sans verbe d'allumage : le modele decide ; "ambilight" seul reste un allumage
         if re.search(r'\bambilight\b', q) or \
                 re.search(r'\b(?:allume[rz]?|active[rz]?|remets?|rallume[rz]?|mets?)\b', q):

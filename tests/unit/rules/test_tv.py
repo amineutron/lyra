@@ -5,6 +5,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
+import pytest
+
+from lyra.rules import detect as detect_all
 from lyra.rules.tv import detect
 
 
@@ -183,17 +186,38 @@ class TestAmbilightOff:
 
 
 class TestAmbilightColor:
-    """tv.ambilight_color n'existe dans aucun serveur (audit 2026-09-19) : une
-    couleur demande le mode manuel, l'action la plus proche que pylips-mcp expose."""
+    """pylips-mcp 0.4.0 expose tv.ambilight_color(r, g, b) : une couleur nommee donne
+    son RVB. Avant, la regle se rabattait sur ambilight_mode(manual), sans effet sur
+    la 55OLED705 qui n'a pas de style FOLLOW_COLOR (pylips-mcp#7)."""
 
-    def test_ambilight_rouge(self):
-        assert tool("ambilight en rouge") == "tv.ambilight_mode"
+    @pytest.mark.parametrize("phrase,rgb", [
+        ("ambilight en rouge", (255, 0, 0)),
+        ("ambilight bleu", (0, 0, 255)),
+        ("mets l'ambilight en bleu", (0, 0, 255)),
+        ("ambilight couleur verte", (0, 255, 0)),
+        ("mets l ambilight en couleur bleue", (0, 0, 255)),
+        ("passe les leds de la tele en violet", (128, 0, 128)),
+        ("ambilight orange", (255, 165, 0)),
+        ("ambilight en jaune", (255, 255, 0)),
+        ("mets l'ambilight en rose", (255, 192, 203)),
+        ("ambilight en cyan", (0, 255, 255)),
+        ("ambilight turquoise", (64, 224, 208)),
+        ("ambilight en magenta", (255, 0, 255)),
+    ])
+    def test_couleur_nommee_donne_son_rgb(self, phrase, rgb):
+        r = detect(phrase)
+        assert r is not None and r.tool == "tv.ambilight_color", phrase
+        assert (r.arguments["r"], r.arguments["g"], r.arguments["b"]) == rgb
 
-    def test_ambilight_bleu(self):
-        assert tool("ambilight bleu") == "tv.ambilight_mode"
+    def test_mode_manuel_explicite_reste_un_mode(self):
+        r = detect("ambilight en mode manuel")
+        assert r is not None and r.tool == "tv.ambilight_mode"
+        assert r.arguments == {"mode": "manual"}
 
-    def test_mode_manuel(self):
-        assert args("ambilight rouge") == {"mode": "manual"}
+    def test_regression_hue_ne_prend_plus_la_couleur_de_l_ambilight(self):
+        # "couleur" faisait matcher hue.set_group_color_rgb avant la regle TV
+        assert detect_all("ambilight couleur verte").tool == "tv.ambilight_color"
+        assert detect_all("mets les lumieres en vert").tool == "hue.set_group_color_rgb"
 
 
 # ------------------------------------------------------------------ #
@@ -215,23 +239,21 @@ class TestNoMatch:
 # masculins) — l'ambilight tombait sur ambilight_on au lieu de la couleur.
 class TestAmbilightCouleursMasculines:
     def test_ambilight_blanc(self):
-        from lyra.rules import detect
         r = detect("mets l ambilight en blanc")
-        assert r is not None and r.tool == "tv.ambilight_mode"
-        assert r.arguments == {"mode": "manual"}
+        assert r is not None and r.tool == "tv.ambilight_color"
+        assert r.arguments == {"r": 255, "g": 255, "b": 255}
 
     def test_ambilight_violet(self):
-        from lyra.rules import detect
         r = detect("ambilight en violet")
-        assert r is not None and r.tool == "tv.ambilight_mode"
+        assert r is not None and r.tool == "tv.ambilight_color"
 
     def test_paradigme_complet(self):
         """Chaque cle du dictionnaire de couleurs doit declencher la regle."""
-        from lyra.rules import detect
         from lyra.rules.tv import _AMBI_COLOR_MAP
-        for color in _AMBI_COLOR_MAP:
+        for color, rgb in _AMBI_COLOR_MAP.items():
             r = detect(f"ambilight en {color}")
-            assert r is not None and r.tool == "tv.ambilight_mode", color
+            assert r is not None and r.tool == "tv.ambilight_color", color
+            assert (r.arguments["r"], r.arguments["g"], r.arguments["b"]) == rgb, color
 
 
 class TestPhrasesInedites:

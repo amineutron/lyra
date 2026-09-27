@@ -43,7 +43,7 @@ DESTRUCTIVE_TOOLS: frozenset[str] = frozenset({
 PERFORMANCE_TOOLS: frozenset[str] = frozenset({
     "tv.power_on", "tv.power_off", "tv.volume_up", "tv.volume_down",
     "tv.volume_set", "tv.mute", "tv.ambilight_on", "tv.ambilight_off",
-    "tv.ambilight_mode", "tv.launch_app", "tv.youtube_video",
+    "tv.ambilight_mode", "tv.ambilight_color", "tv.launch_app", "tv.youtube_video",
     "tv.screen_off", "tv.screen_on", "tv.get_state", "tv.list_apps",
     "hue.turn_on_light", "hue.turn_off_light", "hue.set_brightness",
     "hue.set_color_rgb", "hue.set_color_temperature", "hue.set_color_preset",

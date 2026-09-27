@@ -887,6 +887,20 @@ TV_TOOLS = [
         }
     ),
     MCPTool(
+        name="ambilight_color",
+        description="Met l'Ambilight sur une couleur fixe (RVB 0-255), luminosite optionnelle",
+        parameters={
+            "type": "object",
+            "properties": {
+                "r": {"type": "integer", "description": "Rouge (0-255)"},
+                "g": {"type": "integer", "description": "Vert (0-255)"},
+                "b": {"type": "integer", "description": "Bleu (0-255)"},
+                "brightness": {"type": "integer", "description": "Luminosite (0-255)"}
+            },
+            "required": ["r", "g", "b"]
+        }
+    ),
+    MCPTool(
         name="list_apps",
         description="Liste les applications disponibles sur la TV",
         parameters={"type": "object", "properties": {}}
