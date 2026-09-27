@@ -1,6 +1,6 @@
 # A 64 KB pipe froze my assistant: every stdio MCP client must drain stderr
 
-*Amine Arouabah (amineutron), September 2026. Working draft. Code and fix: https://github.com/amineutron/lyra (AGPL-3.0), commit `2c3976c`. Version francaise : [2026-09-tube-stderr.fr.md](2026-09-tube-stderr.fr.md).*
+*Mohamed-Amine Rouabah (amineutron), September 2026. Working draft. Code and fix: https://github.com/amineutron/lyra (AGPL-3.0), commit `2c3976c`. Version francaise : [2026-09-tube-stderr.fr.md](2026-09-tube-stderr.fr.md).*
 
 ## Summary
 

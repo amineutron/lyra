@@ -1,6 +1,6 @@
 # Un tube de 64 Ko a fige mon assistant : tout client MCP stdio doit vider stderr
 
-*Amine Arouabah (amineutron), septembre 2026. Version de travail. Code et correctif : https://github.com/amineutron/lyra (AGPL-3.0), commit `2c3976c`. English version: [2026-09-tube-stderr.en.md](2026-09-tube-stderr.en.md).*
+*Mohamed-Amine Rouabah (amineutron), septembre 2026. Version de travail. Code et correctif : https://github.com/amineutron/lyra (AGPL-3.0), commit `2c3976c`. English version: [2026-09-tube-stderr.en.md](2026-09-tube-stderr.en.md).*
 
 ## Resume
 

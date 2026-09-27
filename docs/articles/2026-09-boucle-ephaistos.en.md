@@ -1,6 +1,6 @@
 # Getting a 0.5-billion-parameter model to pick the right tool: a measured improvement loop, mechanism before model
 
-*Amine Arouabah (amineutron), September 2026. Working version, not peer reviewed. Code, test sets and raw results: https://github.com/amineutron/lyra (AGPL-3.0). French original: [2026-09-boucle-ephaistos.fr.md](2026-09-boucle-ephaistos.fr.md).*
+*Mohamed-Amine Rouabah (amineutron), September 2026. Working version, not peer reviewed. Code, test sets and raw results: https://github.com/amineutron/lyra (AGPL-3.0). French original: [2026-09-boucle-ephaistos.fr.md](2026-09-boucle-ephaistos.fr.md).*
 
 ## Abstract
 
