@@ -53,7 +53,8 @@ def run_step(ctx: StepContext) -> None:
     ctx.emit(Output("Demon lyra-daemon actif (journalctl --user -u lyra-daemon -f)"))
 
     if ctx.state.install_smoke_timer:
-        for name in ("lyra-mcp-smoke.service", "lyra-mcp-smoke.timer"):
+        for name in ("lyra-mcp-smoke.service", "lyra-mcp-smoke.timer",
+                     "lyra-mcp-smoke-alert.service"):
             src = lyra / "install" / name
             if src.exists():
                 (unit_dir / name).write_text(

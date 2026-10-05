@@ -1,0 +1,10 @@
+[Unit]
+Description=Alerte ntfy apres un echec du smoke test MCP Lyra
+
+[Service]
+Type=oneshot
+WorkingDirectory=@LYRA_DIR@
+# NTFY_URL / NTFY_TOPIC / NTFY_TOKEN : fournis par un drop-in local
+# (EnvironmentFile=...) ; sans NTFY_URL le script ne fait rien.
+EnvironmentFile=-%h/.lyra/alert.env
+ExecStart=@LYRA_DIR@/.venv/bin/python scripts/smoke_alert.py

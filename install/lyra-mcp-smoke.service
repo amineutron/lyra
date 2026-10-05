@@ -1,6 +1,7 @@
 [Unit]
 Description=Smoke test des serveurs MCP Lyra (metriques vers tracking)
 After=network.target
+OnFailure=lyra-mcp-smoke-alert.service
 
 [Service]
 Type=oneshot
