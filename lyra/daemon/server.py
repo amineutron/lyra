@@ -207,6 +207,32 @@ class LyraDaemon:
             "notifications": [n for n in manager.get_completed_notifications()],
         }
 
+    # -- Analyse d'une phrase, sans execution -------------------------------
+
+    def handle_analyze(self, channel: LineChannel, message: dict) -> None:
+        """Dit ce que Lyra ferait d'une phrase, SANS l'executer.
+
+        Message : {"type": "analyze", "text": "allume la tele"}. Reponse :
+        {"type": "analysis", "found", "tool", "arguments", "missing_args",
+        "confidence", "source", "dangerous", "destructive", "performance",
+        "warnings"} ou {"type": "error"}. Regles seulement : ni modele, ni
+        verrou, ni session, ni feedback (lyra/daemon/analysis.py) ; repond donc
+        meme pendant qu'une autre requete tourne.
+        """
+        from lyra.daemon.analysis import analyze_text
+        try:
+            channel.send({"type": "analysis", **analyze_text(message.get("text", ""))})
+        except ValueError as e:
+            channel.send({"type": "error", "text": str(e)})
+        except ChannelClosed:
+            pass
+        except Exception as e:  # noqa: BLE001 - jamais tuer le demon
+            logger.error("erreur analyse: %s\n%s", e, traceback.format_exc())
+            try:
+                channel.send({"type": "error", "text": f"Erreur interne du demon: {e}"})
+            except ChannelClosed:
+                pass
+
     # -- Appel direct d'un outil (sans modele) -----------------------------
 
     def handle_tool(self, channel: LineChannel, message: dict,
@@ -220,12 +246,18 @@ class LyraDaemon:
         cote, cas de neutroncore). Reponse : {"type": "tool_result", ...} puis
         {"type": "result", "exit_code"}. C'est la route de neutroncore
         (roadmap #73) : un seul processus parle aux appareils.
+
+        options.unattended = True (automatisations, personne devant l'ecran) :
+        seuls les outils de PERFORMANCE_TOOLS passent. Tout autre outil —
+        dangereux, non classe, ou hors catalogue — est refuse d'emblee, sans
+        "ask" (personne ne repondrait) et quel que soit "confirmed".
         """
-        from lyra.core.constants import is_dangerous_tool
+        from lyra.core.constants import is_dangerous_tool, is_performance_tool
         rui = RemoteUI(channel)
         name = str(message.get("name", "")).strip()
         arguments = message.get("arguments") or {}
-        options = message.get("options", {})
+        options = message.get("options")
+        options = options if isinstance(options, dict) else {}   # options illisibles = aucune option
         if not name or not isinstance(arguments, dict):
             channel.send({"type": "error", "text": "tool: name et arguments requis"})
             channel.send({"type": "result", "exit_code": 1, "executed": False})
@@ -240,6 +272,11 @@ class LyraDaemon:
         catalogue = {t.get("name") for t in (v2._hestia.get_available_tools() or [])}
         if name not in catalogue and not name.startswith("tracking."):
             channel.send({"type": "error", "text": f"outil inconnu: {name}"})
+            channel.send({"type": "result", "exit_code": 1, "executed": False})
+            return
+        if bool(options.get("unattended", False)) and not is_performance_tool(name):
+            channel.send({"type": "error",
+                          "text": f"outil non autorise sans presence humaine: {name}"})
             channel.send({"type": "result", "exit_code": 1, "executed": False})
             return
         try:
@@ -374,6 +411,8 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
                     daemon.handle_request(channel, message, session_id)
                 elif mtype == "tool":
                     daemon.handle_tool(channel, message, session_id)
+                elif mtype == "analyze":
+                    daemon.handle_analyze(channel, message)
                 elif mtype == "purge":
                     try:
                         result = daemon.purge_data(dry_run=bool(message.get("dry_run")))

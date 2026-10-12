@@ -1,7 +1,7 @@
 # Lyra — commandes uniques (regle testing homelab : une commande par projet)
 PY := .venv/bin/python
 
-.PHONY: test smoke campaign test-all bench bench-daemon bench-regles bench-tts bench-modeles
+.PHONY: test smoke smoke-daemon campaign test-all bench bench-daemon bench-regles bench-tts bench-modeles
 
 # Suite pytest complete (unit + integration + e2e)
 test:
@@ -10,6 +10,10 @@ test:
 # Smoke des serveurs MCP (spawn + initialize + tools/list, report tracking)
 smoke:
 	$(PY) scripts/smoke_mcps.py
+
+# Smoke du demon en cours (hello, ping, health, analyze, refus sans humain) : n'execute rien
+smoke-daemon:
+	$(PY) scripts/smoke_daemon.py
 
 # Campagne de detection 152 requetes (dry-run regles + one-shot Ollama)
 campaign:
