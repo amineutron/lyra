@@ -19,7 +19,7 @@
 | httpcore           | 1.0.9     | BSD-3-Clause                                            | https://www.encode.io/httpcore/                                       |
 | idna               | 3.19      | BSD-3-Clause                                            | https://github.com/kjd/idna                                           |
 | pycparser          | 3.0       | BSD-3-Clause                                            | https://github.com/eliben/pycparser                                   |
-| python-dotenv      | 1.2.3     | BSD-3-Clause                                            | https://github.com/theskumar/python-dotenv                            |
+| python-dotenv      | 1.2.4     | BSD-3-Clause                                            | https://github.com/theskumar/python-dotenv                            |
 | numpy              | 2.5.3     | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0      | https://numpy.org                                                     |
 | lyra-assistant     | 1.3.1     | GNU Affero General Public License v3 or later (AGPLv3+) | https://github.com/amineutron/lyra                                    |
 | piper-tts          | 1.8.0     | GPL-3.0-or-later                                        | http://github.com/OHF-voice/piper1-gpl                                |
@@ -27,21 +27,21 @@
 | ptyprocess         | 0.7.0     | ISC License (ISCL)                                      | https://github.com/pexpect/ptyprocess                                 |
 | annotated-types    | 0.8.0     | MIT                                                     | https://github.com/annotated-types/annotated-types                    |
 | anyio              | 4.15.1    | MIT                                                     | https://anyio.readthedocs.io/en/stable/versionhistory.html            |
-| ast_serialize      | 0.11.1    | MIT                                                     | https://github.com/mypyc/ast_serialize                                |
+| ast_serialize      | 0.13.0    | MIT                                                     | https://github.com/mypyc/ast_serialize                                |
 | charset-normalizer | 3.5.1     | MIT                                                     | https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md  |
 | ctranslate2        | 4.8.2     | MIT                                                     | https://opennmt.net                                                   |
 | filelock           | 3.32.6    | MIT                                                     | https://github.com/tox-dev/py-filelock                                |
 | iniconfig          | 2.3.0     | MIT                                                     | https://github.com/pytest-dev/iniconfig                               |
-| librt              | 0.15.0    | MIT                                                     | https://github.com/mypyc/librt                                        |
-| mypy               | 2.3.1     | MIT                                                     | https://www.mypy-lang.org/                                            |
+| librt              | 0.16.0    | MIT                                                     | https://github.com/mypyc/librt                                        |
+| mypy               | 2.4.0     | MIT                                                     | https://www.mypy-lang.org/                                            |
 | mypy_extensions    | 1.1.0     | MIT                                                     | https://github.com/python/mypy_extensions                             |
-| ollama             | 0.6.2     | MIT                                                     | https://ollama.com                                                    |
-| pydantic           | 2.13.5    | MIT                                                     | https://github.com/pydantic/pydantic                                  |
+| ollama             | 0.6.3     | MIT                                                     | https://ollama.com                                                    |
+| pydantic           | 2.14.1    | MIT                                                     | https://github.com/pydantic/pydantic                                  |
 | pydantic-settings  | 2.15.0    | MIT                                                     | https://github.com/pydantic/pydantic-settings                         |
-| pydantic_core      | 2.46.5    | MIT                                                     | https://github.com/pydantic                                           |
+| pydantic_core      | 2.50.1    | MIT                                                     | https://github.com/pydantic                                           |
 | pytest             | 9.1.1     | MIT                                                     | https://docs.pytest.org/en/latest/                                    |
 | pytest-cov         | 7.1.0     | MIT                                                     | https://pytest-cov.readthedocs.io/en/latest/changelog.html            |
-| ruff               | 0.16.8    | MIT                                                     | https://docs.astral.sh/ruff                                           |
+| ruff               | 0.17.0    | MIT                                                     | https://docs.astral.sh/ruff                                           |
 | sounddevice        | 0.5.6     | MIT                                                     | https://github.com/spatialaudio/python-sounddevice/                   |
 | typing-inspection  | 0.4.4     | MIT                                                     | https://github.com/pydantic/typing-inspection                         |
 | urllib3            | 2.8.0     | MIT                                                     | https://github.com/urllib3/urllib3/blob/main/CHANGES.rst              |
