@@ -19,7 +19,6 @@ from lyra.daemon.analysis import MAX_TEXT, analyze_text
 from lyra.daemon.protocol import LineChannel
 from lyra.daemon.server import LyraDaemon
 
-
 # --- analyze_text ------------------------------------------------------------
 
 @pytest.mark.parametrize("phrase,tool,arguments", [
@@ -90,8 +89,8 @@ def test_arguments_manquants_signales(monkeypatch):
 
 def test_analyser_n_a_aucun_effet_de_bord(monkeypatch, tmp_path):
     """Ni pipeline, ni session, ni feedback, ni cascader : seules les regles sont lues."""
-    import lyra.rag_enhanced.feedback_loop as fb
     import lyra.rag_enhanced.confidence_cascader as cc
+    import lyra.rag_enhanced.feedback_loop as fb
 
     def interdit(*_a, **_k):
         raise AssertionError("analyze ne doit pas toucher a ce composant")
