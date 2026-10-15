@@ -7,10 +7,15 @@ Client -> demon :
   {"type": "hello",  "session": str, "client": "oneshot|repl|vocal"}
   {"type": "request", "text": str, "options": {"mode","yes","verbose","interactive"}}
   {"type": "answer",  "value": str}          # reponse a un "ask"
-  {"type": "tool",    "name": str, "arguments": dict, "options": {"confirmed": bool}}
+  {"type": "tool",    "name": str, "arguments": dict,
+                      "options": {"confirmed": bool, "unattended": bool}}
                                              # execution directe d'un outil MCP, sans
                                              # modele (neutroncore, roadmap #73) ;
-                                             # un outil dangereux non confirme -> "ask"
+                                             # un outil dangereux non confirme -> "ask" ;
+                                             # unattended (automatisations) : seuls les
+                                             # outils de PERFORMANCE_TOOLS, jamais de "ask"
+  {"type": "analyze", "text": str}           # que ferait Lyra de cette phrase ? Regles
+                                             # seules, sans execution ni effet de bord
   {"type": "tasks_poll"}
   {"type": "health"}
   {"type": "ping"}
@@ -26,6 +31,11 @@ Demon -> client :
   {"type": "progress", "step": str, "data": dict}
   {"type": "ask",     "kind": "confirm|input", "prompt": str, "payload": dict}
   {"type": "result",  "exit_code": int, "executed": bool}
+  {"type": "analysis", "found": bool, "tool": str, "arguments": dict,
+                       "missing_args": list, "confidence": float, "source": "rule",
+                       "dangerous": bool, "destructive": bool, "performance": bool,
+                       "compound": bool,   # plusieurs actions dans la phrase : une seule retenue
+                       "warnings": list}
   {"type": "tasks",   "active": list, "errors": list, "notifications": list}
   {"type": "health",  "data": dict}
   {"type": "pong"}
