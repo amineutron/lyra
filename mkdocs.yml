@@ -95,7 +95,15 @@ nav:
       - Installation testée en VM: user/VM_INSTALL_TESTS.md
   - Sécurité:
       - Ce que le code garantit: securite.md
+      - Modèle de menaces: THREAT_MODEL.md
       - Flux de données: user/DATA_FLOWS.md
+  - Architecture:
+      - Décisions: adr/index.md
+      - "ADR-001 : Ollama": adr/ADR-001-ollama.md
+      - "ADR-002 : petits modèles, règles d'abord": adr/ADR-002-petits-modeles-et-regles.md
+      - "ADR-003 : socket UNIX": adr/ADR-003-socket-unix.md
+      - "ADR-004 : MCP": adr/ADR-004-mcp.md
+      - "ADR-005 : sudoers par script": adr/ADR-005-sudoers-par-script.md
   - Brancher son infra:
       - Ajouter un serveur MCP: ajouter-un-mcp.md
       - Outils MCP fournis: user/MCP_TOOLS.md

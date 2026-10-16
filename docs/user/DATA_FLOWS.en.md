@@ -31,7 +31,9 @@ None of these files is sent anywhere. Secrets (tokens, device passwords) live in
 | Discord | `discord.webhook_url` | `discord.enabled` **and** a webhook set in `secrets.yaml` | end-of-task and error notifications (title, status) |
 | Home Assistant | `homeassistant.url` | `homeassistant.enabled` **and** a token | home automation commands |
 | Notion | Notion API | `notion.enabled` (off by default) **and** a token | workflow log |
-| Installer | `ollama.com`, `huggingface.co`, `pypi.org` | at install time only | download of models, Piper and dependencies |
+| Installer | `ollama.com`, `huggingface.co`, `pypi.org`, `github.com` (repositories of the selected MCP servers), npm registry (fedora-agents dependencies) | at install time only | download of models, Piper, MCP servers and dependencies |
+| Hugging Face models at startup | `huggingface.co` (or `HF_ENDPOINT`) | only when MiniLM or Whisper is missing from the local cache; never with `LYRA_OFFLINE=1` or `HF_HUB_OFFLINE=1` | the name of the requested model |
+| Daily MCP smoke-test alert | the ntfy server in `NTFY_URL` | `NTFY_URL` in `~/.lyra/alert.env` (`lyra-mcp-smoke-alert` timer) | the names of the failing MCP servers and their error message |
 
 Without explicit configuration (token, URL), each of these outputs stays inactive: `enabled: true` alone is not enough. For strictly offline use, set `enabled: false` on n8n, Discord, Home Assistant and Notion, and point Ollama to the local machine.
 
