@@ -200,6 +200,24 @@ TOOL_BUILDERS = {
 # Execution directe du script shell
 # ==============================================
 
+def _tracking_token() -> str:
+    """Jeton local exige par l'API tracking en ecriture (fichier 0600 ecrit au demarrage).
+
+    Meme recherche que lyra/hestia/tracking_client.py ; ce script n'importe pas ce
+    module pour ne pas charger tout l'executeur MCP.
+    """
+    for candidate in (os.environ.get("TRACKING_TOKEN_FILE"),
+                      "/run/tracking/token",
+                      f"{os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}'}/tracking/token"):
+        if not candidate:
+            continue
+        try:
+            return Path(candidate).read_text().strip()
+        except OSError:
+            continue
+    return ""
+
+
 def _tracking_update(tracking_id: str, tracking_api: str,
                      processed: float = None, log: str = None, extra: dict = None) -> None:
     """Envoie une mise a jour a l'API tracking (silencieux si indisponible)."""
@@ -219,7 +237,8 @@ def _tracking_update(tracking_id: str, tracking_api: str,
         req = urllib.request.Request(
             f"{tracking_api}/sessions/{tracking_id}",
             data=data, method="PUT",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json",
+                     "Authorization": f"Bearer {_tracking_token()}"}
         )
         urllib.request.urlopen(req, timeout=1)
     except (urllib.error.URLError, OSError):
