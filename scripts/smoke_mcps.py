@@ -109,6 +109,24 @@ def smoke_one(name: str, spec: dict) -> dict:
         proc.wait(timeout=5)
 
 
+def _tracking_token() -> str:
+    """Jeton local exige par l'API tracking en ecriture (fichier 0600 ecrit au demarrage).
+
+    Meme recherche que lyra/hestia/tracking_client.py ; ce script n'importe pas ce
+    module pour ne pas charger tout l'executeur MCP.
+    """
+    for candidate in (os.environ.get("TRACKING_TOKEN_FILE"),
+                      "/run/tracking/token",
+                      f"{os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}'}/tracking/token"):
+        if not candidate:
+            continue
+        try:
+            return Path(candidate).read_text().strip()
+        except OSError:
+            continue
+    return ""
+
+
 def report_tracking(results: dict[str, dict]) -> None:
     """Cree une session tracking avec un item par serveur (best-effort)."""
     try:
@@ -116,12 +134,13 @@ def report_tracking(results: dict[str, dict]) -> None:
     except ImportError:
         return
     all_ok = all(r["ok"] for r in results.values())
+    entetes = {"Authorization": f"Bearer {_tracking_token()}"}
     items = [{"name": f"{n} ({r['tool_count']} outils, init {r['init_s']}s)"
               if r["ok"] else f"{n} — {r['error'][:60]}",
               "status": "done" if r["ok"] else "error"}
              for n, r in results.items()]
     try:
-        resp = requests.post(f"{TRACKING_API}/sessions", timeout=3, json={
+        resp = requests.post(f"{TRACKING_API}/sessions", timeout=3, headers=entetes, json={
             "name": f"[SMOKE] MCP servers ({sum(r['ok'] for r in results.values())}"
                     f"/{len(results)} OK)",
             "template": "machine",
@@ -132,7 +151,7 @@ def report_tracking(results: dict[str, dict]) -> None:
         # l'API ignore status/processed au POST : cloture via PUT
         sid = resp.json().get("id")
         if sid:
-            requests.put(f"{TRACKING_API}/sessions/{sid}", timeout=3, json={
+            requests.put(f"{TRACKING_API}/sessions/{sid}", timeout=3, headers=entetes, json={
                 "status": "done" if all_ok else "error",
                 "processed": sum(r["ok"] for r in results.values()),
             })
