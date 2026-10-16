@@ -21,6 +21,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from modules.mcp import MCPManager, MCPResult
 
+from ..utils.task_files import task_file
 from .metrics import MetricsCollector
 from .notion_logger import NotionLogger
 from .tracking_client import TrackingClient
@@ -334,7 +335,7 @@ class HestiaExecutor:
             remaining = [t for t in tasks if t.get("task_id") != task_id]
             registry_path.write_text(json.dumps(remaining, indent=2))
             # Nettoyer les fichiers temporaires
-            for fpath in [pid_file, f"/tmp/lyra_task_{task_id}.progress"]:
+            for fpath in [pid_file, task_file(task_id, "progress")]:
                 if fpath:
                     Path(fpath).unlink(missing_ok=True)
         except Exception as e:

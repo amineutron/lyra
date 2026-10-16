@@ -23,10 +23,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import yaml
 
+from lyra.core.paths import scripts_dir_from_config
+from lyra.utils.task_files import task_file
 from modules.n8n import send_discord_notification
 
-# Chemins de base vers les scripts shell
-FEDORA_BASE = Path.home() / "dev/fedora-setup/scripts"
+# Chemins de base vers les scripts shell : la copie systeme root:root installee par
+# l'installeur (/usr/local/lib/lyra/scripts, ou LYRA_SCRIPTS_DIR / paths.scripts), la
+# seule que couvrent les regles sudoers. L'ancien ~/dev/fedora-setup/scripts n'a aucune
+# regle (sudo -n echouait) et, inscriptible par l'utilisateur, ne doit jamais en avoir.
+FEDORA_BASE = scripts_dir_from_config()
 VM_CTRL = FEDORA_BASE / "agents/vm-controller"
 KVM = FEDORA_BASE / "kvm"
 BACKUP = FEDORA_BASE / "agents/backup-manager"
@@ -524,8 +529,8 @@ def main():
     progress_file = ""
     done_file = ""
     if args.task_id:
-        progress_file = f"/tmp/lyra_task_{args.task_id}.progress"
-        done_file = f"/tmp/lyra_task_{args.task_id}.done"
+        progress_file = task_file(args.task_id, "progress")
+        done_file = task_file(args.task_id, "done")
         # Ecrire l'etat initial
         try:
             with open(progress_file, "w") as f:
@@ -561,6 +566,9 @@ def main():
             pass
 
     # Envoyer notification Discord si webhook fourni (succes ou echec)
+    # webhook : par l'environnement (LYRA_DISCORD_WEBHOOK) ; --webhook reste accepte pour un
+    # lancement a la main, mais il est alors visible de tous les comptes dans la liste des processus
+    args.webhook = args.webhook or os.environ.get("LYRA_DISCORD_WEBHOOK", "")
     if args.webhook:
         try:
             send_notification(args.webhook, tool_short, arguments, output, success=success)

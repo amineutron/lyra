@@ -459,16 +459,23 @@ def serve(config_path: str = "config.yaml",
     if _socket_in_use(socket_path):
         logger.error("un demon Lyra ecoute deja sur %s", socket_path)
         return 1
-    socket_path.parent.mkdir(parents=True, exist_ok=True)
+    socket_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     socket_path.unlink(missing_ok=True)  # socket orphelin d'un crash
 
     daemon = LyraDaemon(config_path)
     daemon_state.write_state(daemon_state.STARTING)
-    daemon.initialize_async()
 
-    server = _Server(str(socket_path), _ConnectionHandler)
+    # Le socket nait en 0600 : un chmod apres bind laissait un instant ou un autre
+    # compte pouvait se connecter. L'umask ne s'applique qu'ici, avant que
+    # l'initialisation n'ouvre ses propres fils (l'umask est commun au processus).
+    ancien_umask = os.umask(0o177)
+    try:
+        server = _Server(str(socket_path), _ConnectionHandler)
+    finally:
+        os.umask(ancien_umask)
     server.daemon = daemon  # type: ignore[attr-defined]
     os.chmod(socket_path, 0o600)
+    daemon.initialize_async()
 
     def _shutdown(signum, _frame):
         logger.info("arret demande (signal %d)", signum)
