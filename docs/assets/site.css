@@ -1,0 +1,38 @@
+/* Couleurs du branding amineutron (or, rose, aubergine), comme l'installeur et neutroncore. */
+:root {
+  --lyra-or: #f6c177;
+  --lyra-rose: #eb6f92;
+  --lyra-aubergine: #0e0a10;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #2a1d2e;
+  --md-primary-fg-color--light: #4a3550;
+  --md-primary-fg-color--dark: var(--lyra-aubergine);
+  --md-primary-bg-color: #fff8ee;
+  --md-accent-fg-color: #c2456b;
+  --md-typeset-a-color: #a8385a;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 300;
+  --md-default-bg-color: var(--lyra-aubergine);
+  --md-default-bg-color--light: #1a131d;
+  --md-code-bg-color: #18111b;
+  --md-primary-fg-color: #1a131d;
+  --md-primary-fg-color--light: #2a1d2e;
+  --md-primary-fg-color--dark: var(--lyra-aubergine);
+  --md-primary-bg-color: var(--lyra-or);
+  --md-accent-fg-color: var(--lyra-rose);
+  --md-typeset-a-color: var(--lyra-or);
+}
+
+.md-header__title,
+.md-nav__title {
+  letter-spacing: 0.02em;
+}
+
+/* Tableaux larges (prérequis, garanties) : défilent au lieu de déborder sur téléphone. */
+.md-typeset__table {
+  max-width: 100%;
+}

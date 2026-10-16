@@ -1,0 +1,108 @@
+# Site de documentation : https://amineutron.github.io/lyra/
+# Construire en local : uv run --only-group docs mkdocs serve
+# Publié par .github/workflows/docs.yml à chaque envoi sur main.
+#
+# Seules les pages de la navigation sont publiées. Les notes de travail (docs/archive,
+# viewers HTML, PDF) restent dans le dépôt, hors du site. Des pages reprennent des
+# sections du README ou d'autres fichiers par `<!-- inclure: ... -->` (docs/hooks/site_links.py).
+site_name: Lyra
+# MkDocs borné sous 2.0 dans pyproject.toml : la 2.0 supprime les extensions et le thème Material.
+site_description: Assistant DevOps vocal, local par défaut, qui pilote VM, sauvegardes et appareils par des serveurs MCP
+site_url: https://amineutron.github.io/lyra/
+repo_url: https://github.com/amineutron/lyra
+repo_name: amineutron/lyra
+edit_uri: edit/main/docs/
+copyright: AGPL-3.0, avec une licence commerciale pour les produits fermés
+
+docs_dir: docs
+strict: true
+
+theme:
+  name: material
+  language: fr
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Mode clair
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Mode sombre
+  font:
+    text: Cantarell
+    code: JetBrains Mono
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - assets/site.css
+
+hooks:
+  - docs/hooks/site_links.py
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+exclude_docs: |
+  archive/
+  hooks/
+  dev/
+  !dev/BOUCLE_AMELIORATION.md
+  demo/
+  *.html
+  *.pdf
+  *.tar.gz
+  *.py
+  README.md
+
+not_in_nav: |
+  user/vm-install-reports/
+  articles/*.en.md
+  user/DATA_FLOWS.en.md
+
+nav:
+  - Accueil: index.md
+  - Installer:
+      - Matériel: materiel.md
+      - Installation: installation.md
+      - Essayer sans rien installer: essayer.md
+      - Derrière un proxy, sans Internet: reseau.md
+      - Installation testée en VM: user/VM_INSTALL_TESTS.md
+  - Sécurité:
+      - Ce que le code garantit: securite.md
+      - Flux de données: user/DATA_FLOWS.md
+  - Brancher son infra:
+      - Ajouter un serveur MCP: ajouter-un-mcp.md
+      - Outils MCP fournis: user/MCP_TOOLS.md
+  - Mesures:
+      - Benchmarks: mesures.md
+      - La boucle d'amélioration: dev/BOUCLE_AMELIORATION.md
+      - "Article : la boucle EPHAISTOS": articles/2026-09-boucle-ephaistos.fr.md
+      - "Article : le tube stderr": articles/2026-09-tube-stderr.fr.md
+  - FAQ: faq.md
+  - Journal des versions: changelog.md

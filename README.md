@@ -2,6 +2,8 @@
 
 [![Tests](https://github.com/amineutron/lyra/actions/workflows/tests.yml/badge.svg)](https://github.com/amineutron/lyra/actions/workflows/tests.yml) [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/) [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/amineutron/lyra)
 
+**Documentation : [amineutron.github.io/lyra](https://amineutron.github.io/lyra/)** (installation, matériel, sécurité et flux de données, ajouter son propre serveur MCP, FAQ, mesures).
+
 **English summary.** Lyra is a voice-driven DevOps assistant that runs locally by default: Ollama models, faster-whisper speech-to-text, Piper text-to-speech, a three-tier RAG over MCP tool specs, and a resident daemon with text, voice and web clients. It drives KVM virtual machines, backups and home devices through MCP servers, and never runs a sensitive action without a human confirmation. AGPL-3.0 with a commercial option; French-first interface. What is captured and what leaves the machine: [docs/user/DATA_FLOWS.en.md](docs/user/DATA_FLOWS.en.md) (French: [DATA_FLOWS.md](docs/user/DATA_FLOWS.md)).
 
 Assistant vocal DevOps **local par défaut** — pas d'API cloud, pas de facture, sorties réseau optionnelles et [listées](docs/user/DATA_FLOWS.md). Tu lui parles (ou tu lui écris) en français, il gère tes VMs, tes backups, ta TV, tes lumières. Tout tourne sur ta machine : LLM via Ollama, reconnaissance vocale, synthèse vocale.
