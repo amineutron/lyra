@@ -49,6 +49,11 @@ Changelog = "https://github.com/amineutron/lyra/blob/main/CHANGELOG.md"
 [project.scripts]
 lyra = "lyra.client.__main__:main"
 
+[dependency-groups]
+# Site de documentation (mkdocs.yml). Groupe à part, hors de l'extra dev : ni la CI des
+# tests ni l'inventaire des licences n'installent ces paquets.
+docs = ["mkdocs>=1.6,<2", "mkdocs-material>=9.7,<10"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["lyra", "modules"]
 

@@ -1,5 +1,7 @@
 # Documentation de Lyra
 
+La version publiée, organisée pour la lecture, est sur [amineutron.github.io/lyra](https://amineutron.github.io/lyra/) (source : `mkdocs.yml`, pages à la racine de ce dossier).
+
 - [`user/`](user/) : pour installer et utiliser Lyra : [flux de données](user/DATA_FLOWS.md), [outils MCP](user/MCP_TOOLS.md), [installation testée en VM](user/VM_INSTALL_TESTS.md).
 - [`dev/`](dev/) : pour contribuer : architecture, RAG enhanced, diagrammes, viewer Mermaid.
 - [`archive/`](archive/) : notes de conception des phases passées, conservées pour l'historique ; elles peuvent ne plus refléter le code.
