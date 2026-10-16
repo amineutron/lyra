@@ -31,7 +31,9 @@ Aucun de ces fichiers n'est envoyé ailleurs. Les secrets (jetons, mots de passe
 | Discord | `discord.webhook_url` | `discord.enabled` **et** un webhook renseigné dans `secrets.yaml` | notifications de fin de tâche et d'erreur (titre, état) |
 | Home Assistant | `homeassistant.url` | `homeassistant.enabled` **et** un jeton | commandes domotiques |
 | Notion | API Notion | `notion.enabled` (désactivé par défaut) **et** un jeton | journal des workflows |
-| Installeur | `ollama.com`, `huggingface.co`, `pypi.org` | à l'installation seulement | téléchargement des modèles, de Piper et des dépendances |
+| Installeur | `ollama.com`, `huggingface.co`, `pypi.org`, `github.com` (dépôts des serveurs MCP cochés), registre npm (dépendances de fedora-agents) | à l'installation seulement | téléchargement des modèles, de Piper, des serveurs MCP et des dépendances |
+| Modèles Hugging Face au démarrage | `huggingface.co` (ou `HF_ENDPOINT`) | seulement si MiniLM ou Whisper manque du cache local ; jamais avec `LYRA_OFFLINE=1` ou `HF_HUB_OFFLINE=1` | le nom du modèle demandé |
+| Alerte du test quotidien des MCP | le serveur ntfy de `NTFY_URL` | `NTFY_URL` dans `~/.lyra/alert.env` (timer `lyra-mcp-smoke-alert`) | le nom des serveurs MCP en échec et leur message d'erreur |
 
 Sans configuration explicite (jeton, URL), chacune de ces sorties est inactive : `enabled: true` seul ne suffit pas. Pour un usage strictement hors ligne, mettre `enabled: false` sur n8n, Discord, Home Assistant et Notion, et pointer Ollama sur la machine locale.
 
