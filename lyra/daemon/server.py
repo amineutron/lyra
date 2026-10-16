@@ -91,9 +91,8 @@ class LyraDaemon:
             with open(self.config_path) as f:
                 raw = yaml.safe_load(f)
             self.purge_on_stop = bool((raw.get("privacy") or {}).get("purge_on_stop", False))
-            discord = raw.get("discord", {})
-            if discord.get("enabled"):
-                self.webhook_url = discord.get("webhook_url", "")
+            from lyra.core.config import discord_webhook
+            self.webhook_url = discord_webhook(self.config_path)
 
             enhanced_config = RAGEnhancedConfig.from_dict(raw.get("rag_enhanced", {}))
             self.pipeline = EnhancedPipeline(

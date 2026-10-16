@@ -7,6 +7,7 @@
 - Daemon socket: created with mode 0600 directly (umask around `bind`) instead of being chmod-ed right after, and `~/.lyra` is created 0700.
 
 ### Fixed
+- Discord notifications: the webhook is read from `config.yaml`, then from the neighbouring `secrets.yaml` where `config.yaml.example` and the data-flow doc put it; only `config.yaml` was read, so a webhook stored as documented sent nothing (daemon and standalone mode).
 - `scripts/async_mcp_wrapper.py` ran `sudo -n` on scripts under `~/dev/fedora-setup/scripts`: no sudoers rule covers that user-writable path, so system clone, backup creation and backup restore failed when run in the background. It now uses the root-owned copy resolved by `lyra.core.paths` (`/usr/local/lib/lyra/scripts`, `LYRA_SCRIPTS_DIR`, `paths.scripts`).
 
 ### Changed

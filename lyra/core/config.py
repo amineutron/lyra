@@ -12,6 +12,31 @@ from typing import Any, Optional
 import yaml
 
 
+def _lire_yaml(path: Path) -> dict:
+    try:
+        data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def discord_webhook(config_path: "str | Path") -> str:
+    """Webhook Discord si `discord.enabled` : config.yaml d'abord, sinon secrets.yaml voisin.
+
+    config.yaml.example renvoie vers secrets.yaml (`webhook_url: null  # voir secrets.yaml`),
+    ou l'installeur range les secrets en 0600 ; seul config.yaml etait lu.
+    """
+    config_path = Path(config_path)
+    discord = _lire_yaml(config_path).get("discord") or {}
+    if not isinstance(discord, dict) or not discord.get("enabled"):
+        return ""
+    url = discord.get("webhook_url") or ""
+    if not url:
+        secret = _lire_yaml(config_path.parent / "secrets.yaml").get("discord") or {}
+        url = secret.get("webhook_url") or "" if isinstance(secret, dict) else ""
+    return str(url)
+
+
 def ollama_url_depuis_env(valeur: Optional[str]) -> Optional[str]:
     """Normalise OLLAMA_HOST en URL de base ; None si vide.
 
