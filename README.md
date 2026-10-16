@@ -244,6 +244,7 @@ Ces dépôts MCP sont publics mais taillés pour ma domotique — le cœur de Ly
 | Scripts privilégiés copiés en root et autorisés un par un dans `sudoers.d`, jamais de sudo global | [`installer/core/steps/mcps.py`](installer/core/steps/mcps.py) | [`tests/installer/test_mcps_sudoers.py`](tests/installer/test_mcps_sudoers.py) |
 | Secrets hors de `config.yaml` (fichier `secrets.yaml` en 0600, jeton GitHub jamais écrit sur disque) | [`secrets.yaml.example`](secrets.yaml.example), [`installer/core/gitauth.py`](installer/core/gitauth.py) | [`tests/installer/test_gitauth.py`](tests/installer/test_gitauth.py) |
 | Aucun chemin personnel ni adresse privée dans le dépôt | garde-fou CI ([workflow](.github/workflows/tests.yml)) | [`tests/unit/test_paths.py`](tests/unit/test_paths.py) |
+| Versions vérifiables : tag signé, `uv.lock` contrôlé en CI, chaque wheel et sdist publié avec `sbom.json` (CycloneDX) et deux attestations Sigstore (provenance, SBOM) | [`.github/workflows/release.yml`](.github/workflows/release.yml), [procédure](docs/dev/release-process.md) | `gh attestation verify <wheel> --owner amineutron` |
 | Local par défaut : aucune sortie réseau sans configuration explicite | [`docs/user/DATA_FLOWS.md`](docs/user/DATA_FLOWS.md) | vérification par `grep` décrite dans le document |
 
 Signaler une faille : [politique de sécurité](https://github.com/amineutron/.github/blob/main/SECURITY.md).
