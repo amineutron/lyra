@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Releases: `sbom.json` (CycloneDX inventory of the base and `gpu` dependencies, exact versions from `uv.lock`) attached to each GitHub release; wheel and sdist carry a SLSA provenance attestation and an SBOM attestation, both verifiable with `gh attestation verify`. The release refuses to build when `uv.lock` is stale. Procedure in `docs/dev/release-process.md`.
+
 ### Changed
 - CI: ruff lint is now blocking (240 findings cleared: 139 were the documented `from manim import *` of the intro animations, now a per-file ignore; `main.py` keeps its CUDA-before-imports order under a justified E402 ignore). The test job also runs `scenes/ironman`.
 
