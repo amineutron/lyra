@@ -1,6 +1,7 @@
 """Etapes : Ollama (local ou distant) + modeles LLM legers."""
 from __future__ import annotations
 
+import shlex
 import shutil
 import time
 from pathlib import Path
@@ -47,7 +48,7 @@ def run_ollama(ctx: StepContext) -> None:
     if host:
         bashrc = Path.home() / ".bashrc"
         added = _append_once(bashrc, "OLLAMA_HOST=",
-                             f"\nexport OLLAMA_HOST={host}:11434\n")
+                             f"\nexport OLLAMA_HOST={shlex.quote(host + ':11434')}\n")
         ctx.emit(Output(f"Ollama distant : {host}:11434"
                         + (" (export ajoute au .bashrc)" if added else "")))
         return
