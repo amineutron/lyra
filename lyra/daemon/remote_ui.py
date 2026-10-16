@@ -22,22 +22,30 @@ class RequestCancelled(Exception):
 
 
 
-def build_confirm_prompt(tool_name: str, arguments: dict) -> tuple[str, bool]:
+def build_confirm_prompt(tool_name: str, arguments: dict,
+                         danger: bool | None = None) -> tuple[str, bool]:
     """Prompt de confirmation explicite : quel outil, sur quoi.
 
     Les actions destructives (DANGEROUS_TOOLS) sont mises en avant sans
     ambiguite — "Je vais executer X. Tu confirmes ?" ressemblait a une
     commande basique (retour utilisateur 2026-08-14).
+
+    `danger` : verdict deja calcule par l'appelant (annotation destructiveHint du
+    serveur comprise, voir actions._outil_dangereux). Il ne peut que durcir le
+    prompt, jamais l'assouplir pour un outil des listes statiques.
     """
     from ..core.constants import DANGEROUS_TOOLS, DESTRUCTIVE_TOOLS
 
     short = tool_name.split(".")[-1]
-    danger = short in DANGEROUS_TOOLS
     args_txt = ", ".join(f"{k}={v}" for k, v in list(arguments.items())[:3])
     target = f" ({args_txt})" if args_txt else ""
     if short in DESTRUCTIVE_TOOLS:
         return (f"!! ACTION DESTRUCTIVE !! {tool_name}{target} — "
                 f"operation irreversible. Confirmer ?", True)
+    if danger is True and short not in DANGEROUS_TOOLS:
+        return (f"!! ACTION DESTRUCTIVE !! {tool_name}{target} — "
+                f"operation declaree destructive par son serveur. Confirmer ?", True)
+    danger = short in DANGEROUS_TOOLS
     if danger:
         return (f"! ACTION SENSIBLE ! {tool_name}{target} — "
                 f"operation importante (rien n'est detruit). Confirmer ?", True)
@@ -107,14 +115,15 @@ class RemoteUI:
         return self.ask("input", prompt)
 
     def confirm_action(self, tool_name: str, arguments: dict,
-                       vocal_mode: bool = False, voice: Any = None):
+                       vocal_mode: bool = False, voice: Any = None,
+                       danger: bool | None = None):
         """Equivalent distant de ui.confirm_action : True | False | "modify".
 
         Le client rend le prompt [O/n/m] comme il veut (clavier ou vocal) et
         renvoie la reponse brute ; l'interpretation reste ici, identique au
-        comportement historique.
+        comportement historique. `danger` : voir build_confirm_prompt.
         """
-        prompt, danger = build_confirm_prompt(tool_name, arguments)
+        prompt, danger = build_confirm_prompt(tool_name, arguments, danger)
         answer = self.ask("confirm", prompt,
                           {"tool": tool_name, "arguments": arguments,
                            "danger": danger}).lower()

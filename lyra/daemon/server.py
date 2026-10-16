@@ -252,7 +252,9 @@ class LyraDaemon:
         dangereux, non classe, ou hors catalogue — est refuse d'emblee, sans
         "ask" (personne ne repondrait) et quel que soit "confirmed".
         """
-        from lyra.core.constants import is_dangerous_tool, is_performance_tool
+        from lyra.core.constants import is_performance_tool
+
+        from .actions import _outil_dangereux
         rui = RemoteUI(channel)
         name = str(message.get("name", "")).strip()
         arguments = message.get("arguments") or {}
@@ -280,8 +282,8 @@ class LyraDaemon:
             channel.send({"type": "result", "exit_code": 1, "executed": False})
             return
         try:
-            if is_dangerous_tool(name) and not bool(options.get("confirmed", False)):
-                if not rui.confirm_action(name, arguments):
+            if _outil_dangereux(v2, name) and not bool(options.get("confirmed", False)):
+                if not rui.confirm_action(name, arguments, danger=True):
                     rui.warning("Action annulee.")
                     channel.send({"type": "result", "exit_code": 2, "executed": False})
                     return

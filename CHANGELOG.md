@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Security
+- The MCP `destructiveHint` annotation now requires a strict confirmation in the daemon and in standalone mode, like `DANGEROUS_TOOLS`. A third-party server that marked a tool destructive only got the soft `[O/n]` prompt (Enter = yes), and `-y` ran it without asking: the annotation was read by `Pipeline.is_dangerous_action`, which nothing called. Bundled servers are unaffected (fedora-agents annotates exactly the tools already listed).
+
 ### Changed
 - CI: ruff lint is now blocking (240 findings cleared: 139 were the documented `from manim import *` of the intro animations, now a per-file ignore; `main.py` keeps its CUDA-before-imports order under a justified E402 ignore). The test job also runs `scenes/ironman`.
 
