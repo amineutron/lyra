@@ -81,6 +81,23 @@ def is_dangerous_tool(tool_name: str) -> bool:
     return tool_name.split(".")[-1] in DANGEROUS_TOOLS
 
 
+def is_dangerous_with_annotations(tool_name: str, hestia=None) -> bool:
+    """is_dangerous_tool OU annotation destructiveHint posee par le serveur de l'outil.
+
+    `hestia` : l'executeur (HestiaExecutor.is_dangerous_tool lit l'annotation dans la
+    liste d'outils deja en cache). Seul un True explicite compte : executeur absent,
+    en panne ou reponse inattendue = la liste statique tranche seule.
+    """
+    if is_dangerous_tool(tool_name):
+        return True
+    if hestia is None:
+        return False
+    try:
+        return hestia.is_dangerous_tool(tool_name) is True
+    except Exception:
+        return False
+
+
 def is_destructive_tool(tool_name: str) -> bool:
     """Vrai si l'outil detruit/ecrase des donnees (sous-ensemble rouge)."""
     return tool_name.split(".")[-1] in DESTRUCTIVE_TOOLS

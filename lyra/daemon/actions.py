@@ -10,7 +10,7 @@ Codes de sortie (parite avec run_one_shot) :
 
 from __future__ import annotations
 
-from ..core.constants import PERFORMANCE_TOOLS, is_dangerous_tool
+from ..core.constants import PERFORMANCE_TOOLS, is_dangerous_tool, is_dangerous_with_annotations
 from ..core.fastpath import try_fast_path_rules
 from ..core.types import QueryType
 from ..core.workflows.context import ExecContext
@@ -31,9 +31,16 @@ def _message_execution(tool_name: str, arguments: dict) -> str:
     return f"J'execute {tool_name}" + (f" ({args_txt})." if args_txt else ".")
 
 
-def _should_skip_confirmation(tool_name: str, mode: str) -> bool:
-    """Parite avec main_rag.should_skip_confirmation."""
-    if is_dangerous_tool(tool_name):
+def _outil_dangereux(v2, tool_name: str) -> bool:
+    """Liste statique (DANGEROUS_TOOLS) OU annotation destructiveHint du serveur : un
+    serveur MCP tiers peut exiger une confirmation stricte sans toucher a constants.py."""
+    return is_dangerous_with_annotations(tool_name, getattr(v2, "_hestia", None))
+
+
+def _should_skip_confirmation(tool_name: str, mode: str, dangerous: bool | None = None) -> bool:
+    """Parite avec main_rag.should_skip_confirmation. `dangerous` : verdict deja calcule
+    (annotation comprise) ; a defaut, la liste statique seule."""
+    if dangerous if dangerous is not None else is_dangerous_tool(tool_name):
         return False
     return mode == "performance" and tool_name in PERFORMANCE_TOOLS
 
@@ -170,8 +177,8 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
         except RequestCancelled:
             raise
 
-    is_dangerous = is_dangerous_tool(tool_name)
-    skip_confirm = _should_skip_confirmation(tool_name, mode)
+    is_dangerous = _outil_dangereux(v2, tool_name)
+    skip_confirm = _should_skip_confirmation(tool_name, mode, dangerous=is_dangerous)
     sans_confirmation = skip_confirm or (yes and not is_dangerous)
 
     # En mode performance (ou -y), LYRA affichait "Je vais executer X. Tu
@@ -184,7 +191,7 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
         # meme prompt explicite que remote_ui.confirm_action (outil + cible,
         # mise en avant destructive) — les deux chemins etaient incoherents
         from .remote_ui import build_confirm_prompt
-        prompt, _danger = build_confirm_prompt(tool_name, arguments)
+        prompt, _danger = build_confirm_prompt(tool_name, arguments, is_dangerous)
         if not is_dangerous:
             prompt += " [O/n]"
         answer = rui.ask("confirm", prompt,
