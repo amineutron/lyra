@@ -24,7 +24,7 @@ from installer.core.catalog import McpDef, load_catalog
 from installer.core.events import Ask, AskBroker
 from installer.core.osdetect import detect_current
 from installer.core.pipeline import build_pipeline, run_pipeline
-from installer.core.state import DEFAULT_LYRA_REPO, InstallState
+from installer.core.state import DEFAULT_LYRA_REPO, InstallState, hote_ollama_arg
 from installer.core.sudoprime import ensure_sudo_cached
 
 from . import boot, forms, menu, mode_select
@@ -51,7 +51,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
                    help="Simule l'installation (aucune action reelle)")
     p.add_argument("--repo", default=DEFAULT_LYRA_REPO)
     p.add_argument("--lyra-dir", type=Path, default=None)
-    p.add_argument("--ollama-host", default="")
+    p.add_argument("--ollama-host", default="", type=hote_ollama_arg)
     p.add_argument("--skip-models", action="store_true")
     return p.parse_args(argv)
 
