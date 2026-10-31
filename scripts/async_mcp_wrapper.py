@@ -24,8 +24,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import yaml
 
 from lyra.core.paths import scripts_dir_from_config
-from lyra.utils.task_files import task_file
 from lyra.hestia.tracking_client import tracking_token
+from lyra.utils.task_files import task_file
 from modules.n8n import send_discord_notification
 
 # Chemins de base vers les scripts shell : la copie systeme root:root installee par

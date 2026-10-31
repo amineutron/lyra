@@ -452,6 +452,16 @@ def _socket_in_use(path: Path) -> bool:
         sock.close()
 
 
+def _bind_private(creer):
+    """Appelle `creer()` (qui bind le socket) sous umask 0o177, puis restaure l'umask :
+    le socket nait en 0600, sans fenetre ou il serait plus ouvert."""
+    ancien_umask = os.umask(0o177)
+    try:
+        return creer()
+    finally:
+        os.umask(ancien_umask)
+
+
 def serve(config_path: str = "config.yaml",
           socket_path: Path = SOCKET_PATH) -> int:
     """Point d'entree du demon. Retourne un code de sortie."""
@@ -467,11 +477,7 @@ def serve(config_path: str = "config.yaml",
     # Le socket nait en 0600 : un chmod apres bind laissait un instant ou un autre
     # compte pouvait se connecter. L'umask ne s'applique qu'ici, avant que
     # l'initialisation n'ouvre ses propres fils (l'umask est commun au processus).
-    ancien_umask = os.umask(0o177)
-    try:
-        server = _Server(str(socket_path), _ConnectionHandler)
-    finally:
-        os.umask(ancien_umask)
+    server = _bind_private(lambda: _Server(str(socket_path), _ConnectionHandler))
     server.daemon = daemon  # type: ignore[attr-defined]
     os.chmod(socket_path, 0o600)
     daemon.initialize_async()
