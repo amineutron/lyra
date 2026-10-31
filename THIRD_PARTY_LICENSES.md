@@ -30,7 +30,7 @@
 | ast_serialize      | 0.13.0     | MIT                                                     | https://github.com/mypyc/ast_serialize                                |
 | charset-normalizer | 3.5.1      | MIT                                                     | https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md  |
 | ctranslate2        | 4.8.2      | MIT                                                     | https://opennmt.net                                                   |
-| filelock           | 3.32.6     | MIT                                                     | https://github.com/tox-dev/py-filelock                                |
+| filelock           | 4.2.1      | MIT                                                     | https://github.com/tox-dev/py-filelock                                |
 | iniconfig          | 2.3.0      | MIT                                                     | https://github.com/pytest-dev/iniconfig                               |
 | librt              | 0.16.0     | MIT                                                     | https://github.com/mypyc/librt                                        |
 | mypy               | 2.4.0      | MIT                                                     | https://www.mypy-lang.org/                                            |
