@@ -34,6 +34,9 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from lyra.hestia.tracking_client import tracking_token  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 TRACKING_API = "http://127.0.0.1:8765"
 INIT_TIMEOUT = float(os.environ.get("LYRA_SMOKE_TIMEOUT", "15"))
@@ -116,12 +119,13 @@ def report_tracking(results: dict[str, dict]) -> None:
     except ImportError:
         return
     all_ok = all(r["ok"] for r in results.values())
+    entetes = {"Authorization": f"Bearer {tracking_token()}"}
     items = [{"name": f"{n} ({r['tool_count']} outils, init {r['init_s']}s)"
               if r["ok"] else f"{n} — {r['error'][:60]}",
               "status": "done" if r["ok"] else "error"}
              for n, r in results.items()]
     try:
-        resp = requests.post(f"{TRACKING_API}/sessions", timeout=3, json={
+        resp = requests.post(f"{TRACKING_API}/sessions", timeout=3, headers=entetes, json={
             "name": f"[SMOKE] MCP servers ({sum(r['ok'] for r in results.values())}"
                     f"/{len(results)} OK)",
             "template": "machine",
@@ -132,7 +136,7 @@ def report_tracking(results: dict[str, dict]) -> None:
         # l'API ignore status/processed au POST : cloture via PUT
         sid = resp.json().get("id")
         if sid:
-            requests.put(f"{TRACKING_API}/sessions/{sid}", timeout=3, json={
+            requests.put(f"{TRACKING_API}/sessions/{sid}", timeout=3, headers=entetes, json={
                 "status": "done" if all_ok else "error",
                 "processed": sum(r["ok"] for r in results.values()),
             })

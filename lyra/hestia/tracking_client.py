@@ -14,7 +14,7 @@ import urllib.request
 from typing import Optional
 
 
-def _tracking_token() -> str:
+def tracking_token() -> str:
     """Jeton local de l'API tracking (issue #40) : fichier 0600 ecrit par api.py au demarrage."""
     import os
     from pathlib import Path as _P
@@ -52,7 +52,7 @@ class TrackingClient:
         req = urllib.request.Request(
             url, data=data, method=method,
             headers={"Content-Type": "application/json",
-                     "Authorization": f"Bearer {_tracking_token()}"} if data else {}
+                     "Authorization": f"Bearer {tracking_token()}"} if data else {}
         )
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:

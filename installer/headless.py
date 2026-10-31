@@ -19,7 +19,7 @@ from installer.core.catalog import load_catalog
 from installer.core.events import Ask, AskBroker, Output, StepChange
 from installer.core.osdetect import detect_current
 from installer.core.pipeline import run_pipeline
-from installer.core.state import DEFAULT_LYRA_REPO, InstallState
+from installer.core.state import DEFAULT_LYRA_REPO, InstallState, hote_ollama_arg
 from installer.core.sudoprime import ensure_sudo_cached
 
 
@@ -28,7 +28,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     p.add_argument("--demo", action="store_true", help="simule l'installation (aucune action reelle)")
     p.add_argument("--repo", default=DEFAULT_LYRA_REPO)
     p.add_argument("--lyra-dir", type=Path, default=None)
-    p.add_argument("--ollama-host", default="")
+    p.add_argument("--ollama-host", default="", type=hote_ollama_arg)
     p.add_argument("--skip-models", action="store_true")
     p.add_argument("--mcps", default="", help="identifiants du catalogue, separes par des virgules")
     return p.parse_args(argv)

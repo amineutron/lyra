@@ -18,7 +18,7 @@ from typing import Any
 
 from ...core.catalog import McpDef, load_catalog
 from ...core.osdetect import detect_current
-from ...core.state import InstallState
+from ...core.state import InstallState, valider_hote_ollama
 from .bridge import InstallBusyError, InstallManager
 
 HOST = "127.0.0.1"
@@ -109,6 +109,10 @@ def validate_install_payload(payload: Any,
         raise ValidationError("options.skip_models doit etre un booleen")
     if not isinstance(options.get("ollama_host", ""), str):
         raise ValidationError("options.ollama_host doit etre une chaine")
+    try:
+        valider_hote_ollama(options.get("ollama_host", ""))
+    except ValueError as exc:
+        raise ValidationError(f"options.ollama_host : {exc}") from None
 
     return {"mcps": [str(m) for m in mcps],
             "device_config": {k: dict(v) for k, v in device_config.items()},
@@ -205,7 +209,37 @@ class InstallerHandler(BaseHTTPRequestHandler):
 
     # ---- routes ---------------------------------------------------------
 
+    def _guard(self) -> bool:
+        """Refuse ce qui ne vient pas de l'interface servie ici. Rend False si la requete est refusee.
+
+        Le serveur n'ecoute que sur la boucle locale, mais une page web ouverte dans le
+        navigateur peut quand meme l'appeler :
+        - Host doit designer la boucle locale (sinon : rebinding DNS, une page de
+          attaquant.test resolu en 127.0.0.1 lirait les reponses) ;
+        - un Origin present doit etre celui de l'interface (127.0.0.1 ou localhost, ce port) ;
+        - un POST doit etre en application/json : une page ne peut l'envoyer a une autre
+          origine sans requete de controle CORS, a laquelle ce serveur ne repond pas.
+        """
+        port = self.server.server_address[1]
+        host = (self.headers.get("Host") or "").strip()
+        locaux = {f"127.0.0.1:{port}", f"localhost:{port}", "127.0.0.1", "localhost"}
+        if host not in locaux:
+            self._send_json({"error": "hote non local refuse"}, 403)
+            return False
+        origin = self.headers.get("Origin")
+        if origin is not None and origin not in {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}:
+            self._send_json({"error": "origine refusee"}, 403)
+            return False
+        if self.command == "POST":
+            ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+            if ctype != "application/json":
+                self._send_json({"error": "Content-Type application/json attendu"}, 415)
+                return False
+        return True
+
     def do_GET(self) -> None:  # noqa: N802 (API stdlib)
+        if not self._guard():
+            return
         path = self.path.split("?", 1)[0]
         if path == "/":
             self.send_response(302)
@@ -233,6 +267,8 @@ class InstallerHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "introuvable"}, 404)
 
     def do_POST(self) -> None:  # noqa: N802 (API stdlib)
+        if not self._guard():
+            return
         path = self.path.split("?", 1)[0]
         try:
             if path == "/api/install":

@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import yaml
 
+from lyra.hestia.tracking_client import tracking_token
 from modules.n8n import send_discord_notification
 
 # Chemins de base vers les scripts shell
@@ -219,7 +220,8 @@ def _tracking_update(tracking_id: str, tracking_api: str,
         req = urllib.request.Request(
             f"{tracking_api}/sessions/{tracking_id}",
             data=data, method="PUT",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json",
+                     "Authorization": f"Bearer {tracking_token()}"}
         )
         urllib.request.urlopen(req, timeout=1)
     except (urllib.error.URLError, OSError):
