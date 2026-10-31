@@ -34,6 +34,9 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from lyra.hestia.tracking_client import tracking_token  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 TRACKING_API = "http://127.0.0.1:8765"
 INIT_TIMEOUT = float(os.environ.get("LYRA_SMOKE_TIMEOUT", "15"))
@@ -109,24 +112,6 @@ def smoke_one(name: str, spec: dict) -> dict:
         proc.wait(timeout=5)
 
 
-def _tracking_token() -> str:
-    """Jeton local exige par l'API tracking en ecriture (fichier 0600 ecrit au demarrage).
-
-    Meme recherche que lyra/hestia/tracking_client.py ; ce script n'importe pas ce
-    module pour ne pas charger tout l'executeur MCP.
-    """
-    for candidate in (os.environ.get("TRACKING_TOKEN_FILE"),
-                      "/run/tracking/token",
-                      f"{os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}'}/tracking/token"):
-        if not candidate:
-            continue
-        try:
-            return Path(candidate).read_text().strip()
-        except OSError:
-            continue
-    return ""
-
-
 def report_tracking(results: dict[str, dict]) -> None:
     """Cree une session tracking avec un item par serveur (best-effort)."""
     try:
@@ -134,7 +119,7 @@ def report_tracking(results: dict[str, dict]) -> None:
     except ImportError:
         return
     all_ok = all(r["ok"] for r in results.values())
-    entetes = {"Authorization": f"Bearer {_tracking_token()}"}
+    entetes = {"Authorization": f"Bearer {tracking_token()}"}
     items = [{"name": f"{n} ({r['tool_count']} outils, init {r['init_s']}s)"
               if r["ok"] else f"{n} — {r['error'][:60]}",
               "status": "done" if r["ok"] else "error"}

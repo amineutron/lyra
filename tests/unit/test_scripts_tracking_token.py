@@ -78,4 +78,4 @@ def test_sans_fichier_de_jeton_rien_ne_casse(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     wrapper = _charger("async_mcp_wrapper")
     # /run/tracking/token peut exister sur la machine : seul le type compte ici
-    assert isinstance(wrapper._tracking_token(), str)
+    assert isinstance(wrapper.tracking_token(), str)
