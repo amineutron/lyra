@@ -9,7 +9,7 @@
 | tokenizers         | 0.23.2     | Apache Software License                                 | https://github.com/huggingface/tokenizers                             |
 | coverage           | 7.16.0     | Apache-2.0                                              | https://github.com/coveragepy/coveragepy                              |
 | hf-xet             | 1.6.0      | Apache-2.0                                              | https://github.com/huggingface/xet-core                               |
-| pytest-asyncio     | 1.4.0      | Apache-2.0                                              | https://github.com/pytest-dev/pytest-asyncio                          |
+| pytest-asyncio     | 1.4.1      | Apache-2.0                                              | https://github.com/pytest-dev/pytest-asyncio                          |
 | packaging          | 26.3       | Apache-2.0 OR BSD-2-Clause                              | https://github.com/pypa/packaging                                     |
 | httpx              | 0.28.1     | BSD License                                             | https://github.com/encode/httpx                                       |
 | Pygments           | 2.21.0     | BSD-2-Clause                                            | https://pygments.org                                                  |
@@ -37,11 +37,11 @@
 | mypy_extensions    | 1.1.0      | MIT                                                     | https://github.com/python/mypy_extensions                             |
 | ollama             | 0.6.3      | MIT                                                     | https://ollama.com                                                    |
 | pydantic           | 2.14.1     | MIT                                                     | https://github.com/pydantic/pydantic                                  |
-| pydantic-settings  | 2.15.0     | MIT                                                     | https://github.com/pydantic/pydantic-settings                         |
+| pydantic-settings  | 2.16.1     | MIT                                                     | https://github.com/pydantic/pydantic-settings                         |
 | pydantic_core      | 2.50.1     | MIT                                                     | https://github.com/pydantic                                           |
 | pytest             | 9.1.1      | MIT                                                     | https://docs.pytest.org/en/latest/                                    |
 | pytest-cov         | 7.1.0      | MIT                                                     | https://pytest-cov.readthedocs.io/en/latest/changelog.html            |
-| ruff               | 0.17.0     | MIT                                                     | https://docs.astral.sh/ruff                                           |
+| ruff               | 0.17.2     | MIT                                                     | https://docs.astral.sh/ruff                                           |
 | sounddevice        | 0.5.6      | MIT                                                     | https://github.com/spatialaudio/python-sounddevice/                   |
 | typing-inspection  | 0.4.4      | MIT                                                     | https://github.com/pydantic/typing-inspection                         |
 | urllib3            | 2.8.0      | MIT                                                     | https://github.com/urllib3/urllib3/blob/main/CHANGES.rst              |
