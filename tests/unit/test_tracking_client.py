@@ -1,10 +1,10 @@
 """Tests de regression pour TrackingClient.
 
-Regression du commit 8ed4532 : `_tracking_token()` avait ete inseree entre
+Regression du commit 8ed4532 : `tracking_token()` avait ete inseree entre
 `class TrackingClient:` et son `__init__`. Comme la fonction se termine par un
 `return` a l'indentation 4 et que les methodes suivent a cette meme
 indentation, Python les a interpretees comme des fonctions IMBRIQUEES dans
-`_tracking_token`, placees apres son `return` : jamais executees.
+`tracking_token`, placees apres son `return` : jamais executees.
 
 C'est syntaxiquement valide, donc rien n'a leve d'erreur a l'import. La classe
 etait vide, tout le client de tracking etait du code mort, et le seul symptome
@@ -35,13 +35,13 @@ def test_la_classe_expose_bien_ses_methodes():
 
 
 def test_le_jeton_est_une_fonction_de_module():
-    """_tracking_token doit rester au niveau module, avant la classe."""
-    assert callable(tracking_client._tracking_token)
-    assert isinstance(tracking_client._tracking_token(), str)
+    """tracking_token doit rester au niveau module, avant la classe."""
+    assert callable(tracking_client.tracking_token)
+    assert isinstance(tracking_client.tracking_token(), str)
 
 
 def test_aucune_methode_cachee_dans_le_jeton():
-    """Verrou direct : rien ne doit etre imbrique dans _tracking_token."""
-    source = inspect.getsource(tracking_client._tracking_token)
+    """Verrou direct : rien ne doit etre imbrique dans tracking_token."""
+    source = inspect.getsource(tracking_client.tracking_token)
     assert "def __init__" not in source
     assert "def _request" not in source
