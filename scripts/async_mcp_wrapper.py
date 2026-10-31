@@ -25,6 +25,7 @@ import yaml
 
 from lyra.core.paths import scripts_dir_from_config
 from lyra.utils.task_files import task_file
+from lyra.hestia.tracking_client import tracking_token
 from modules.n8n import send_discord_notification
 
 # Chemins de base vers les scripts shell : la copie systeme root:root installee par
@@ -224,7 +225,8 @@ def _tracking_update(tracking_id: str, tracking_api: str,
         req = urllib.request.Request(
             f"{tracking_api}/sessions/{tracking_id}",
             data=data, method="PUT",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json",
+                     "Authorization": f"Bearer {tracking_token()}"}
         )
         urllib.request.urlopen(req, timeout=1)
     except (urllib.error.URLError, OSError):

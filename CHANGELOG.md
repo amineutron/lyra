@@ -5,15 +5,14 @@
 ### Security
 - Background tasks: their `.log`, `.pid`, `.progress` and `.done` files move from `/tmp` (predictable names, readable by every account) to a private 0700 directory, `$XDG_RUNTIME_DIR/lyra/tasks` (`LYRA_TASK_DIR` to override). The Discord webhook reaches the task wrapper through the environment, no longer as a command-line argument visible to every account in the process list.
 - Daemon socket: created with mode 0600 directly (umask around `bind`) instead of being chmod-ed right after, and `~/.lyra` is created 0700.
-
-### Fixed
-- Discord notifications: the webhook is read from `config.yaml`, then from the neighbouring `secrets.yaml` where `config.yaml.example` and the data-flow doc put it; only `config.yaml` was read, so a webhook stored as documented sent nothing (daemon and standalone mode).
-- `scripts/async_mcp_wrapper.py` ran `sudo -n` on scripts under `~/dev/fedora-setup/scripts`: no sudoers rule covers that user-writable path, so system clone, backup creation and backup restore failed when run in the background. It now uses the root-owned copy resolved by `lyra.core.paths` (`/usr/local/lib/lyra/scripts`, `LYRA_SCRIPTS_DIR`, `paths.scripts`).
+- Graphical installer (`install.sh --app`, 127.0.0.1:9877): a web page open in the browser could start the install and answer its confirmations (no Host, Origin or Content-Type check; a `text/plain` POST needs no CORS preflight; question ids were `ask-1`, `ask-2`...), and `options.ollama_host` was written unquoted into `~/.bashrc`, so a crafted value ran shell code at the next login. The backend now refuses a non-local Host (DNS rebinding), a foreign Origin and any non-JSON POST; question ids are random; `ollama_host` must be a host name or an IP (all frontends: app, TUI, headless) and is quoted in `.bashrc`.
 
 ### Changed
 - CI: ruff lint is now blocking (240 findings cleared: 139 were the documented `from manim import *` of the intro animations, now a per-file ignore; `main.py` keeps its CUDA-before-imports order under a justified E402 ignore). The test job also runs `scenes/ironman`.
 
 ### Fixed
+- Discord notifications: the webhook is read from `config.yaml`, then from the neighbouring `secrets.yaml` where `config.yaml.example` and the data-flow doc put it; only `config.yaml` was read, so a webhook stored as documented sent nothing (daemon and standalone mode).
+- `scripts/async_mcp_wrapper.py` ran `sudo -n` on scripts under `~/dev/fedora-setup/scripts`: no sudoers rule covers that user-writable path, so system clone, backup creation and backup restore failed when run in the background. It now uses the root-owned copy resolved by `lyra.core.paths` (`/usr/local/lib/lyra/scripts`, `LYRA_SCRIPTS_DIR`, `paths.scripts`).
 - `main_rag.py`: the module docstring sat after `from __future__ import annotations`, so it was not the docstring (and flagged every import); it is first again.
 - Bare `except:` in ephaistos and the MCP client no longer swallow Ctrl+C.
 - Tests: the Iron Man red-flash test now checks the colour sent to the lamp (it computed it without asserting); the phase 0 timing test mocks the parallel state reads added with the refactor (it made real requests and measured their 2 s timeout).
