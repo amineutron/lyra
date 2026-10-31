@@ -91,9 +91,8 @@ class LyraDaemon:
             with open(self.config_path) as f:
                 raw = yaml.safe_load(f)
             self.purge_on_stop = bool((raw.get("privacy") or {}).get("purge_on_stop", False))
-            discord = raw.get("discord", {})
-            if discord.get("enabled"):
-                self.webhook_url = discord.get("webhook_url", "")
+            from lyra.core.config import discord_webhook
+            self.webhook_url = discord_webhook(self.config_path)
 
             enhanced_config = RAGEnhancedConfig.from_dict(raw.get("rag_enhanced", {}))
             self.pipeline = EnhancedPipeline(
@@ -455,22 +454,35 @@ def _socket_in_use(path: Path) -> bool:
         sock.close()
 
 
+def _bind_private(creer):
+    """Appelle `creer()` (qui bind le socket) sous umask 0o177, puis restaure l'umask :
+    le socket nait en 0600, sans fenetre ou il serait plus ouvert."""
+    ancien_umask = os.umask(0o177)
+    try:
+        return creer()
+    finally:
+        os.umask(ancien_umask)
+
+
 def serve(config_path: str = "config.yaml",
           socket_path: Path = SOCKET_PATH) -> int:
     """Point d'entree du demon. Retourne un code de sortie."""
     if _socket_in_use(socket_path):
         logger.error("un demon Lyra ecoute deja sur %s", socket_path)
         return 1
-    socket_path.parent.mkdir(parents=True, exist_ok=True)
+    socket_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     socket_path.unlink(missing_ok=True)  # socket orphelin d'un crash
 
     daemon = LyraDaemon(config_path)
     daemon_state.write_state(daemon_state.STARTING)
-    daemon.initialize_async()
 
-    server = _Server(str(socket_path), _ConnectionHandler)
+    # Le socket nait en 0600 : un chmod apres bind laissait un instant ou un autre
+    # compte pouvait se connecter. L'umask ne s'applique qu'ici, avant que
+    # l'initialisation n'ouvre ses propres fils (l'umask est commun au processus).
+    server = _bind_private(lambda: _Server(str(socket_path), _ConnectionHandler))
     server.daemon = daemon  # type: ignore[attr-defined]
     os.chmod(socket_path, 0o600)
+    daemon.initialize_async()
 
     def _shutdown(signum, _frame):
         logger.info("arret demande (signal %d)", signum)

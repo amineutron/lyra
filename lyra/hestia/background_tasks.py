@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from ..utils.task_files import task_file, task_file_read
 from .tracking_client import TrackingClient
 
 REGISTRY_PATH = Path.home() / ".lyra" / "active_tasks.json"
@@ -34,7 +35,7 @@ class BackgroundTask:
     success: Optional[bool] = None
     result: Optional[str] = None
     error: Optional[str] = None
-    pid_file: Optional[str] = None   # chemin vers /tmp/lyra_task_{task_id}.pid
+    pid_file: Optional[str] = None   # chemin du .pid (dossier prive, lyra.utils.task_files)
     tracking_id: Optional[str] = None  # session_id MCP tracking
 
     def get_pid(self) -> Optional[int]:
@@ -122,9 +123,11 @@ class BackgroundTaskManager:
         # mettre a jour la progression en temps reel
         env = os.environ.copy()
         env["LYRA_TRACKING_ID"] = tracking_id or ""
+        if webhook_url:
+            env["LYRA_DISCORD_WEBHOOK"] = webhook_url
 
         # Rediriger stdout/stderr vers un fichier log (evite deadlock pipe buffer >64 Ko)
-        log_file_path = f"/tmp/lyra_task_{task_id}.log"
+        log_file_path = task_file(task_id, "log")
         log_file = open(log_file_path, "w")
 
         # Lancer le subprocess
@@ -138,7 +141,7 @@ class BackgroundTaskManager:
         log_file.close()  # le process herite du fd, on peut fermer notre cote
 
         # Ecrire le PID dans un fichier pour persistance cross-session
-        pid_file = f"/tmp/lyra_task_{task_id}.pid"
+        pid_file = task_file(task_id, "pid")
         Path(pid_file).write_text(str(process.pid))
 
         # Creer la tache
@@ -191,9 +194,8 @@ class BackgroundTaskManager:
             "--task-id", task_id,
         ]
 
-        if webhook_url:
-            cmd.extend(["--webhook", webhook_url])
-
+        # Le webhook passe par l'environnement (LYRA_DISCORD_WEBHOOK, voir start_task) :
+        # en argument, il etait lisible par tous les comptes dans /proc/<pid>/cmdline.
         return cmd
 
     def check_task(self, task_id: str) -> Optional[BackgroundTask]:
@@ -220,7 +222,7 @@ class BackgroundTaskManager:
                 task.completed = True
                 task.success = (poll == 0)
                 # Lire les dernieres lignes du fichier log (pas de deadlock pipe)
-                log_file_path = f"/tmp/lyra_task_{task.task_id}.log"
+                log_file_path = task_file_read(task.task_id, "log", task.pid_file)
                 log_tail = self._read_log_tail(log_file_path)
                 if task.success:
                     task.result = log_tail
@@ -237,7 +239,7 @@ class BackgroundTaskManager:
                 was_running = not task.completed
                 task.completed = True
                 # Lire le code de retour depuis le fichier done (ecrit par async_mcp_wrapper)
-                done_file = f"/tmp/lyra_task_{task.task_id}.done"
+                done_file = task_file_read(task.task_id, "done", task.pid_file)
                 if os.path.exists(done_file):
                     try:
                         task.success = (Path(done_file).read_text().strip() == "0")
@@ -246,7 +248,7 @@ class BackgroundTaskManager:
                 else:
                     # Pas de done_file = interrompu (SIGTERM, crash)
                     task.success = False
-                log_file_path = f"/tmp/lyra_task_{task.task_id}.log"
+                log_file_path = task_file_read(task.task_id, "log", task.pid_file)
                 log_tail = self._read_log_tail(log_file_path)
                 if task.success:
                     task.result = log_tail
@@ -292,9 +294,9 @@ class BackgroundTaskManager:
         """Supprime les fichiers temporaires d'une tache terminee."""
         for path in [
             task.pid_file,
-            f"/tmp/lyra_task_{task.task_id}.progress",
-            f"/tmp/lyra_task_{task.task_id}.done",
-            f"/tmp/lyra_task_{task.task_id}.log",
+            task_file_read(task.task_id, "progress", task.pid_file),
+            task_file_read(task.task_id, "done", task.pid_file),
+            task_file_read(task.task_id, "log", task.pid_file),
         ]:
             if path:
                 try:
@@ -376,7 +378,7 @@ class BackgroundTaskManager:
             else:
                 # Process mort : determiner succes/echec et notifier
                 task.completed = True
-                done_file = f"/tmp/lyra_task_{task.task_id}.done"
+                done_file = task_file_read(task.task_id, "done", task.pid_file)
                 if os.path.exists(done_file):
                     try:
                         task.success = (Path(done_file).read_text().strip() == "0")
@@ -387,7 +389,7 @@ class BackgroundTaskManager:
                     task.success = False
                     task.error = "Operation interrompue (Lyra redemarree ou process tue)"
 
-                log_file_path = f"/tmp/lyra_task_{task.task_id}.log"
+                log_file_path = task_file_read(task.task_id, "log", task.pid_file)
                 log_tail = self._read_log_tail(log_file_path)
                 if task.success:
                     task.result = log_tail
@@ -520,7 +522,8 @@ class BackgroundTaskManager:
         Returns:
             {"percentage": 65, "message": "38GB/58GB", "timestamp": ...} ou None
         """
-        progress_file = f"/tmp/lyra_task_{task_id}.progress"
+        t = self.tasks.get(task_id)
+        progress_file = task_file_read(task_id, "progress", t.pid_file if t else None)
 
         if not os.path.exists(progress_file):
             return None

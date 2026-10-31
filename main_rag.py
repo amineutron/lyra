@@ -1069,11 +1069,10 @@ def main():
     try:
         with open(args.config) as f:
             cfg = yaml.safe_load(f)
-        discord_cfg = cfg.get("discord", {})
-        if discord_cfg.get("enabled", False):
-            DISCORD_WEBHOOK_URL = discord_cfg.get("webhook_url", "")
-            if DISCORD_WEBHOOK_URL:
-                ui.print_info("Discord notifications activees")
+        from lyra.core.config import discord_webhook
+        DISCORD_WEBHOOK_URL = discord_webhook(args.config)   # config.yaml, sinon secrets.yaml
+        if DISCORD_WEBHOOK_URL:
+            ui.print_info("Discord notifications activees")
     except Exception as e:
         cfg = {}
         ui.print_warning(f"Config non chargee: {e}")
