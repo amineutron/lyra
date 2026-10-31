@@ -7,6 +7,7 @@ app) consomment exactement ces evenements — aucune logique de rendu ici.
 from __future__ import annotations
 
 import itertools
+import secrets
 import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
@@ -75,7 +76,9 @@ class AskBroker:
 
     def ask(self, kind: str, prompt: str, default: Any = None,
             extra: Optional[dict] = None) -> Any:
-        ask_id = f"ask-{next(self._counter)}"
+        # imprevisible : une page web ne doit pas pouvoir deviner l'identifiant a
+        # renvoyer a POST /api/answer (le numero reste lisible dans les journaux)
+        ask_id = f"ask-{next(self._counter)}-{secrets.token_urlsafe(16)}"
         done = threading.Event()
         with self._lock:
             self._pending[ask_id] = done
