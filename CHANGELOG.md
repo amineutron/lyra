@@ -5,6 +5,9 @@
 ### Breaking
 - `scripts/async_mcp_wrapper.py` no longer falls back to `~/dev/fedora-setup/scripts`: background MCP scripts are resolved only from the root-owned copy (`/usr/local/lib/lyra/scripts`, `LYRA_SCRIPTS_DIR` or `paths.scripts`). The old path was user-writable and covered by no sudoers rule; run the installer (or set `LYRA_SCRIPTS_DIR`) if you relied on it.
 
+### Added
+- Releases: `sbom.json` (CycloneDX inventory of the base and `gpu` dependencies, exact versions from `uv.lock`) attached to each GitHub release; wheel and sdist carry a SLSA provenance attestation and an SBOM attestation, both verifiable with `gh attestation verify`. The release refuses to build when `uv.lock` is stale. Procedure in `docs/dev/release-process.md`.
+
 ### Security
 - Background tasks: their `.log`, `.pid`, `.progress` and `.done` files move from `/tmp` (predictable names, readable by every account) to a private 0700 directory, `$XDG_RUNTIME_DIR/lyra/tasks` (`LYRA_TASK_DIR` to override). The Discord webhook reaches the task wrapper through the environment, no longer as a command-line argument visible to every account in the process list.
 - Daemon socket: created with mode 0600 directly (umask around `bind`) instead of being chmod-ed right after, and `~/.lyra` is created 0700.
