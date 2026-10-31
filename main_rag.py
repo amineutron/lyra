@@ -33,7 +33,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 import yaml
 
 from lyra.core.config import RAGConfig
-from lyra.core.constants import DANGEROUS_TOOLS, PERFORMANCE_TOOLS, is_dangerous_tool  # noqa: F401
+from lyra.core.constants import (  # noqa: F401
+    DANGEROUS_TOOLS,
+    PERFORMANCE_TOOLS,
+    is_dangerous_tool,
+    is_dangerous_with_annotations,
+)
 
 # QueryType et PipelineResult importes depuis types.py (pas de torch/sentence_transformers)
 # Pipeline importe dans main() apres le banner pour ne pas bloquer le demarrage
@@ -241,7 +246,7 @@ def print_banner(mode="v2", ephaistos_model="Qwen", lyra_model="Llama"):
     print(ui.colored(banner, ui.Colors.CYAN))
 
 
-def should_skip_confirmation(tool_name: str, mode: str) -> bool:
+def should_skip_confirmation(tool_name: str, mode: str, dangerous: Optional[bool] = None) -> bool:
     """Determine si on peut skip la confirmation.
 
     Args:
@@ -251,8 +256,9 @@ def should_skip_confirmation(tool_name: str, mode: str) -> bool:
     Returns:
         True si on peut executer sans confirmation
     """
-    # Toujours confirmer les outils dangereux (nom prefixe ou non)
-    if is_dangerous_tool(tool_name):
+    # Toujours confirmer les outils dangereux (nom prefixe ou non). `dangerous` :
+    # verdict deja calcule par l'appelant, annotation destructiveHint comprise.
+    if dangerous if dangerous is not None else is_dangerous_tool(tool_name):
         return False
 
     # Mode performance: skip pour les outils domotique
@@ -556,7 +562,9 @@ def handle_action(
             voice.speak(context_msg)
 
     # Mode performance: execution rapide si autorise ET pas de contexte injecte
-    if should_skip_confirmation(tool_name, mode) and not requires_confirmation:
+    dangerous = is_dangerous_with_annotations(
+        tool_name, getattr(get_actual_pipeline(pipeline), "_hestia", None))
+    if should_skip_confirmation(tool_name, mode, dangerous) and not requires_confirmation:
         ui.print_info(f"Execution rapide: {tool_name}")
         exec_result = get_actual_pipeline(pipeline).execute_action(tool_name, arguments)
 
@@ -922,8 +930,9 @@ def run_one_shot(
         # Determiner si confirmation necessaire
         # Nom prefixe ("fedora.vm_destroy") : "in DANGEROUS_TOOLS" etait toujours
         # faux et -y executait vm_destroy sans confirmation (audit 2026-09-19).
-        is_dangerous = is_dangerous_tool(tool_name)
-        skip_confirm = should_skip_confirmation(tool_name, mode)
+        is_dangerous = is_dangerous_with_annotations(
+            tool_name, getattr(get_actual_pipeline(pipeline), "_hestia", None))
+        skip_confirm = should_skip_confirmation(tool_name, mode, is_dangerous)
 
         if not skip_confirm and not (yes and not is_dangerous):
             # Afficher l'action et demander confirmation

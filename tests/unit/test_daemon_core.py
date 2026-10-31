@@ -282,6 +282,27 @@ class TestHandleTool:
         assert recus[0]["type"] == "error" and recus[-1]["exit_code"] == 1
         v2.execute_action.assert_not_called()
 
+    def test_outil_annote_destructif_par_un_serveur_tiers_demande_confirmation(self):
+        """destructiveHint d'un serveur tiers : confirmation stricte, comme DANGEROUS_TOOLS.
+
+        Regression : le demon ne lisait que la liste statique ; l'annotation n'etait
+        consultee que par Pipeline.is_dangerous_action, que rien n'appelait.
+        """
+        d, v2 = self._daemon()
+        v2._hestia.get_available_tools.return_value.append({"name": "stock.purger"})
+        v2._hestia.is_dangerous_tool.side_effect = lambda n: n == "stock.purger"
+        recus = self._echange(d, {"type": "tool", "name": "stock.purger", "arguments": {}}, reponses=["n"])
+        assert recus[0]["type"] == "ask" and recus[0]["payload"]["danger"] is True
+        assert recus[-1]["exit_code"] == 2
+        v2.execute_action.assert_not_called()
+
+    def test_reponse_inattendue_de_l_executeur_ignoree(self):
+        """Seul un True explicite compte : un objet quelconque ne rend pas l'outil dangereux."""
+        d, v2 = self._daemon()
+        v2._hestia.is_dangerous_tool.return_value = "oui"
+        recus = self._echange(d, {"type": "tool", "name": "tv.power_on", "arguments": {}})
+        assert [m["type"] for m in recus] == ["output", "result"]
+
     def test_echec_d_execution(self):
         d, _ = self._daemon(executed=True, error="Error executing tool")
         recus = self._echange(d, {"type": "tool", "name": "tv.power_on", "arguments": {}})
