@@ -238,7 +238,7 @@ Ces dépôts MCP sont publics mais taillés pour ma domotique — le cœur de Ly
 
 | Garantie | Où dans le code | Test |
 |---|---|---|
-| Confirmation humaine avant toute action ; les outils dangereux ne sont jamais auto-confirmés, même en mode performance | [`lyra/core/constants.py`](lyra/core/constants.py) (`DANGEROUS_TOOLS`, `DESTRUCTIVE_TOOLS`), [`lyra/daemon/actions.py`](lyra/daemon/actions.py) (`_should_skip_confirmation`) | [`tests/unit/test_confirm_prompt.py`](tests/unit/test_confirm_prompt.py) |
+| Confirmation humaine avant toute action ; les outils dangereux (listés, ou annotés `destructiveHint` par leur serveur MCP) ne sont jamais auto-confirmés, même en mode performance ou avec `-y` | [`lyra/core/constants.py`](lyra/core/constants.py) (`DANGEROUS_TOOLS`, `DESTRUCTIVE_TOOLS`), [`lyra/daemon/actions.py`](lyra/daemon/actions.py) (`_should_skip_confirmation`) | [`tests/unit/test_confirm_prompt.py`](tests/unit/test_confirm_prompt.py) |
 | Arguments validés par liste blanche avant tout script shell (noms de VM, chemins, commentaires) | [`scripts/async_mcp_wrapper.py`](scripts/async_mcp_wrapper.py), [`lyra/core/validation.py`](lyra/core/validation.py) | [`tests/unit/test_async_wrapper_validation.py`](tests/unit/test_async_wrapper_validation.py) |
 | Lecture de l'état réel avant d'agir (read-first) | [`lyra/core/validation.py`](lyra/core/validation.py) (`validate_vm_existence`) | [`tests/unit/rules/`](tests/unit/rules/) |
 | Scripts privilégiés copiés en root et autorisés un par un dans `sudoers.d`, jamais de sudo global | [`installer/core/steps/mcps.py`](installer/core/steps/mcps.py) | [`tests/installer/test_mcps_sudoers.py`](tests/installer/test_mcps_sudoers.py) |
