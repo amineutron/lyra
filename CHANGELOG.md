@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Releases: `sbom.json` (CycloneDX inventory of the base and `gpu` dependencies, exact versions from `uv.lock`) attached to each GitHub release; wheel and sdist carry a SLSA provenance attestation and an SBOM attestation, both verifiable with `gh attestation verify`. The release refuses to build when `uv.lock` is stale. Procedure in `docs/dev/release-process.md`.
+
 ### Security
 - The MCP `destructiveHint` annotation now requires a strict confirmation in the daemon and in standalone mode, like `DANGEROUS_TOOLS`. A third-party server that marked a tool destructive only got the soft `[O/n]` prompt (Enter = yes), and `-y` ran it without asking: the annotation was read by `Pipeline.is_dangerous_action`, which nothing called. Bundled servers are unaffected (fedora-agents annotates exactly the tools already listed).
 - Graphical installer (`install.sh --app`, 127.0.0.1:9877): a web page open in the browser could start the install and answer its confirmations (no Host, Origin or Content-Type check; a `text/plain` POST needs no CORS preflight; question ids were `ask-1`, `ask-2`...), and `options.ollama_host` was written unquoted into `~/.bashrc`, so a crafted value ran shell code at the next login. The backend now refuses a non-local Host (DNS rebinding), a foreign Origin and any non-JSON POST; question ids are random; `ollama_host` must be a host name or an IP (all frontends: app, TUI, headless) and is quoted in `.bashrc`.
