@@ -1,6 +1,7 @@
 """Etapes : Ollama (local ou distant) + modeles LLM legers."""
 from __future__ import annotations
 
+import re
 import shlex
 import shutil
 import time
@@ -19,13 +20,24 @@ INSTALL_ATTEMPTS = 3
 INSTALL_RETRY_PAUSE_S = 10
 
 
+def _set_export(path: Path, var: str, value: str) -> bool:
+    """Garantit un unique `export VAR=valeur` dans path ; True si le fichier change.
 
-def _append_once(path: Path, marker: str, block: str) -> bool:
+    Un export existant avec une autre valeur est remplace (et non conserve) :
+    OLLAMA_HOST prime sur config.yaml, donc une valeur perimee ferait gagner
+    l'ancien hote sur l'option --ollama-host explicite.
+    """
+    ligne = f"export {var}={shlex.quote(value)}"
     text = path.read_text(encoding="utf-8") if path.exists() else ""
-    if marker in text:
+    motif = re.compile(rf"^[ \t]*(?:export[ \t]+)?{re.escape(var)}=.*$\n?", re.MULTILINE)
+    if motif.search(text):
+        nouveau = motif.sub("", text).rstrip("\n")
+        nouveau = (nouveau + "\n" if nouveau else "") + ligne + "\n"
+    else:
+        nouveau = text + f"\n{ligne}\n"
+    if nouveau == text:
         return False
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(block)
+    path.write_text(nouveau, encoding="utf-8")
     return True
 
 
@@ -47,10 +59,9 @@ def run_ollama(ctx: StepContext) -> None:
 
     if host:
         bashrc = Path.home() / ".bashrc"
-        added = _append_once(bashrc, "OLLAMA_HOST=",
-                             f"\nexport OLLAMA_HOST={shlex.quote(host + ':11434')}\n")
+        added = _set_export(bashrc, "OLLAMA_HOST", host + ":11434")
         ctx.emit(Output(f"Ollama distant : {host}:11434"
-                        + (" (export ajoute au .bashrc)" if added else "")))
+                        + (" (export mis a jour dans le .bashrc)" if added else "")))
         return
 
     _install_proxy_dropin(ctx)

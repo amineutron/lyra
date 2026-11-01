@@ -98,7 +98,7 @@ réseau : ils respectent celles que les outils sous-jacents lisent déjà.
 | `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` | curl, pip/uv, requests, le script d'installation d'Ollama | tout le trafic sortant passe par le proxy |
 | `PIP_INDEX_URL` (ou `UV_INDEX_URL`) | pip / uv | miroir PyPI interne pour le venv |
 | `HF_ENDPOINT` | huggingface_hub (modèles Whisper, MiniLM) et le téléchargement des voix Piper | miroir Hugging Face interne |
-| `OLLAMA_HOST` | le client `ollama` et Lyra (`get_ollama_base_url`, prime sur `llm.base_url` de config.yaml) | Ollama distant, machine sans GPU, Codespace |
+| `OLLAMA_HOST` | le client `ollama` et Lyra (`get_ollama_base_url`, prime sur `llm.base_url` de config.yaml) | Ollama distant, machine sans GPU, Codespace. Précédence : `OLLAMA_HOST` > `llm.base_url` > `http://localhost:11434`. `--ollama-host` écrit les deux (`config.yaml` et un unique `export OLLAMA_HOST=` dans `~/.bashrc`, remplacé s'il existait déjà) ; un `OLLAMA_HOST` déjà exporté dans le shell courant l'emporte jusqu'à la prochaine session |
 
 Trois endroits ne voyaient pas ces variables ; ils sont traités
 (`installer/core/proxyenv.py`, `lyra/utils/netenv.py`) :
