@@ -8,6 +8,9 @@
 #   podman compose -f docker-compose.sovereign.yml exec lyra lyra "liste les taches"
 #   podman compose -f docker-compose.sovereign.yml --profile cpu down     # -v efface aussi les volumes
 #
+# Fournisseur : docker-compose v2 (valide). podman-compose ne cree pas le conteneur
+# tracking (network_mode: service:..., exit 125) : voir deploy/eval/README.md.
+#
 # Profil gpu a la place de cpu : NVIDIA via CDI (nvidia-container-toolkit).
 # Ollama deja installe ailleurs : ne lancer aucun profil et definir LYRA_EVAL_OLLAMA_HOST.
 # Un vrai ampli Denon a tester : LYRA_EVAL_DENON_HOST=<ip>.
