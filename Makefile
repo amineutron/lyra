@@ -1,5 +1,6 @@
 # Lyra — commandes uniques (regle testing homelab : une commande par projet)
-PY := .venv/bin/python
+# .venv si present, sinon python3 (surcharge possible : make test PY=...)
+PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
 .PHONY: test smoke smoke-daemon campaign test-all bench bench-daemon bench-regles bench-tts bench-modeles
 
