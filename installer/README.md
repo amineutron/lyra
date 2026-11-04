@@ -39,7 +39,7 @@ flowchart LR
     POST --> DAEMON["daemon<br/>lyra-daemon (systemd user)"]
 ```
 
-Les repos MCP prives (`fedora-agents`, `hue-mcp`, `pylips-mcp`...) partagent
+Les repos MCP (`fedora-agents`, `halo-light`, `pylips-mcp`...) partagent
 le meme fallback d'authentification que le clone du repo principal
 (`core/gitauth.py resolve_repo_url`) : SSH testee en premier (et le succes
 alimente `known_hosts`), sinon un Personal Access Token est demande **une
@@ -75,7 +75,9 @@ true` vont dans secrets.yaml chmod 600, jamais dans config.yaml),
 config/server (blocs injectes dans config.yaml), check (http|tcp),
 extra_steps (npm_build, sudoers, hue_pairing, pip_catt). `sudoers` copie
 `<dest>/scripts` en root:root dans /usr/local/lib/lyra/scripts puis ecrit
-/etc/sudoers.d/lyra (une regle par script, visudo -cf, jamais de glob). Les deux
+/etc/sudoers.d/lyra (une regle par script, visudo -cf, jamais de glob). `hue_pairing`
+apparie le bridge en https (le http est redirige) et ecrit `~/.config/halo-light/config.json`
+(0600) pour le serveur halo-light, en plus de secrets.yaml. Les deux
 frontaux et les tests le prennent en compte automatiquement.
 
 ## Garanties

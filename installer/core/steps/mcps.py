@@ -6,16 +6,21 @@ Extras declares dans le catalogue (extra_steps) :
                  + /etc/sudoers.d/lyra NOPASSWD par script (visudo -cf)
                  + utilisateur dans le groupe libvirt (virsh sans sudo)
   pip_catt     : outils catt + yt-dlp dans le venv
-  hue_pairing  : pairing bouton du bridge (username+clientkey -> secrets)
+  hue_pairing  : pairing bouton du bridge en https (username+clientkey -> secrets, et
+                 ~/.config/halo-light/config.json en 0600 pour le serveur halo-light)
 """
 from __future__ import annotations
 
 import getpass
 import grp
+import json
+import os
 import pwd
 import subprocess
 import tempfile
 import time
+import warnings
+from collections.abc import Mapping
 from pathlib import Path
 
 import requests
@@ -216,11 +221,55 @@ def _ensure_libvirt_group(ctx: StepContext, groups_fn=user_groups) -> None:
     ctx.emit(Output(f"{user} ajoute au groupe {LIBVIRT_GROUP} : se reconnecter pour l'activer"))
 
 
+def pairing_url(bridge_ip: str) -> str:
+    """Le bridge redirige le http (port 80) vers https : un POST http serait perdu en route."""
+    return f"https://{bridge_ip}/api"
+
+
+def _halo_light_config_path(environ: Mapping[str, str]) -> Path:
+    """Meme resolution que halo-light : HALO_LIGHT_CONFIG, sinon $XDG_CONFIG_HOME ou ~/.config."""
+    explicit = environ.get("HALO_LIGHT_CONFIG")
+    if explicit:
+        return Path(explicit).expanduser()
+    base = environ.get("XDG_CONFIG_HOME")
+    root = Path(base) if base else Path.home() / ".config"
+    return root / "halo-light" / "config.json"
+
+
+def write_halo_light_config(bridge_ip: str, username: str, clientkey: str,
+                            environ: Mapping[str, str] | None = None) -> Path:
+    """Ecrit la configuration du serveur halo-light (0600, dossier 0700), fusionnee avec l'existant.
+
+    La cle d'application et le couple entertainment (username, clientkey) sont ceux du pairing ;
+    une zone de divertissement deja choisie (beat.area_id) est conservee.
+    """
+    path = _halo_light_config_path(os.environ if environ is None else environ)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        existing = {}
+    beat = dict(existing.get("beat") or {})
+    beat.update({"username": username, "clientkey": clientkey})
+    merged = {**existing, "bridge_ip": bridge_ip, "app_key": username, "beat": beat}
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.unlink(missing_ok=True)
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        json.dump(merged, handle, indent=2)
+        handle.write("\n")
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, path)
+    return path
+
+
 def _hue_pairing(ctx: StepContext, mcp: McpDef, total: int = 30) -> None:
-    """Pairing du bridge : polling POST /api pendant `total` secondes.
+    """Pairing du bridge : polling POST /api (https) pendant `total` secondes.
 
     Resultat (username + clientkey) depose dans state.secrets['hue'] —
-    ecrit dans secrets.yaml par l'etape config, jamais dans config.yaml.
+    ecrit dans secrets.yaml par l'etape config, jamais dans config.yaml — et dans la
+    configuration du serveur halo-light (~/.config/halo-light/config.json, 0600).
+    Le certificat du bridge est signe par une autorite privee de Signify : pas de verification.
     """
     bridge_ip = (ctx.state.device_config.get(mcp.id) or {}).get("bridge_ip", "")
     if not bridge_ip:
@@ -234,11 +283,13 @@ def _hue_pairing(ctx: StepContext, mcp: McpDef, total: int = 30) -> None:
             ctx.emit(Progress(ctx.step_id,
                               f"pairing... {remaining}s restantes"))
             try:
-                r = requests.post(
-                    f"http://{bridge_ip}/api",
-                    json={"devicetype": "lyra#installer",
-                          "generateclientkey": True},
-                    timeout=1.5)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")  # InsecureRequestWarning (certificat prive)
+                    r = requests.post(
+                        pairing_url(bridge_ip),
+                        json={"devicetype": "lyra#installer",
+                              "generateclientkey": True},
+                        timeout=1.5, verify=False)  # noqa: S501 - autorite privee de Signify
                 data = r.json()
                 if isinstance(data, list) and data and "success" in data[0]:
                     success = data[0]["success"]
@@ -246,6 +297,7 @@ def _hue_pairing(ctx: StepContext, mcp: McpDef, total: int = 30) -> None:
                     hue["username"] = success.get("username", "")
                     hue["clientkey"] = success.get("clientkey", "")
                     ctx.state.secrets["hue"] = hue
+                    write_halo_light_config(bridge_ip, hue["username"], hue["clientkey"])
                     ctx.emit(Output("Pairing Hue reussi"))
                     return
             except requests.RequestException:
