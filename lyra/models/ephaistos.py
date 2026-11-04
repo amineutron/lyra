@@ -216,7 +216,7 @@ Reponse:
 Requete: "mets la luminosite a 50%"
 Specs: set_brightness(light_id: int, brightness: int), set_group_brightness(group_id?: int, brightness: int)
 Reponse:
-{"tool": "set_group_brightness", "arguments": {"brightness": 127}, "missing_args": [], "confidence": 0.90, "reasoning": "50% de 254 = 127, groupe par defaut"}
+{"tool": "set_group_brightness", "arguments": {"brightness": 50}, "missing_args": [], "confidence": 0.90, "reasoning": "50% = 50 (echelle 0-100), groupe par defaut"}
 
 Requete: "baisse les lumieres"
 Specs: set_group_brightness(group_id?: int, brightness: int), turn_off_group(group_id?: int)

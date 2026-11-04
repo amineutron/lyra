@@ -27,9 +27,14 @@ _WHITE_PRESETS = (
 )
 
 
-def _pct_to_bri(pct: int) -> int:
-    """Pourcentage -> luminosite Hue (0-254 : 255 est hors limites pour le pont)."""
-    return round(max(0, min(100, pct)) * 254 / 100)
+# Luminosite relative (« monte », « baisse ») : le serveur Hue prend un pourcentage 0-100.
+_BRIGHTNESS_HIGH = 80
+_BRIGHTNESS_LOW = 20
+
+
+def _clamp_pct(pct: int) -> int:
+    """Pourcentage de luminosite borne a 0-100 (echelle du serveur halo-light, pas 0-254)."""
+    return max(0, min(100, pct))
 
 
 def _detect_beat_and_reads(q: str):
@@ -139,22 +144,22 @@ def detect(query: str):
                     "rule: allume la lumiere NAME", 0.90)
 
     # Luminosite sans lampe nommee = le groupe (lyra#24). Avant : hue.set_brightness sans
-    # light_id (obligatoire, l'appel echouait) et une echelle 0-255 (Hue : 0-254).
+    # light_id (obligatoire, l'appel echouait). L'echelle est un pourcentage 0-100.
     m_pct = re.search(r'luminosite?\s+a\s+(\d+)\s*(?:pour\s*cent|%)?', q) or \
         re.search(r'(?:lumieres?|lampes?)\s+a\s+(\d+)\s*(?:pour\s*cent|%)', q)
     if m_pct:
-        brightness = _pct_to_bri(int(m_pct.group(1)))
+        brightness = _clamp_pct(int(m_pct.group(1)))
         return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": brightness},
                     f"rule: luminosite du groupe {brightness}", 0.92)
 
     if re.search(r'\b(?:lumieres?|lampes?|lumiere)\s+plus\s+(?:fort[esz]*|intens[aeés]*|haut[esz]*|viv[esz]*)', q) or \
             re.search(r'\b(?:monte|augmente|hausse|eleve)\b.*\bluminosite\b|\bluminosite\b.*\b(?:monte|augmente|hausse|eleve)\b', q):
-        return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": 200},
+        return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": _BRIGHTNESS_HIGH},
                     "rule: luminosite du groupe haute (relative)", 0.88)
 
     if re.search(r'\b(?:lumieres?|lampes?|lumiere)\s+plus\s+(?:doux|douce[sz]*|faible[sz]*|bas[esz]*)', q) or \
             re.search(r'\b(?:baisse|diminue|reduis|attenues?)\b.*\bluminosite\b|\bluminosite\b.*\b(?:baisse|diminue|reduis|attenues?)\b', q):
-        return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": 50},
+        return make("hue.set_group_brightness", {"group_id": _DEFAULT_GROUP, "brightness": _BRIGHTNESS_LOW},
                     "rule: luminosite du groupe basse (relative)", 0.88)
 
     # hue.set_group_color_rgb: "lumieres en rouge/bleu/..." (pluriel/ambiance =
