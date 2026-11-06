@@ -42,17 +42,17 @@ mcps:
     extra_steps: [npm_build, sudoers]
 
   - id: hue
-    name: hue-mcp
+    name: halo-light
     color: yellow
     icon: "[H]"
     short_desc: "Lumieres Philips Hue"
-    repo: "git@github.com:amineutron/hue-mcp.git"
-    dest: "{lyra}/mcp-servers/hue-mcp"
+    repo: "git@github.com:amineutron/halo-light.git"
+    dest: "{lyra}/mcp-servers/halo-light"
     runtime: python
     default_checked: false
     long_desc: |
       Pilote les lumieres Philips Hue
-      via le bridge local (port 80).
+      via l'API locale CLIP v2 du bridge (https).
     examples:
       - "allume les lumieres"
       - "ambiance cinema"
@@ -77,15 +77,19 @@ mcps:
         bridge_ip: "{bridge_ip}"
     server:
       enabled: true
-      command: python3
-      args: ["{dest}/hue_server.py"]
+      # Executable installe par `pip install -e` dans le venv de Lyra (chemin absolu : seule
+      # forme acceptee par modules/mcp.py pour un binaire).
+      command: "{lyra}/.venv/bin/halo-light"
+      args: ["serve"]
       env:
         HUE_BRIDGE_IP: "{bridge_ip}"
       timeout: 10
       keep_alive: true
     check:
-      type: http
-      url: "http://{bridge_ip}/api/config"
+      # Le bridge redirige le http (port 80) vers https : on teste le port 443.
+      type: tcp
+      host: "{bridge_ip}"
+      port: 443
     extra_steps: [hue_pairing]
 
   - id: tv
