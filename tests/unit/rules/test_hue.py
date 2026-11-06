@@ -3,6 +3,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from lyra.rules.hue import detect
@@ -133,12 +135,22 @@ class TestGroupBrightness:
     def test_luminosite_pct(self):
         assert tool("luminosite a 50%") == "hue.set_group_brightness"
 
-    def test_luminosite_value_echelle_hue(self):
+    def test_luminosite_en_pourcentage(self):
+        """Le serveur Hue (halo-light) prend un pourcentage 0-100, pas l'echelle 0-254 du pont v1."""
         a = args("luminosite a 50%")
-        assert a == {"group_id": 81, "brightness": 127}  # round(50 * 254 / 100)
+        assert a == {"group_id": 81, "brightness": 50}
 
     def test_jamais_hors_limites(self):
-        assert args("luminosite a 100%")["brightness"] == 254
+        assert args("luminosite a 100%")["brightness"] == 100
+        assert args("luminosite a 250%")["brightness"] == 100
+
+    @pytest.mark.parametrize("q", [
+        "luminosite a 70%", "monte la luminosite", "augmente la luminosite",
+        "baisse la luminosite", "lumieres plus douces", "lumieres plus fortes",
+    ])
+    def test_luminosite_toujours_dans_0_100(self, q):
+        """Regression : « augmente la luminosite » envoyait 200 et le serveur refusait (> 100)."""
+        assert 0 <= args(q)["brightness"] <= 100
 
     def test_lumieres_a_80_pct(self):
         assert tool("lumieres a 80 pour cent") == "hue.set_group_brightness"

@@ -21,12 +21,12 @@ def route(q):
 
 # ---------------------------------------------------------------- luminosite
 # Regression : « les lumieres a 50% » partait vers hue.set_brightness sans light_id
-# (obligatoire : l'appel echouait) et l'echelle etait 0-255 alors que Hue va de 0 a 254.
+# (obligatoire : l'appel echouait). L'echelle est un pourcentage 0-100 (serveur halo-light).
 @pytest.mark.parametrize("q,brightness", [
-    ("mets les lumieres a 50%", 127),
-    ("luminosite a 50%", 127),
-    ("lumieres a 80 pour cent", 203),
-    ("luminosite a 100%", 254),
+    ("mets les lumieres a 50%", 50),
+    ("luminosite a 50%", 50),
+    ("lumieres a 80 pour cent", 80),
+    ("luminosite a 100%", 100),
     ("luminosite a 0%", 0),
 ])
 def test_luminosite_du_groupe(q, brightness):
@@ -34,9 +34,9 @@ def test_luminosite_du_groupe(q, brightness):
 
 
 @pytest.mark.parametrize("q,brightness", [
-    ("monte la luminosite", 200),
-    ("baisse la luminosite", 50),
-    ("lumieres plus douces", 50),
+    ("monte la luminosite", 80),
+    ("baisse la luminosite", 20),
+    ("lumieres plus douces", 20),
 ])
 def test_luminosite_relative_du_groupe(q, brightness):
     assert route(q) == ("hue.set_group_brightness", {"group_id": 81, "brightness": brightness})

@@ -960,12 +960,12 @@ HUE_TOOLS = [
     ),
     MCPTool(
         name="set_brightness",
-        description="Regle la luminosite d'une lumiere (0-254)",
+        description="Regle la luminosite d'une lumiere (0-100, en pourcentage)",
         parameters={
             "type": "object",
             "properties": {
                 "light_id": {"type": "integer", "description": "ID de la lumiere"},
-                "brightness": {"type": "integer", "description": "Luminosite (0-254)"}
+                "brightness": {"type": "integer", "description": "Luminosite (0-100, en pourcentage)"}
             },
             "required": ["light_id", "brightness"]
         }
@@ -1025,7 +1025,7 @@ HUE_TOOLS = [
             "type": "object",
             "properties": {
                 "group_id": {"type": "integer", "description": "ID du groupe (81=Chambre/toutes)"},
-                "brightness": {"type": "integer", "description": "Luminosite (0-254)"}
+                "brightness": {"type": "integer", "description": "Luminosite (0-100, en pourcentage)"}
             },
             "required": ["group_id", "brightness"]
         }

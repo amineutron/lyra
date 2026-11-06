@@ -47,12 +47,12 @@ Groupes: 81=Chambre a coucher (toutes les 5 lumieres), 83=TV, 84=Coin tele
 
 - hue.turn_on_light : Allume une lumiere (params: light_id integer)
 - hue.turn_off_light : Eteint une lumiere (params: light_id integer)
-- hue.set_brightness : Regle la luminosite d'UNE lumiere (params: light_id, brightness 0-254)
+- hue.set_brightness : Regle la luminosite d'UNE lumiere (params: light_id, brightness 0-100, en pourcentage)
 - hue.set_color_rgb : Change la couleur RGB (params: light_id, red, green, blue 0-255)
 - hue.set_color_preset : Applique un preset (params: light_id, preset: warm/cool/daylight/relax/energize/red/green/blue)
 - hue.turn_on_group : Allume un groupe (params: group_id)
 - hue.turn_off_group : Eteint un groupe (params: group_id)
-- hue.set_group_brightness : Luminosite de TOUTES les lumieres d'un groupe (params: group_id, brightness 0-254)
+- hue.set_group_brightness : Luminosite de TOUTES les lumieres d'un groupe (params: group_id, brightness 0-100, en pourcentage)
 - hue.set_group_color_rgb : Couleur du groupe (params: group_id, red, green, blue)
 - hue.set_group_color_preset : Preset du groupe (params: group_id, preset)
 - hue.get_all_lights : Liste toutes les lumieres
@@ -251,7 +251,7 @@ Utilisateur: "Baisse la luminosite de la lumiere 1"
 {"name": "hue.set_brightness", "arguments": {"light_id": 1, "brightness": 100}}
 
 Utilisateur: "Mets toutes les lumieres en luminosite max"
-{"name": "hue.set_group_brightness", "arguments": {"group_id": 81, "brightness": 254}}
+{"name": "hue.set_group_brightness", "arguments": {"group_id": 81, "brightness": 100}}
 
 Utilisateur: "Mets la lumiere 1 en mode relax"
 {"name": "hue.set_color_preset", "arguments": {"light_id": 1, "preset": "relax"}}
