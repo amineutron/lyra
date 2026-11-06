@@ -61,6 +61,12 @@ def _serve(tmp_path, accept_unattended: bool):
                         ch.send({"type": "health", "data": {}})
                     elif m["type"] == "analyze":
                         ch.send(GOOD)
+                    elif m["type"] == "memory_list":
+                        ch.send({"type": "memory_items", "items": []})
+                    elif m["type"] == "memory_add":
+                        ch.send({"type": "error", "text": "au moins un « veut dire »", "code": "invalid"})
+                    elif m["type"] == "memory_delete":
+                        ch.send({"type": "error", "text": "souvenir introuvable", "code": "not_found"})
                     elif m["type"] == "tool":
                         for reply in ([{"type": "result", "exit_code": 0}] if accept_unattended else REFUSED):
                             ch.send(reply)
@@ -77,7 +83,8 @@ def _serve(tmp_path, accept_unattended: bool):
 def test_passage_complet_sur_un_demon_sain(tmp_path):
     path, server = _serve(tmp_path, accept_unattended=False)
     try:
-        assert smoke.run(path) == [("hello", ""), ("ping", ""), ("health", ""), ("analyze", ""), ("unattended", "")]
+        assert smoke.run(path) == [("hello", ""), ("ping", ""), ("health", ""), ("analyze", ""),
+                              ("memory_list", ""), ("memory_add", ""), ("memory_delete", ""), ("unattended", "")]
     finally:
         server.shutdown()
         server.server_close()
@@ -94,3 +101,15 @@ def test_un_demon_qui_accepte_tout_sans_humain_est_signale(tmp_path):
 
 def test_demon_absent(tmp_path):
     assert smoke.run(tmp_path / "absent.sock")[0][0] == "connexion"
+
+
+@pytest.mark.parametrize("fn,message,ok", [
+    (smoke.check_memory_list, {"type": "memory_items", "items": []}, True),
+    (smoke.check_memory_list, {"type": "error", "text": "type de message inconnu: memory_list"}, False),
+    (smoke.check_memory_list, {"type": "memory_items", "items": "x"}, False),
+    (smoke.check_memory_absent, {"type": "error", "code": "not_found", "text": "x"}, True),
+    (smoke.check_memory_absent, {"type": "memory_done", "op": "delete"}, False),            # a supprime quelque chose : grave
+    (smoke.check_memory_absent, {"type": "error", "text": "type de message inconnu"}, False),
+])
+def test_verifications_de_la_memoire(fn, message, ok):
+    assert (fn(message) == "") is ok

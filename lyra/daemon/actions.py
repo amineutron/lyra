@@ -145,6 +145,7 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
                 webhook_url: str) -> int:
     tool_name = result.tool_call["name"]
     arguments = result.tool_call["arguments"]
+    rui.note_tool(tool_name)   # journal d'historique : l'outil retenu, meme sans confirmation
 
     # Workflows speciaux multi-interactions (clone avec arret / revert snapshot)
     if tool_name == "vm_clone_with_stop" or (

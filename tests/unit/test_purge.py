@@ -39,14 +39,14 @@ def dirs(tmp_path):
 def test_plan_compte_sans_rien_modifier(dirs):
     root, home = dirs
     items = purge.plan(root, home)
-    assert [i.count for i in items] == [2, 3, 1]
+    assert [i.count for i in items] == [2, 3, 1, 0]
     assert purge.plan(root, home) == items  # lecture seule
 
 
 def test_purge_puis_verification_a_zero(dirs):
     root, home = dirs
     before = purge.purge(root, home)
-    assert [i.count for i in before] == [2, 3, 1]
+    assert [i.count for i in before] == [2, 3, 1, 0]
     assert purge.is_clean(purge.plan(root, home))
 
 
@@ -81,7 +81,7 @@ def test_commande_dry_run_ne_touche_a_rien(dirs, monkeypatch, capsys):
     monkeypatch.setattr(purge_cmd, "_via_daemon", lambda dry_run: None)
     monkeypatch.setattr(Path, "home", lambda: home)
     assert purge_cmd.run(dry_run=True, assume_yes=False, root=root) == purge_cmd.EXIT_OK
-    assert [i.count for i in purge.plan(root, home)] == [2, 3, 1]
+    assert [i.count for i in purge.plan(root, home)] == [2, 3, 1, 0]
     assert "Rien n'a ete efface" in capsys.readouterr().out
 
 
@@ -135,7 +135,7 @@ def test_demon_trop_ancien_rien_n_est_efface(dirs, monkeypatch, capsys):
     monkeypatch.setattr(Path, "home", lambda: home)
     assert purge_cmd.run(dry_run=False, assume_yes=True, root=root) == purge_cmd.EXIT_ERROR
     assert "restart lyra-daemon" in capsys.readouterr().out
-    assert [i.count for i in purge.plan(root, home)] == [2, 3, 1]
+    assert [i.count for i in purge.plan(root, home)] == [2, 3, 1, 0]
 
 
 @pytest.mark.parametrize("exc,absent", [
@@ -154,3 +154,14 @@ def test_demon_absent_ou_injoignable(monkeypatch, exc, absent):
     else:
         with pytest.raises(RuntimeError, match="injoignable"):
             purge_cmd._via_daemon(dry_run=True)
+
+
+def test_purge_efface_le_journal_d_historique_et_son_ancien_fichier(dirs):
+    root, home = dirs
+    journal = home / purge.HISTORY_LOG
+    journal.write_text('{"ts":1}\n{"ts":2}\n', encoding="utf-8")
+    journal.with_name("history.jsonl.1").write_text('{"ts":0}\n', encoding="utf-8")
+    assert [i.count for i in purge.plan(root, home)] == [2, 3, 1, 3]
+    purge.purge(root, home)
+    assert not journal.exists() and not journal.with_name("history.jsonl.1").exists()
+    assert purge.is_clean(purge.plan(root, home))

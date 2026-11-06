@@ -46,8 +46,10 @@ def build_confirm_prompt(tool_name: str, arguments: dict) -> tuple[str, bool]:
 class RemoteUI:
     """Traduit les appels UI en messages protocole sur un canal."""
 
-    def __init__(self, channel: LineChannel):
+    def __init__(self, channel: LineChannel, recorder: Any = None):
         self._channel = channel
+        # recorder (history.Recorder) : note l'outil et le verdict pour le journal
+        self._recorder = recorder
 
     # -- Sorties unidirectionnelles ------------------------------------
 
@@ -63,7 +65,14 @@ class RemoteUI:
     def warning(self, text: str) -> None:
         self._output("warning", text)
 
+    def note_tool(self, tool_name: str) -> None:
+        """Retient l'outil choisi pour le journal (rien n'est envoye au client)."""
+        if self._recorder is not None:
+            self._recorder.tool_call(tool_name)
+
     def error(self, text: str) -> None:
+        if self._recorder is not None:
+            self._recorder.error(text)
         self._output("error", text)
 
     def lyra(self, text: str) -> None:
@@ -77,11 +86,15 @@ class RemoteUI:
 
     def tool_call(self, tool_name: str, arguments: dict,
                   vm_state: Optional[dict] = None) -> None:
+        if self._recorder is not None:
+            self._recorder.tool_call(tool_name)
         self._output("tool_call", tool=tool_name, arguments=arguments,
                      vm_state=vm_state)
 
     def tool_result(self, text: str, success: bool = True,
                     raw_error: Optional[str] = None) -> None:
+        if self._recorder is not None:
+            self._recorder.tool_result(success, raw_error)
         self._output("tool_result", text, success=success, raw_error=raw_error)
 
     def progress(self, step: str, data: dict) -> None:

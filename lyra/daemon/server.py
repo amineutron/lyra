@@ -20,6 +20,7 @@ import time
 import traceback
 from pathlib import Path
 
+from . import history, memory
 from . import state as daemon_state
 from .actions import run_request
 from .protocol import SOCKET_PATH, ChannelClosed, LineChannel
@@ -27,6 +28,7 @@ from .remote_ui import RemoteUI, RequestCancelled
 
 logger = logging.getLogger("lyra.daemon")
 
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"   # memoire de Lyra (feedback, historique, vocabulaire)
 INIT_WAIT_TIMEOUT = 180.0   # attente max d'un client pendant l'init
 HEARTBEAT_INTERVAL = 15.0
 
@@ -233,6 +235,55 @@ class LyraDaemon:
             except ChannelClosed:
                 pass
 
+    # -- Memoire editable (sans modele) ------------------------------------
+
+    def handle_memory(self, channel: LineChannel, message: dict) -> None:
+        """memory_list / memory_update / memory_delete (lyra/daemon/memory.py).
+
+        {"type": "memory_list", "store"?: str, "limit"?: int}
+            -> {"type": "memory_items", "items": [...]}
+        {"type": "memory_update", "id": str, "text": str, "store"?: str}
+            -> {"type": "memory_done", "op": "update", "id", "store", "restart_needed"}
+        {"type": "memory_delete", "id": str, "store"?: str}
+            -> {"type": "memory_done", "op": "delete", ...}
+        {"type": "memory_add", "word": str, "means": [str], "store"?: "vocabulary"}
+            -> {"type": "memory_done", "op": "add", "id", "store", "restart_needed": true}
+           (code d'erreur "exists" si le mot est deja dans le dictionnaire)
+        Erreur : {"type": "error", "text", "code": "invalid|not_found|internal"}.
+        Ni modele ni verrou de requete : repond meme pendant un echange.
+        """
+        mtype = message.get("type")
+        try:
+            loop = _live_feedback_loop()
+            if mtype == "memory_list":
+                limit = message.get("limit", 200)
+                items = memory.list_items(DATA_DIR, message.get("store"), limit, loop)
+                channel.send({"type": "memory_items", "items": items})
+            elif mtype == "memory_update":
+                res = memory.update_item(DATA_DIR, message.get("id"), message.get("text"),
+                                         message.get("store"), loop)
+                channel.send({"type": "memory_done", "op": "update", **res})
+            elif mtype == "memory_add":
+                res = memory.add_word(DATA_DIR, message.get("word"), message.get("means"), message.get("store"))
+                channel.send({"type": "memory_done", "op": "add", **res})
+            else:
+                res = memory.delete_item(DATA_DIR, message.get("id"), message.get("store"), loop)
+                channel.send({"type": "memory_done", "op": "delete", **res})
+        except memory.MemoryRequestError as e:
+            self._send_safe(channel, {"type": "error", "text": str(e), "code": e.code})
+        except ChannelClosed:
+            pass
+        except Exception as e:  # noqa: BLE001 - jamais tuer le demon
+            logger.error("erreur memoire %s: %s\n%s", mtype, e, traceback.format_exc())
+            self._send_safe(channel, {"type": "error", "text": f"memoire: {e}", "code": "internal"})
+
+    @staticmethod
+    def _send_safe(channel: LineChannel, message: dict) -> None:
+        try:
+            channel.send(message)
+        except ChannelClosed:
+            pass
+
     # -- Appel direct d'un outil (sans modele) -----------------------------
 
     def handle_tool(self, channel: LineChannel, message: dict,
@@ -313,8 +364,10 @@ class LyraDaemon:
     # -- Traitement d'une requete ----------------------------------------
 
     def handle_request(self, channel: LineChannel, message: dict,
-                       session_id: str) -> None:
-        rui = RemoteUI(channel)
+                       session_id: str, client: object = None) -> None:
+        recorder = history.Recorder()
+        rui = RemoteUI(channel, recorder)
+        exit_code = 1   # un client parti ou une exception comptent comme un echec
 
         if not self._init_done.is_set():
             rui.info("Je finis de charger mes modeles, un instant...")
@@ -346,8 +399,10 @@ class LyraDaemon:
                 interactive=bool(options.get("interactive", False)),
                 webhook_url=self.webhook_url,
             )
+            exit_code = code
             channel.send({"type": "result", "exit_code": code, "executed": True})
         except RequestCancelled as e:
+            exit_code = 2
             logger.info("requete annulee (%s)", e)
             try:
                 channel.send({"type": "result", "exit_code": 2, "executed": False})
@@ -365,10 +420,34 @@ class LyraDaemon:
         finally:
             self._busy_with = ""
             self._busy.release()
+            self._journal_request(message, session_id, client, recorder, exit_code)
+
+    @staticmethod
+    def _journal_request(message: dict, session_id: str, client: object,
+                         recorder: "history.Recorder", exit_code: int) -> None:
+        """Une ligne dans ~/.lyra/history.jsonl. Ne leve jamais, ne retarde rien d'utile."""
+        try:
+            success = recorder.success
+            if success is None and recorder.tool and exit_code == 0:
+                success = True    # tache lancee en arriere-plan, sans verdict immediat
+            detail = recorder.detail or ("annule" if exit_code == 2 else "")
+            history.append(history.build_entry(
+                session=session_id, channel=history.channel_of(client),
+                text=str(message.get("text", "")), tool=recorder.tool,
+                success=success, exit_code=exit_code, detail=detail), history.HISTORY_PATH)
+        except Exception as e:  # noqa: BLE001 - le journal est facultatif
+            logger.warning("journal d'historique : %s", e)
 
 
 def _items(items) -> list[dict]:
     return [{"label": i.label, "path": str(i.path), "count": i.count, "unit": i.unit} for i in items]
+
+
+def _live_feedback_loop():
+    """Le feedback charge par le demon (None tant qu'il n'est pas cree : on edite alors le fichier)."""
+    from lyra.rag_enhanced import feedback_loop
+
+    return feedback_loop._instance
 
 
 def _forget_feedback_in_memory() -> None:
@@ -393,12 +472,14 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
         daemon: LyraDaemon = self.server.daemon  # type: ignore[attr-defined]
         channel = LineChannel(self.connection)
         session_id = "default"
+        client = None
         try:
             while not daemon._stop.is_set():
                 message = channel.recv(timeout=None)
                 mtype = message.get("type")
                 if mtype == "hello":
                     session_id = str(message.get("session") or "default")
+                    client = message.get("client")
                     channel.send({"type": "ready", "status": daemon.status,
                                   "uptime": round(time.time() - daemon.started_at, 1)})
                 elif mtype == "ping":
@@ -408,9 +489,11 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
                 elif mtype == "tasks_poll":
                     channel.send({"type": "tasks", **daemon.tasks_snapshot()})
                 elif mtype == "request":
-                    daemon.handle_request(channel, message, session_id)
+                    daemon.handle_request(channel, message, session_id, client)
                 elif mtype == "tool":
                     daemon.handle_tool(channel, message, session_id)
+                elif mtype in ("memory_list", "memory_update", "memory_delete", "memory_add"):
+                    daemon.handle_memory(channel, message)
                 elif mtype == "analyze":
                     daemon.handle_analyze(channel, message)
                 elif mtype == "purge":
