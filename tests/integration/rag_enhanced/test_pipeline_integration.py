@@ -12,6 +12,11 @@ from pathlib import Path
 
 import pytest
 
+# Ces tests instancient le vrai RAG (ChromaDB + embeddings) : environnement requis.
+# Fournis par .venv (voir docs/dev/TESTS.md) ; sans eux, skip explicite.
+pytest.importorskip("chromadb", reason="chromadb absent : utiliser .venv (docs/dev/TESTS.md)")
+pytest.importorskip("sentence_transformers", reason="sentence_transformers absent : utiliser .venv")
+
 CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config.yaml"
 
 
