@@ -112,3 +112,23 @@ def test_script_officiel_abandonne_apres_trois_echecs():
         else:
             raise AssertionError("l'echec definitif aurait du lever RuntimeError")
     assert mock_run.call_count == ollama.INSTALL_ATTEMPTS
+
+
+def test_ollama_host_explicite_remplace_un_export_perime(tmp_path, monkeypatch):
+    """Regression : --ollama-host doit l'emporter. Avant le fix, un
+    `export OLLAMA_HOST=` deja present dans ~/.bashrc etait conserve, et comme
+    OLLAMA_HOST prime sur config.yaml au runtime, l'ancienne valeur gagnait."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    bashrc = tmp_path / ".bashrc"
+    bashrc.write_text("alias a=b\nexport OLLAMA_HOST=ancien:11434\nalias c=d\n", encoding="utf-8")
+    ctx, _events = _ctx("192.168.122.1", _FakeBroker())
+
+    with patch("installer.core.steps.ollama.shutil.which", return_value="/usr/bin/ollama"):
+        ollama.run_ollama(ctx)
+        ollama.run_ollama(ctx)  # idempotent
+
+    text = bashrc.read_text(encoding="utf-8")
+    assert "ancien" not in text
+    assert text.count("OLLAMA_HOST=") == 1
+    assert "export OLLAMA_HOST=192.168.122.1:11434" in text
+    assert "alias a=b" in text and "alias c=d" in text

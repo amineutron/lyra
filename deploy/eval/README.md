@@ -26,6 +26,15 @@ podman compose -f docker-compose.sovereign.yml exec lyra lyra   # mode texte int
 podman compose -f docker-compose.sovereign.yml --profile cpu down   # ajoute -v pour effacer les volumes
 ```
 
+Fournisseur compose : `podman compose` délègue à `docker-compose` (v2) s'il est
+installé, sinon à `podman-compose`. Seul le premier est validé (docker-compose
+v5.1.0 sur Fedora, 2026-11-01) : le conteneur `tracking` partage le réseau de
+`lyra` (`network_mode: service:lyra`) et répond sur `127.0.0.1:8765` avec le
+jeton Bearer partagé par le volume `tracking-run`. Sous `podman-compose`, ce
+conteneur annexe n'est pas créé (erreur 125) : installe `docker-compose` (paquet
+`docker-compose` ou binaire officiel). Avec `docker-compose` rootless, le socket
+Podman doit tourner : `systemctl --user start podman.socket`.
+
 - `--profile gpu` à la place de `cpu` : Ollama sur carte NVIDIA (CDI,
   `nvidia-container-toolkit`).
 - Un Ollama existe déjà ailleurs : aucun profil, et

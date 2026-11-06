@@ -38,6 +38,8 @@ def pipeline_with_mocks():
 
     pipeline._model_manager = Mock()
     pipeline._ephaistos = Mock()
+    # _compact_spec est appele par le pipeline (filtrer_missing_args) : un Mock casse re.split
+    pipeline._ephaistos._compact_spec.side_effect = lambda spec: spec
     pipeline._lyra = Mock()
     pipeline._hestia = Mock()
     pipeline._intent_classifier = Mock()

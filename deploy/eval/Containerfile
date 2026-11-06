@@ -36,7 +36,7 @@ RUN python -m venv /opt/lyra/.venv \
 # des modules de premier niveau, server, models, storage... qui entreraient en
 # collision avec ceux de Lyra)
 RUN python -m venv /opt/mcp/denon && /opt/mcp/denon/bin/pip install "denon-mcp==0.3.2" \
- && python -m venv /opt/tracking && /opt/tracking/bin/pip install "mcp-tracking==0.2.1"
+ && python -m venv /opt/tracking && /opt/tracking/bin/pip install "mcp-tracking==0.3.0"
 
 COPY --chown=lyra:lyra . .
 RUN /opt/lyra/.venv/bin/pip install --no-deps -e .
