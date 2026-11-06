@@ -85,6 +85,9 @@ class ModelManager:
         self.ephaistos_temp = config.models.ephaistos.temperature
         self.lyra_temp = config.models.lyra.temperature
 
+        # Maintien en VRAM apres le dernier appel (models.keep_alive)
+        self.keep_alive = config.models.keep_alive
+
         # Stats
         self._ephaistos_calls = 0
         self._lyra_calls = 0
@@ -177,7 +180,7 @@ class ModelManager:
             "model": model,
             "messages": messages,
             "stream": False,
-            "keep_alive": -1,  # garder le modele en VRAM indefiniment
+            "keep_alive": self.keep_alive,
             "options": _options_generation(temperature)
         }
         try:

@@ -4,7 +4,9 @@ Lyra RAG - Configuration centralisee.
 Charge et valide la configuration RAG depuis config.yaml.
 """
 
+import logging
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
@@ -77,6 +79,34 @@ class RAGModuleConfig:
     retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
 
 
+# Duree pendant laquelle Ollama garde un modele en VRAM apres le dernier appel.
+# Avant le 2026-10-06 c'etait -1 en dur (illimite) : ~3 Go de VRAM occupes en
+# permanence, meme sans utiliser Lyra. Avec une duree, le premier appel apres
+# une pause recharge le modele (1 a 2 s).
+DEFAULT_KEEP_ALIVE = "30m"
+_KEEP_ALIVE_DUREE_RE = re.compile(r"^\d+[smh]$")
+
+
+def normalize_keep_alive(value: Any) -> str | int:
+    """Valide models.keep_alive ; retombe sur DEFAULT_KEEP_ALIVE si invalide.
+
+    Accepte une duree Ollama ("90s", "30m", "2h"), un nombre de secondes,
+    0 (dechargement immediat) ou -1 (illimite).
+    """
+    if isinstance(value, str):
+        texte = value.strip()
+        if _KEEP_ALIVE_DUREE_RE.match(texte):
+            return texte
+        if re.fullmatch(r"-?\d+", texte):
+            value = int(texte)
+    if isinstance(value, int) and not isinstance(value, bool) and value >= -1:
+        return value
+    logging.getLogger(__name__).warning(
+        "models.keep_alive invalide (%r) : %s utilise a la place", value, DEFAULT_KEEP_ALIVE
+    )
+    return DEFAULT_KEEP_ALIVE
+
+
 @dataclass
 class ModelConfig:
     """Configuration d'un modele LLM."""
@@ -95,6 +125,7 @@ class ModelsConfig:
         name="llama3.2:1b",
         temperature=0.5
     ))
+    keep_alive: str | int = DEFAULT_KEEP_ALIVE
 
 
 @dataclass
@@ -206,6 +237,9 @@ class RAGConfig:
                     name=lyra.get("name", "llama3.2:1b"),
                     temperature=lyra.get("temperature", 0.5)
                 )
+
+            if "keep_alive" in models_data:
+                config.models.keep_alive = normalize_keep_alive(models_data["keep_alive"])
 
         # Session config
         if "session" in data:

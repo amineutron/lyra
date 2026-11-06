@@ -228,6 +228,9 @@ rag:
 # Dual Models
 # =============================================================================
 models:
+  # Maintien des modeles en VRAM apres le dernier appel : "30m", "2h", un
+  # nombre de secondes, ou -1 pour illimite (reponse immediate, VRAM occupee).
+  keep_alive: "30m"
   ephaistos:
     name: "qwen2.5-coder:0.5b"   # experimental 3GB
     # name: "qwen2.5-coder:7b"   # production 5GB

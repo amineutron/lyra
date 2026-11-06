@@ -16,6 +16,12 @@ Client -> demon :
                                              # outils de PERFORMANCE_TOOLS, jamais de "ask"
   {"type": "analyze", "text": str}           # que ferait Lyra de cette phrase ? Regles
                                              # seules, sans execution ni effet de bord
+  {"type": "memory_list",   "store"?: "conversations|feedback|vocabulary", "limit"?: int}
+  {"type": "memory_update", "id": str, "text": str, "store"?: str}
+  {"type": "memory_delete", "id": str, "store"?: str}
+  {"type": "memory_add",    "word": str, "means": [str], "store"?: "vocabulary"}
+                                             # memoire editable (lyra/daemon/memory.py) :
+                                             # ids stricts, ecriture atomique, sans modele
   {"type": "tasks_poll"}
   {"type": "health"}
   {"type": "ping"}
@@ -36,6 +42,10 @@ Demon -> client :
                        "dangerous": bool, "destructive": bool, "performance": bool,
                        "compound": bool,   # plusieurs actions dans la phrase : une seule retenue
                        "warnings": list}
+  {"type": "memory_items", "items": list}
+  {"type": "memory_done",  "op": "update|delete|add", "id": str, "store": str,
+                           "restart_needed": bool}   # vocabulaire : lu au demarrage
+  {"type": "error", "text": str, "code"?: "invalid|not_found|internal"}  # memory_* seulement
   {"type": "tasks",   "active": list, "errors": list, "notifications": list}
   {"type": "health",  "data": dict}
   {"type": "pong"}

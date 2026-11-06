@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock, patch
 import httpx
 import pytest
 
-from lyra.core.config import RAGConfig
+from lyra.core.config import DEFAULT_KEEP_ALIVE, RAGConfig, normalize_keep_alive
 from lyra.models.model_manager import ModelManager, ModelResponse
 
 
@@ -208,3 +208,42 @@ class TestModelManager:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestKeepAlive:
+    """Duree de maintien des modeles en VRAM (models.keep_alive)."""
+
+    @pytest.mark.parametrize("valeur, attendu", [
+        ("30m", "30m"),
+        ("90s", "90s"),
+        ("2h", "2h"),
+        (" 15m ", "15m"),
+        (-1, -1),          # illimite, ancien comportement
+        (0, 0),            # dechargement immediat
+        (600, 600),        # secondes
+        ("-1", -1),
+        ("600", 600),
+    ])
+    def test_valeurs_valides(self, valeur, attendu):
+        assert normalize_keep_alive(valeur) == attendu
+
+    @pytest.mark.parametrize("valeur", ["", "bientot", "30 minutes", "m30", -5, None, True, 1.5])
+    def test_valeur_invalide_retombe_sur_le_defaut(self, valeur):
+        assert normalize_keep_alive(valeur) == DEFAULT_KEEP_ALIVE
+
+    def test_defaut_limite(self):
+        # Regression 2026-10-06 : -1 en dur gardait ~3 Go de VRAM occupes en permanence.
+        assert RAGConfig.from_dict({}).models.keep_alive == DEFAULT_KEEP_ALIVE == "30m"
+
+    def test_lu_depuis_la_config(self):
+        cfg = RAGConfig.from_dict({"models": {"keep_alive": "5m"}})
+        assert cfg.models.keep_alive == "5m"
+        # Les modeles gardent leurs valeurs par defaut quand seul keep_alive est donne
+        assert cfg.models.lyra.name == "llama3.2:1b"
+
+    def test_envoye_a_ollama(self, mock_http):
+        mock_client, _ = mock_http
+        mock_client.post.return_value = Mock(json=Mock(return_value={"message": {"content": "ok"}}))
+        m = ModelManager(RAGConfig.from_dict({"models": {"keep_alive": "10m"}}))
+        m.call_lyra("Bonjour")
+        assert mock_client.post.call_args.kwargs["json"]["keep_alive"] == "10m"
