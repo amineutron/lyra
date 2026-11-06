@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-06
+
 ### Breaking
 - `scripts/async_mcp_wrapper.py` no longer falls back to `~/dev/fedora-setup/scripts`: background MCP scripts are resolved only from the root-owned copy (`/usr/local/lib/lyra/scripts`, `LYRA_SCRIPTS_DIR` or `paths.scripts`). The old path was user-writable and covered by no sudoers rule; run the installer (or set `LYRA_SCRIPTS_DIR`) if you relied on it.
 
