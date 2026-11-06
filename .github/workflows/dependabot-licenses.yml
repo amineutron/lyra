@@ -1,0 +1,42 @@
+name: Dependabot licences
+# Regénère THIRD_PARTY_LICENSES.md sur les PR Dependabot : un bump de version
+# change l'inventaire sans changer aucune licence, et le contrôle
+# "licences-tierces" échouait à chaque fois jusqu'à une régénération manuelle.
+on:
+  pull_request_target:
+    branches: [main]
+    paths: [uv.lock, pyproject.toml]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  regenerate:
+    # Uniquement les PR ouvertes par Dependabot : ce job tourne avec un jeton en
+    # écriture, il ne doit jamais exécuter le code d'une PR tierce.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: astral-sh/setup-uv@v7
+      - name: Régénérer l'inventaire (identique à make licenses)
+        run: |
+          uv sync --frozen --extra dev --python 3.12 -q
+          { echo "# Licences des dépendances tierces"; echo; uv run --frozen pip-licenses --format=markdown --with-urls --order=license | awk '!seen[$0]++'; } > THIRD_PARTY_LICENSES.md
+      - name: Commiter si l'inventaire a changé
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet THIRD_PARTY_LICENSES.md; then
+            echo "Inventaire déjà à jour"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add THIRD_PARTY_LICENSES.md
+          git commit -m "chore(deps): regenerate third-party licenses"
+          git push origin "HEAD:${BRANCH}"
+          # Un push avec GITHUB_TOKEN ne déclenche pas la CI : on la relance à la main
+          gh workflow run tests.yml --ref "${BRANCH}"
