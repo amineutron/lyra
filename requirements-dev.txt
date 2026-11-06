@@ -12,7 +12,7 @@ ruff>=0.1.0  # Linter rapide (remplace flake8/black/isort)
 mypy>=1.0.0  # Type checking
 
 # Coverage
-coverage>=7.17.0
+coverage>=7.17.1
 
 # Utilitaires
 ipython>=9.18.0  # REPL amélioré
