@@ -65,3 +65,12 @@ demandes/
 lyra-v1-CDC
 readme
 .venv-licenses/
+
+# ---------- Fichiers locaux (sauvegardes de config, medias, captures) ----------
+# Sauvegardes de config.yaml : peuvent contenir des reglages personnels
+config.yaml.bak*
+config.yaml.installer-sanitized-*
+# Audio protege par le droit d'auteur : seul assets/back_in_black_beats.json est versionne
+assets/*.mp3
+# Captures et schemas jetables a la racine de docs/ (docs/assets/ reste versionne)
+/docs/*.png
