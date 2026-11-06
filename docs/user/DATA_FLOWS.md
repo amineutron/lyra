@@ -13,6 +13,7 @@ Lyra est **locale par défaut** : le traitement de la voix, le LLM, la recherche
 | Retours utilisateur (« c'était bien / pas bien ») | RAG enhanced | `data/feedback.json` | jusqu'à suppression | `rm data/feedback.json` |
 | Index des spécifications d'outils | indexeur RAG | `.chromadb/` (embeddings locaux) | jusqu'à réindexation | `rm -rf .chromadb && make index` |
 | Réglages (voix, modèles) | menu `/setting` | `~/.lyra/settings.json` | jusqu'à modification | supprimer le fichier |
+| Historique des échanges | le démon | `~/.lyra/history.jsonl` (0600 ; phrase, canal, outil, réussite ; sans son ni arguments) | rotation à 2 Mo, un seul ancien fichier | `lyra --purge` ou supprimer le fichier |
 | Erreurs | journal d'erreurs | `~/.lyra/logs/errors/` | rotation par le démon | supprimer le dossier |
 | Socket du démon | démon | `~/.lyra/lyra.sock` (UNIX, droits 0600) | durée d'exécution | automatique |
 | Journal des actions MCP | mcp-tracking | `~/.local/state/tracking/` (via l'API locale 127.0.0.1:8765) | purge automatique (7 jours après la fin) | API tracking |

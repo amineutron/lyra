@@ -1,11 +1,12 @@
 """Purge des donnees gardees en clair (roadmap #54), logique pure et testee.
 
-Trois magasins contiennent du texte venu de l'utilisateur (voir
+Quatre magasins contiennent du texte venu de l'utilisateur (voir
 docs/user/DATA_FLOWS.md) :
 
 - ``data/session_history.db`` : requetes et reponses (SQLite) ;
 - ``data/feedback.json`` : requetes notees et motifs appris du feedback ;
-- ``~/.lyra/logs/errors/`` : arguments des outils MCP en echec.
+- ``~/.lyra/logs/errors/`` : arguments des outils MCP en echec ;
+- ``~/.lyra/history.jsonl`` (+ ``.1``) : journal d'historique vocal (une ligne par echange).
 
 La purge est une OPTION : rien n'est efface sans ``lyra --purge`` ou sans
 ``privacy.purge_on_stop: true``. Chaque purge se fait en trois temps : ``plan``
@@ -22,6 +23,7 @@ from pathlib import Path
 SESSION_DB = Path("data") / "session_history.db"
 FEEDBACK_JSON = Path("data") / "feedback.json"
 ERROR_LOGS = Path(".lyra") / "logs" / "errors"
+HISTORY_LOG = Path(".lyra") / "history.jsonl"
 # champs du feedback qui portent du texte utilisateur ou des motifs tires de ce texte
 _FEEDBACK_KEYS = ("interactions", "hits", "enrichments")
 
@@ -62,6 +64,21 @@ def _error_logs(folder: Path) -> list[Path]:
     return sorted(p for p in folder.glob("*.log") if p.is_file()) if folder.is_dir() else []
 
 
+def _history_files(path: Path) -> list[Path]:
+    return [p for p in (path, path.with_name(path.name + ".1")) if p.is_file()]
+
+
+def _history_lines(path: Path) -> int:
+    n = 0
+    for p in _history_files(path):
+        try:
+            with p.open("rb") as f:
+                n += sum(1 for _ in f)
+        except OSError:
+            pass
+    return n
+
+
 def plan(root: Path, home: Path) -> list[PurgeItem]:
     """Ce que contiennent les magasins, sans rien modifier."""
     errors = home / ERROR_LOGS
@@ -69,6 +86,7 @@ def plan(root: Path, home: Path) -> list[PurgeItem]:
         PurgeItem("historique des echanges", root / SESSION_DB, _session_rows(root / SESSION_DB), "echanges"),
         PurgeItem("retours et motifs appris", root / FEEDBACK_JSON, _feedback_entries(root / FEEDBACK_JSON), "entrees"),
         PurgeItem("journaux d'erreurs MCP", errors, len(_error_logs(errors)), "fichiers"),
+        PurgeItem("journal d'historique vocal", home / HISTORY_LOG, _history_lines(home / HISTORY_LOG), "lignes"),
     ]
 
 
@@ -102,12 +120,14 @@ def _purge_feedback(path: Path) -> None:
 
 
 def purge(root: Path, home: Path) -> list[PurgeItem]:
-    """Efface les trois magasins ; renvoie ce qu'ils contenaient avant."""
+    """Efface les quatre magasins ; renvoie ce qu'ils contenaient avant."""
     before = plan(root, home)
     _purge_session(root / SESSION_DB)
     _purge_feedback(root / FEEDBACK_JSON)
     for log in _error_logs(home / ERROR_LOGS):
         log.unlink(missing_ok=True)
+    for f in _history_files(home / HISTORY_LOG):
+        f.unlink(missing_ok=True)
     return before
 
 

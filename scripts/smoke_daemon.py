@@ -3,6 +3,9 @@
 Se connecte au socket du demon et verifie, sans rien executer :
   hello -> ready, ping -> pong, health -> health,
   analyze -> analysis (une phrase connue des regles est resolue),
+  memory_list -> memory_items (lecture seule, 1 element : la memoire editable est servie),
+  memory_add d'un mot sans « veut dire » -> erreur « invalid » (refus avant toute ecriture),
+  memory_delete d'un id inexistant -> erreur « not_found » (rien n'est supprime),
   tool en mode unattended sur un outil hors PERFORMANCE_TOOLS -> refuse.
 
 Aucun appareil n'est touche : l'analyse n'execute rien et l'appel d'outil
@@ -29,6 +32,7 @@ KNOWN_TOOL = "tv.power_on"
 # l'executerait, et le test doit alors echouer sans avoir rien change.
 REFUSED_TOOL = "fedora.vm_status"
 REFUSAL_TEXT = "sans presence humaine"
+ABSENT_MEMORY_ID = "conv-999999999999"   # valide mais jamais atteint par un vrai rowid
 
 
 def check_ready(m: dict) -> str:
@@ -66,11 +70,34 @@ def check_refusal(replies: list[dict]) -> str:
     return ""
 
 
+def check_memory_list(m: dict) -> str:
+    if m.get("type") != "memory_items":
+        return f"memory_list non reconnu (demon a redemarrer ?) : {m.get('type')} {m.get('text', '')}".strip()
+    return "" if isinstance(m.get("items"), list) else "liste de souvenirs illisible"
+
+
+def check_memory_absent(m: dict) -> str:
+    """Un id valide mais inexistant : refuse avec le code not_found, sans rien supprimer."""
+    if m.get("type") == "error" and m.get("code") == "not_found":
+        return ""
+    return f"suppression d'un id inexistant : {m.get('type')} {m.get('text', '')}".strip()
+
+
+def check_memory_add_refused(m: dict) -> str:
+    """Un ajout sans « veut dire » : refuse par validation, aucun fichier touche."""
+    if m.get("type") == "error" and m.get("code") == "invalid":
+        return ""
+    return f"memory_add non reconnu (demon a redemarrer ?) : {m.get('type')} {m.get('text', '')}".strip()
+
+
 STEPS = (
     ("hello", {"type": "hello", "session": "smoke", "client": "oneshot"}, check_ready),
     ("ping", {"type": "ping"}, check_pong),
     ("health", {"type": "health"}, check_health),
     ("analyze", {"type": "analyze", "text": KNOWN_PHRASE}, check_analysis),
+    ("memory_list", {"type": "memory_list", "limit": 1}, check_memory_list),
+    ("memory_add", {"type": "memory_add", "word": "smoke", "means": []}, check_memory_add_refused),
+    ("memory_delete", {"type": "memory_delete", "id": ABSENT_MEMORY_ID}, check_memory_absent),
 )
 
 
