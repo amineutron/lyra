@@ -128,3 +128,26 @@ def test_humanize_single_long_sentence_cut_at_word():
 
 def test_humanize_drops_emojis():
     assert humanize_for_speech("Terminé ✅ 🎉 bravo") == "Terminé bravo"
+
+
+# ---- summarize_result ----
+from lyra.client.speech_fr import DONE_PHRASE, summarize_result  # noqa: E402
+
+
+@pytest.mark.parametrize("tool,raw,expected", [
+    ("tv.get_state", '{"powerstate": "On", "volume": 60, "muted": false}',
+     "La télé est allumée, volume 60."),
+    ("tv.get_state", '{"powerstate": "Standby", "volume": 20, "muted": true}',
+     "La télé est éteinte, volume 20. Le son est coupé."),
+    ("tv.get_state", '{"result": "{\\"powerstate\\": \\"On\\", \\"volume\\": 35}"}',
+     "La télé est allumée, volume 35."),
+    ("denon.get_status", '{"power": "on", "volume": 45, "source": "TV", "muted": false}',
+     "L'ampli est allumé, volume 45, source TV."),
+    ("tv.volume_up", '{"ok": true}', DONE_PHRASE),
+    ("hue.turn_on_group", "[1, 2]", DONE_PHRASE),
+    ("tv.mute", "", DONE_PHRASE),
+    ("tv.volume_set", "Volume réglé à 30%. Tout va bien. Autre phrase.",
+     "Volume réglé à 30 pour cent."),
+])
+def test_summarize_result(tool, raw, expected):
+    assert summarize_result(tool, raw) == expected

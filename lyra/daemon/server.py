@@ -399,6 +399,7 @@ class LyraDaemon:
                 yes=bool(options.get("yes", False)),
                 interactive=bool(options.get("interactive", False)),
                 webhook_url=self.webhook_url,
+                plain_results=bool(options.get("plain_results", False)),
             )
             exit_code = code
             channel.send({"type": "result", "exit_code": code, "executed": True})

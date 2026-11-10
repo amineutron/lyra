@@ -19,7 +19,10 @@ import unicodedata
 from typing import Any, Mapping, Optional
 
 MAX_SPOKEN_CHARS = 300
+SPOKEN_LIMIT = 160  # une reponse parlee reste courte : le detail est a l'ecran
 SCREEN_POINTER = "Le détail est affiché à l'écran."
+DONE_PHRASE = "C'est fait."
+FAIL_PHRASE = "Ça n'a pas marché. Le détail est à l'écran."
 
 # Libelles lisibles : "serveur.outil" -> (phrase avec arguments, phrase sans).
 # La premiere forme est utilisee si tous les champs {x} sont presents.
@@ -279,7 +282,8 @@ def _cut_at_sentence(text: str, limit: int) -> str:
     return text[:limit].rsplit(" ", 1)[0].rstrip(",;:")
 
 
-def humanize_for_speech(text: str, limit: int = MAX_SPOKEN_CHARS) -> str:
+def humanize_for_speech(text: str, limit: int = MAX_SPOKEN_CHARS,
+                        max_sentences: Optional[int] = None) -> str:
     """Texte a ecouter : sans codes, symboles, liens ni noms de fonctions.
 
     JSON ou tres long : on renvoie vers l'ecran plutot que de tout lire.
@@ -308,7 +312,86 @@ def humanize_for_speech(text: str, limit: int = MAX_SPOKEN_CHARS) -> str:
     cleaned = _drop_symbols(cleaned)
     cleaned = " ".join(cleaned.replace("\n", ". ").split())
     cleaned = _SPACE_BEFORE_STOP_RE.sub(r"\1", cleaned)
+    if max_sentences is not None:
+        cleaned = " ".join(_SENTENCE_RE.split(cleaned)[:max_sentences])
     cleaned = _cut_at_sentence(cleaned, limit)
     if many_lines and cleaned:
         cleaned = f"{cleaned.rstrip('.')}. {SCREEN_POINTER}"
     return cleaned
+
+
+# --------------------------------------------------------------------------
+# Resume parle d'un resultat d'outil (le resultat brut, pas une reformulation LLM)
+# --------------------------------------------------------------------------
+
+_ON_WORDS = frozenset({"on", "true", "allume", "allumee", "yes", "oui", "1"})
+
+
+def _try_json(text: str) -> Any:
+    try:
+        return json.loads(text)
+    except (ValueError, TypeError):
+        return None
+
+
+def _unwrap(data: Any) -> Any:
+    """{"result": "<json>"} (enveloppe MCP) -> contenu."""
+    for _ in range(2):
+        if isinstance(data, dict) and set(data) == {"result"}:
+            inner = data["result"]
+            data = _try_json(inner) if isinstance(inner, str) else inner
+            if data is None:
+                return inner
+    return data
+
+
+def _is_on(value: Any) -> bool:
+    return str(value).strip().lower() in _ON_WORDS
+
+
+def _device_summary(label: str, data: Mapping[str, Any], power_keys: tuple[str, ...],
+                    feminine: bool = False) -> str:
+    power = next((data[k] for k in power_keys if k in data), None)
+    parts = []
+    if power is None:
+        head = f"{label}"
+    else:
+        on, off = ("allumée", "éteinte") if feminine else ("allumé", "éteint")
+        head = f"{label} est {on}" if _is_on(power) else f"{label} est {off}"
+    parts.append(head)
+    volume = data.get("volume")
+    if isinstance(volume, (int, float)) and not isinstance(volume, bool):
+        parts.append(f"volume {int(volume)}")
+    source = data.get("source")
+    if isinstance(source, str) and source.strip():
+        parts.append(f"source {source.strip()}")
+    sentence = ", ".join(parts) + "."
+    if data.get("muted") is True:
+        sentence += " Le son est coupé."
+    return sentence
+
+
+_SUMMARIZERS = {
+    "tv.get_state": lambda d: _device_summary("La télé", d, ("powerstate", "power"), feminine=True),
+    "denon.get_status": lambda d: _device_summary("L'ampli", d, ("power", "powerstate")),
+}
+
+
+def summarize_result(tool: Optional[str], text: str) -> str:
+    """Phrase courte et fiable pour un resultat d'outil reussi.
+
+    JSON connu -> resume deterministe ; JSON inconnu -> "C'est fait." ; texte
+    simple -> sa premiere phrase nettoyee.
+    """
+    raw = _ANSI_RE.sub("", text or "").strip()
+    if not raw:
+        return DONE_PHRASE
+    data = _unwrap(_try_json(raw))
+    if isinstance(data, Mapping):
+        summarizer = _SUMMARIZERS.get(_full_name(tool or ""))
+        return (summarizer(data) if summarizer else "") or DONE_PHRASE
+    if isinstance(data, (list, int, float, bool)):
+        return DONE_PHRASE
+    plain = humanize_for_speech(data if isinstance(data, str) else raw,
+                                limit=SPOKEN_LIMIT, max_sentences=1)
+    return plain or DONE_PHRASE

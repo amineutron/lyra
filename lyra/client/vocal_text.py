@@ -15,9 +15,15 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from dataclasses import dataclass, replace
 from typing import Optional
 
-from lyra.client.speech_fr import humanize_for_speech
+from lyra.client.speech_fr import (
+    FAIL_PHRASE,
+    SPOKEN_LIMIT,
+    humanize_for_speech,
+    summarize_result,
+)
 
 MAX_SPOKEN_CHARS = 300
 
@@ -65,7 +71,8 @@ def spoken_text(message: dict) -> Optional[str]:
         return None
     if message.get("kind") not in SPOKEN_KINDS:
         return None
-    text = humanize_for_speech(str(message.get("text", "")))
+    text = humanize_for_speech(str(message.get("text", "")), limit=SPOKEN_LIMIT,
+                               max_sentences=2)
     return text or None
 
 
@@ -87,3 +94,55 @@ def interpret_confirmation(transcript: str, danger: bool = False) -> Optional[st
     if wordset & yes:
         return ANSWER_YES
     return None
+
+
+@dataclass(frozen=True)
+class SpeechState:
+    """Etat immuable d'une requete : dernier outil, echec annonce, phrases dites."""
+
+    last_tool: Optional[str] = None
+    failed: bool = False
+    said: frozenset = frozenset()
+
+
+def _speech_key(text: str) -> str:
+    return " ".join(_normalize(text))
+
+
+def plan_speech(message: dict, state: SpeechState) -> tuple[Optional[str], SpeechState]:
+    """Que dire pour ce message ? Retourne (texte ou None, nouvel etat).
+
+    - resultat d'outil : resume court du resultat brut ;
+    - echec / erreur : une seule phrase, jamais le texte de l'erreur (chemins,
+      traces) ; le commentaire LYRA qui suit un echec est tu ;
+    - une phrase deja dite dans la requete n'est pas repetee.
+    """
+    if message.get("type") != "output":
+        return None, state
+    kind = message.get("kind")
+    if kind == "tool_call":
+        return None, replace(state, last_tool=message.get("tool"))
+    if kind not in SPOKEN_KINDS:
+        return None, state
+
+    raw = str(message.get("text", ""))
+    failed = state.failed
+    if kind == "tool_result":
+        if message.get("success", True):
+            spoken: Optional[str] = summarize_result(state.last_tool, raw)
+        else:
+            spoken, failed = FAIL_PHRASE, True
+    elif kind == "error":
+        spoken, failed = FAIL_PHRASE, True
+    elif kind == "lyra_tag":
+        spoken = None if state.failed else (
+            humanize_for_speech(raw, limit=SPOKEN_LIMIT, max_sentences=1) or None)
+    else:  # lyra
+        spoken = humanize_for_speech(raw, limit=SPOKEN_LIMIT, max_sentences=2) or None
+
+    if spoken is None:
+        return None, replace(state, failed=failed)
+    key = _speech_key(spoken)
+    if key in state.said:
+        return None, replace(state, failed=failed)
+    return spoken, replace(state, failed=failed, said=state.said | {key})

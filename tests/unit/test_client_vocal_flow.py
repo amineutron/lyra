@@ -81,3 +81,50 @@ def test_dangerous_confirmation_wording():
     # "ok vas-y" n'est pas une confirmation pour un outil dangereux : redemande
     assert voice.said[1] == "Je n'ai pas compris. Oui ou non ?"
     assert channel.sent[-1] == {"type": "answer", "value": "non"}
+
+
+def test_tool_call_between_lyra_sentence_and_confirm_does_not_release_it():
+    """Regression : le tool_call (silencieux) liberait la phrase technique retenue."""
+    messages = [
+        {"type": "output", "kind": "lyra", "text": "Je executer ?"},
+        {"type": "output", "kind": "tool_call", "tool": "tv.get_state", "arguments": {}},
+        {"type": "ask", "kind": "confirm", "prompt": "Executer tv.get_state ? [O/n]",
+         "payload": {"tool": "tv.get_state", "arguments": {}, "danger": False}},
+        {"type": "output", "kind": "tool_result", "success": True,
+         "text": '{"powerstate": "On", "volume": 60, "muted": false}'},
+        {"type": "result"},
+    ]
+    _status, _channel, voice = _run(messages, ["oui"])
+    assert voice.said == ["Je vais consulter l'état de la télé. Tu confirmes ?",
+                          "La télé est allumée, volume 60."]
+
+
+def test_failure_is_one_short_sentence_and_lyra_comment_is_silent():
+    messages = [
+        {"type": "output", "kind": "tool_call", "tool": "hue.turn_on_group",
+         "arguments": {}},
+        {"type": "output", "kind": "tool_result", "success": False,
+         "text": "Le processus d'activation du groupe a échoué. Détail : voir le fichier de log"},
+        {"type": "output", "kind": "lyra_tag", "text": "ca a pas marche... details dans le log"},
+        {"type": "result"},
+    ]
+    _status, _channel, voice = _run(messages, [])
+    assert voice.said == ["Ça n'a pas marché. Le détail est à l'écran."]
+
+
+def test_same_sentence_is_not_repeated_in_one_request():
+    messages = [
+        {"type": "output", "kind": "tool_result", "success": True, "text": "Volume réglé."},
+        {"type": "output", "kind": "tool_result", "success": True, "text": "Volume réglé."},
+        {"type": "result"},
+    ]
+    _status, _channel, voice = _run(messages, [])
+    assert voice.said == ["Volume réglé."]
+
+
+def test_long_reply_is_cut_to_two_short_sentences():
+    long_text = ("Première phrase utile. Deuxième phrase utile. "
+                 "Troisième phrase inutile. Quatrième phrase inutile.")
+    messages = [{"type": "output", "kind": "lyra", "text": long_text}, {"type": "result"}]
+    _status, _channel, voice = _run(messages, [])
+    assert voice.said == ["Première phrase utile. Deuxième phrase utile."]

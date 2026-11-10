@@ -23,8 +23,9 @@ from lyra.client.render import render_output, render_progress
 from lyra.client.speech_fr import confirm_question, humanize_for_speech
 from lyra.client.vocal_text import (
     ANSWER_NO,
+    SpeechState,
     interpret_confirmation,
-    spoken_text,
+    plan_speech,
 )
 from lyra.core.constants import DESTRUCTIVE_TOOLS
 from lyra.daemon.protocol import ChannelClosed, LineChannel
@@ -63,6 +64,7 @@ def _load_voice(user_settings):
             language=stt_cfg.get("language", "fr"),
             device=stt_cfg.get("device", "cuda"),
             compute_type=stt_cfg.get("compute_type", "float16"),
+            initial_prompt=stt_cfg.get("initial_prompt") or None,
             audio_config=audio_config,
             tts_speaker_id=int(tts_cfg.get("speaker_id", 0)),
             tts_length_scale=float(tts_cfg.get("length_scale", 1.0)),
@@ -126,23 +128,29 @@ def _process_request(channel: LineChannel, voice, text: str, mode: str,
             "type": "request",
             "text": text,
             "options": {"mode": mode, "yes": False, "verbose": verbose,
-                        "interactive": True},
+                        "interactive": True,
+                        # resultat brut : pas de reformulation LLM (lente et
+                        # approximative), resume court cote client
+                        "plain_results": True},
         })
         # La phrase "Je vais ... Tu confirmes ?" du demon precede le ask de
         # confirmation : on la retient et on ne la lit pas si une confirmation
         # decrite en francais suit (sinon elle est lue avant le message suivant).
         held: Optional[str] = None
+        speech = SpeechState()
         while True:
             message = channel.recv(timeout=600)
             mtype = message.get("type")
             if mtype == "output":
                 render_output(message)
-                _speak(voice, held)
-                held = None
-                to_say = spoken_text(message)
+                to_say, speech = plan_speech(message, speech)
                 if message.get("kind") == "lyra":
+                    _speak(voice, held)
                     held = to_say
-                else:
+                elif to_say:
+                    # un message silencieux (tool_call) ne libere pas la phrase retenue
+                    _speak(voice, held)
+                    held = None
                     _speak(voice, to_say)
             elif mtype == "progress":
                 render_progress(message, verbose=verbose)
