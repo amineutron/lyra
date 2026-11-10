@@ -6,6 +6,9 @@ from .base import make, normalize
 
 _CAST_VERBS = r'\b(?:caste?[rz]?|diffuse?[rz]?|envoie[rz]?)\b'
 _CAST_DEST = r'\b(?:chromecast|cast|tele|tv|television|ecran de la tele)\b'
+# Destination qui designe le Chromecast lui-meme : suffit sans verbe de diffusion. « tele » / « tv »
+# seuls non : pour une video YouTube, la regle TV (pylips, plus bas dans le registre) la joue.
+_CAST_DEST_CHROMECAST = r'\b(?:chromecast|cast)\b'
 _YOUTUBE_URL_RE = r'https?://(?:www\.)?(?:youtube\.com/watch\S*|youtu\.be/[\w-]+)'
 
 
@@ -32,10 +35,11 @@ def detect(query: str):
         args = {"level": level} if level is not None else {}
         return make("catt.cast_volume", args, "rule: volume du cast", 0.92)
 
-    # cast_youtube: URL YouTube + verbe cast/diffuse, OU destination chromecast/tele
-    # (lyra#23 : "mets ca sur le chromecast <url>" tombait sur screen-manager.open_url)
+    # cast_youtube: URL YouTube + verbe cast/diffuse, OU destination chromecast/cast
+    # (lyra#23 : "mets ca sur le chromecast <url>" tombait sur screen-manager.open_url).
+    # « sur la tv / la tele » sans verbe de diffusion : tv.youtube_video (regles/tv.py), pas ici.
     m_cyt = re.search(_YOUTUBE_URL_RE, query, re.IGNORECASE)   # requete d'origine : la casse de l'id compte (recette 2026-09-23)
-    if m_cyt and (re.search(_CAST_VERBS, q) or re.search(_CAST_DEST, q)):
+    if m_cyt and (re.search(_CAST_VERBS, q) or re.search(_CAST_DEST_CHROMECAST, q)):
         return make("catt.cast_youtube", {"url": m_cyt.group(0)},
                     "rule: cast youtube URL", 0.94)
 
