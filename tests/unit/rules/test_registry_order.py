@@ -126,3 +126,30 @@ class TestScreenManagerHorsRegistre:
         from lyra.rules import detect
         r = detect("ouvre firefox sur l'ecran 2")
         assert r is None or not r.tool.startswith("screen-manager")
+
+
+class TestYoutubeTvOuCast:
+    """Une URL YouTube + la TV sans verbe de diffusion : pylips (tv.youtube_video), pas le Chromecast.
+
+    CATT passe avant TV dans le registre et sa destination « tv / tele » seule suffisait a capter
+    la phrase : la regle tv.youtube_video ne repondait jamais. Un verbe de diffusion ou le mot
+    chromecast / cast reste le signe d'un envoi par CATT.
+    """
+
+    URL = "https://youtu.be/dQw4w9WgXcQ"
+
+    def test_joue_la_video_sur_la_tv_va_a_pylips(self):
+        r = detect(f"joue cette video youtube sur la tv {self.URL}")
+        assert r is not None and r.tool == "tv.youtube_video" and r.arguments == {"video": self.URL}
+
+    def test_mets_la_video_sur_la_tele_va_a_pylips(self):
+        assert tool(f"mets cette video sur la tele {self.URL}") == "tv.youtube_video"
+
+    def test_diffuse_sur_la_tv_reste_au_chromecast(self):
+        assert tool(f"diffuse {self.URL} sur la tv") == "catt.cast_youtube"
+
+    def test_chromecast_sans_verbe_reste_au_chromecast(self):
+        assert tool(f"mets ca sur le chromecast {self.URL}") == "catt.cast_youtube"
+
+    def test_cast_sans_verbe_reste_au_chromecast(self):
+        assert tool(f"regarde ca sur le cast {self.URL}") == "catt.cast_youtube"
