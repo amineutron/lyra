@@ -226,13 +226,12 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
         rui.tool_call(tool_name, arguments)
         # meme prompt explicite que remote_ui.confirm_action (outil + cible,
         # mise en avant destructive) — les deux chemins etaient incoherents
-        from .remote_ui import build_confirm_prompt
+        from .remote_ui import build_confirm_payload, build_confirm_prompt
         prompt, _danger = build_confirm_prompt(tool_name, arguments, is_dangerous)
         if not is_dangerous:
             prompt += " [O/n/m]"
         answer = rui.ask("confirm", prompt,
-                         {"tool": tool_name, "arguments": arguments,
-                          "danger": is_dangerous}).lower()
+                         build_confirm_payload(tool_name, arguments, is_dangerous)).lower()
         rounds = 0
         while is_modify_answer(answer) and rounds < MAX_MODIFY_ROUNDS:
             rounds += 1
@@ -246,8 +245,7 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
             if not is_dangerous:
                 prompt += " [O/n/m]"
             answer = rui.ask("confirm", prompt,
-                             {"tool": tool_name, "arguments": arguments,
-                              "danger": is_dangerous}).lower()
+                             build_confirm_payload(tool_name, arguments, is_dangerous)).lower()
         confirmed = (answer in ("o", "oui") if is_dangerous
                      else answer in ("", "o", "oui"))
         if not confirmed:

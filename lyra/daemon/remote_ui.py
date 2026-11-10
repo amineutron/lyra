@@ -11,10 +11,14 @@ UIContext construit ici et n'a AUCUNE idee qu'il parle a un socket.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Optional
 
 from ..core.workflows.context import UIContext
+from .display import build_display
 from .protocol import ASK_TIMEOUT, ChannelClosed, LineChannel
+
+logger = logging.getLogger(__name__)
 
 
 class RequestCancelled(Exception):
@@ -50,6 +54,25 @@ def build_confirm_prompt(tool_name: str, arguments: dict,
         return (f"! ACTION SENSIBLE ! {tool_name}{target} — "
                 f"operation importante (rien n'est detruit). Confirmer ?", True)
     return (f"Executer {tool_name}{target} ?", False)
+
+def build_confirm_payload(tool_name: str, arguments: dict, danger: bool,
+                          state: Optional[dict] = None) -> dict:
+    """Payload d'un `ask` de kind confirm, avec `display` si l'outil s'y prete.
+
+    `display` est additif (les clients existants l'ignorent) et purement
+    decoratif : un echec de sa construction ne doit jamais bloquer la
+    confirmation.
+    """
+    payload = {"tool": tool_name, "arguments": arguments, "danger": danger}
+    try:
+        display = build_display(tool_name, arguments, state)
+    except Exception:
+        logger.warning("build_display a echoue pour %s", tool_name, exc_info=True)
+        display = None
+    if display is not None:
+        payload["display"] = display
+    return payload
+
 
 class RemoteUI:
     """Traduit les appels UI en messages protocole sur un canal."""
@@ -138,8 +161,7 @@ class RemoteUI:
         """
         prompt, danger = build_confirm_prompt(tool_name, arguments, danger)
         answer = self.ask("confirm", prompt,
-                          {"tool": tool_name, "arguments": arguments,
-                           "danger": danger}).lower()
+                          build_confirm_payload(tool_name, arguments, danger)).lower()
         if answer in ("m", "modify", "modifier"):
             return "modify"
         # Une action sensible exige un "oui" explicite : Entree ne suffit pas
