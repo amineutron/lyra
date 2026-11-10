@@ -50,7 +50,7 @@ PLAYERS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("aplay", ("-q",)),
 )
 
-DEFAULT_VOLUME = 0.6
+DEFAULT_VOLUME = 0.35
 MAX_VOLUME = 1.0           # jamais plus fort que la voix
 SAFETY_TIMEOUT_S = 5.0     # un lecteur encore vivant apres ce delai est tue
 
