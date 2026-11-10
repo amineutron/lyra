@@ -26,6 +26,7 @@ SRC = ROOT / "installer" / "assets" / "mascots_svg"
 STATES = ("sleep", "idle", "work", "busy", "ok", "err")
 COLS = 8
 MAX_LOOP_MS = 4000
+BLEND_FRAMES = 8
 
 PAGE_CSS = """
 html,body{margin:0;background:transparent}
@@ -51,8 +52,11 @@ out.textContent=JSON.stringify(durs);
 FRAMES_JS = """
 const fps=%(fps)d, loop=%(loop)d;
 for(const [i,cell] of [...document.querySelectorAll('.cell')].entries()){
-  const t=(i*1000/fps)%%loop;
-  for(const a of cell.getAnimations({subtree:true})){a.pause();a.currentTime=t;}
+  const t=i*1000/fps;
+  for(const a of cell.getAnimations({subtree:true})){
+    const infinite=a.effect.getComputedTiming().iterations===Infinity;
+    a.pause();a.currentTime=infinite?t:t%%loop;
+  }
 }
 """
 
@@ -103,21 +107,49 @@ def probe_loop_ms(chrome: str, fragment: str, name: str, state: str, size: int, 
     return max(loop, 1000) if durations else 2000
 
 
+def crossfade_loop(png: Path, frames: int, extra: int, size: int) -> None:
+    """Make the sheet loop seamlessly: the first `extra` frames fade in from the frames that
+    would follow the last one, which were rendered after the loop (frames .. frames+extra)."""
+    from PIL import Image, ImageChops  # Pillow is already an installer dependency
+
+    sheet = Image.open(png).convert("RGBA")
+
+    def cut(i: int):
+        r, c = divmod(i, COLS)
+        return sheet.crop((c * size, r * size, (c + 1) * size, (r + 1) * size))
+
+    rows = math.ceil(frames / COLS)
+    out = Image.new("RGBA", (COLS * size, rows * size), (0, 0, 0, 0))
+    for i in range(frames):
+        frame = cut(i)
+        if i < extra:
+            weight = (i + 1) / (extra + 1)
+            tail, head = cut(frames + i), frame
+            tail.putalpha(ImageChops.multiply(tail.getchannel("A"), Image.new("L", tail.size, round(255 * (1 - weight)))))
+            head.putalpha(ImageChops.multiply(head.getchannel("A"), Image.new("L", head.size, round(255 * weight))))
+            frame = Image.alpha_composite(tail, head)
+        r, c = divmod(i, COLS)
+        out.paste(frame, (c * size, r * size))
+    out.save(png, optimize=True)
+
+
 def render_state(chrome: str, name: str, state: str, args, tmp: Path) -> dict:
     fragment = (SRC / f"{name}.html").read_text()
     loop = probe_loop_ms(chrome, fragment, name, state, args.size, tmp)
     frames = max(2, round(loop * args.fps / 1000))
-    rows = math.ceil(frames / COLS)
+    extra = min(BLEND_FRAMES, frames // 4)
+    rows = math.ceil((frames + extra) / COLS)
     script = FRAMES_JS % {"fps": args.fps, "loop": loop}
     page = tmp / f"sheet_{name}_{state}.html"
-    page.write_text(build_page(fragment, name, state, args.size, frames, script, False))
+    page.write_text(build_page(fragment, name, state, args.size, frames + extra, script, False))
     out_dir = args.out / name
     out_dir.mkdir(parents=True, exist_ok=True)
     png = out_dir / f"{state}.png"
     subprocess.run(chrome_args(chrome, [f"--window-size={COLS * args.size},{rows * args.size}",
                                         "--virtual-time-budget=800", f"--screenshot={png}", page.as_uri()]),
                    capture_output=True, timeout=120, check=True)
-    return {"name": name, "state": state, "frames": frames, "loop_ms": loop, "rows": rows}
+    crossfade_loop(png, frames, extra, args.size)
+    return {"name": name, "state": state, "frames": frames, "loop_ms": loop, "rows": math.ceil(frames / COLS)}
 
 
 def main() -> None:
