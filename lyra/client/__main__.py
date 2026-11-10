@@ -3,7 +3,8 @@ Lyra Client - Point d'entree CLI.
 
 Route les invocations :
 - one-shot texte  -> demon (relance auto si mort) puis fallback standalone
-- interactif / vocal / legacy / --standalone -> main_rag historique (Phase 4
+- interactif -> REPL demon ; vocal -> lyra.client.vocal (demon, repli standalone) ;
+  legacy / --standalone / --check / --debug -> main_rag historique (Phase 4
   du chantier demon : le REPL deviendra client a son tour)
 
 Codes de sortie identiques a run_one_shot : 0=ok, 1=erreur, 2=annule, 3=args.
@@ -165,18 +166,28 @@ def main() -> int:
 
     one_shot = args.request is not None
     daemon_capable = (
-        not args.standalone and not args.vocal and not args.check
+        not args.standalone and not args.check
         and not args.debug and not unknown and args.config == "config.yaml"
     )
 
-    if daemon_capable and one_shot:
+    if daemon_capable and args.vocal and not one_shot:
+        # Vocal : capture/STT/TTS locaux, pipeline dans le demon
+        from lyra.client.vocal import run_vocal
+        code = run_vocal(args)
+        if code >= 0:
+            return code
+        print("  [!] Demon ou voix indisponible, bascule en mode standalone",
+              file=sys.stderr)
+    elif daemon_capable and args.vocal:
+        pass  # vocal + requete directe : historique standalone
+    elif daemon_capable and one_shot:
         code = run_oneshot_via_daemon(args.request, args)
         if code >= 0:
             return code
         print("  [!] Demon indisponible, bascule en mode standalone (plus lent)",
               file=sys.stderr)
     elif daemon_capable and not one_shot:
-        # REPL interactif branche sur le demon (vocal reste standalone)
+        # REPL interactif branche sur le demon
         from lyra.client.repl import run_repl
         code = run_repl(args)
         if code >= 0:
