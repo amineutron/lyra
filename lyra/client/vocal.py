@@ -39,6 +39,7 @@ def _load_voice(user_settings):
     """Construit VoiceInterface depuis config.yaml. None si indisponible."""
     try:
         import yaml
+
         from modules.audio import AudioConfig, VoiceInterface
 
         with open(REPO_ROOT / "config.yaml") as f:
