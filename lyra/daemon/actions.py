@@ -17,6 +17,7 @@ from ..core.workflows.context import ExecContext
 from ..core.workflows.vm_clone_exec import handle_vm_clone_with_stop
 from ..core.workflows.vm_snapshot_exec import handle_snapshot_restore_with_safety
 from ..utils.error_log import is_execution_error, lyra_error_message, write_error_log
+from . import implicit
 from .modify import MAX_MODIFY_ROUNDS, ModifyError, is_modify_answer, parse_modification
 from .remote_ui import RemoteUI, RequestCancelled
 
@@ -101,7 +102,14 @@ def run_request(
     """
     v2 = _actual(pipeline)
 
-    fast_analysis = try_fast_path_rules(text) if use_fast_path else None
+    # Intention implicite : "ok vasy" apres une proposition de Lyra la rejoue,
+    # TOUJOURS avec confirmation (ni -p ni -y ne s'appliquent a ce chemin).
+    replay = implicit.resolve_implicit(v2, session_id, text)
+    if replay is not None:
+        rui.info(f"Je reprends : {replay.tool}.")
+        mode, yes = "default", False
+    fast_analysis = replay if replay is not None else (
+        try_fast_path_rules(text) if use_fast_path else None)
     if fast_analysis is not None and hasattr(pipeline, "process_precomputed"):
         with v2.session_scope(session_id):
             result = pipeline.process_precomputed(text, fast_analysis)
@@ -115,6 +123,7 @@ def run_request(
     # Cas 1 : question de connaissance -> reponse directe
     if result.query_type == QueryType.KNOWLEDGE:
         rui.lyra(result.response)
+        implicit.remember_from_reply(v2, session_id, result.response)
         return 0
 
     # Cas 2 : arguments manquants
@@ -143,6 +152,7 @@ def run_request(
 
     # Cas 3 : action prete -> confirmation puis execution
     if result.tool_call:
+        implicit.forget(v2, session_id)
         return _run_action(pipeline, v2, task_manager, result, rui,
                            session_id=session_id, mode=mode, yes=yes,
                            fast=fast_analysis is not None,
@@ -150,6 +160,7 @@ def run_request(
 
     # Cas 4 : pas de match -> reponse directe
     rui.lyra(result.response)
+    implicit.remember_from_reply(v2, session_id, result.response)
     if not interactive:
         _oublier_les_questions(v2, session_id)
     return 0
