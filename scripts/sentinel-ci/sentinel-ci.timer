@@ -1,0 +1,11 @@
+[Unit]
+Description=Sentinel CI toutes les 30 minutes et a la connexion
+
+[Timer]
+OnStartupSec=2min
+OnUnitActiveSec=30min
+Persistent=true
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target
