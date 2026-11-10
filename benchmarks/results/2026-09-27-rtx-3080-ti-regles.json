@@ -1,0 +1,59 @@
+{
+  "mesure": "regles",
+  "date": "2026-09-27",
+  "materiel": {
+    "gpu": {
+      "nom": "NVIDIA GeForce RTX 3080 Ti",
+      "vram": "12288 MiB",
+      "pilote": "580.159.03"
+    },
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "ram_go": 62
+  },
+  "versions": {
+    "python": "3.12.13",
+    "ollama": "0.14.1",
+    "lyra_commit": "2c3976c",
+    "noyau": "6.18.13-200.fc43.x86_64"
+  },
+  "modeles": {
+    "ephaistos": "qwen2.5-coder:0.5b",
+    "lyra": "llama3.2:1b"
+  },
+  "banc": "regles",
+  "cas": 152,
+  "statuts": {
+    "PASS": 151,
+    "FAIL": 1
+  },
+  "taux_pass": 0.9934,
+  "par_categorie": {
+    "BACKUP": {
+      "PASS": 35
+    },
+    "DENON": {
+      "PASS": 16
+    },
+    "EDGE": {
+      "PASS": 13
+    },
+    "FEDORA": {
+      "PASS": 63
+    },
+    "HUE": {
+      "PASS": 12
+    },
+    "TV": {
+      "PASS": 12,
+      "FAIL": 1
+    }
+  },
+  "echecs": [
+    {
+      "query": "joue cette video youtube sur la tv https://youtu.be/dQw4w9WgXcQ",
+      "attendu": "tv.youtube_video",
+      "obtenu": "catt.cast_youtube",
+      "statut": "FAIL"
+    }
+  ]
+}
