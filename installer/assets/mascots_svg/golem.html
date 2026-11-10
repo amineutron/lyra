@@ -1,0 +1,53 @@
+<style>
+.m-golem *{transform-box:fill-box;transform-origin:center}
+.m-golem .ru{fill:none;stroke:#e3d4ff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.35}
+.m-golem .zz{animation:golem-zz 3.4s ease-in-out -1s infinite}
+.m-golem .br{animation:golem-br 4s ease-in-out infinite}
+.m-golem .s-sleep .ru{opacity:.15}
+.m-golem .s-sleep .ey{animation:golem-dim 4s ease-in-out infinite}
+.m-golem .s-idle .ey{animation:golem-look 5s ease-in-out infinite}
+.m-golem .s-idle .ru{animation:golem-glow 4s ease-in-out infinite}
+.m-golem .s-work .ey{animation:golem-scan 1.6s ease-in-out infinite}
+.m-golem .s-work .ru{animation:golem-light 1.2s ease-in-out -.5s infinite}
+.m-golem .s-work .cr{animation:golem-glow 1.2s ease-in-out infinite}
+.m-golem .s-busy .ey{animation:golem-beat .4s ease-in-out infinite}
+.m-golem .s-busy .ru{animation:golem-light .4s ease-in-out -.1s infinite}
+.m-golem .s-busy .bar{animation:golem-bar .4s ease-in-out infinite}
+.m-golem .s-ok .ru{stroke:#82d69c;opacity:1}
+.m-golem .s-ok .halo{animation:golem-halo 1.6s ease-out infinite}
+.m-golem .s-err .all{animation:golem-shake .35s ease-in-out 4}
+.m-golem .s-err .ru{stroke:#ff8a9d;animation:golem-flick .5s steps(2) infinite}
+.m-golem .red{animation:golem-red 1s ease-in-out infinite}
+.m-golem .fall{animation:golem-fall 1.2s ease-in infinite}
+.m-golem .s .d1{animation-delay:-.3s}.m-golem .s .d2{animation-delay:-.6s}.m-golem .s .d3{animation-delay:-.9s}.m-golem .s .d4{animation-delay:-1.2s}
+@keyframes golem-zz{0%{transform:translate(0,4px);opacity:0}30%{opacity:1}100%{transform:translate(6px,-10px);opacity:0}}
+@keyframes golem-br{50%{transform:scale(1.015,1.025)}}
+@keyframes golem-dim{50%{opacity:.4}}
+@keyframes golem-look{0%,30%,100%{transform:translateX(0)}40%,60%{transform:translateX(-3px)}75%,90%{transform:translateX(3px)}}
+@keyframes golem-glow{50%{opacity:.9}}
+@keyframes golem-scan{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+@keyframes golem-light{0%,100%{opacity:.2}40%{opacity:1}}
+@keyframes golem-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+@keyframes golem-bar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+@keyframes golem-halo{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.25);opacity:0}}
+@keyframes golem-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+@keyframes golem-flick{50%{opacity:.35}}
+@keyframes golem-red{0%,100%{opacity:.3}50%{opacity:.7}}
+@keyframes golem-fall{0%{transform:translateY(0);opacity:1}100%{transform:translateY(16px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.m-golem *{animation-duration:6s !important}}
+</style>
+<svg class="mx m-golem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<path id="golem-z" d="M0 0h8l-8 9h8" fill="none" stroke="#e3d4ff" stroke-width="2.2" stroke-linecap="round"/>
+<path id="golem-rk" d="M60 14L80 24L96 32L102 64L98 102L22 102L18 64L24 32L40 24Z" stroke-width="7" stroke-linejoin="round"/>
+<path id="golem-r1" d="M0-6v12M-4-2l4-4l4 4"/><path id="golem-r2" d="M-4-6h8M0-6v12M-4 6h8"/><path id="golem-r3" d="M-4-6l8 12M4-6l-8 12"/>
+<g id="golem-body"><rect x="6" y="58" width="19" height="36" rx="7" fill="#7d68a8"/><rect x="95" y="58" width="19" height="36" rx="7" fill="#7d68a8"/><use href="#golem-rk" fill="#9b84c4" stroke="#9b84c4"/><path d="M60 14L40 24L24 32L18 64L38 54L54 38Z" fill="#b095d6"/><path d="M22 102L98 102L102 64L96 84L24 84Z" fill="#6f5a96" opacity=".55"/><path d="M28 30q4-9 12-5q6-4 10 1q-4 5-9 3q-6 4-13 1Z" fill="#6fbf86"/><path d="M88 34q3-5 8-2q-1 5-8 2Z" fill="#6fbf86"/><path d="M72 18l-4 11l7 7l-4 9M30 90l9-4l2 9" stroke="#5a4780" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="44" cy="46" rx="9" ry="8" fill="#2a2040"/><ellipse cx="76" cy="46" rx="9" ry="8" fill="#2a2040"/><rect x="42" y="59" width="36" height="11" rx="5" fill="#2a2040"/></g>
+</defs>
+<g class="s s-sleep"><g class="br"><use href="#golem-body"/></g><g class="ey"><path d="M38 47h12M70 47h12" stroke="#e3d4ff" stroke-width="2.6" stroke-linecap="round"/></g><g transform="translate(44 84)"><g class="ru"><use href="#golem-r1"/></g></g><g transform="translate(60 84)"><g class="ru"><use href="#golem-r2"/></g></g><g transform="translate(76 84)"><g class="ru"><use href="#golem-r3"/></g></g><g transform="translate(86 20)"><g class="zz"><use href="#golem-z"/></g></g></g>
+<g class="s s-idle"><use href="#golem-body"/><g class="ey"><circle cx="44" cy="46" r="3.6" fill="#f3e9ff"/><circle cx="76" cy="46" r="3.6" fill="#f3e9ff"/></g><path d="M50 65h20" stroke="#6f5a96" stroke-width="2" stroke-linecap="round"/><g transform="translate(44 84)"><g class="ru"><use href="#golem-r1"/></g></g><g transform="translate(60 84)"><g class="ru d2"><use href="#golem-r2"/></g></g><g transform="translate(76 84)"><g class="ru d4"><use href="#golem-r3"/></g></g></g>
+<g class="s s-work"><use href="#golem-body"/><path class="cr" d="M72 18l-4 11l7 7l-4 9M30 90l9-4l2 9" stroke="#e3d4ff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".2"/><g class="ey"><circle cx="44" cy="46" r="6" fill="#f6c177"/><circle cx="76" cy="46" r="6" fill="#f6c177"/></g><path d="M50 65h20" stroke="#6f5a96" stroke-width="2" stroke-linecap="round"/><g transform="translate(60 30)"><g class="ru d3" style="stroke:#f6c177"><use href="#golem-r2" transform="scale(.6)"/></g></g><g transform="translate(44 84)"><g class="ru d1"><use href="#golem-r1"/></g></g><g transform="translate(60 84)"><g class="ru d2"><use href="#golem-r2"/></g></g><g transform="translate(76 84)"><g class="ru d4"><use href="#golem-r3"/></g></g></g>
+<g class="s s-busy"><use href="#golem-body"/><g class="ey"><circle cx="44" cy="46" r="4.4" fill="#f3e9ff"/><circle cx="76" cy="46" r="4.4" fill="#f3e9ff"/></g><g fill="#e3d4ff"><rect class="bar" x="47" y="60" width="4" height="9" rx="2"/><rect class="bar d1" x="54" y="60" width="4" height="9" rx="2"/><rect class="bar d2" x="61" y="60" width="4" height="9" rx="2"/><rect class="bar d3" x="68" y="60" width="4" height="9" rx="2"/></g><g transform="translate(44 84)"><g class="ru"><use href="#golem-r1"/></g></g><g transform="translate(60 84)"><g class="ru d1"><use href="#golem-r2"/></g></g><g transform="translate(76 84)"><g class="ru d2"><use href="#golem-r3"/></g></g></g>
+<g class="s s-ok"><circle class="halo" cx="60" cy="58" r="50" fill="none" stroke="#7C6CF0" stroke-width="3"/><use href="#golem-body"/><path d="M37 50q7-10 14 0M69 50q7-10 14 0" stroke="#82d69c" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M48 62q12 7 24 0" stroke="#82d69c" stroke-width="2.6" fill="none" stroke-linecap="round"/><g transform="translate(44 84)"><g class="ru"><use href="#golem-r1"/></g></g><g transform="translate(60 84)"><g class="ru"><use href="#golem-r2"/></g></g><g transform="translate(76 84)"><g class="ru"><use href="#golem-r3"/></g></g></g>
+<g class="s s-err"><g class="all"><use href="#golem-body"/><use class="red" href="#golem-rk" fill="#e5484d" stroke="#e5484d"/><path d="M38 41l12 10M50 41l-12 10M70 41l12 10M82 41l-12 10" stroke="#ff8a9d" stroke-width="3" stroke-linecap="round"/><path d="M46 66l5-4l6 5l6-5l5 4l5-4" stroke="#ff8a9d" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(44 84)"><g class="ru"><use href="#golem-r1"/></g></g><g transform="translate(60 84)"><g class="ru d1"><use href="#golem-r2"/></g></g><g transform="translate(76 84)"><g class="ru d2"><use href="#golem-r3"/></g></g></g>
+<circle class="fall" cx="92" cy="104" r="2.6" fill="#9b84c4"/><circle class="fall d2" cx="30" cy="104" r="2" fill="#9b84c4"/></g>
+</svg>

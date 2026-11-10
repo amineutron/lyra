@@ -1,0 +1,70 @@
+<style>
+.m-atom use{fill:none;stroke:var(--c);stroke-width:2.4}
+.m-atom .dash{stroke-dasharray:7 6}
+.m-atom .e{fill:var(--ec)}
+.m-atom [class]{transform-box:fill-box;transform-origin:center}
+.m-atom .s{--c:#7fb2e0;--ec:#cfe6ff;--d:7s}
+.m-atom .s-sleep{--c:#4f6d8c;--ec:#7f98b3;--d:30s}
+.m-atom .s-work{--c:#c4a7e7;--ec:#efe4ff;--d:2.4s}
+.m-atom .s-busy{--c:#9cc7f0;--ec:#fff;--d:1s}
+.m-atom .s-ok{--c:#82d69c;--ec:#e4ffee;--d:1.6s}
+.m-atom .s-err{--c:#eb6f92;--ec:#ffd0dc;--d:5s}
+.m-atom .e{offset-path:path("M106 60a46 17 0 1 0 -92 0a46 17 0 1 0 92 0");offset-rotate:0deg;animation:atom-o var(--d) linear infinite}
+.m-atom .d1{animation-delay:calc(var(--d) * -.33)}
+.m-atom .d2{animation-delay:calc(var(--d) * -.66)}
+.m-atom .t1{animation-delay:calc(var(--d) * -.04)}.m-atom .t1.d1{animation-delay:calc(var(--d) * -.37)}.m-atom .t1.d2{animation-delay:calc(var(--d) * -.70)}
+@keyframes atom-o{to{offset-distance:100%}}
+.m-atom .pz{animation-play-state:paused}
+.m-atom .br{animation:atom-br 4s ease-in-out infinite}
+@keyframes atom-br{50%{transform:scale(1.05)}}
+.m-atom .pu{animation:atom-pu 2.4s ease-in-out infinite}
+@keyframes atom-pu{50%{transform:scale(1.1)}}
+.m-atom .beat{animation:atom-beat .25s ease-in-out infinite}
+@keyframes atom-beat{50%{transform:scale(1.14)}}
+.m-atom .tilt{animation:atom-tilt 6s linear infinite}
+@keyframes atom-tilt{to{transform:rotate(360deg)}}
+.m-atom .tiltf{animation:atom-tilt 3s linear infinite}
+.m-atom .zz{animation:atom-z 3.6s ease-in infinite}
+@keyframes atom-z{0%{opacity:0;transform:translate(0,6px)}30%{opacity:1}100%{opacity:0;transform:translate(6px,-12px)}}
+.m-atom .tw{animation:atom-tw 1.4s steps(1) infinite}
+.m-atom .tw2{animation:atom-tw 1.4s steps(1) -.7s infinite}
+@keyframes atom-tw{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1)}60%{opacity:.2;transform:scale(.6)}80%{opacity:0}}
+.m-atom .halo{animation:atom-halo 1.2s ease-out infinite}
+@keyframes atom-halo{0%{opacity:.8;transform:scale(.7)}100%{opacity:0;transform:scale(1.7)}}
+.m-atom .rays{animation:atom-rays 1.6s ease-in-out infinite}
+@keyframes atom-rays{0%{opacity:0;transform:scale(.6)}30%,70%{opacity:1;transform:scale(1)}100%{opacity:.4;transform:scale(1.08)}}
+.m-atom .red{animation:atom-red .8s ease-in-out infinite}
+@keyframes atom-red{0%,100%{fill:#eb6f92}50%{fill:#e5484d}}
+.m-atom .shk{animation:atom-shk .16s linear infinite}
+@keyframes atom-shk{25%{transform:translate(-2px,1px)}75%{transform:translate(2px,-1px)}}
+.m-atom .jit{animation:atom-jit 1.3s steps(1) infinite}
+@keyframes atom-jit{0%{transform:rotate(0)}20%{transform:rotate(6deg)}40%{transform:rotate(-5deg)}60%{transform:rotate(3deg)}80%{transform:rotate(-8deg)}}
+.m-atom .lost{animation:atom-lost 1.8s ease-in infinite}
+@keyframes atom-lost{0%{transform:translate(0,0);opacity:1}60%{transform:translate(8px,34px);opacity:1}75%{transform:translate(10px,30px) scaleY(.6)}85%{transform:translate(12px,34px);opacity:.8}100%{transform:translate(14px,34px);opacity:0}}
+.m-atom .arc{animation:atom-arc .5s steps(1) infinite}
+.m-atom .arc2{animation:atom-arc .5s steps(1) -.25s infinite}
+@keyframes atom-arc{0%{opacity:0}20%{opacity:1}55%{opacity:0}}
+.m-atom .puff{animation:atom-puff 2s ease-out infinite}
+.m-atom .puff2{animation:atom-puff 2s ease-out -1s infinite}
+@keyframes atom-puff{0%{opacity:.7;transform:translateY(6px) scale(.5)}100%{opacity:0;transform:translateY(-18px) scale(1.4)}}
+@media (prefers-reduced-motion:reduce){.m-atom [class]{animation-duration:20s!important}}
+</style>
+<svg class="mx m-atom" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <defs><g id="atom-orb"><ellipse transform="rotate(0 60 60)" cx="60" cy="60" rx="46" ry="17"/><ellipse transform="rotate(60 60 60)" cx="60" cy="60" rx="46" ry="17"/><ellipse transform="rotate(120 60 60)" cx="60" cy="60" rx="46" ry="17"/></g></defs>
+ <g class="s s-sleep"><g opacity=".75"><use href="#atom-orb"/><g transform="rotate(0 60 60)"><circle class="e pz d0 t0" r="4.4"/></g><g transform="rotate(60 60 60)"><circle class="e pz d1 t0" r="4.4"/></g><g transform="rotate(120 60 60)"><circle class="e pz d2 t0" r="4.4"/></g></g><g class="br"><g class=""><circle cx="60" cy="60" r="14" fill="#4f6d8c"/><circle cx="60" cy="60" r="12" fill="#6f8fb3"/><circle cx="55" cy="55" r="5" fill="#a9c3df" opacity=".7"/><circle cx="64" cy="65" r="3" fill="#4f6d8c" opacity=".6"/></g></g>
+  <path class="zz" d="M92 20h8l-8 9h8" stroke="#7C6CF0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+ <g class="s s-idle"><use href="#atom-orb" opacity=".6"/><g transform="rotate(0 60 60)"><circle class="e d0 t0" r="4.4"/></g><g transform="rotate(60 60 60)"><circle class="e d1 t0" r="4.4"/></g><g transform="rotate(120 60 60)"><circle class="e d2 t0" r="4.4"/></g><g class="pu"><g class=""><circle cx="60" cy="60" r="14" fill="#5a8fc4"/><circle cx="60" cy="60" r="12" fill="#7fb2e0"/><circle cx="55" cy="55" r="5" fill="#cfe6ff" opacity=".7"/><circle cx="64" cy="65" r="3" fill="#5a8fc4" opacity=".6"/></g></g>
+  <g transform="translate(20 24) scale(1)"><path class="tw" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#7C6CF0"/></g><g transform="translate(100 98) scale(0.8)"><path class="tw2" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#cfe6ff"/></g></g>
+ <g class="s s-work"><use href="#atom-orb" class="tilt"/><g transform="rotate(0 60 60)"><circle class="e d0 t0" r="4.4"/></g><g transform="rotate(60 60 60)"><circle class="e d1 t0" r="4.4"/></g><g transform="rotate(120 60 60)"><circle class="e d2 t0" r="4.4"/></g><g class="pu"><g class=""><circle cx="60" cy="60" r="14" fill="#8f74c4"/><circle cx="60" cy="60" r="12" fill="#c4a7e7"/><circle cx="55" cy="55" r="5" fill="#f1e8ff" opacity=".7"/><circle cx="64" cy="65" r="3" fill="#8f74c4" opacity=".6"/></g></g></g>
+ <g class="s s-busy"><use href="#atom-orb" class="tiltf"/><g transform="rotate(0 60 60)"><circle class="e d0 t0" r="4.4"/></g><g transform="rotate(0 60 60)"><circle class="e d0 t1" r="3.2" opacity="0.45"/></g><g transform="rotate(60 60 60)"><circle class="e d1 t0" r="4.4"/></g><g transform="rotate(60 60 60)"><circle class="e d1 t1" r="3.2" opacity="0.45"/></g><g transform="rotate(120 60 60)"><circle class="e d2 t0" r="4.4"/></g><g transform="rotate(120 60 60)"><circle class="e d2 t1" r="3.2" opacity="0.45"/></g><g class="beat"><g class=""><circle cx="60" cy="60" r="14" fill="#5a8fc4"/><circle cx="60" cy="60" r="12" fill="#9cc7f0"/><circle cx="55" cy="55" r="5" fill="#fff" opacity=".7"/><circle cx="64" cy="65" r="3" fill="#5a8fc4" opacity=".6"/></g></g>
+  <circle class="halo" cx="60" cy="60" r="14" fill="none" stroke="#7C6CF0" stroke-width="2.5"/></g>
+ <g class="s s-ok"><g class="rays" stroke="#ffe3b0" stroke-width="3.5" stroke-linecap="round"><path d="M60 3v7" transform="rotate(0 60 60)"/><path d="M60 3v7" transform="rotate(45 60 60)"/><path d="M60 3v7" transform="rotate(90 60 60)"/><path d="M60 3v7" transform="rotate(135 60 60)"/><path d="M60 3v7" transform="rotate(180 60 60)"/><path d="M60 3v7" transform="rotate(225 60 60)"/><path d="M60 3v7" transform="rotate(270 60 60)"/><path d="M60 3v7" transform="rotate(315 60 60)"/></g>
+  <use href="#atom-orb"/><g transform="rotate(0 60 60)"><circle class="e d0 t0" r="4.4"/></g><g transform="rotate(60 60 60)"><circle class="e d1 t0" r="4.4"/></g><g transform="rotate(120 60 60)"><circle class="e d2 t0" r="4.4"/></g><g class="pu"><g class=""><circle cx="60" cy="60" r="14" fill="#4fa56b"/><circle cx="60" cy="60" r="12" fill="#82d69c"/><circle cx="55" cy="55" r="5" fill="#e4ffee" opacity=".7"/><circle cx="64" cy="65" r="3" fill="#4fa56b" opacity=".6"/></g></g>
+  <circle class="halo" cx="60" cy="60" r="14" fill="none" stroke="#e4ffee" stroke-width="2.5"/></g>
+ <g class="s s-err"><g class="shk"><g class="jit"><use href="#atom-orb" class="dash"/></g>
+  <g transform="rotate(0 60 60)"><g transform="rotate(0 60 60)"><circle class="e pz d0 t0" r="4.4"/></g><g transform="rotate(60 60 60)"><circle class="e pz d1 t0" r="4.4"/></g><g transform="rotate(120 60 60)"><circle class="e pz d2 t0" r="4.4"/></g></g><g class="red"><circle cx="60" cy="60" r="14" fill="#c4455f"/><circle cx="60" cy="60" r="12" fill="#eb6f92"/><circle cx="55" cy="55" r="5" fill="#ffb3c6" opacity=".7"/><circle cx="64" cy="65" r="3" fill="#c4455f" opacity=".6"/></g></g>
+  <circle class="lost" cx="94" cy="56" r="4.4" fill="#ffd0dc"/>
+  <path class="arc" d="M22 44l9-4-5 9 9-3M96 88l-8 4 5-8-9 3" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="arc2" d="M92 28l-8 5 9 2-6 8M22 84l8-5-9-2 6-8" stroke="#e5484d" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle class="puff" cx="60" cy="40" r="5" fill="#8a90ad"/><circle class="puff2" cx="52" cy="34" r="4" fill="#8a90ad"/></g>
+</svg>

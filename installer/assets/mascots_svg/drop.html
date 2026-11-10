@@ -1,0 +1,80 @@
+<style>
+.m-drop *{transform-box:fill-box}
+.m-drop .bd{transform-origin:50% 100%}
+.m-drop .rp{fill:none;stroke:#b9d7f2;stroke-width:2;transform-origin:50% 50%;opacity:0}
+.m-drop .re{stroke:#eb6f92}
+.m-drop .dt{fill:#b9d7f2;transform-origin:50% 50%}
+.m-drop .st{fill:#7C6CF0;transform-origin:50% 50%}
+.m-drop .zz{fill:none;stroke:#b9d7f2;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0;animation:drop-z 3.6s ease-in-out infinite}
+.m-drop .a1{animation:drop-wob 1.9s ease-in-out infinite}
+.m-drop .a3{animation:drop-ring 2.6s ease-out infinite}
+.m-drop .a4{animation:drop-ring 1.2s ease-out infinite}
+.m-drop .a5{animation:drop-ring 1.2s .6s ease-out infinite}
+.m-drop .a6{animation:drop-sway 2.2s ease-in-out infinite}
+.m-drop .a8{animation:drop-rise 2.4s ease-out infinite}
+.m-drop .a9{animation:drop-beat .6s ease-in-out infinite}
+.m-drop .a0{animation:drop-fall .6s ease-in infinite}
+.m-drop .b2{animation:drop-jump 2.6s ease-in-out infinite}
+.m-drop .b3{animation:drop-splash 2.6s ease-out infinite}
+.m-drop .b4{animation:drop-shake .45s ease-in-out infinite;transform-origin:50% 100%}
+.m-drop .b5{animation:drop-sweat 2s ease-out infinite}
+.m-drop .b6{animation:drop-breath 4s ease-in-out infinite}
+.m-drop .b7{animation:drop-twk 1s ease-in-out infinite}
+.m-drop .b9{animation:drop-tint 2.2s ease-in-out infinite}
+.m-drop .c1{animation:drop-red 1.8s ease-in-out infinite}
+@keyframes drop-wob{0%,100%{transform:scale(1.05,.94)}50%{transform:scale(.95,1.06)}}
+@keyframes drop-ring{0%{transform:scale(.3);opacity:.9}100%{transform:scale(2);opacity:0}}
+@keyframes drop-sway{0%,100%{transform:rotate(-6deg) scale(1.03,.97)}50%{transform:rotate(6deg) scale(.97,1.03)}}
+@keyframes drop-rise{0%{transform:translateY(0);opacity:0}20%{opacity:.9}100%{transform:translateY(-34px);opacity:0}}
+@keyframes drop-beat{0%,100%{transform:scale(1.1,.88)}40%{transform:scale(.92,1.12)}}
+@keyframes drop-fall{0%{transform:translateY(-4px) scale(.6);opacity:0}15%{opacity:1}80%{transform:translateY(30px) scale(.5);opacity:1}100%{transform:translateY(36px) scale(.2);opacity:0}}
+@keyframes drop-jump{0%,60%,100%{transform:translateY(0) scale(1.15,.82)}12%{transform:translateY(0) scale(.9,1.15)}35%{transform:translateY(-13px) scale(.92,1.08)}48%{transform:translateY(0) scale(1.2,.8)}56%{transform:translateY(0) scale(.95,1.06)}}
+@keyframes drop-splash{0%,40%{transform:translate(0,0) scale(.3);opacity:0}48%{opacity:1}75%{transform:translate(var(--x),-22px) scale(1);opacity:.9}100%{transform:translate(var(--x),0) scale(.6);opacity:0}}
+@keyframes drop-shake{0%,100%{transform:scale(1.22,.74) rotate(-5deg)}50%{transform:scale(1.22,.74) rotate(5deg)}}
+@keyframes drop-sweat{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-18px);opacity:0}}
+@keyframes drop-breath{0%,100%{transform:scale(1.06,.88)}50%{transform:scale(1.02,.94)}}
+@keyframes drop-twk{0%,100%{transform:scale(.4);opacity:.3}50%{transform:scale(1);opacity:1}}
+@keyframes drop-tint{0%,100%{opacity:0}50%{opacity:.55}}
+@keyframes drop-red{0%{opacity:.2}30%,100%{opacity:.85}}
+@keyframes drop-z{0%{opacity:0;transform:translate(0,6px)}30%,60%{opacity:.9}100%{opacity:0;transform:translate(6px,-8px)}}
+@media (prefers-reduced-motion:reduce){.m-drop *{animation-duration:6s!important}}
+</style>
+<svg class="mx m-drop" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <path id="drop-p" d="M60 24C60 24 38 54 38 74a22 22 0 0 0 44 0C82 54 60 24 60 24Z"/>
+  <g id="drop-g"><use href="#drop-p" fill="#7fb2e0"/><ellipse cx="66" cy="86" rx="13" ry="7" fill="#5f94c6" opacity=".5"/><ellipse cx="50" cy="66" rx="3.6" ry="8" fill="#e6f2fc" opacity=".85" transform="rotate(14 50 66)"/><circle cx="48" cy="82" r="1.8" fill="#e6f2fc" opacity=".8"/></g>
+  <g id="drop-w"><ellipse cx="60" cy="97" rx="40" ry="5.5" fill="#7fb2e0" opacity=".2"/><ellipse cx="60" cy="97" rx="40" ry="5.5" fill="none" stroke="#7fb2e0" stroke-width="2" opacity=".6"/></g>
+ </defs>
+ <g class="s s-sleep">
+  <use href="#drop-w"/>
+  <g class="bd b6"><use href="#drop-g"/><use href="#drop-p" fill="#2c4a78" opacity=".4"/></g>
+  <path class="zz" d="M86 36h9l-9 10h9"/><path class="zz" style="animation-delay:1.2s" d="M96 22h6l-6 7h6"/>
+ </g>
+ <g class="s s-idle">
+  <use href="#drop-w"/><ellipse class="rp a3" cx="60" cy="97" rx="30" ry="5"/>
+  <g class="bd a1"><use href="#drop-g"/></g>
+  <path class="st b7" d="M96 40l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>
+ </g>
+ <g class="s s-work">
+  <use href="#drop-w"/>
+  <g class="bd a6"><use href="#drop-g"/><use class="b9" href="#drop-p" fill="#d6ecfb"/></g>
+  <circle class="dt a8" cx="26" cy="74" r="3.4"/><circle class="dt a8" style="animation-delay:.8s" cx="94" cy="68" r="2.8"/><circle class="dt a8" style="animation-delay:1.6s" cx="22" cy="54" r="2.2"/><circle class="dt a8" style="animation-delay:.4s" cx="98" cy="48" r="2.4"/><circle class="dt a8" style="animation-delay:1.2s" cx="90" cy="86" r="2"/>
+ </g>
+ <g class="s s-busy">
+  <use href="#drop-w"/><ellipse class="rp a4" cx="60" cy="97" rx="30" ry="5"/><ellipse class="rp a5" cx="60" cy="97" rx="30" ry="5"/>
+  <g class="bd a9"><use href="#drop-g"/></g>
+  <path class="dt a0" d="M60 8C60 8 54 17 54 21a6 6 0 0 0 12 0C66 17 60 8 60 8Z"/>
+  <path class="rp a4" d="M20 60q-5 8 0 16M100 60q5 8 0 16" style="stroke-width:2.6;stroke-linecap:round"/>
+ </g>
+ <g class="s s-ok">
+  <use href="#drop-w"/><ellipse class="rp a4" cx="60" cy="97" rx="30" ry="5"/>
+  <g class="bd b2"><use href="#drop-g"/><use class="b9" href="#drop-p" fill="#ffffff"/></g>
+  <circle class="dt b3" style="--x:-30px" cx="48" cy="92" r="3.2"/><circle class="dt b3" style="--x:-16px" cx="54" cy="92" r="2.4"/><circle class="dt b3" style="--x:16px" cx="66" cy="92" r="2.4"/><circle class="dt b3" style="--x:30px" cx="72" cy="92" r="3.2"/>
+  <path class="st b7" d="M94 30l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path class="st b7" style="animation-delay:.5s" d="M24 38l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/>
+ </g>
+ <g class="s s-err">
+  <use href="#drop-w"/><ellipse class="rp re a4" cx="60" cy="97" rx="30" ry="5"/>
+  <g class="bd b4"><use href="#drop-g"/><use class="c1" href="#drop-p" fill="#e5484d"/></g>
+  <path class="dt b5" d="M88 70q4 6 0 9q-4-3 0-9z" fill="#eb6f92"/><path class="dt b5" style="animation-delay:1s" d="M30 66q4 6 0 9q-4-3 0-9z" fill="#eb6f92"/>
+ </g>
+</svg>

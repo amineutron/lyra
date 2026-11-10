@@ -1,0 +1,89 @@
+<style>
+.m-bolt [class]{transform-box:fill-box;transform-origin:center}
+.m-bolt .breathe{animation:bolt-breathe 4s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes bolt-breathe{50%{transform:scale(1.03)}}
+.m-bolt .glow{animation:bolt-glow 4s ease-in-out infinite}
+@keyframes bolt-glow{50%{opacity:.3;transform:scale(1.08)}}
+.m-bolt .zz{animation:bolt-z 3.6s ease-in infinite}
+@keyframes bolt-z{0%{opacity:0;transform:translate(0,6px)}30%{opacity:1}100%{opacity:0;transform:translate(6px,-12px)}}
+.m-bolt .bob{animation:bolt-bob 2s ease-in-out infinite}
+@keyframes bolt-bob{50%{transform:translateY(-4px) rotate(2deg)}}
+.m-bolt .pulse{animation:bolt-pulse 2s ease-in-out infinite}
+@keyframes bolt-pulse{50%{opacity:.35}}
+.m-bolt .tw{animation:bolt-tw 1.4s steps(1) infinite}
+.m-bolt .tw2{animation:bolt-tw 1.4s steps(1) -.7s infinite}
+@keyframes bolt-tw{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1)}60%{opacity:.2;transform:scale(.6)}80%{opacity:0}}
+.m-bolt .shake{animation:bolt-shake .14s linear infinite}
+@keyframes bolt-shake{25%{transform:translate(-1.5px,1px)}75%{transform:translate(1.5px,-1px)}}
+.m-bolt .charge{animation:bolt-charge .7s ease-in-out infinite}
+@keyframes bolt-charge{0%,100%{opacity:0}50%{opacity:.85}}
+.m-bolt .arc{animation:bolt-arc .5s steps(1) infinite}
+.m-bolt .arc2{animation:bolt-arc .5s steps(1) -.25s infinite}
+@keyframes bolt-arc{0%{opacity:0}20%{opacity:1}55%{opacity:0}}
+.m-bolt .ring{animation:bolt-ring 1s ease-out infinite}
+@keyframes bolt-ring{0%{opacity:.5;transform:scale(.6)}100%{opacity:0;transform:scale(1.3)}}
+.m-bolt .drop{animation:bolt-drop .9s cubic-bezier(.6,0,.9,.6) infinite}
+@keyframes bolt-drop{0%{transform:translateY(-8px) scaleY(1.06);opacity:.3}25%{transform:translateY(0) scaleY(1);opacity:1}45%{transform:scale(1.07,.95)}70%,100%{transform:none}}
+.m-bolt .flash{animation:bolt-flash .9s linear infinite}
+@keyframes bolt-flash{0%,18%{opacity:0}25%{opacity:.9}55%,100%{opacity:0}}
+.m-bolt .impact{animation:bolt-imp .9s ease-out infinite}
+@keyframes bolt-imp{0%,22%{opacity:0;transform:scale(.3)}30%{opacity:.9}100%{opacity:0;transform:scale(1.6)}}
+.m-bolt .beat{animation:bolt-beat .3s ease-in-out infinite}
+@keyframes bolt-beat{50%{transform:scaleX(.92)}}
+.m-bolt .w1{animation:bolt-w .6s ease-out infinite}
+.m-bolt .w2{animation:bolt-w .6s ease-out -.4s infinite}
+@keyframes bolt-w{0%{opacity:0;transform:translateX(-4px)}30%{opacity:.9}100%{opacity:0;transform:translateX(5px)}}
+.m-bolt .hop{animation:bolt-hop 1.2s ease-in-out infinite}
+@keyframes bolt-hop{0%,100%{transform:translateY(0)}30%{transform:translateY(-8px) scale(1.04)}55%{transform:translateY(0) scale(1.04,.96)}}
+.m-bolt .rays{animation:bolt-rays 1.6s ease-in-out infinite}
+@keyframes bolt-rays{0%{opacity:0;transform:scale(.5)}25%,70%{opacity:1;transform:scale(1)}100%{opacity:.5;transform:scale(1.1)}}
+.m-bolt .red{animation:bolt-red .8s ease-in-out infinite}
+@keyframes bolt-red{0%,100%{fill:#eb6f92;stroke:#eb6f92}50%{fill:#e5484d;stroke:#e5484d}}
+.m-bolt .stut{animation:bolt-stut 1.1s steps(1) infinite}
+@keyframes bolt-stut{0%{opacity:1}10%{opacity:.3}20%{opacity:1}30%{opacity:.45}40%,80%{opacity:1}90%{opacity:.35}}
+.m-bolt .jit{animation:bolt-jit .9s linear infinite}
+@keyframes bolt-jit{0%,100%{transform:rotate(-12deg)}15%{transform:rotate(-16deg) translate(-2px,1px)}30%{transform:rotate(-9deg) translate(2px,-1px)}45%{transform:rotate(-14deg)}60%{transform:rotate(-10deg) translate(-2px,0)}}
+.m-bolt .puff{animation:bolt-puff 2s ease-out infinite}
+.m-bolt .puff2{animation:bolt-puff 2s ease-out -1s infinite}
+@keyframes bolt-puff{0%{opacity:.7;transform:translateY(6px) scale(.5)}100%{opacity:0;transform:translateY(-18px) scale(1.4)}}
+@media (prefers-reduced-motion:reduce){.m-bolt [class]{animation-duration:8s!important}}
+</style>
+<svg class="mx m-bolt" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <g class="s s-sleep">
+  <g class="breathe" opacity=".8"><g transform="rotate(-8 60 60) translate(0 -2)"><path class="" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#d7a566" stroke="#d7a566" stroke-width="3" stroke-linejoin="round"/><path d="M88 46 46 112l5-30 24-36z" fill="#b98a4e"/><path d="M72 8 34 66h8l32-50z" fill="#f1c98f" opacity=".7"/></g></g>
+  <path class="zz" d="M88 24h8l-8 9h8" stroke="#7C6CF0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+ </g>
+ <g class="s s-idle">
+  <circle class="glow" cx="60" cy="60" r="38" fill="#f6c177" opacity=".07"/>
+  <g class="bob"><path class="" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#f6c177" stroke="#f6c177" stroke-width="3" stroke-linejoin="round"/><path d="M88 46 46 112l5-30 24-36z" fill="#d9a050"/><path d="M72 8 34 66h8l32-50z" fill="#ffe3b0" opacity=".7"/>
+   <path class="pulse" d="M72 8 34 66h8l32-50z" fill="#fff" opacity=".5"/></g>
+  <path class="tw" d="M28 34l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#7C6CF0"/>
+  <path class="tw2" d="M94 78l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#ffe3b0"/>
+ </g>
+ <g class="s s-work">
+  <circle class="ring" cx="60" cy="60" r="44" fill="none" stroke="#7C6CF0" stroke-width="2.5"/>
+  <g class="shake"><path class="" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#f6c177" stroke="#f6c177" stroke-width="3" stroke-linejoin="round"/><path d="M88 46 46 112l5-30 24-36z" fill="#d9a050"/><path d="M72 8 34 66h8l32-50z" fill="#ffe3b0" opacity=".7"/><path class="charge" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#fff"/></g>
+  <path class="arc" d="M30 40l8-4-5 9 9-3M92 82l-8 4 5-9-9 3" stroke="#ffe3b0" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="arc2" d="M92 26l-8 5 9 2-6 8M26 92l8-5-9-2 6-8" stroke="#7C6CF0" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+ </g>
+ <g class="s s-busy">
+  <ellipse class="impact" cx="64" cy="113" rx="26" ry="5" fill="none" stroke="#ffe3b0" stroke-width="2.5"/>
+  <g class="drop"><g class="beat"><path class="" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#f6c177" stroke="#f6c177" stroke-width="3" stroke-linejoin="round"/><path d="M88 46 46 112l5-30 24-36z" fill="#d9a050"/><path d="M72 8 34 66h8l32-50z" fill="#ffe3b0" opacity=".7"/><path class="flash" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#fff"/></g></g>
+  <path class="w1" d="M94 46q6 10 0 20" stroke="#7C6CF0" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path class="w2" d="M101 40q10 16 0 32" stroke="#7C6CF0" stroke-width="3" fill="none" stroke-linecap="round"/>
+ </g>
+ <g class="s s-ok">
+  <g class="rays" stroke="#ffe3b0" stroke-width="3.5" stroke-linecap="round">
+   <path d="M60 4v8" transform="rotate(30 60 60)"/><path d="M60 4v8" transform="rotate(-30 60 60)"/><path d="M60 4v8" transform="rotate(75 60 60)"/><path d="M60 4v8" transform="rotate(-75 60 60)"/><path d="M60 4v8" transform="rotate(105 60 60)"/><path d="M60 4v8" transform="rotate(-105 60 60)"/><path d="M60 4v8" transform="rotate(150 60 60)"/><path d="M60 4v8" transform="rotate(-150 60 60)"/>
+  </g>
+  <g class="hop"><g transform="translate(0 4) scale(.93) translate(4 4)"><path class="" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#f6c177" stroke="#f6c177" stroke-width="3" stroke-linejoin="round"/><path d="M88 46 46 112l5-30 24-36z" fill="#d9a050"/><path d="M72 8 34 66h8l32-50z" fill="#ffe3b0" opacity=".7"/></g></g>
+  <path d="M88 84l5 5 10-12" stroke="#82d69c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+ </g>
+ <g class="s s-err">
+  <g class="jit"><g class="stut"><path class="red" d="M72 8 34 66h22l-10 46 42-66H66L82 8z" fill="#eb6f92" stroke="#eb6f92" stroke-width="3" stroke-linejoin="round"/><path d="M88 46 46 112l5-30 24-36z" fill="#c4455f"/><path d="M72 8 34 66h8l32-50z" fill="#ffb3c6" opacity=".7"/></g></g>
+  <path class="arc" d="M26 44l9-4-5 9 9-3M96 70l-8 4 5-8-9 3" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="arc2" d="M92 30l-8 5 9 2-6 8M30 86l8-5-9-2 6-8" stroke="#e5484d" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle class="puff" cx="82" cy="22" r="5" fill="#8a90ad"/>
+  <circle class="puff2" cx="72" cy="16" r="4" fill="#8a90ad"/>
+ </g>
+</svg>

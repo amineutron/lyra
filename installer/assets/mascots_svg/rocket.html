@@ -1,0 +1,94 @@
+<style>
+.m-rocket *{transform-box:fill-box}
+.m-rocket .bd{transform-origin:50% 100%}
+.m-rocket .ff{transform-origin:50% 0}
+.m-rocket .sk{fill:#c9d1e4;transform-origin:50% 50%;opacity:0}
+.m-rocket .sp{fill:#fbe0a8;transform-origin:50% 50%}
+.m-rocket .st{fill:#7C6CF0;transform-origin:50% 50%}
+.m-rocket .rg{fill:none;stroke:#7C6CF0;stroke-width:2;transform-origin:50% 50%;opacity:0;animation:rocket-ring 2s ease-out infinite}
+.m-rocket .zz{fill:none;stroke:#fbe0a8;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0;animation:rocket-z 3.6s ease-in-out infinite}
+.m-rocket .ln{fill:none;stroke:#fbe0a8;stroke-width:2.4;stroke-linecap:round}
+.m-rocket .a1{animation:rocket-br 4s ease-in-out infinite}
+.m-rocket .a2{animation:rocket-idle 2.4s ease-in-out infinite}
+.m-rocket .a3{animation:rocket-fl .3s steps(2) infinite}
+.m-rocket .a4{animation:rocket-glow 1.6s ease-in-out infinite}
+.m-rocket .l1{animation:rocket-lift 2.8s ease-in infinite}
+.m-rocket .l2{animation:rocket-shake 2.8s linear infinite}
+.m-rocket .l3{animation:rocket-flame 2.8s linear infinite}
+.m-rocket .l4{animation:rocket-smoke 2.8s ease-out infinite}
+.m-rocket .l5{animation:rocket-streak 2.8s linear infinite}
+.m-rocket .b1{animation:rocket-vib .12s linear infinite}
+.m-rocket .b2{animation:rocket-hov .9s ease-in-out infinite}
+.m-rocket .b3{animation:rocket-lvl .9s steps(1) infinite}
+.m-rocket .b4{animation:rocket-spark .45s linear infinite}
+.m-rocket .c1{animation:rocket-bob 2s ease-in-out infinite}
+.m-rocket .c2{animation:rocket-twk 1.2s ease-in-out infinite}
+.m-rocket .e1{animation:rocket-err 3s ease-in-out infinite}
+.m-rocket .e2{animation:rocket-cough 3s steps(1) infinite}
+.m-rocket .e3{animation:rocket-puff 3s ease-out infinite}
+.m-rocket .e4{animation:rocket-red 1.5s ease-in-out infinite}
+@keyframes rocket-br{0%,100%{transform:scale(1.01,.985)}50%{transform:scale(.995,1.01)}}
+@keyframes rocket-idle{0%,100%{transform:translateX(-.6px)}50%{transform:translateX(.6px)}}
+@keyframes rocket-fl{0%{transform:scaleY(.18)}100%{transform:scaleY(.34)}}
+@keyframes rocket-glow{0%,100%{opacity:.1}50%{opacity:.7}}
+@keyframes rocket-ring{0%{transform:scale(.5);opacity:.8}100%{transform:scale(2.4);opacity:0}}
+@keyframes rocket-lift{0%,30%{transform:translateY(0) scale(1);opacity:1}62%{transform:translateY(-44px) scale(.42);opacity:1}72%{transform:translateY(-62px) scale(.2);opacity:0}84%{transform:translateY(0) scale(1);opacity:0}92%,100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes rocket-shake{0%{transform:translateX(0)}5%{transform:translateX(-.8px)}10%{transform:translateX(.8px)}15%{transform:translateX(-1.4px)}20%{transform:translateX(1.4px)}25%{transform:translateX(-2px)}30%{transform:translateX(2px)}35%,100%{transform:translateX(0)}}
+@keyframes rocket-flame{0%{transform:scaleY(.2)}30%{transform:scaleY(1)}62%{transform:scaleY(1.5)}100%{transform:scaleY(.2)}}
+@keyframes rocket-smoke{0%{transform:scale(.3);opacity:0}25%{opacity:.7}65%{transform:translate(var(--x),-6px) scale(1.5);opacity:0}100%{opacity:0}}
+@keyframes rocket-streak{0%,40%{transform:translateY(-14px);opacity:0}55%{opacity:.8}75%{transform:translateY(22px);opacity:0}100%{opacity:0}}
+@keyframes rocket-vib{0%{transform:translate(-1px,0)}50%{transform:translate(1px,-.6px)}100%{transform:translate(-1px,0)}}
+@keyframes rocket-hov{0%,100%{transform:translateY(-1px)}50%{transform:translateY(-5px)}}
+@keyframes rocket-lvl{0%{transform:scaleY(.5)}25%{transform:scaleY(.85)}50%{transform:scaleY(1.2)}75%{transform:scaleY(.9)}}
+@keyframes rocket-spark{0%{transform:translateY(0);opacity:1}100%{transform:translateY(16px);opacity:0}}
+@keyframes rocket-bob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(-8px)}}
+@keyframes rocket-twk{0%,100%{transform:scale(.4);opacity:.3}50%{transform:scale(1);opacity:1}}
+@keyframes rocket-err{0%,60%,100%{transform:rotate(-3deg)}15%{transform:translateY(-9px) rotate(5deg)}30%{transform:translateY(-3px) rotate(-6deg)}40%{transform:translateY(1px) rotate(-9deg)}50%{transform:rotate(-9deg)}}
+@keyframes rocket-cough{0%{transform:scaleY(.7)}10%{transform:scaleY(.1)}20%{transform:scaleY(.55)}30%,100%{transform:scaleY(0)}}
+@keyframes rocket-puff{0%{transform:translateY(0) scale(.4);opacity:0}15%{opacity:.8}100%{transform:translateY(-22px) scale(1.5);opacity:0}}
+@keyframes rocket-red{0%{opacity:.2}30%,100%{opacity:.7}}
+@keyframes rocket-z{0%{opacity:0;transform:translate(0,6px)}30%,60%{opacity:.9}100%{opacity:0;transform:translate(6px,-8px)}}
+@media (prefers-reduced-motion:reduce){.m-rocket *{animation-duration:8s!important}}
+</style>
+<svg class="mx m-rocket" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <path id="rocket-p" d="M60 10C73 24 77 42 77 66L77 86H43L43 66C43 42 47 24 60 10ZM43 66C35 70 29 80 28 94L43 86ZM77 66C85 70 91 80 92 94L77 86Z"/>
+  <g id="rocket-g"><path d="M43 66C35 70 29 80 28 94L43 86ZM77 66C85 70 91 80 92 94L77 86Z" fill="#eb6f92"/><path d="M60 10C73 24 77 42 77 66L77 86H43L43 66C43 42 47 24 60 10Z" fill="#f6c177"/><path d="M68 44C74 48 77 56 77 66L77 86H68Z" fill="#d9a05a" opacity=".55"/><rect x="47" y="46" width="3" height="32" rx="1.5" fill="#fbe0a8" opacity=".7"/><path d="M60 10C66 17 71 25 73 33H47C49 25 54 17 60 10Z" fill="#eb6f92"/><rect x="43" y="74" width="34" height="4" fill="#d9a05a"/><path d="M50 86H70L66 93H54Z" fill="#a8763a"/></g>
+  <g id="rocket-w"><circle cx="60" cy="52" r="10" fill="none" stroke="#fbe0a8" stroke-width="3.5"/><path d="M54 49a7 7 0 0 1 5-4" fill="none" stroke="#e6f2fc" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="rocket-f"><path d="M52 92C52 100 56 108 60 114C64 108 68 100 68 92Z" fill="#f08a5d"/><path d="M55 92C55 98 58 104 60 108C62 104 65 98 65 92Z" fill="#f6c177"/><path d="M58 92C58 96 59 99 60 101C61 99 62 96 62 92Z" fill="#fff1c9"/></g>
+  <ellipse id="rocket-gr" cx="60" cy="99" rx="28" ry="3.5" fill="#2a3550"/>
+ </defs>
+ <g class="s s-sleep">
+  <use href="#rocket-gr"/>
+  <g class="bd a1"><use href="#rocket-g"/><circle cx="60" cy="52" r="10" fill="#34466e"/><use href="#rocket-w"/><use href="#rocket-p" fill="#6b5a8a" opacity=".3"/></g>
+  <path class="zz" d="M86 30h9l-9 10h9"/><path class="zz" style="animation-delay:1.2s" d="M96 16h6l-6 7h6"/>
+ </g>
+ <g class="s s-idle">
+  <use href="#rocket-gr"/>
+  <g class="a2"><use href="#rocket-g"/><circle cx="60" cy="52" r="10" fill="#7fb2e0"/><circle class="a4" cx="60" cy="52" r="10" fill="#fff"/><use href="#rocket-w"/><use class="ff a3" href="#rocket-f"/></g>
+  <circle class="rg" cx="60" cy="52" r="10"/>
+  <path class="st c2" d="M100 34l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>
+ </g>
+ <g class="s s-work">
+  <use href="#rocket-gr"/>
+  <circle class="sk l4" style="--x:-14px" cx="40" cy="97" r="4"/><circle class="sk l4" style="--x:14px;animation-delay:.2s" cx="80" cy="97" r="4"/><circle class="sk l4" style="--x:0px;animation-delay:.4s" cx="60" cy="98" r="3.5"/>
+  <path class="ln l5" d="M24 40v10M96 50v10M104 30v8" opacity=".6"/>
+  <g class="bd l1"><g class="l2"><use href="#rocket-g"/><circle cx="60" cy="52" r="10" fill="#7fb2e0"/><use href="#rocket-w"/><use class="ff l3" href="#rocket-f"/></g></g>
+ </g>
+ <g class="s s-busy">
+  <use href="#rocket-gr"/>
+  <g class="b2"><g class="b1"><use href="#rocket-g"/><circle cx="60" cy="52" r="10" fill="#d9ecfb"/><use href="#rocket-w"/><use class="ff b3" href="#rocket-f"/></g></g>
+  <circle class="sp b4" cx="52" cy="104" r="2"/><circle class="sp b4" style="animation-delay:.15s" cx="68" cy="104" r="2.4"/><circle class="sp b4" style="animation-delay:.3s" cx="60" cy="106" r="1.8"/>
+  <path class="ln" d="M20 44q-5 8 0 16M100 44q5 8 0 16" opacity=".5"/><path class="ln" d="M12 40q-8 12 0 24M108 40q8 12 0 24" opacity=".3"/>
+ </g>
+ <g class="s s-ok">
+  <use href="#rocket-gr"/>
+  <g class="c1"><use href="#rocket-g"/><circle cx="60" cy="52" r="10" fill="#fff1c9"/><use href="#rocket-w"/><use class="ff" href="#rocket-f" style="transform:scaleY(.8)"/></g>
+  <path class="st c2" d="M96 24l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path class="sp c2" style="animation-delay:.4s" d="M22 36l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path class="sp c2" style="animation-delay:.8s" d="M98 62l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path class="st c2" style="animation-delay:.6s" d="M18 68l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/>
+ </g>
+ <g class="s s-err">
+  <use href="#rocket-gr"/>
+  <g class="bd e1"><use class="ff e2" href="#rocket-f"/><use href="#rocket-g"/><use class="e4" href="#rocket-p" fill="#e5484d"/><circle cx="60" cy="52" r="10" fill="#5a2a3a"/><use href="#rocket-w"/><path class="ln" d="M57 46l5 5l-4 4l5 4" stroke="#fff1c9" stroke-width="1.8"/></g>
+  <circle class="sk e3" style="opacity:0" cx="62" cy="96" r="6"/><circle class="sk e3" style="animation-delay:.9s" cx="56" cy="96" r="5"/><circle class="sk e3" style="animation-delay:1.8s" cx="66" cy="96" r="6"/>
+ </g>
+</svg>

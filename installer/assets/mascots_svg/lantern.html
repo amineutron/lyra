@@ -1,0 +1,52 @@
+<style>
+.m-lantern *{transform-box:fill-box;transform-origin:center;stroke-linecap:round;stroke-linejoin:round}
+.m-lantern .fl{animation:lantern-fl 1.8s ease-in-out infinite;transform-origin:50% 100%}
+.m-lantern .ff{animation-duration:.45s}
+.m-lantern .ha{animation:lantern-ha 3.4s ease-in-out infinite}
+.m-lantern .hz{animation-duration:6s}
+.m-lantern .em{animation:lantern-em 2.6s ease-out infinite;opacity:0}
+.m-lantern .e2{animation-delay:-.9s}.m-lantern .e3{animation-delay:-1.7s}
+.m-lantern .sw{animation:lantern-sw 2s ease-in-out infinite;transform-origin:50% 0}
+.m-lantern .rt{stroke-dasharray:4 10;animation:lantern-rt 5s linear infinite}
+.m-lantern .vp{animation:lantern-vp .5s ease-in-out infinite;transform-origin:50% 100%}
+.m-lantern .rg{animation:lantern-rg 1.2s ease-out infinite;opacity:0}
+.m-lantern .r2{animation-delay:-.6s}
+.m-lantern .bn{animation:lantern-bn .5s ease-in-out infinite;transform-origin:50% 100%}
+.m-lantern .jp{animation:lantern-jp 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.m-lantern .pp{animation:lantern-pp 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.m-lantern .tw{animation:lantern-tw 1.5s ease-in-out infinite}
+.m-lantern .t2{animation-delay:-.5s}.m-lantern .t3{animation-delay:-1s}
+.m-lantern .up{animation:lantern-up 3.4s ease-in infinite;opacity:0}
+.m-lantern .u2{animation-delay:-1.7s}
+.m-lantern .sk{animation:lantern-sk 2.4s ease-in-out infinite;transform-origin:50% 100%}
+.m-lantern .sp{animation:lantern-sp 2.4s infinite;transform-origin:50% 100%}
+.m-lantern .rd{animation:lantern-rd 2.4s ease-in-out infinite;opacity:.5}
+.m-lantern .sm{animation:lantern-sm 2.4s ease-out infinite;opacity:0}
+.m-lantern .s2{animation-delay:-1.2s}
+@keyframes lantern-fl{0%,100%{transform:scale(1,1) skewX(0)}30%{transform:scale(.95,1.08) skewX(4deg)}60%{transform:scale(1.04,.96) skewX(-3deg)}}
+@keyframes lantern-ha{50%{transform:scale(1.08);opacity:.7}}
+@keyframes lantern-em{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(4px,-26px);opacity:0}}
+@keyframes lantern-sw{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes lantern-rt{to{stroke-dashoffset:-56}}
+@keyframes lantern-vp{0%,100%{transform:scale(.88,.75)}50%{transform:scale(1.1,1.3)}}
+@keyframes lantern-rg{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+@keyframes lantern-bn{50%{transform:translateY(-2px)}}
+@keyframes lantern-jp{0%,10%{transform:none}22%{transform:scale(1.06,.9)}42%{transform:translateY(-14px) scale(.95,1.06)}62%{transform:scale(1.06,.92)}76%,100%{transform:none}}
+@keyframes lantern-pp{0%,10%{transform:scale(.8)}30%{transform:scale(1.5,1.55)}55%,100%{transform:scale(1.2,1.25)}}
+@keyframes lantern-tw{0%,100%{opacity:.2;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@keyframes lantern-up{0%{transform:translate(0,6px) scale(.6);opacity:0}25%{opacity:1}100%{transform:translate(8px,-16px);opacity:0}}
+@keyframes lantern-sk{0%,100%{transform:rotate(0)}6%{transform:rotate(-6deg)}12%{transform:rotate(6deg)}18%{transform:rotate(-4deg)}24%{transform:rotate(3deg)}32%{transform:none}}
+@keyframes lantern-sp{0%,100%{transform:scale(.6,.55);opacity:.9}12%{transform:scale(.3,.2);opacity:.4}22%{transform:scale(.75,.8);opacity:1}34%{transform:scale(.25,.2);opacity:.3}46%{transform:scale(.6,.6);opacity:.9}}
+@keyframes lantern-rd{0%,50%,100%{opacity:.4}10%,30%{opacity:.7}}
+@keyframes lantern-sm{0%{transform:translate(0,0) scale(.5);opacity:0}25%{opacity:.6}100%{transform:translate(-4px,-26px) scale(1.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.m-lantern *{animation-duration:8s!important}}
+</style>
+<svg class="mx m-lantern" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<defs><g id="lantern-b"><path d="M50 32C50 16 70 16 70 32" stroke="#c9923f" stroke-width="4" fill="none"/><rect x="40" y="40" width="40" height="50" rx="5" fill="#f6c177" opacity=".14"/><path d="M42 41V89M78 41V89M60 41V89" stroke="#c9923f" stroke-width="3" fill="none" opacity=".75"/><path d="M37 42L46 30H74L83 42Z" fill="#c9923f"/><path d="M48 33h18" stroke="#fbe3b0" stroke-width="2" opacity=".6"/><rect x="34" y="88" width="52" height="9" rx="3" fill="#c9923f"/><rect x="36" y="90" width="20" height="2" rx="1" fill="#fbe3b0" opacity=".5"/></g><path id="lantern-f" d="M60 46C65 58 74 64 74 74a14 14 0 0 1-28 0C46 64 55 58 60 46Z"/><path id="lantern-c" d="M60 62C63 68 67 71 67 78a7 7 0 0 1-14 0C53 71 57 68 60 62Z"/><g id="lantern-h" fill="#f6c177"><circle cx="60" cy="68" r="42" opacity=".07"/><circle cx="60" cy="68" r="32" opacity=".09"/><circle cx="60" cy="68" r="22" opacity=".12"/></g></defs>
+<g class="s s-sleep"><ellipse cx="60" cy="102" rx="30" ry="3" fill="#f6c177" opacity=".14"/><g class="ha hz"><circle cx="60" cy="68" r="24" fill="#f6c177" opacity=".08"/></g><use href="#lantern-b"/><g style="transform:scale(.4);transform-origin:50% 100%"><g class="fl"><use href="#lantern-f" fill="#f2a54a"/><use href="#lantern-c" fill="#fbe3b0"/></g></g><g class="up "><path d="M84 40h7l-7 8h7" stroke="#fbe3b0" stroke-width="2.4" fill="none"/></g><g class="up u2"><path d="M92 28h7l-7 8h7" stroke="#fbe3b0" stroke-width="2.4" fill="none"/></g></g>
+<g class="s s-idle"><ellipse cx="60" cy="102" rx="30" ry="3" fill="#f6c177" opacity=".14"/><g class="ha"><use href="#lantern-h"/></g><use href="#lantern-b"/><g class="fl"><use href="#lantern-f" fill="#f6c177"/><use href="#lantern-c" fill="#fff3d0"/></g><circle class="em " cx="58" cy="62" r="2" fill="#fbe3b0"/><circle class="em e2" cx="64" cy="62" r="2" fill="#fbe3b0"/></g>
+<g class="s s-work"><ellipse cx="60" cy="102" rx="30" ry="3" fill="#f6c177" opacity=".14"/><circle class="rt" cx="60" cy="68" r="47" fill="none" stroke="#f6c177" stroke-width="2.4" opacity=".6"/><g class="sw"><g class="ha ff"><use href="#lantern-h"/></g><use href="#lantern-b"/><g style="transform:scale(1.12,1.2);transform-origin:50% 100%"><g class="fl ff"><use href="#lantern-f" fill="#f6c177"/><use href="#lantern-c" fill="#ffffff"/></g></g><circle class="em " cx="56" cy="62" r="2" fill="#fbe3b0"/><circle class="em e2" cx="63" cy="62" r="2" fill="#fbe3b0"/><circle class="em e3" cx="60" cy="62" r="2" fill="#fbe3b0"/></g></g>
+<g class="s s-busy"><ellipse cx="60" cy="102" rx="30" ry="3" fill="#f6c177" opacity=".14"/><g stroke="#7C6CF0" stroke-width="2.4" fill="none"><circle class="rg" cx="60" cy="68" r="40"/><circle class="rg r2" cx="60" cy="68" r="40"/></g><g class="bn"><use href="#lantern-h"/><use href="#lantern-b"/><g class="vp"><use href="#lantern-f" fill="#f6c177"/><use href="#lantern-c" fill="#fff3d0"/></g></g></g>
+<g class="s s-ok"><ellipse cx="60" cy="102" rx="30" ry="3" fill="#f6c177" opacity=".14"/><g class="jp"><g class="ha"><use href="#lantern-h"/></g><use href="#lantern-b"/><g class="pp"><use href="#lantern-f" fill="#fbd68a"/><use href="#lantern-c" fill="#ffffff"/></g></g><path class="tw" d="M16 37l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f6c177"/><path class="tw t2" d="M104 31l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#c4a7e7"/><path class="tw t3" d="M98 81l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f6c177"/><path class="tw t3" d="M22 79l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#c4a7e7"/></g>
+<g class="s s-err"><ellipse cx="60" cy="102" rx="30" ry="3" fill="#f6c177" opacity=".14"/><g class="sk"><g class="ha hz"><circle cx="60" cy="68" r="26" fill="#e8455f" opacity=".12"/></g><use href="#lantern-b"/><rect class="rd" x="40" y="40" width="40" height="50" rx="5" fill="#e8455f"/><g class="sp"><use href="#lantern-f" fill="#e8455f"/><use href="#lantern-c" fill="#ff9aa8"/></g></g><g fill="#d4a9b4"><circle class="sm" cx="66" cy="42" r="4"/><circle class="sm s2" cx="56" cy="42" r="3"/></g></g>
+</svg>

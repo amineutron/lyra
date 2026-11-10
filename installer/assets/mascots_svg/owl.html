@@ -1,0 +1,69 @@
+<style>
+.m-owl *{transform-box:fill-box;transform-origin:center}
+.m-owl .hd{transform-origin:50% 100%}
+.m-owl .wl{transform-origin:70% 10%}.m-owl .wr{transform-origin:30% 10%;--k:-1}
+.m-owl .pu circle:first-child{fill:#1a2a44}.m-owl .pu circle+circle{fill:#fff}
+.m-owl .eye{animation:owl-blink 4.5s infinite}
+.m-owl .zz{animation:owl-zz 3s ease-in-out -1s infinite}
+.m-owl .dot{animation:owl-dot 1.2s ease-in-out -.4s infinite}
+.m-owl .breath{animation:owl-br 3.4s ease-in-out infinite}
+.m-owl .s-sleep .hd{animation:owl-nod 5s ease-in-out infinite}
+.m-owl .s-idle .hd{animation:owl-tilt 5s ease-in-out infinite}
+.m-owl .s-idle .pu{animation:owl-look 5s ease-in-out infinite}
+.m-owl .s-work .hd{animation:owl-turn 2.6s ease-in-out infinite}
+.m-owl .s-work .pu{animation:owl-dart 1.3s ease-in-out infinite}
+.m-owl .s-work .big{animation:owl-big 1.3s ease-in-out infinite}
+.m-owl .s-busy .hd{animation:owl-talk .5s ease-in-out infinite}
+.m-owl .s-busy .bk{animation:owl-beak .25s ease-in-out infinite}
+.m-owl .s-busy .wl{animation:owl-flap .5s ease-in-out infinite}
+.m-owl .s-busy .wr{animation:owl-flap .5s ease-in-out infinite}
+.m-owl .s-busy .pu{animation:owl-pulse .5s ease-in-out infinite}
+.m-owl .s-ok .all{animation:owl-hop 1s ease-out 2}
+.m-owl .s-ok .wl{transform:rotate(55deg)}.m-owl .s-ok .wr{transform:rotate(-55deg)}
+.m-owl .s-err .all{animation:owl-shake .4s ease-in-out 4}
+.m-owl .s-err .hd{animation:owl-wob 1.2s ease-in-out infinite}
+.m-owl .red{animation:owl-red 1s ease-in-out infinite}
+.m-owl .spin{animation:owl-spin 2s linear infinite}
+.m-owl .s .d1{animation-delay:-.3s}.m-owl .s .d2{animation-delay:-.7s}.m-owl .s .d3{animation-delay:-1.1s}
+@keyframes owl-blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes owl-zz{0%{transform:translate(0,4px);opacity:0}30%{opacity:1}100%{transform:translate(6px,-10px);opacity:0}}
+@keyframes owl-dot{0%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@keyframes owl-br{50%{transform:scale(1.03,1.05)}}
+@keyframes owl-nod{0%,100%{transform:rotate(4deg) translateY(2px)}50%{transform:rotate(7deg) translateY(3px)}}
+@keyframes owl-tilt{0%,35%,100%{transform:rotate(0)}50%,80%{transform:rotate(-9deg)}}
+@keyframes owl-look{0%,35%,100%{transform:translateX(0)}50%,80%{transform:translateX(-2px)}}
+@keyframes owl-turn{0%,100%{transform:rotate(-16deg) translateX(-3px)}50%{transform:rotate(16deg) translateX(3px)}}
+@keyframes owl-dart{0%,100%{transform:translate(-2px,-2px) scale(.7)}50%{transform:translate(2px,-1px) scale(.7)}}
+@keyframes owl-big{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@keyframes owl-talk{0%,100%{transform:translateY(0)}50%{transform:translateY(2px) rotate(-2deg)}}
+@keyframes owl-beak{0%,100%{transform:scaleY(.6)}50%{transform:scaleY(1.5)}}
+@keyframes owl-flap{0%,100%{transform:rotate(0)}50%{transform:rotate(calc(var(--k,1)*28deg))}}
+@keyframes owl-pulse{0%,100%{transform:scale(1.15)}50%{transform:scale(1.4)}}
+@keyframes owl-hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}}
+@keyframes owl-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@keyframes owl-wob{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes owl-red{0%,100%{opacity:.4}50%{opacity:.8}}
+@keyframes owl-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.m-owl *{animation-duration:6s !important}}
+</style>
+<svg class="mx m-owl" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<path id="owl-z" d="M0 0h8l-8 9h8" fill="none" stroke="#bcd8f0" stroke-width="2.2" stroke-linecap="round"/>
+<path id="owl-st" d="M0-5L1.4-1.4L5 0L1.4 1.4L0 5L-1.4 1.4L-5 0L-1.4-1.4Z" fill="#f6c177"/>
+<g id="owl-d"><circle r="14" fill="#eef5fc" stroke="#5a8fc0" stroke-width="2"/></g>
+<g id="owl-body"><ellipse cx="48" cy="108" rx="7" ry="3.6" fill="#f6c177"/><ellipse cx="72" cy="108" rx="7" ry="3.6" fill="#f6c177"/><ellipse cx="60" cy="82" rx="28" ry="27" fill="#7fb2e0"/><ellipse cx="60" cy="88" rx="17" ry="19" fill="#bcd8f0"/><path d="M52 80q4 3 8 0q4 3 8 0M52 90q4 3 8 0q4 3 8 0M54 100q3 2 6 0q3 2 6 0" stroke="#7fb2e0" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>
+<ellipse id="owl-w" cx="0" cy="0" rx="9" ry="21" fill="#5a8fc0"/>
+<g id="owl-head"><path d="M30 34L27 13L45 24ZM90 34L93 13L75 24Z" fill="#5a8fc0"/><ellipse cx="60" cy="46" rx="34" ry="28" fill="#7fb2e0"/><path d="M32 52Q60 82 88 52Q60 66 32 52Z" fill="#5a8fc0" opacity=".35"/></g>
+<path id="owl-bk" d="M55 53Q60 51 65 53L60 65Z" fill="#f6c177"/>
+</defs>
+<g class="s s-sleep"><g class="breath"><use href="#owl-body"/><g class="wl"><use href="#owl-w" x="33" y="82"/></g><g class="wr"><use href="#owl-w" x="87" y="82"/></g></g><g class="hd"><use href="#owl-head"/><circle cx="46" cy="47" r="13" fill="#6fa3d4"/><circle cx="74" cy="47" r="13" fill="#6fa3d4"/><path d="M38 47q8 6 16 0M66 47q8 6 16 0" stroke="#1a2a44" stroke-width="2.4" fill="none" stroke-linecap="round"/><use href="#owl-bk" transform="translate(0 3)"/></g>
+<g transform="translate(88 24)"><g class="zz"><use href="#owl-z"/></g></g></g>
+<g class="s s-idle"><g class="breath"><use href="#owl-body"/><g class="wl"><use href="#owl-w" x="33" y="82"/></g><g class="wr"><use href="#owl-w" x="87" y="82"/></g></g><g class="hd"><use href="#owl-head"/><g class="eye"><use href="#owl-d" x="46" y="47"/><g class="pu"><circle cx="46" cy="47" r="6.5"/><circle cx="48.5" cy="44.5" r="2"/></g></g><g class="eye"><use href="#owl-d" x="74" y="47"/><g class="pu"><circle cx="74" cy="47" r="6.5"/><circle cx="76.5" cy="44.5" r="2"/></g></g><use href="#owl-bk"/></g></g>
+<g class="s s-work"><g class="breath"><use href="#owl-body"/><g class="wl"><use href="#owl-w" x="33" y="82"/></g><g class="wr"><use href="#owl-w" x="87" y="82"/></g></g><g class="hd"><use href="#owl-head"/><g class="big"><use href="#owl-d" x="46" y="47"/><use href="#owl-d" x="74" y="47"/></g><g class="pu"><circle cx="46" cy="47" r="6.5"/></g><g class="pu"><circle cx="74" cy="47" r="6.5"/></g><use href="#owl-bk"/></g>
+<g transform="translate(48 8)"><circle class="dot" r="2.4" fill="#f6c177"/></g><g transform="translate(60 6)"><circle class="dot d1" r="2.4" fill="#f6c177"/></g><g transform="translate(72 8)"><circle class="dot d2" r="2.4" fill="#f6c177"/></g></g>
+<g class="s s-busy"><g class="all"><use href="#owl-body"/><g class="wl"><use href="#owl-w" x="33" y="82"/></g><g class="wr"><use href="#owl-w" x="87" y="82"/></g><g class="hd"><use href="#owl-head"/><use href="#owl-d" x="46" y="47"/><use href="#owl-d" x="74" y="47"/><g class="pu"><circle cx="46" cy="47" r="6.5"/><circle cx="48.5" cy="44.5" r="2"/></g><g class="pu"><circle cx="74" cy="47" r="6.5"/><circle cx="76.5" cy="44.5" r="2"/></g><g class="bk"><use href="#owl-bk"/></g></g></g></g>
+<g class="s s-ok"><g class="all"><use href="#owl-body"/><g class="wl"><use href="#owl-w" x="33" y="82"/></g><g class="wr"><use href="#owl-w" x="87" y="82"/></g><use href="#owl-head"/><circle cx="46" cy="47" r="13" fill="#eef5fc"/><circle cx="74" cy="47" r="13" fill="#eef5fc"/><path d="M38 52q8-12 16 0M66 52q8-12 16 0" stroke="#1a2a44" stroke-width="3" fill="none" stroke-linecap="round"/><use href="#owl-bk"/></g>
+<g transform="translate(20 28)"><use class="dot" href="#owl-st"/></g><g transform="translate(100 24)"><use class="dot d2" href="#owl-st"/></g><g transform="translate(104 60)"><use class="dot d1" href="#owl-st"/></g></g>
+<g class="s s-err"><g class="all"><use href="#owl-body"/><g class="wl"><use href="#owl-w" x="33" y="82"/></g><g class="wr"><use href="#owl-w" x="87" y="82"/></g><g class="hd"><use href="#owl-head"/><ellipse class="red" cx="60" cy="46" rx="34" ry="28" fill="#e5484d"/><use href="#owl-d" x="46" y="47"/><use href="#owl-d" x="74" y="47"/><path d="M40 41l12 12M52 41l-12 12M68 41l12 12M80 41l-12 12" stroke="#1a2a44" stroke-width="3" stroke-linecap="round"/><use href="#owl-bk"/></g><ellipse class="red" cx="60" cy="88" rx="17" ry="19" fill="#e5484d"/></g>
+<g class="spin"><g transform="translate(60 12)"><circle cx="-16" r="2.4" fill="#f6c177"/><circle cx="16" r="2.4" fill="#f6c177"/><circle cy="-10" r="2.4" fill="#eb6f92"/><circle cy="10" r="0"/></g></g></g>
+</svg>

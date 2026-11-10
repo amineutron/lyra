@@ -1,0 +1,67 @@
+<style>
+.m-robot *{transform-box:fill-box;transform-origin:center}
+.m-robot .al{transform-origin:100% 0}.m-robot .ar{transform-origin:0 0;--k:-1}
+.m-robot .arm path{stroke:#c4506f;stroke-width:6;stroke-linecap:round}.m-robot .arm circle{fill:#f7a3bb;r:4.3px}
+.m-robot .bar{transform-origin:50% 100%}
+.m-robot .ant{transform-origin:50% 100%}
+.m-robot .bob{animation:robot-bob 2.6s ease-in-out infinite}
+.m-robot .eye{animation:robot-blink 4s infinite}
+.m-robot .led{animation:robot-led 1.2s ease-in-out infinite}
+.m-robot .zz{animation:robot-zz 3s ease-in-out -1s infinite}
+.m-robot .s-idle .bar{animation:robot-eq 2s ease-in-out infinite}
+.m-robot .s-idle .ant{animation:robot-sway 3s ease-in-out infinite}
+.m-robot .s-work .spin{animation:robot-spin 1s linear infinite}
+.m-robot .s-work .pup{animation:robot-scan 1.4s ease-in-out infinite}
+.m-robot .s-work .ant{animation:robot-sway .5s ease-in-out infinite}
+.m-robot .s-busy .bar{animation:robot-eq .45s ease-in-out infinite}
+.m-robot .s-busy .head{animation:robot-nod .45s ease-in-out infinite}
+.m-robot .s-ok .all{animation:robot-jump 1s ease-out 2}
+.m-robot .s-ok .chk{stroke-dasharray:30;animation:robot-chk 2s ease-out -.6s infinite}
+.m-robot .s-err .all{animation:robot-shake .4s ease-in-out 4}
+.m-robot .red{animation:robot-red 1s ease-in-out infinite}
+.m-robot .gl{animation:robot-gl .5s steps(2) infinite}
+.m-robot .puff{animation:robot-puff 2s ease-out infinite}
+.m-robot .s-idle .ar{animation:robot-lift 3.4s ease-in-out infinite}
+.m-robot .s-work .al{animation:robot-type .5s ease-in-out infinite}
+.m-robot .s-work .ar{animation:robot-type .5s ease-in-out -.25s infinite}
+.m-robot .s-busy .al{animation:robot-wave .6s ease-in-out infinite}
+.m-robot .s-busy .ar{animation:robot-wave .6s ease-in-out -.3s infinite}
+.m-robot .s-ok .al{transform:rotate(125deg)}.m-robot .s-ok .ar{transform:rotate(-125deg)}
+.m-robot .s-err .al{transform:rotate(-12deg)}.m-robot .s-err .ar{transform:rotate(12deg)}
+.m-robot .s .d1{animation-delay:-.3s}.m-robot .s .d2{animation-delay:-.6s}.m-robot .s .d3{animation-delay:-.9s}
+@keyframes robot-bob{50%{transform:translateY(-2px)}}
+@keyframes robot-blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes robot-led{50%{opacity:.35}}
+@keyframes robot-zz{0%{transform:translate(0,4px);opacity:0}30%{opacity:1}100%{transform:translate(6px,-10px);opacity:0}}
+@keyframes robot-eq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes robot-sway{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes robot-lift{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg)}}
+@keyframes robot-spin{to{transform:rotate(360deg)}}
+@keyframes robot-scan{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+@keyframes robot-type{0%,100%{transform:rotate(0)}50%{transform:rotate(calc(var(--k,1)*55deg))}}
+@keyframes robot-wave{0%,100%{transform:rotate(calc(var(--k,1)*10deg))}50%{transform:rotate(calc(var(--k,1)*100deg))}}
+@keyframes robot-nod{50%{transform:translateY(1.5px)}}
+@keyframes robot-jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}}
+@keyframes robot-chk{0%{stroke-dashoffset:30}40%,100%{stroke-dashoffset:0}}
+@keyframes robot-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px) rotate(-2deg)}75%{transform:translateX(3px) rotate(2deg)}}
+@keyframes robot-red{0%,100%{opacity:.25}50%{opacity:.6}}
+@keyframes robot-gl{50%{transform:translateX(3px)}}
+@keyframes robot-puff{0%{transform:translate(0,0) scale(.4);opacity:.9}100%{transform:translate(2px,-14px) scale(1.5);opacity:0}}
+@media (prefers-reduced-motion:reduce){.m-robot *{animation-duration:6s !important}}
+</style>
+<svg class="mx m-robot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<path id="robot-z" d="M0 0h8l-8 9h8" fill="none" stroke="#f7a3bb" stroke-width="2.2" stroke-linecap="round"/>
+<g id="robot-legs"><rect x="46" y="96" width="10" height="11" rx="3" fill="#c4506f"/><rect x="64" y="96" width="10" height="11" rx="3" fill="#c4506f"/><rect x="42" y="103" width="16" height="7" rx="3.5" fill="#eb6f92"/><rect x="62" y="103" width="16" height="7" rx="3.5" fill="#eb6f92"/></g>
+<g id="robot-body"><rect x="37" y="64" width="46" height="36" rx="10" fill="#eb6f92"/><path d="M71 64h2a10 10 0 0 1 10 10v16a10 10 0 0 1-10 10h-2z" fill="#c4506f" opacity=".5"/><rect x="45" y="69" width="30" height="22" rx="5" fill="#1a1426"/></g>
+<g id="robot-head"><rect x="29" y="25" width="62" height="36" rx="11" fill="#eb6f92"/><rect x="35" y="30" width="50" height="25" rx="8" fill="#1a1426"/><rect x="25" y="38" width="5" height="12" rx="2.5" fill="#c4506f"/><rect x="90" y="38" width="5" height="12" rx="2.5" fill="#c4506f"/><rect x="58.5" y="17" width="3" height="9" fill="#c4506f"/></g>
+</defs>
+<g class="s s-sleep"><g class="bob"><use href="#robot-legs"/><use href="#robot-body"/><g class="al arm"><path d="M37 70l-7 16"/><circle cx="30" cy="87"/></g><g class="ar arm"><path d="M83 70l7 16"/><circle cx="90" cy="87"/></g><use href="#robot-head"/><circle cx="60" cy="14" r="4" fill="#7a3a52"/><path d="M42 43q4 3 8 0M70 43q4 3 8 0" stroke="#f7a3bb" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".7"/><path d="M52 80h16" stroke="#f7a3bb" stroke-width="2" stroke-linecap="round"/></g>
+<g transform="translate(86 26)"><g class="zz"><use href="#robot-z"/></g></g></g>
+<g class="s s-idle"><g class="bob"><use href="#robot-legs"/><use href="#robot-body"/><g class="al arm"><path d="M37 70l-7 16"/><circle cx="30" cy="87"/></g><g class="ar arm"><path d="M83 70l7 16"/><circle cx="90" cy="87"/></g><use href="#robot-head"/><g class="ant"><circle class="led" cx="60" cy="14" r="4.5" fill="#f6c177"/></g><g class="eye"><circle cx="47" cy="43" r="5" fill="#f7a3bb"/><circle cx="73" cy="43" r="5" fill="#f7a3bb"/></g><g fill="#f7a3bb"><rect class="bar" x="49" y="74" width="3.5" height="12" rx="1.5"/><rect class="bar d1" x="55" y="74" width="3.5" height="12" rx="1.5"/><rect class="bar d2" x="61" y="74" width="3.5" height="12" rx="1.5"/><rect class="bar d3" x="67" y="74" width="3.5" height="12" rx="1.5"/></g></g></g>
+<g class="s s-work"><g class="bob"><use href="#robot-legs"/><use href="#robot-body"/><g class="al arm"><path d="M37 70l-7 16"/><circle cx="30" cy="87"/></g><g class="ar arm"><path d="M83 70l7 16"/><circle cx="90" cy="87"/></g><use href="#robot-head"/><g class="ant"><circle class="led" cx="60" cy="14" r="4.5" fill="#f6c177"/></g><circle cx="47" cy="43" r="6.5" fill="#2b2140"/><circle cx="73" cy="43" r="6.5" fill="#2b2140"/><g class="pup"><circle cx="47" cy="43" r="3.6" fill="#f6c177"/><circle cx="73" cy="43" r="3.6" fill="#f6c177"/></g><g class="spin"><circle cx="60" cy="80" r="7" fill="none" stroke="#f7a3bb" stroke-width="2.4" stroke-dasharray="14 8" stroke-linecap="round"/></g></g></g>
+<g class="s s-busy"><g class="all"><use href="#robot-legs"/><use href="#robot-body"/><g class="al arm"><path d="M37 70l-7 16"/><circle cx="30" cy="87"/></g><g class="ar arm"><path d="M83 70l7 16"/><circle cx="90" cy="87"/></g><g class="head"><use href="#robot-head"/><g class="ant"><circle class="led" cx="60" cy="14" r="4.5" fill="#f6c177"/></g><circle cx="47" cy="43" r="5.5" fill="#f7a3bb"/><circle cx="73" cy="43" r="5.5" fill="#f7a3bb"/><circle cx="48" cy="42" r="1.6" fill="#fff"/><circle cx="74" cy="42" r="1.6" fill="#fff"/></g><g fill="#f6c177"><rect class="bar" x="48" y="72" width="3" height="16" rx="1.5"/><rect class="bar d1" x="53.5" y="72" width="3" height="16" rx="1.5"/><rect class="bar d2" x="59" y="72" width="3" height="16" rx="1.5"/><rect class="bar d3" x="64.5" y="72" width="3" height="16" rx="1.5"/><rect class="bar d1" x="70" y="72" width="3" height="16" rx="1.5"/></g></g></g>
+<g class="s s-ok"><g class="all"><use href="#robot-legs"/><use href="#robot-body"/><g class="al arm"><path d="M37 70l-7 16"/><circle cx="30" cy="87"/></g><g class="ar arm"><path d="M83 70l7 16"/><circle cx="90" cy="87"/></g><use href="#robot-head"/><circle class="led" cx="60" cy="14" r="4.5" fill="#82d69c"/><path d="M41 46q6-8 12 0M67 46q6-8 12 0" stroke="#82d69c" stroke-width="3" fill="none" stroke-linecap="round"/><path class="chk" d="M51 80l6 6l12-12" stroke="#82d69c" stroke-width="3.4" fill="none" stroke-linecap="round"/></g></g>
+<g class="s s-err"><g class="all"><use href="#robot-legs"/><use href="#robot-body"/><g class="al arm"><path d="M37 70l-7 16"/><circle cx="30" cy="87"/></g><g class="ar arm"><path d="M83 70l7 16"/><circle cx="90" cy="87"/></g><use href="#robot-head"/><rect class="red" x="29" y="25" width="62" height="36" rx="11" fill="#e5484d"/><rect class="red" x="37" y="64" width="46" height="36" rx="10" fill="#e5484d"/><circle cx="60" cy="14" r="4.5" fill="#e5484d"/><path d="M42 39l10 9M52 39l-10 9M68 39l10 9M78 39l-10 9" stroke="#ff8a9d" stroke-width="3" stroke-linecap="round"/><g class="gl"><path d="M52 74l16 12M68 74l-16 12" stroke="#ff8a9d" stroke-width="3" stroke-linecap="round"/></g></g>
+<circle class="puff" cx="60" cy="10" r="4" fill="#9a8fb0"/></g>
+</svg>
