@@ -380,7 +380,8 @@ class VoiceInterface:
         device: str = "cuda",
         audio_config: Optional[AudioConfig] = None,
         tts_speaker_id: int = 0,
-        tts_length_scale: float = 1.0
+        tts_length_scale: float = 1.0,
+        compute_type: str = "float16"
     ):
         """
         Initialise l'interface vocale.
@@ -390,11 +391,13 @@ class VoiceInterface:
             tts_model: Chemin vers le modele Piper
             language: Langue
             device: cuda ou cpu
+            compute_type: precision Whisper (float16 sur GPU, int8 sur CPU)
             audio_config: Configuration audio
             tts_speaker_id: Speaker du modele Piper (multi-speaker)
             tts_length_scale: Vitesse de parole (1.0 = normal, >1 = plus lent)
         """
-        self.stt = STT(model=stt_model, language=language, device=device)
+        self.stt = STT(model=stt_model, language=language, device=device,
+                       compute_type=compute_type)
         self.tts = TTS(
             model_path=tts_model,
             speaker_id=tts_speaker_id,
