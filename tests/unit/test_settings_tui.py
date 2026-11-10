@@ -167,3 +167,28 @@ class TestRunSettingsTui:
         messages = self._run(menu, ["enter", "esc", "esc"], monkeypatch)
         assert messages == ["Reglages fermes."]
         assert menu.settings.get("tts.model") is None
+
+
+class TestCapsuleScreens:
+    _run = TestRunSettingsTui._run
+
+    def test_choix_mascotte(self, tmp_path, monkeypatch):
+        menu = make_menu(tmp_path)
+        # racine: 3x down -> "Mascotte capsule", enter -> ecran (random preselectionne)
+        # -> down (ascii), enter, puis esc racine
+        messages = self._run(
+            menu, ["down", "down", "down", "enter", "down", "enter", "esc"], monkeypatch)
+        assert any("Mascotte capsule : ascii" in m for m in messages)
+        assert menu.settings.capsule().mascot == "ascii"
+
+    def test_bascule_sons(self, tmp_path, monkeypatch):
+        menu = make_menu(tmp_path)
+        # racine: 4x down -> "Sons capsule", enter -> enter (interrupteur general),
+        # down enter (listen_start), esc (retour racine), esc (fermer)
+        messages = self._run(
+            menu, ["down"] * 4 + ["enter", "enter", "down", "enter", "esc", "esc"],
+            monkeypatch)
+        cfg = menu.settings.capsule()
+        assert cfg.sounds_enabled is False
+        assert cfg.sounds_events["listen_start"] is False
+        assert any("Sons capsule coupes" in m for m in messages)

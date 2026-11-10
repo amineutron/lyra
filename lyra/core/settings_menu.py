@@ -18,6 +18,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from .capsule_settings import (
+    KEY_SOUNDS_ENABLED,
+    MASCOT_CHOICES,
+    SOUND_EVENT_IDS,
+    event_key,
+)
 from .settings import UserSettings, VoiceInfo, list_available_voices
 
 # Etats du menu
@@ -25,6 +31,8 @@ _ROOT = "root"
 _VOICE = "voice"
 _SPEED = "speed"
 _MODE = "mode"
+_MASCOT = "mascot"
+_SOUNDS = "sounds"
 
 SPEED_PRESETS = [
     ("0.8", "rapide"),
@@ -100,6 +108,10 @@ class SettingsMenu:
             return self._handle_speed(text)
         if self._state == _MODE:
             return self._handle_mode(text)
+        if self._state == _MASCOT:
+            return self._handle_mascot(text)
+        if self._state == _SOUNDS:
+            return self._handle_sounds(text)
         return self.close()
 
     # ------------------------------------------------------------------
@@ -121,6 +133,9 @@ class SettingsMenu:
                 return f"{scale} ({name})"
         return str(scale)
 
+    def current_sounds_label(self) -> str:
+        return "actifs" if self.settings.capsule().sounds_enabled else "coupes"
+
     def _render_root(self) -> str:
         mode = self.callbacks.get_mode()
         return (
@@ -128,6 +143,8 @@ class SettingsMenu:
             f"  1. Voix    : {self.current_voice_label()}\n"
             f"  2. Vitesse : {self.current_speed_label()}\n"
             f"  3. Mode    : {mode}\n"
+            f"  4. Mascotte capsule : {self.settings.capsule().mascot}\n"
+            f"  5. Sons capsule     : {self.current_sounds_label()}\n"
             "(numero, ou q pour quitter)"
         )
 
@@ -161,6 +178,25 @@ class SettingsMenu:
             "(numero, ou q pour revenir)"
         )
 
+    def _render_mascot(self) -> str:
+        current = self.settings.capsule().mascot
+        lines = ["Mascotte de la capsule :"]
+        for idx, name in enumerate(MASCOT_CHOICES, start=1):
+            lines.append(f"  {idx}. {name}{'  [actuelle]' if name == current else ''}")
+        lines.append("(numero, un nom, ou q pour revenir)")
+        return "\n".join(lines)
+
+    def _render_sounds(self) -> str:
+        cfg = self.settings.capsule()
+        lines = [
+            "Sons de la capsule (numero pour basculer) :",
+            f"  1. Sons : {'actifs' if cfg.sounds_enabled else 'coupes'}",
+        ]
+        for idx, event in enumerate(SOUND_EVENT_IDS, start=2):
+            lines.append(f"  {idx}. {event} : {'on' if cfg.sounds_events[event] else 'off'}")
+        lines.append("(numero, ou q pour revenir)")
+        return "\n".join(lines)
+
     # ------------------------------------------------------------------
     # Handlers par etat
     # ------------------------------------------------------------------
@@ -175,6 +211,12 @@ class SettingsMenu:
         if text in ("3", "mode"):
             self._state = _MODE
             return self._render_mode()
+        if text in ("4", "mascotte", "mascot"):
+            self._state = _MASCOT
+            return self._render_mascot()
+        if text in ("5", "sons", "sounds"):
+            self._state = _SOUNDS
+            return self._render_sounds()
         return f"Choix invalide.\n{self._render_root()}"
 
     def _handle_voice(self, text: str) -> str:
@@ -206,6 +248,23 @@ class SettingsMenu:
         self._state = _ROOT
         return f"{message}\n\n{self._render_root()}"
 
+    def _handle_mascot(self, text: str) -> str:
+        selected = _resolve_option(text, list(MASCOT_CHOICES), key=str)
+        if selected is None:
+            return f"Choix invalide.\n{self._render_mascot()}"
+        message = self.apply_mascot_choice(selected)
+        self._state = _ROOT
+        return f"{message}\n\n{self._render_root()}"
+
+    def _handle_sounds(self, text: str) -> str:
+        toggles = ["general", *SOUND_EVENT_IDS]
+        selected = _resolve_option(text, toggles, key=str)
+        if selected is None:
+            return f"Choix invalide.\n{self._render_sounds()}"
+        message = (self.toggle_sounds() if selected == "general"
+                   else self.toggle_sound_event(selected))
+        return f"{message}\n\n{self._render_sounds()}"
+
     # ------------------------------------------------------------------
     # Actions (partagees avec le TUI interactif, settings_tui.py)
     # ------------------------------------------------------------------
@@ -236,6 +295,25 @@ class SettingsMenu:
         self.settings.set("active_mode", mode)
         self._apply(self.callbacks.set_mode, mode)
         return f"[+] Mode {mode} active (persiste)"
+
+    def apply_mascot_choice(self, mascot: str) -> str:
+        """Persiste la mascotte de la capsule (lue par la capsule a l'ouverture)."""
+        self.settings.set("capsule.mascot", mascot)
+        return f"[+] Mascotte capsule : {mascot}"
+
+    def toggle_sounds(self) -> str:
+        """Bascule l'interrupteur general des sons de la capsule."""
+        enabled = not self.settings.capsule().sounds_enabled
+        self.settings.set(KEY_SOUNDS_ENABLED, enabled)
+        return f"[+] Sons capsule {'actifs' if enabled else 'coupes'}"
+
+    def toggle_sound_event(self, event: str) -> str:
+        """Bascule le son d'un evenement (listen_start, ask, ...)."""
+        if event not in SOUND_EVENT_IDS:
+            raise ValueError(f"Evenement sonore inconnu: {event}")
+        enabled = not self.settings.capsule().sounds_events[event]
+        self.settings.set(event_key(event), enabled)
+        return f"[+] Son {event} : {'on' if enabled else 'off'}"
 
     # ------------------------------------------------------------------
     # Helpers

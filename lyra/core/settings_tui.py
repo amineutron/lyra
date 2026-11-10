@@ -19,6 +19,7 @@ import tty
 from contextlib import contextmanager
 from typing import Callable, Optional, TextIO
 
+from .capsule_settings import MASCOT_CHOICES, SOUND_EVENT_IDS
 from .settings_menu import SPEED_PRESETS, SettingsMenu, parse_speed
 
 _HIGHLIGHT = "\033[44;97m"  # fond bleu, texte blanc
@@ -147,6 +148,8 @@ def run_settings_tui(menu: SettingsMenu, println: Callable[[str], None] = print)
             f"Voix    : {menu.current_voice_label()}",
             f"Vitesse : {menu.current_speed_label()}",
             f"Mode    : {menu.callbacks.get_mode()}",
+            f"Mascotte capsule : {menu.settings.capsule().mascot}",
+            f"Sons capsule     : {menu.current_sounds_label()}",
         ]
         choice = select_menu("Reglages Lyra", root_items,
                              hint=f"{_HINT}   Echap ici: fermer")
@@ -159,6 +162,10 @@ def run_settings_tui(menu: SettingsMenu, println: Callable[[str], None] = print)
             _speed_screen(menu, println)
         elif choice == 2:
             _mode_screen(menu, println)
+        elif choice == 3:
+            _mascot_screen(menu, println)
+        elif choice == 4:
+            _sounds_screen(menu, println)
 
 
 def _voice_screen(menu: SettingsMenu, println: Callable[[str], None]) -> None:
@@ -211,3 +218,29 @@ def _mode_screen(menu: SettingsMenu, println: Callable[[str], None]) -> None:
     choice = select_menu("Mode", items, index=modes.index(current))
     if choice is not None:
         println(menu.apply_mode_choice(modes[choice]))
+
+
+def _mascot_screen(menu: SettingsMenu, println: Callable[[str], None]) -> None:
+    current = menu.settings.capsule().mascot
+    items = [f"{name}{'  [actuelle]' if name == current else ''}" for name in MASCOT_CHOICES]
+    choice = select_menu("Mascotte de la capsule", items,
+                         index=MASCOT_CHOICES.index(current))
+    if choice is not None:
+        println(menu.apply_mascot_choice(MASCOT_CHOICES[choice]))
+
+
+def _sounds_screen(menu: SettingsMenu, println: Callable[[str], None]) -> None:
+    """Liste de bascules : Entree inverse la ligne, Echap revient."""
+    index = 0
+    while True:
+        cfg = menu.settings.capsule()
+        items = [f"Sons : {'actifs' if cfg.sounds_enabled else 'coupes'}"]
+        items += [f"{event} : {'on' if cfg.sounds_events[event] else 'off'}"
+                  for event in SOUND_EVENT_IDS]
+        choice = select_menu("Sons de la capsule", items, index=index,
+                             hint="fleches: naviguer   Entree: basculer   Echap: retour")
+        if choice is None:
+            return
+        index = choice
+        println(menu.toggle_sounds() if choice == 0
+                else menu.toggle_sound_event(SOUND_EVENT_IDS[choice - 1]))

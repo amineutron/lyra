@@ -14,6 +14,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
+from .capsule_settings import (
+    CAPSULE_KEYS,
+    CapsuleSettings,
+    capsule_settings,
+    validate_capsule_value,
+)
+
+__all__ = [
+    "ALLOWED_KEYS", "SETTINGS_PATH", "CapsuleSettings", "UserSettings",
+    "VoiceInfo", "capsule_settings", "find_voice", "list_available_voices",
+]
+
 SETTINGS_PATH = Path.home() / ".lyra" / "settings.json"
 
 # Cles autorisees dans settings.json (dot-notation)
@@ -22,7 +34,7 @@ ALLOWED_KEYS = {
     "tts.speaker_id",    # speaker pour les modeles multi-speaker
     "tts.length_scale",  # vitesse (1.0 = normal, >1 = plus lent)
     "active_mode",       # default | performance
-}
+} | CAPSULE_KEYS         # capsule.* : voir capsule_settings.py (mascotte, sons)
 
 # Genre connu des voix Piper fr_FR (les metadonnees .onnx.json ne le donnent pas)
 VOICE_GENDERS = {
@@ -98,6 +110,7 @@ class UserSettings:
         """Ecrit une cle en dot-notation et persiste immediatement (atomique)."""
         if key not in ALLOWED_KEYS:
             raise ValueError(f"Cle de reglage inconnue: {key}")
+        value = validate_capsule_value(key, value)
         new_data = json.loads(json.dumps(self._data))  # copie profonde
         node = new_data
         parts = key.split(".")
@@ -135,6 +148,10 @@ class UserSettings:
             if value is not None:
                 merged[yaml_key] = value
         return merged
+
+    def capsule(self) -> CapsuleSettings:
+        """Reglages capsule fusionnes avec les defauts."""
+        return capsule_settings(self)
 
     def active_mode(self, default: str = "default") -> str:
         mode = self.get("active_mode")

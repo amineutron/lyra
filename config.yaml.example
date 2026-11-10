@@ -170,6 +170,31 @@ discord:
     - errors
 
 # =============================================================================
+# Capsule vocale (Quickshell) -- valeurs par defaut
+# =============================================================================
+# Reglable a chaud via /setting (persiste dans ~/.lyra/settings.json, qui
+# prime sur ce fichier). Definitions : lyra/core/capsule_settings.py
+# capsule:
+#   mascot: random              # random | ascii | nom du catalogue (owl, cat, robot...)
+#   sounds:
+#     enabled: true
+#     volume: 0.35              # 0.0 a 1.0
+#     pack: soft                # soft | crystal | retro
+#     events:                   # true par defaut, sauf thinking (trop bavard)
+#       listen_start: true
+#       listen_end: true
+#       thinking: false
+#       speak_start: true
+#       ask: true
+#       confirm: true
+#       warn: true
+#       success: true
+#       error: true
+#       cancel: true
+#       choice: true
+#       pin: true
+
+# =============================================================================
 # Securite
 # =============================================================================
 security:
