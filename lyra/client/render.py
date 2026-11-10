@@ -40,9 +40,38 @@ def render_output(message: dict) -> None:
         print(text)
 
 
-def render_progress(message: dict, verbose: bool = False) -> None:
-    """Affiche un message {"type": "progress", ...} (verbose uniquement)."""
+def compact_progress_line(message: dict) -> Optional[str]:
+    """Ligne courte (M1 non-verbose) pour une etape de progression, ou None.
+
+    Une seule ligne, sans score ni niveau de confiance : l'utilisateur sait
+    que Lyra travaille. Les etapes RAG intermediaires (registry_done,
+    capabilities_done, ...) restent reservees au mode verbose.
+    """
+    step = message.get("step", "")
+    data = message.get("data") or {}
+    if step == "acknowledgement":
+        return data.get("message") or None
+    if step == "rule_matched":
+        tool = data.get("tool_short") or str(data.get("tool", "?")).split(".")[-1]
+        return f"{data.get('server', '?')}: {tool}"
+    if step == "before_llm":
+        tool = str(data.get("tool", "?")).split(".")[-1].replace("_", " ")
+        return f"EPHAISTOS analyse {tool}..."
+    return None
+
+
+def render_progress(message: dict, verbose: bool = False,
+                    compact: bool = False) -> None:
+    """Affiche un message {"type": "progress", ...}.
+
+    verbose : detail complet (scores RAG). compact : une ligne courte par
+    etape cle (REPL). Sans l'un ni l'autre, rien (one-shot silencieux).
+    """
     if not verbose:
+        if compact:
+            line = compact_progress_line(message)
+            if line:
+                print(f"  {ui.Colors.CYAN}[lyra] {line}{ui.Colors.RESET}", flush=True)
         return
     step = message.get("step", "")
     data = message.get("data", {})

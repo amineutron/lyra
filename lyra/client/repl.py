@@ -68,7 +68,7 @@ def _process_request(channel: LineChannel, text: str, mode: str,
             if mtype == "output":
                 render_output(message)
             elif mtype == "progress":
-                render_progress(message, verbose=verbose)
+                render_progress(message, verbose=verbose, compact=True)
             elif mtype == "busy":
                 ui.print_info(message.get("text", "Lyra est occupee..."))
             elif mtype == "ask":
