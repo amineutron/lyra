@@ -17,6 +17,8 @@ import re
 import unicodedata
 from typing import Optional
 
+from lyra.client.speech_fr import humanize_for_speech
+
 MAX_SPOKEN_CHARS = 300
 
 # Sorties lues a voix haute (les autres restent a l'ecran seulement)
@@ -63,7 +65,7 @@ def spoken_text(message: dict) -> Optional[str]:
         return None
     if message.get("kind") not in SPOKEN_KINDS:
         return None
-    text = clean_for_speech(str(message.get("text", "")))
+    text = humanize_for_speech(str(message.get("text", "")))
     return text or None
 
 

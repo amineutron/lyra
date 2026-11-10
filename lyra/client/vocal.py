@@ -20,12 +20,13 @@ from typing import Optional
 
 from lyra.client.launcher import ensure_daemon
 from lyra.client.render import render_output, render_progress
+from lyra.client.speech_fr import confirm_question, humanize_for_speech
 from lyra.client.vocal_text import (
     ANSWER_NO,
-    clean_for_speech,
     interpret_confirmation,
     spoken_text,
 )
+from lyra.core.constants import DESTRUCTIVE_TOOLS
 from lyra.daemon.protocol import ChannelClosed, LineChannel
 from modules import ui
 
@@ -91,7 +92,14 @@ def _ask_by_voice(voice, message: dict) -> Optional[str]:
     danger = bool(payload.get("danger") or payload.get("dangerous"))
 
     print(f"\n{ui.Colors.CYAN}{prompt}{ui.Colors.RESET}", flush=True)
-    spoken = clean_for_speech(prompt)
+    tool = payload.get("tool")
+    if kind == "confirm" and tool:
+        # phrase lisible a la place du nom d'outil et du prompt technique
+        destructive = str(tool).split(".")[-1] in DESTRUCTIVE_TOOLS
+        spoken = confirm_question(str(tool), payload.get("arguments") or {},
+                                  danger=danger, destructive=destructive)
+    else:
+        spoken = humanize_for_speech(prompt)
 
     if kind != "confirm":
         _speak(voice, spoken)
@@ -120,25 +128,42 @@ def _process_request(channel: LineChannel, voice, text: str, mode: str,
             "options": {"mode": mode, "yes": False, "verbose": verbose,
                         "interactive": True},
         })
+        # La phrase "Je vais ... Tu confirmes ?" du demon precede le ask de
+        # confirmation : on la retient et on ne la lit pas si une confirmation
+        # decrite en francais suit (sinon elle est lue avant le message suivant).
+        held: Optional[str] = None
         while True:
             message = channel.recv(timeout=600)
             mtype = message.get("type")
             if mtype == "output":
                 render_output(message)
-                _speak(voice, spoken_text(message))
+                _speak(voice, held)
+                held = None
+                to_say = spoken_text(message)
+                if message.get("kind") == "lyra":
+                    held = to_say
+                else:
+                    _speak(voice, to_say)
             elif mtype == "progress":
                 render_progress(message, verbose=verbose)
             elif mtype == "busy":
                 ui.print_info(message.get("text", "Lyra est occupee..."))
             elif mtype == "ask":
+                if message.get("kind") == "confirm":
+                    held = None
+                else:
+                    _speak(voice, held)
+                    held = None
                 answer = _ask_by_voice(voice, message)
                 if answer is None:
                     ui.print_warning("Annule.")
                     return "reconnect"
                 channel.send({"type": "answer", "value": answer})
             elif mtype == "result":
+                _speak(voice, held)
                 return "done"
             elif mtype == "error":
+                _speak(voice, held)
                 ui.print_error(message.get("text", "erreur protocole"))
                 return "done"
     except KeyboardInterrupt:
