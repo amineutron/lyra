@@ -59,7 +59,7 @@ docs/            user/ (flux de données, outils MCP, tests en VM), dev/ (archit
 
 - Confirmation obligatoire pour toute action MCP ; la liste des outils dangereux est unique : `lyra/core/constants.py` (`DANGEROUS_TOOLS`, sous-ensemble `DESTRUCTIVE_TOOLS`). Comparer toujours via `is_dangerous_tool()` (gère le préfixe serveur).
 - Les outils dangereux ne sont jamais auto-confirmés, même en `-p` ou `-y`.
-- Les arguments transmis aux scripts shell (noms de VM, chemins, commentaires) sont validés par liste blanche regex (`lyra/core/validation.py`).
+- Les arguments transmis aux scripts shell par les tâches de fond (noms de VM, chemins, commentaires) sont validés par liste blanche regex dans `scripts/async_mcp_wrapper.py` (`validate_safe_name/path/text`, testés dans `tests/unit/test_async_wrapper_validation.py`). `lyra/core/validation.py` ne vérifie que l'existence et l'état des VMs. Les appels MCP synchrones ne passent pas par ce wrapper : leur validation relève des scripts du dépôt fedora-agents (point ouvert, voir `docs/THREAT_MODEL.md`). La correction « m » du démon filtre en plus les valeurs saisies (`lyra/daemon/modify.py`).
 - L'installeur copie les scripts privilégiés dans `/usr/local/lib/lyra/scripts` (root) et génère un `sudoers.d` par script (`installer/core/steps/mcps.py`).
 - Sorties réseau optionnelles (Ollama distant, n8n, Notion, Discord) : désactivées sans configuration explicite.
 
