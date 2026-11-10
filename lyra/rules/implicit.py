@@ -14,7 +14,6 @@ normal de confirmation (voir lyra/daemon/implicit.py).
 """
 
 import re
-from typing import Optional
 
 from .base import normalize
 
