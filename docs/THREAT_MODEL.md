@@ -65,6 +65,7 @@ Les flèches en pointillé traversent une frontière de confiance.
 |---|---|---|
 | Socket du démon | fichier 0600, protocole typé, outils hors catalogue refusés | [`lyra/daemon/server.py`](../lyra/daemon/server.py), [`protocol.py`](../lyra/daemon/protocol.py) |
 | Action sensible | confirmation humaine ; les outils dangereux exigent un « oui » explicite, jamais automatique, même en mode performance ou avec `-y` | [`lyra/core/constants.py`](../lyra/core/constants.py), [`lyra/daemon/actions.py`](../lyra/daemon/actions.py), [tests](../tests/unit/test_confirm_prompt.py) |
+| Abonnés passifs (capsule) | `subscribe` : la connexion devient définitivement restreinte (ping, unsubscribe, answer) ; ne reçoit que des états, jamais le contenu des réponses ni les arguments ; un `answer` ne vaut que pour une confirmation qui lui a été diffusée, une seule fois, et ne confirme jamais une action dangereuse ; file bornée et plafond d'abonnés | [`subscribe.py`](../lyra/daemon/subscribe.py), [tests](../tests/unit/test_daemon_subscribe.py) |
 | Automatisations sans humain (`unattended`) | seuls les outils domestiques de `PERFORMANCE_TOOLS` passent ; rien ne pose de question | `handle_tool` dans [`server.py`](../lyra/daemon/server.py) |
 | Analyse d'une phrase pour les automatisations | règles seules, rien n'est exécuté | [`lyra/daemon/analysis.py`](../lyra/daemon/analysis.py) |
 | Passage à root | copie root des scripts, une règle sudoers par script, `visudo -cf`, aucun binaire générique | [ADR-005](adr/ADR-005-sudoers-par-script.md) |

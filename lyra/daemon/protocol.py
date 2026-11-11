@@ -25,6 +25,24 @@ Client -> demon :
   {"type": "tasks_poll"}
   {"type": "health"}
   {"type": "ping"}
+  {"type": "subscribe"}                      # suivre l'etat des sessions (capsule), voir
+  {"type": "unsubscribe"}                    # lyra/daemon/subscribe.py. Apres subscribe, la
+                                             # connexion est RESTREINTE : seuls ping,
+                                             # unsubscribe et answer sont acceptes (le reste
+                                             # -> error code "forbidden"), definitivement.
+  {"type": "answer", "ask_id"?: str, "value"?: str, "control"?: {"id": str, "value": int}}
+                                             # d'un ABONNE : reponse a une confirmation
+                                             # diffusee (ask_id de l'evenement state "confirm" ;
+                                             # absent = la plus recente diffusee a ce canal).
+                                             # control = curseur, equivalent a value "id=valeur"
+                                             # (format historique : valeur = "volume=45").
+                                             # Filtre : o/oui/y/yes confirment une action non
+                                             # dangereuse seulement ; n/non/no refusent ; un id
+                                             # du display ou "id=entier" valide passe par
+                                             # translate_confirm_answer ; tout le reste = refus.
+                                             # Une action dangereuse n'est jamais confirmee par
+                                             # un abonne (ni clic, ni curseur, ni "o"). Premier
+                                             # arrive gagne (client demandeur ou abonne).
 
 Demon -> client :
   {"type": "ready",   "status": str, "uptime": float}
@@ -59,9 +77,24 @@ Demon -> client :
   {"type": "memory_done",  "op": "update|delete|add", "id": str, "store": str,
                            "restart_needed": bool}   # vocabulaire : lu au demarrage
   {"type": "error", "text": str, "code"?: "invalid|not_found|internal"}  # memory_* seulement
+  {"type": "error", "text": str, "code": "forbidden|stale|limit"}  # abonnes : type interdit
+                    # ou ask non diffuse / "stale" deja tranchee / "limit" trop d'abonnes
   {"type": "tasks",   "active": list, "errors": list, "notifications": list}
   {"type": "health",  "data": dict}
   {"type": "pong"}
+  {"type": "subscribed", "max_subscribers": int}   # premier message d'un abonne
+  {"type": "state", "state": "idle|thinking|speaking|confirm|ok|error",
+                    "session": str, "ts": float,
+                    "label"?: str,        # nom d'outil court nettoye (<= 60), jamais d'argument
+                    "ask_id"?: str, "danger"?: bool, "display"?: dict}   # confirm seulement
+                    # aux abonnes seulement ; UN evenement par changement d'etat ; jamais le
+                    # texte des reponses ni les erreurs brutes. "idle" couvre l'ecoute (le
+                    # demon ne sait pas si le micro est ouvert) ; "speaking" = une reponse
+                    # Lyra est emise (son contenu n'est pas diffuse).
+  {"type": "answer_ack", "session": str, "ask_id": str, "value": "o|n",
+                         "source": "client|subscriber", "ts": float}
+                    # aux abonnes : la confirmation est tranchee (par le client demandeur,
+                    # p.ex. la voix, ou par un abonne) -> verrouiller la capsule
   {"type": "busy",    "text": str}
   {"type": "error",   "text": str}
 """
@@ -69,8 +102,10 @@ Demon -> client :
 from __future__ import annotations
 
 import json
+import select
 import socket
 import threading
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -118,6 +153,35 @@ class LineChannel:
         if not isinstance(message, dict) or "type" not in message:
             raise ValueError(f"message sans type: {line[:120]!r}")
         return message
+
+    def recv_interruptible(self, wake: threading.Event, timeout: float) -> Optional[dict]:
+        """Comme recv, mais rend None des que `wake` est positionne.
+
+        Attente par tranches (select) : un timeout de socket en plein readline
+        rendrait le flux inutilisable. Sert aux confirmations pouvant etre
+        tranchees par un autre canal (abonne). Suppose un client qui n'envoie
+        qu'un message a la fois pendant un ask.
+        """
+        deadline = time.monotonic() + timeout
+        while True:
+            if wake.is_set():
+                return None
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("pas de message recu dans le delai")
+            try:
+                readable, _, _ = select.select([self._sock], [], [], min(0.2, remaining))
+            except (OSError, ValueError) as e:
+                raise ChannelClosed(str(e)) from e
+            if readable:
+                return self.recv(timeout=remaining)
+
+    def abort(self) -> None:
+        """Coupe la connexion meme si un autre thread est bloque dans sendall/recv."""
+        try:
+            self._sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
 
     def close(self) -> None:
         try:

@@ -74,12 +74,31 @@ def build_confirm_payload(tool_name: str, arguments: dict, danger: bool,
     return payload
 
 
+def _verdict(answer: str, danger: bool) -> str:
+    """"o" si la reponse (deja traduite) confirme, sinon "n" ("m" = correction)."""
+    low = answer.strip().lower()
+    if low in ("m", "modify", "modifier"):
+        return "n"
+    yes = ("o", "oui", "y", "yes") if danger else ("", "o", "oui", "y", "yes")
+    return "o" if low in yes else "n"
+
+
 class RemoteUI:
     """Traduit les appels UI en messages protocole sur un canal."""
 
+    # defauts de classe : des doublures de test court-circuitent __init__
+    _hub: Any = None
+    _session_id = "default"
+    _tool_label: Optional[str] = None
+
     def __init__(self, channel: LineChannel, recorder: Any = None,
-                 state_provider: Any = None):
+                 state_provider: Any = None, hub: Any = None,
+                 session_id: str = "default"):
         self._channel = channel
+        # hub (subscribe.StateHub) : diffuse l'etat aux abonnes ; None = rien
+        self._hub = hub
+        self._session_id = session_id
+        self._tool_label: Optional[str] = None
         # state_provider(tool, arguments) -> dict | None : etat reel pour le display
         self._state_provider = state_provider
         # recorder (history.Recorder) : note l'outil et le verdict pour le journal
@@ -87,7 +106,19 @@ class RemoteUI:
 
     # -- Sorties unidirectionnelles ------------------------------------
 
+    def state(self, state: str, label: Optional[str] = None) -> None:
+        """Diffuse un changement d'etat aux abonnes (sans effet s'il n'y en a pas)."""
+        hub = self._hub
+        if hub is None or not hub.active:
+            return
+        try:
+            hub.publish_state(self._session_id, state, label or self._tool_label)
+        except Exception:  # noqa: BLE001 - la diffusion ne doit jamais casser le pipeline
+            logger.warning("diffusion d'etat impossible", exc_info=True)
+
     def _output(self, kind: str, text: str = "", **extra) -> None:
+        if kind in ("lyra", "lyra_tag"):
+            self.state("speaking")
         self._channel.send({"type": "output", "kind": kind, "text": text, **extra})
 
     def info(self, text: str) -> None:
@@ -101,12 +132,14 @@ class RemoteUI:
 
     def note_tool(self, tool_name: str) -> None:
         """Retient l'outil choisi pour le journal (rien n'est envoye au client)."""
+        self._tool_label = tool_name
         if self._recorder is not None:
             self._recorder.tool_call(tool_name)
 
     def error(self, text: str) -> None:
         if self._recorder is not None:
             self._recorder.error(text)
+        self.state("error")
         self._output("error", text)
 
     def lyra(self, text: str) -> None:
@@ -120,6 +153,8 @@ class RemoteUI:
 
     def tool_call(self, tool_name: str, arguments: dict,
                   vm_state: Optional[dict] = None) -> None:
+        self._tool_label = tool_name
+        self.state("thinking")
         if self._recorder is not None:
             self._recorder.tool_call(tool_name)
         self._output("tool_call", tool=tool_name, arguments=arguments,
@@ -129,6 +164,7 @@ class RemoteUI:
                     raw_error: Optional[str] = None) -> None:
         if self._recorder is not None:
             self._recorder.tool_result(success, raw_error)
+        self.state("ok" if success else "error")
         self._output("tool_result", text, success=success, raw_error=raw_error)
 
     def progress(self, step: str, data: dict) -> None:
@@ -161,17 +197,48 @@ class RemoteUI:
         payload = build_confirm_payload(
             tool_name, arguments, danger,
             self._display_state(tool_name, arguments))
-        raw = self.ask("confirm", prompt, payload)
-        answer, effective = translate_confirm_answer(
-            payload.get("display"), raw, tool_name, arguments, danger)
-        return answer.lower(), effective
+        pending = self._open_pending(tool_name, danger, payload.get("display"))
+        verdict = "n"
+        try:
+            raw = self.ask("confirm", prompt, payload, pending)
+            answer, effective = translate_confirm_answer(
+                payload.get("display"), raw, tool_name, arguments, danger)
+            verdict = _verdict(answer, danger) if effective == arguments else "n"
+            return answer.lower(), effective
+        finally:
+            if pending is not None:
+                self._hub.close_ask(pending, verdict, pending.source)
 
-    def ask(self, kind: str, prompt: str, payload: Optional[dict] = None) -> str:
-        """Envoie un ask et attend la reponse texte du client."""
+    def _open_pending(self, tool_name: str, danger: bool,
+                      display: Optional[dict]) -> Any:
+        hub = self._hub
+        if hub is None or not hub.active:
+            return None
+        try:
+            return hub.open_ask(self._session_id, tool_name, danger, display)
+        except Exception:  # noqa: BLE001 - decoratif
+            logger.warning("diffusion de la confirmation impossible", exc_info=True)
+            return None
+
+    def ask(self, kind: str, prompt: str, payload: Optional[dict] = None,
+            pending: Any = None) -> str:
+        """Envoie un ask et attend la reponse texte du client.
+
+        `pending` (confirmation diffusee a des abonnes) : la reponse peut aussi
+        venir d'un abonne, le premier arrive gagne ; sinon chemin historique.
+        """
         self._channel.send({"type": "ask", "kind": kind, "prompt": prompt,
                             "payload": payload or {}})
         try:
-            message = self._channel.recv(timeout=ASK_TIMEOUT)
+            if pending is None:
+                message = self._channel.recv(timeout=ASK_TIMEOUT)
+            else:
+                message = self._channel.recv_interruptible(pending.event, ASK_TIMEOUT)
+                if message is None:
+                    return str(pending.value)
+                if message.get("type") == "answer" \
+                        and not pending.offer(str(message.get("value", "")).strip(), "client"):
+                    return str(pending.value)    # un abonne a tranche juste avant
         except (ChannelClosed, TimeoutError) as e:
             raise RequestCancelled(f"client injoignable pendant un ask: {e}") from e
         if message.get("type") == "cancel":
