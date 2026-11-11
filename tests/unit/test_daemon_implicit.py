@@ -65,6 +65,13 @@ class FakeUI:
         self.asked.append((kind, payload))
         return self.answer
 
+    def set_state_provider(self, provider): pass
+
+    def ask_confirm(self, tool_name, arguments, prompt, danger):
+        self.asked.append(("confirm", {"tool": tool_name, "arguments": arguments,
+                                       "danger": danger}))
+        return self.answer.lower(), arguments
+
 
 def run(pipe, text, ui, **kw):
     return actions.run_request(pipe, None, text, ui, use_fast_path=False, interactive=True, **kw)
