@@ -71,7 +71,10 @@ def test_settle_seulement_si_le_son_a_joue():
 
 def _voice(sounds):
     """VoiceInterface sans STT/TTS reels."""
-    audio = pytest.importorskip("modules.audio")
+    try:
+        import modules.audio as audio
+    except OSError:  # PortAudio absent (CI runners)
+        pytest.skip("PortAudio library not available")
     v = audio.VoiceInterface.__new__(audio.VoiceInterface)
     v.sounds = sounds
     v.tts = MagicMock()
