@@ -17,6 +17,7 @@ from ..core.workflows.context import ExecContext
 from ..core.workflows.vm_clone_exec import handle_vm_clone_with_stop
 from ..core.workflows.vm_snapshot_exec import handle_snapshot_restore_with_safety
 from ..utils.error_log import is_execution_error, lyra_error_message, write_error_log
+from .modify import MAX_MODIFY_ROUNDS, ModifyError, is_modify_answer, parse_modification
 from .remote_ui import RemoteUI, RequestCancelled
 
 
@@ -35,6 +36,29 @@ def _outil_dangereux(v2, tool_name: str) -> bool:
     """Liste statique (DANGEROUS_TOOLS) OU annotation destructiveHint du serveur : un
     serveur MCP tiers peut exiger une confirmation stricte sans toucher a constants.py."""
     return is_dangerous_with_annotations(tool_name, getattr(v2, "_hestia", None))
+
+
+def _modifier_arguments(rui: RemoteUI, tool_name: str, arguments: dict):
+    """Correction "m" : demande cle=valeur, valide par liste blanche.
+
+    Retourne les nouveaux arguments, ou None (saisie vide = annulation, ou
+    saisies invalides repetees). Ne confirme rien : l'appelant redemande.
+    """
+    if not arguments:
+        rui.warning("Cet outil n'a aucun argument a modifier.")
+        return None
+    actuels = ", ".join(f"{k}={v}" for k, v in arguments.items())
+    prompt = f"Arguments actuels: {actuels}. Nouvelles valeurs (cle=valeur, vide = annuler) :"
+    for _ in range(MAX_MODIFY_ROUNDS):
+        saisie = rui.ask("input", prompt, {"modify": True, "tool": tool_name,
+                                           "arguments": arguments})
+        if not saisie.strip():
+            return None
+        try:
+            return parse_modification(saisie, arguments)
+        except ModifyError as e:
+            rui.warning(f"Correction refusee: {e}")
+    return None
 
 
 def _should_skip_confirmation(tool_name: str, mode: str, dangerous: bool | None = None) -> bool:
@@ -194,10 +218,25 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
         from .remote_ui import build_confirm_prompt
         prompt, _danger = build_confirm_prompt(tool_name, arguments, is_dangerous)
         if not is_dangerous:
-            prompt += " [O/n]"
+            prompt += " [O/n/m]"
         answer = rui.ask("confirm", prompt,
                          {"tool": tool_name, "arguments": arguments,
                           "danger": is_dangerous}).lower()
+        rounds = 0
+        while is_modify_answer(answer) and rounds < MAX_MODIFY_ROUNDS:
+            rounds += 1
+            arguments = _modifier_arguments(rui, tool_name, arguments)
+            if arguments is None:
+                rui.warning("Action annulee.")
+                return 2
+            # Confirmation redemandee sur les NOUVELLES valeurs (jamais auto)
+            rui.tool_call(tool_name, arguments)
+            prompt, _danger = build_confirm_prompt(tool_name, arguments, is_dangerous)
+            if not is_dangerous:
+                prompt += " [O/n/m]"
+            answer = rui.ask("confirm", prompt,
+                             {"tool": tool_name, "arguments": arguments,
+                              "danger": is_dangerous}).lower()
         confirmed = (answer in ("o", "oui") if is_dangerous
                      else answer in ("", "o", "oui"))
         if not confirmed:
