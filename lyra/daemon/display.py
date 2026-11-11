@@ -261,3 +261,86 @@ def resolve_display_answer(display: Optional[dict], value: Any) -> Optional[str]
                 and item["id"] == value:
             return item["id"]
     return None
+
+
+# ---------------------------------------------------------------------------
+# Reponses aux clics (confirmation)
+# ---------------------------------------------------------------------------
+
+_SLIDER_ANSWER = re.compile(r"([^=\s]{1,64})=(-?\d{1,6})")
+# outil -> (id du curseur, argument de l'outil qu'il pilote) ; seuls les outils
+# dont l'argument est une valeur absolue acceptent un curseur
+_SLIDER_ARGUMENT = {"volume_set": ("volume", "level")}
+
+
+def _slider_control(display: Mapping, control_id: str) -> Optional[Mapping]:
+    controls = display.get("controls")
+    if not isinstance(controls, (list, tuple)):
+        return None
+    for control in controls:
+        if isinstance(control, Mapping) and control.get("type") == "slider" \
+                and control.get("id") == control_id:
+            return control
+    return None
+
+
+def parse_slider_answer(display: Optional[dict], value: Any) -> Optional[tuple[str, int]]:
+    """Reponse "id=entier" validee contre un curseur annonce, sinon None.
+
+    L'id doit etre un curseur du display, la valeur un entier decimal strict
+    dans [min, max] annonces (pas de flottant, d'exposant, de signe parasite).
+    """
+    if not isinstance(display, Mapping) or not isinstance(value, str):
+        return None
+    match = _SLIDER_ANSWER.fullmatch(value)
+    if match is None:
+        return None
+    control = _slider_control(display, match.group(1))
+    if control is None:
+        return None
+    low, high = _as_int(control.get("min")), _as_int(control.get("max"))
+    number = int(match.group(2))
+    if low is None or high is None or not low <= number <= high:
+        return None
+    return match.group(1), number
+
+
+def translate_confirm_answer(display: Optional[dict], raw: Any, tool: str,
+                             arguments: Optional[dict],
+                             danger: bool) -> tuple[str, dict]:
+    """Traduit la reponse client d'une confirmation en reponse sure.
+
+    Retourne (reponse, arguments_effectifs) ou la reponse est "o" (confirme),
+    "n" (refuse) ou la valeur brute inchangee (reponse texte classique : O/n/m,
+    traitee par la logique existante). Regles :
+    - seul un id PROPOSE par `display` ou un curseur valide est reconnu ; tout
+      autre id ressemblant a un clic est un refus, jamais une confirmation ;
+    - une action dangereuse ne se confirme jamais par un clic catalogue ni par
+      un curseur : elle exige le "oui" textuel explicite ;
+    - un clic ne confirme que l'element deja cible par l'outil (`selected`) ;
+      changer de cible n'est pas supporte ici (c'est la correction "m") ;
+    - un curseur ne modifie qu'un argument absolu connu (volume_set -> level),
+      dans une COPIE des arguments.
+    """
+    args = dict(arguments) if isinstance(arguments, Mapping) else {}
+    if not isinstance(raw, str) or not isinstance(display, Mapping):
+        return (raw if isinstance(raw, str) else "n"), args
+
+    slider = parse_slider_answer(display, raw)
+    if slider is not None:
+        control_id, number = slider
+        mapping = _SLIDER_ARGUMENT.get(tool.split(".")[-1])
+        if danger or mapping is None or mapping[0] != control_id:
+            return "n", args
+        return "o", {**args, mapping[1]: number}
+    if _SLIDER_ANSWER.fullmatch(raw):
+        return "n", args                      # curseur invalide / hors plage
+
+    item_id = resolve_display_answer(display, raw)
+    if item_id is None:
+        return raw, args                      # reponse texte classique
+    if danger or display.get("kind") in ("choices", "sessions"):
+        return "n", args
+    selected = any(isinstance(i, Mapping) and i.get("id") == item_id
+                   and i.get("selected") is True for i in display["items"])
+    return ("o" if selected else "n"), args
