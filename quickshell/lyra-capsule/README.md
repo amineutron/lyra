@@ -32,4 +32,8 @@ Tester sans demon : `quickshell/lyra-capsule/demo` (fenetre normale, payloads fa
   `LyraCapsule` (pilule + bulle, signal `answered(id, value)`, premier arrive gagne).
 - `shell.qml` : fenetre layer-shell (overlay, clics traversants hors pilule/bulle) + pont.
 - `bridge/lyra_capsule_bridge.py` : client du socket du demon, traduit les messages du
-  protocole en evenements de capsule (JSON-lines) et les clics en `answer`.
+  protocole en evenements de capsule (JSON-lines) et les clics en `answer`. Il s'abonne au
+  demon (`subscribe`) : le demon diffuse un `state` par changement d'etat et un `answer_ack`
+  quand une confirmation est tranchee ; chaque `answer` renvoie l'`ask_id` diffuse. Sans
+  `subscribed` sous 1,5 s (demon ancien), repli sur l'ancien protocole ask/output. Reconnexion
+  avec backoff (2 s a 30 s) ; erreur `limit` : nouvel essai toutes les 30 s.
