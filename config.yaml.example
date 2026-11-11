@@ -44,6 +44,8 @@ stt:
   compute_type: float16
   beam_size: 5
   vad_filter: true
+  # Vocabulaire attendu (noms d'appareils, de VM) pour guider la transcription
+  # initial_prompt: "Lyra, allume la télé, éteins les lumières, arrête la machine virtuelle."
 
 # =============================================================================
 # Text-to-Speech (Piper)

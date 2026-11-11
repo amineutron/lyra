@@ -1126,6 +1126,7 @@ def main():
                 tts_model=f"models/{tts_cfg.get('model', 'fr_FR-upmc-medium')}.onnx",
                 language=stt_cfg.get("language", "fr"),
                 device=stt_cfg.get("device", "cuda"),
+                compute_type=stt_cfg.get("compute_type", "float16"),
                 audio_config=audio_config,
                 tts_speaker_id=int(tts_cfg.get("speaker_id", 0)),
                 tts_length_scale=float(tts_cfg.get("length_scale", 1.0))

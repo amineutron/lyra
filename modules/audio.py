@@ -44,6 +44,43 @@ class AudioConfig:
     output_device: Optional[int] = None
 
 
+# Silence joue avant la voix : une sortie TV/HDMI en veille se reveille et
+# avale sinon le debut de la premiere phrase.
+LEAD_SILENCE_S = 0.25
+
+
+def resample_audio(audio: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
+    """Reechantillonne en float32 avec filtre anti-repliement (scipy).
+
+    L'interpolation lineaire seule (48k -> 16k pour Whisper) replie les aigus
+    dans la bande utile et degrade la reconnaissance ; repli lineaire si scipy
+    est absent.
+    """
+    if orig_sr == target_sr or len(audio) == 0:
+        return audio.astype(np.float32)
+    try:
+        from math import gcd
+
+        from scipy.signal import resample_poly
+
+        divisor = gcd(int(orig_sr), int(target_sr))
+        return resample_poly(audio, int(target_sr) // divisor,
+                             int(orig_sr) // divisor).astype(np.float32)
+    except ImportError:
+        duration = len(audio) / orig_sr
+        new_length = int(duration * target_sr)
+        indices = np.linspace(0, len(audio) - 1, new_length)
+        return np.interp(indices, np.arange(len(audio)), audio).astype(np.float32)
+
+
+def with_lead_silence(audio: np.ndarray, sample_rate: int,
+                      seconds: float = LEAD_SILENCE_S) -> np.ndarray:
+    """Nouvel audio precede de `seconds` de silence (l'entree n'est pas modifiee)."""
+    pad = np.zeros(int(sample_rate * max(seconds, 0.0)), dtype=np.float32)
+    return np.concatenate([pad, audio.astype(np.float32)])
+
+
+
 class STT:
     """Speech-to-Text avec faster-whisper."""
 
@@ -52,7 +89,8 @@ class STT:
         model: str = "base",
         language: str = "fr",
         device: str = "cuda",
-        compute_type: str = "float16"
+        compute_type: str = "float16",
+        initial_prompt: Optional[str] = None
     ):
         """
         Initialise le modele STT.
@@ -62,6 +100,8 @@ class STT:
             language: Langue cible
             device: cuda ou cpu
             compute_type: float16, int8, etc.
+            initial_prompt: vocabulaire attendu (noms de VM, appareils) pour
+                guider la transcription
         """
         from faster_whisper import WhisperModel
 
@@ -73,15 +113,11 @@ class STT:
             f"whisper-{model}",
         )
         self.language = language
+        self.initial_prompt = initial_prompt
 
     def _resample(self, audio: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
-        """Resample audio vers un nouveau sample rate."""
-        if orig_sr == target_sr:
-            return audio
-        duration = len(audio) / orig_sr
-        new_length = int(duration * target_sr)
-        indices = np.linspace(0, len(audio) - 1, new_length)
-        return np.interp(indices, np.arange(len(audio)), audio).astype(np.float32)
+        """Resample audio vers un nouveau sample rate (anti-repliement)."""
+        return resample_audio(audio, orig_sr, target_sr)
 
     def transcribe(self, audio: np.ndarray, sample_rate: int = 16000) -> str:
         """
@@ -111,7 +147,8 @@ class STT:
             audio,
             language=self.language,
             beam_size=5,
-            vad_filter=True
+            vad_filter=True,
+            initial_prompt=self.initial_prompt
         )
 
         # Concatener les segments
@@ -218,14 +255,8 @@ class TTS:
         return audio
 
     def _resample(self, audio: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
-        """Resample audio vers un nouveau sample rate."""
-        if orig_sr == target_sr:
-            return audio
-        # Interpolation lineaire simple
-        duration = len(audio) / orig_sr
-        new_length = int(duration * target_sr)
-        indices = np.linspace(0, len(audio) - 1, new_length)
-        return np.interp(indices, np.arange(len(audio)), audio).astype(np.float32)
+        """Resample audio vers un nouveau sample rate (anti-repliement)."""
+        return resample_audio(audio, orig_sr, target_sr)
 
     def speak(self, text: str, output_device: Optional[int] = None, blocking: bool = True):
         """
@@ -244,6 +275,7 @@ class TTS:
         # Resampler vers 48kHz (standard supporte par tous les peripheriques)
         target_sr = 48000
         audio_resampled = self._resample(audio_float, self.sample_rate, target_sr)
+        audio_resampled = with_lead_silence(audio_resampled, target_sr)
 
         with suppress_stderr():
             sd.play(
@@ -380,7 +412,9 @@ class VoiceInterface:
         device: str = "cuda",
         audio_config: Optional[AudioConfig] = None,
         tts_speaker_id: int = 0,
-        tts_length_scale: float = 1.0
+        tts_length_scale: float = 1.0,
+        compute_type: str = "float16",
+        initial_prompt: Optional[str] = None
     ):
         """
         Initialise l'interface vocale.
@@ -390,11 +424,13 @@ class VoiceInterface:
             tts_model: Chemin vers le modele Piper
             language: Langue
             device: cuda ou cpu
+            compute_type: precision Whisper (float16 sur GPU, int8 sur CPU)
             audio_config: Configuration audio
             tts_speaker_id: Speaker du modele Piper (multi-speaker)
             tts_length_scale: Vitesse de parole (1.0 = normal, >1 = plus lent)
         """
-        self.stt = STT(model=stt_model, language=language, device=device)
+        self.stt = STT(model=stt_model, language=language, device=device,
+                       compute_type=compute_type, initial_prompt=initial_prompt)
         self.tts = TTS(
             model_path=tts_model,
             speaker_id=tts_speaker_id,

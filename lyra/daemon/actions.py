@@ -56,6 +56,7 @@ def run_request(
     interactive: bool = False,
     webhook_url: str = "",
     use_fast_path: bool = True,
+    plain_results: bool = False,
 ) -> int:
     """Traite une requete complete : process -> confirmation -> execution.
 
@@ -67,6 +68,8 @@ def run_request(
         session_id: Session de conversation (isolation multi-clients)
         mode: default | performance
         yes: Auto-confirmation (sauf outils dangereux)
+        plain_results: True pour renvoyer le resultat brut de l'outil, sans
+                       reformulation LLM (client vocal : resume fait cote client)
         interactive: True pour un client REPL (les clarifications multi-tours
             restent en session au lieu de sortir en code 3)
         webhook_url: Webhook Discord pour les taches async
@@ -121,7 +124,7 @@ def run_request(
     if result.tool_call:
         return _run_action(pipeline, v2, task_manager, result, rui,
                            session_id=session_id, mode=mode, yes=yes,
-                           fast=fast_analysis is not None,
+                           fast=fast_analysis is not None or plain_results,
                            webhook_url=webhook_url)
 
     # Cas 4 : pas de match -> reponse directe
