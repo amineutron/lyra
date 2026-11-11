@@ -1,0 +1,6 @@
+singleton CapsuleTheme 1.0 CapsuleTheme.qml
+SpriteSheet 1.0 SpriteSheet.qml
+MascotCatalog 1.0 MascotCatalog.qml
+MascotView 1.0 MascotView.qml
+DisplayView 1.0 DisplayView.qml
+LyraCapsule 1.0 LyraCapsule.qml
