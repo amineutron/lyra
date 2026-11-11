@@ -36,6 +36,19 @@ Demon -> client :
                       "raw_error": str|None}
   {"type": "progress", "step": str, "data": dict}
   {"type": "ask",     "kind": "confirm|input", "prompt": str, "payload": dict}
+                      # confirm : payload = {"tool", "arguments", "danger"} et, si
+                      # l'outil s'y prete, "display" (champ additif, ignore par les
+                      # clients existants) : description declarative pour la capsule
+                      #   {"kind": "tv|vms|lights|choices|sessions", "title": str,
+                      #    "items": [{"id": str, "label": str, "value"?: scalaire,
+                      #               "state"?: str, "selected"?: bool}],
+                      #    "controls"?: [{"type": "slider", "id": str, "min": int,
+                      #                   "max": int, "value": int}],
+                      #    "pin": false}
+                      # (lyra/daemon/display.py). Tout est du TEXTE d'affichage. Un
+                      # clic revient par le message "answer" existant ; sa valeur doit
+                      # etre validee par display.resolve_display_answer() contre les
+                      # items[].id proposes, jamais executee ni interpretee telle quelle.
   {"type": "result",  "exit_code": int, "executed": bool}
   {"type": "analysis", "found": bool, "tool": str, "arguments": dict,
                        "missing_args": list, "confidence": float, "source": "rule",

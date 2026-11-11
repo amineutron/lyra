@@ -305,6 +305,7 @@ class LyraDaemon:
         from lyra.core.constants import is_performance_tool
 
         from .actions import _outil_dangereux
+        from .display_state import make_state_provider
         rui = RemoteUI(channel)
         name = str(message.get("name", "")).strip()
         arguments = message.get("arguments") or {}
@@ -331,6 +332,7 @@ class LyraDaemon:
                           "text": f"outil non autorise sans presence humaine: {name}"})
             channel.send({"type": "result", "exit_code": 1, "executed": False})
             return
+        rui.set_state_provider(make_state_provider(getattr(v2, "_hestia", None)))
         try:
             if _outil_dangereux(v2, name) and not bool(options.get("confirmed", False)):
                 if not rui.confirm_action(name, arguments, danger=True):

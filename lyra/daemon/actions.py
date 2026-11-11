@@ -18,6 +18,7 @@ from ..core.workflows.vm_clone_exec import handle_vm_clone_with_stop
 from ..core.workflows.vm_snapshot_exec import handle_snapshot_restore_with_safety
 from ..utils.error_log import is_execution_error, lyra_error_message, write_error_log
 from . import implicit
+from .display_state import make_state_provider
 from .modify import MAX_MODIFY_ROUNDS, ModifyError, is_modify_answer, parse_modification
 from .remote_ui import RemoteUI, RequestCancelled
 
@@ -230,9 +231,9 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
         prompt, _danger = build_confirm_prompt(tool_name, arguments, is_dangerous)
         if not is_dangerous:
             prompt += " [O/n/m]"
-        answer = rui.ask("confirm", prompt,
-                         {"tool": tool_name, "arguments": arguments,
-                          "danger": is_dangerous}).lower()
+        rui.set_state_provider(make_state_provider(getattr(v2, "_hestia", None)))
+        answer, arguments = rui.ask_confirm(tool_name, arguments, prompt, is_dangerous)
+        answer = answer.lower()
         rounds = 0
         while is_modify_answer(answer) and rounds < MAX_MODIFY_ROUNDS:
             rounds += 1
@@ -245,9 +246,8 @@ def _run_action(pipeline, v2, task_manager, result, rui: RemoteUI, *,
             prompt, _danger = build_confirm_prompt(tool_name, arguments, is_dangerous)
             if not is_dangerous:
                 prompt += " [O/n/m]"
-            answer = rui.ask("confirm", prompt,
-                             {"tool": tool_name, "arguments": arguments,
-                              "danger": is_dangerous}).lower()
+            answer, arguments = rui.ask_confirm(tool_name, arguments, prompt, is_dangerous)
+            answer = answer.lower()
         confirmed = (answer in ("o", "oui") if is_dangerous
                      else answer in ("", "o", "oui"))
         if not confirmed:

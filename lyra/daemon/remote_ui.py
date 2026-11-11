@@ -11,10 +11,14 @@ UIContext construit ici et n'a AUCUNE idee qu'il parle a un socket.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Optional
 
 from ..core.workflows.context import UIContext
+from .display import build_display, translate_confirm_answer
 from .protocol import ASK_TIMEOUT, ChannelClosed, LineChannel
+
+logger = logging.getLogger(__name__)
 
 
 class RequestCancelled(Exception):
@@ -51,11 +55,33 @@ def build_confirm_prompt(tool_name: str, arguments: dict,
                 f"operation importante (rien n'est detruit). Confirmer ?", True)
     return (f"Executer {tool_name}{target} ?", False)
 
+def build_confirm_payload(tool_name: str, arguments: dict, danger: bool,
+                          state: Optional[dict] = None) -> dict:
+    """Payload d'un `ask` de kind confirm, avec `display` si l'outil s'y prete.
+
+    `display` est additif (les clients existants l'ignorent) et purement
+    decoratif : un echec de sa construction ne doit jamais bloquer la
+    confirmation.
+    """
+    payload = {"tool": tool_name, "arguments": arguments, "danger": danger}
+    try:
+        display = build_display(tool_name, arguments, state)
+    except Exception:
+        logger.warning("build_display a echoue pour %s", tool_name, exc_info=True)
+        display = None
+    if display is not None:
+        payload["display"] = display
+    return payload
+
+
 class RemoteUI:
     """Traduit les appels UI en messages protocole sur un canal."""
 
-    def __init__(self, channel: LineChannel, recorder: Any = None):
+    def __init__(self, channel: LineChannel, recorder: Any = None,
+                 state_provider: Any = None):
         self._channel = channel
+        # state_provider(tool, arguments) -> dict | None : etat reel pour le display
+        self._state_provider = state_provider
         # recorder (history.Recorder) : note l'outil et le verdict pour le journal
         self._recorder = recorder
 
@@ -108,7 +134,37 @@ class RemoteUI:
     def progress(self, step: str, data: dict) -> None:
         self._channel.send({"type": "progress", "step": step, "data": data})
 
+    def set_state_provider(self, provider: Any) -> None:
+        self._state_provider = provider
+
+    def _display_state(self, tool_name: str, arguments: dict) -> Optional[dict]:
+        provider = getattr(self, "_state_provider", None)
+        if provider is None:
+            return None
+        try:
+            state = provider(tool_name, arguments)
+        except Exception:  # noqa: BLE001 - l'etat est decoratif
+            logger.warning("etat indisponible pour %s", tool_name, exc_info=True)
+            return None
+        return state if isinstance(state, dict) else None
+
     # -- Interactions bloquantes ----------------------------------------
+
+    def ask_confirm(self, tool_name: str, arguments: dict, prompt: str,
+                    danger: bool) -> tuple[str, dict]:
+        """ask confirm avec display ; rend (reponse minuscule, arguments effectifs).
+
+        Le clic est valide contre le display emis pour CETTE confirmation
+        (voir display.translate_confirm_answer) ; les arguments effectifs ne
+        different des arguments d'origine que pour un curseur valide.
+        """
+        payload = build_confirm_payload(
+            tool_name, arguments, danger,
+            self._display_state(tool_name, arguments))
+        raw = self.ask("confirm", prompt, payload)
+        answer, effective = translate_confirm_answer(
+            payload.get("display"), raw, tool_name, arguments, danger)
+        return answer.lower(), effective
 
     def ask(self, kind: str, prompt: str, payload: Optional[dict] = None) -> str:
         """Envoie un ask et attend la reponse texte du client."""
@@ -137,9 +193,10 @@ class RemoteUI:
         comportement historique. `danger` : voir build_confirm_prompt.
         """
         prompt, danger = build_confirm_prompt(tool_name, arguments, danger)
-        answer = self.ask("confirm", prompt,
-                          {"tool": tool_name, "arguments": arguments,
-                           "danger": danger}).lower()
+        answer, effective = self.ask_confirm(tool_name, arguments, prompt, danger)
+        if effective != arguments:
+            # ce chemin ne peut pas appliquer une valeur de curseur : pas de oui
+            return False
         if answer in ("m", "modify", "modifier"):
             return "modify"
         # Une action sensible exige un "oui" explicite : Entree ne suffit pas
