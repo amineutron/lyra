@@ -1,0 +1,70 @@
+<style>
+.m-radar [class]{transform-box:fill-box;transform-origin:center}
+.m-radar .s{--c:#7fb2e0;--k:#a9d3ff;--bz:#7fb2e0;--d:4s}
+.m-radar .s-sleep{--c:#4f6d8c;--k:#6f8fb3;--bz:#4f6d8c}
+.m-radar .s-work{--d:1.8s;--k:#c4a7e7}
+.m-radar .s-busy{--d:.9s;--k:#fff;--bz:#a9d3ff}
+.m-radar .s-ok{--c:#82d69c;--k:#9bf0b5;--bz:#82d69c}
+.m-radar .s-err{--c:#eb6f92;--k:#ffd0dc;--bz:#eb6f92}
+.m-radar .sw{animation:rd-sw var(--d) linear infinite}
+@keyframes rd-sw{to{transform:rotate(360deg)}}
+.m-radar .bp{opacity:0;animation:rd-bp var(--d) linear infinite}
+.m-radar .b1{animation-delay:calc(var(--d) * -.17)}
+.m-radar .b2{animation-delay:calc(var(--d) * -.64)}
+.m-radar .b3{animation-delay:calc(var(--d) * -.4)}
+@keyframes rd-bp{0%{opacity:1;transform:scale(1.5)}15%{transform:scale(1)}85%,100%{opacity:0}}
+.m-radar .br{animation:rd-br 4s ease-in-out infinite}
+@keyframes rd-br{50%{opacity:.5}}
+.m-radar .zz{animation:rd-z 3.6s ease-in infinite}
+@keyframes rd-z{0%{opacity:0;transform:translate(0,6px)}30%{opacity:1}100%{opacity:0;transform:translate(6px,-12px)}}
+.m-radar .dot{animation:rd-dot 1.6s steps(1) infinite}
+@keyframes rd-dot{50%{opacity:.2}}
+.m-radar .ping{animation:rd-ping 1.2s ease-out infinite}
+.m-radar .ping2{animation:rd-ping 1.2s ease-out -.6s infinite}
+@keyframes rd-ping{0%{opacity:.9;transform:scale(.1)}100%{opacity:0;transform:scale(1)}}
+.m-radar .vib{animation:rd-vib .12s linear infinite}
+@keyframes rd-vib{25%{transform:translate(-.8px,.8px)}75%{transform:translate(.8px,-.8px)}}
+.m-radar .tw{animation:rd-tw 1.4s steps(1) infinite}
+.m-radar .tw2{animation:rd-tw 1.4s steps(1) -.7s infinite}
+@keyframes rd-tw{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1)}60%{opacity:.2;transform:scale(.6)}80%{opacity:0}}
+.m-radar .lock{animation:rd-lock 1.2s ease-in-out infinite}
+@keyframes rd-lock{0%{transform:scale(1.8);opacity:0}30%{transform:scale(1);opacity:1}60%,100%{transform:scale(1.08);opacity:1}}
+.m-radar .halo{animation:rd-halo 1.4s ease-out infinite}
+@keyframes rd-halo{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(1.2)}}
+.m-radar .noise{animation:rd-no .5s steps(1) infinite}
+.m-radar .noise2{animation:rd-no .5s steps(1) -.25s infinite}
+@keyframes rd-no{0%{opacity:0;transform:translateX(-5px)}25%{opacity:.8;transform:translateX(4px)}50%{opacity:.2}75%{opacity:.9;transform:translateX(-3px)}}
+.m-radar .stuck{animation:rd-stuck 1.1s steps(1) infinite}
+@keyframes rd-stuck{0%{transform:rotate(40deg)}15%{transform:rotate(52deg)}30%{transform:rotate(38deg)}60%{transform:rotate(46deg)}80%{transform:rotate(30deg)}}
+.m-radar .flk{animation:rd-flk 1.1s steps(1) infinite}
+@keyframes rd-flk{0%{opacity:1}10%{opacity:.4}20%{opacity:1}30%{opacity:.6}40,80%{opacity:1}90%{opacity:.3}}
+.m-radar .rb{animation:rd-rb .7s ease-in-out infinite}
+@keyframes rd-rb{50%{opacity:.35}}
+.m-radar .arc{animation:rd-arc .5s steps(1) infinite}
+.m-radar .arc2{animation:rd-arc .5s steps(1) -.25s infinite}
+@keyframes rd-arc{0%{opacity:0}20%{opacity:1}55%{opacity:0}}
+.m-radar .puff{animation:rd-puff 2s ease-out infinite}
+@keyframes rd-puff{0%{opacity:.7;transform:translateY(6px) scale(.5)}100%{opacity:0;transform:translateY(-18px) scale(1.4)}}
+@media (prefers-reduced-motion:reduce){.m-radar [class]{animation-duration:20s!important}}
+</style>
+<svg class="mx m-radar" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <defs><g id="radar-base"><path d="M42 110 52 96h16l10 14z" fill="#5a8fc4"/><path d="M56 90h8v8h-8z" fill="#5a8fc4"/><path d="M45 109 53 97h5l-8 12z" fill="#7fb2e0" opacity=".5"/><circle cx="60" cy="52" r="38" fill="#0e1b33" stroke="var(--bz)" stroke-width="5"/><circle cx="60" cy="52" r="12" fill="none" stroke="var(--c)" stroke-opacity=".3" stroke-width="1.5"/><circle cx="60" cy="52" r="25" fill="none" stroke="var(--c)" stroke-opacity=".3" stroke-width="1.5"/><path d="M22 52h76M60 14v76" stroke="var(--c)" stroke-opacity=".25" stroke-width="1.5"/></g></defs>
+ <g class="s s-sleep"><g class="br"><use href="#radar-base"/><g transform="rotate(40 60 52)"><path d="M60 52 96 52A36 36 0 0 0 90 31.4Z" fill="var(--k)" opacity=".18"/></g><circle class="dot" cx="60" cy="52" r="3" fill="var(--k)"/></g>
+  <path class="zz" d="M94 14h8l-8 9h8" stroke="#7C6CF0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+ <g class="s s-idle"><use href="#radar-base"/><g class="sw"><circle cx="60" cy="52" r="36" fill="none"/><path d="M60 52 96 52A36 36 0 0 0 78 20.8Z" fill="var(--k)" opacity=".16"/><path d="M60 52 96 52A36 36 0 0 0 90 31.4Z" fill="var(--k)" opacity=".28"/><path d="M60 52H96" stroke="var(--k)" stroke-width="2.4" stroke-linecap="round"/></g><circle class="bp b1" cx="72.0" cy="31.2" r="3" fill="var(--k)"/><circle class="dot" cx="60" cy="52" r="2.6" fill="var(--k)"/>
+  <g transform="translate(104 24) scale(0.9)"><path class="tw" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#7C6CF0"/></g></g>
+ <g class="s s-work"><use href="#radar-base"/><g class="sw"><circle cx="60" cy="52" r="36" fill="none"/><path d="M60 52 96 52A36 36 0 0 0 78 20.8Z" fill="var(--k)" opacity=".16"/><path d="M60 52 96 52A36 36 0 0 0 90 31.4Z" fill="var(--k)" opacity=".28"/><path d="M60 52H96" stroke="var(--k)" stroke-width="2.4" stroke-linecap="round"/></g><circle class="bp b1" cx="72.0" cy="31.2" r="3.6" fill="var(--k)"/><circle class="bp b2" cx="42.0" cy="73.4" r="3.6" fill="var(--k)"/><circle class="bp b3" cx="46.9" cy="42.8" r="3.6" fill="var(--k)"/></g>
+ <g class="s s-busy"><g class="vib"><use href="#radar-base"/><g class="sw"><circle cx="60" cy="52" r="36" fill="none"/><path d="M60 52 96 52A36 36 0 0 0 78 20.8Z" fill="var(--k)" opacity=".16"/><path d="M60 52 96 52A36 36 0 0 0 90 31.4Z" fill="var(--k)" opacity=".28"/><path d="M60 52H96" stroke="var(--k)" stroke-width="2.4" stroke-linecap="round"/></g><circle class="bp b1" cx="72.0" cy="31.2" r="3.6" fill="var(--k)"/><circle class="bp b2" cx="42.0" cy="73.4" r="3.6" fill="var(--k)"/><circle class="bp b3" cx="46.9" cy="42.8" r="3.6" fill="var(--k)"/>
+  <circle class="ping" cx="60" cy="52" r="36" fill="none" stroke="#7C6CF0" stroke-width="3"/><circle class="ping2" cx="60" cy="52" r="36" fill="none" stroke="#a9d3ff" stroke-width="2"/></g></g>
+ <g class="s s-ok"><use href="#radar-base"/><circle class="halo" cx="60" cy="52" r="40" fill="none" stroke="#9bf0b5" stroke-width="3"/>
+  <g class="lock"><path d="M44 40v-6h6M76 40v-6h-6M44 64v6h6M76 64v6h-6" stroke="#9bf0b5" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="60" cy="52" r="6" fill="#9bf0b5"/></g>
+  <g transform="translate(100 18) scale(1.1)"><path class="tw" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#ffe3b0"/></g><g transform="translate(18 92) scale(1)"><path class="tw2" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#7C6CF0"/></g></g>
+ <g class="s s-err"><g class="flk"><use href="#radar-base"/>
+  <g class="noise"><path d="M28 40h30M58 62h34M36 74h22" stroke="#ffd0dc" stroke-width="3" stroke-linecap="round"/></g><g class="noise2"><path d="M50 30h30M30 56h26M62 78h26" stroke="#ffd0dc" stroke-width="2.5" stroke-linecap="round"/></g>
+  <g class="stuck"><circle cx="60" cy="52" r="36" fill="none"/><path d="M60 52 96 52A36 36 0 0 0 90 31.4Z" fill="#e5484d" opacity=".3"/><path d="M60 52H96" stroke="#e5484d" stroke-width="2.4" stroke-linecap="round"/></g>
+  <path class="rb" d="M54 46l12 12m0-12-12 12" stroke="#e5484d" stroke-width="4" stroke-linecap="round"/>
+  <circle class="rb" cx="60" cy="52" r="38" fill="none" stroke="#e5484d" stroke-width="5"/></g>
+  <path class="arc" d="M10 40l9-4-5 9 9-3M100 86l-8 4 5-8-9 3" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="arc2" d="M104 34l-8 5 9 2-6 8M12 80l8-5-9-2 6-8" stroke="#e5484d" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle class="puff" cx="86" cy="18" r="5" fill="#8a90ad"/></g>
+</svg>

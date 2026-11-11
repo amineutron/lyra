@@ -1,0 +1,68 @@
+<style>
+.m-pinwheel [class]{transform-box:fill-box;transform-origin:center}
+.m-pinwheel .s{--b1:#f6c177;--b2:#e8a14f}
+.m-pinwheel .s-sleep{--b1:#d7a566;--b2:#b98a4e}
+.m-pinwheel .s-work{--b1:#f6c177;--b2:#c4a7e7}
+.m-pinwheel .s-busy{--b1:#ffe3b0;--b2:#f6c177}
+.m-pinwheel .s-ok{--b1:#f6c177;--b2:#82d69c}
+.m-pinwheel .s-err{--b1:#eb6f92;--b2:#e5484d}
+.m-pinwheel .sl{animation:pw-spin 12s linear infinite}
+.m-pinwheel .md{animation:pw-spin 1.8s cubic-bezier(.6,0,.3,1) infinite}
+.m-pinwheel .fs{animation:pw-spin .45s linear infinite}
+.m-pinwheel .rv{animation:pw-spin 1.4s linear infinite reverse}
+.m-pinwheel .okk{animation:pw-fin 1.2s ease-out 1,pw-spin 6s linear 1.2s infinite}
+@keyframes pw-spin{to{transform:rotate(360deg)}}
+@keyframes pw-fin{to{transform:rotate(720deg)}}
+.m-pinwheel .sway{animation:pw-sway 3s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes pw-sway{50%{transform:rotate(1.5deg)}}
+.m-pinwheel .vib{animation:pw-vib .1s linear infinite}
+@keyframes pw-vib{25%{transform:translateX(-1px)}75%{transform:translateX(1px)}}
+.m-pinwheel .br{animation:pw-br 4s ease-in-out infinite}
+@keyframes pw-br{50%{transform:scale(1.03)}}
+.m-pinwheel .zz{animation:pw-z 3.6s ease-in infinite}
+@keyframes pw-z{0%{opacity:0;transform:translate(0,6px)}30%{opacity:1}100%{opacity:0;transform:translate(6px,-12px)}}
+.m-pinwheel .tw{animation:pw-tw 1.4s steps(1) infinite}
+.m-pinwheel .tw2{animation:pw-tw 1.4s steps(1) -.7s infinite}
+@keyframes pw-tw{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1)}60%{opacity:.2;transform:scale(.6)}80%{opacity:0}}
+.m-pinwheel .wd{animation:pw-wd 1.6s ease-in infinite}
+.m-pinwheel .wd2{animation:pw-wd 1.6s ease-in -.8s infinite}
+@keyframes pw-wd{0%{opacity:0;transform:translateX(-6px)}30%{opacity:.8}100%{opacity:0;transform:translateX(18px)}}
+.m-pinwheel .blur{animation:pw-bl .3s linear infinite}
+@keyframes pw-bl{50%{opacity:.1}}
+.m-pinwheel .halo{animation:pw-halo 1.2s ease-out infinite}
+@keyframes pw-halo{0%{opacity:.8;transform:scale(.6)}100%{opacity:0;transform:scale(1.4)}}
+.m-pinwheel .try{animation:pw-try 1.5s ease-in-out infinite}
+@keyframes pw-try{0%,100%{transform:rotate(0)}25%{transform:rotate(55deg)}35%{transform:rotate(18deg)}45%{transform:rotate(24deg)}55%{transform:rotate(-8deg)}70%{transform:rotate(0)}}
+.m-pinwheel .tilt{animation:pw-tilt 1.5s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes pw-tilt{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}45%{transform:rotate(4deg)}55%{transform:rotate(-3deg)}}
+.m-pinwheel .pr{animation:pw-pr .8s ease-in-out infinite}
+@keyframes pw-pr{0%,100%{opacity:0}50%{opacity:.7}}
+.m-pinwheel .arc{animation:pw-arc .5s steps(1) infinite}
+.m-pinwheel .arc2{animation:pw-arc .5s steps(1) -.25s infinite}
+@keyframes pw-arc{0%{opacity:0}20%{opacity:1}55%{opacity:0}}
+.m-pinwheel .puff{animation:pw-puff 2s ease-out infinite}
+.m-pinwheel .puff2{animation:pw-puff 2s ease-out -1s infinite}
+@keyframes pw-puff{0%{opacity:.7;transform:translateY(6px) scale(.5)}100%{opacity:0;transform:translateY(-18px) scale(1.4)}}
+@media (prefers-reduced-motion:reduce){.m-pinwheel [class]{animation-duration:20s!important}}
+</style>
+<svg class="mx m-pinwheel" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <defs><g id="pinwheel-bl"><g transform="rotate(0 60 52)"><path d="M60 52C60 30 70 16 92 12C88 34 78 48 60 52z" style="fill:var(--b1)"/><path d="M60 52C64 36 72 26 92 12C78 30 70 42 60 52z" fill="#fff" opacity=".3"/></g><g transform="rotate(90 60 52)"><path d="M60 52C60 30 70 16 92 12C88 34 78 48 60 52z" style="fill:var(--b2)"/><path d="M60 52C64 36 72 26 92 12C78 30 70 42 60 52z" fill="#fff" opacity=".3"/></g><g transform="rotate(180 60 52)"><path d="M60 52C60 30 70 16 92 12C88 34 78 48 60 52z" style="fill:var(--b1)"/><path d="M60 52C64 36 72 26 92 12C78 30 70 42 60 52z" fill="#fff" opacity=".3"/></g><g transform="rotate(270 60 52)"><path d="M60 52C60 30 70 16 92 12C88 34 78 48 60 52z" style="fill:var(--b2)"/><path d="M60 52C64 36 72 26 92 12C78 30 70 42 60 52z" fill="#fff" opacity=".3"/></g></g></defs>
+ <g class="s s-sleep"><g class="br" opacity=".85"><g transform="rotate(8 60 111)"><path d="M60 56V111" stroke="#b98a4e" stroke-width="5" stroke-linecap="round"/><path d="M58.6 62V108" stroke="#d9a050" stroke-width="1.4" stroke-linecap="round"/><g transform="rotate(18 60 52)"><use href="#pinwheel-bl"/></g><circle cx="60" cy="52" r="7" fill="#b98a4e"/><circle cx="58" cy="50" r="3" fill="#e8c898"/></g></g>
+  <path class="zz" d="M92 18h8l-8 9h8" stroke="#7C6CF0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+ <g class="s s-idle"><g class="sway"><path d="M60 56V111" stroke="#b98a4e" stroke-width="5" stroke-linecap="round"/><path d="M58.6 62V108" stroke="#d9a050" stroke-width="1.4" stroke-linecap="round"/><g class="sl"><circle cx="60" cy="52" r="42" fill="none"/><use href="#pinwheel-bl"/></g><circle cx="60" cy="52" r="7" fill="#d9a050"/><circle cx="58" cy="50" r="3" fill="#ffe3b0"/></g><path class="wd" d="M6 38q9-5 18 0" stroke="#ffe3b0" stroke-width="2.5" fill="none" stroke-linecap="round"/><path class="wd2" d="M4 62q9-5 18 0" stroke="#f6c177" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <g transform="translate(18 20) scale(1)"><path class="tw" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#7C6CF0"/></g><g transform="translate(104 88) scale(0.8)"><path class="tw2" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#ffe3b0"/></g></g>
+ <g class="s s-work"><g class="sway"><path d="M60 56V111" stroke="#b98a4e" stroke-width="5" stroke-linecap="round"/><path d="M58.6 62V108" stroke="#d9a050" stroke-width="1.4" stroke-linecap="round"/><g class="md"><circle cx="60" cy="52" r="42" fill="none"/><use href="#pinwheel-bl"/></g><circle cx="60" cy="52" r="7" fill="#8f74c4"/><circle cx="58" cy="50" r="3" fill="#e4d6f7"/></g><path class="wd" d="M6 38q9-5 18 0" stroke="#ffe3b0" stroke-width="2.5" fill="none" stroke-linecap="round"/><path class="wd2" d="M4 62q9-5 18 0" stroke="#f6c177" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>
+ <g class="s s-busy"><circle class="blur" cx="60" cy="52" r="40" fill="#f6c177" opacity=".2"/>
+  <g class="vib"><path d="M60 56V111" stroke="#b98a4e" stroke-width="5" stroke-linecap="round"/><path d="M58.6 62V108" stroke="#d9a050" stroke-width="1.4" stroke-linecap="round"/><g class="fs"><circle cx="60" cy="52" r="42" fill="none"/><use href="#pinwheel-bl"/></g><circle cx="60" cy="52" r="7" fill="#f6c177"/><circle cx="58" cy="50" r="3" fill="#fff"/></g>
+  <circle class="rv" cx="60" cy="52" r="41" fill="none" stroke="#ffe3b0" stroke-width="3" stroke-dasharray="12 20" stroke-linecap="round"/>
+  <path class="wd" d="M2 36q9-5 18 0" stroke="#ffe3b0" stroke-width="2.5" fill="none" stroke-linecap="round"/><path class="wd2" d="M0 62q9-5 18 0" stroke="#7C6CF0" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>
+ <g class="s s-ok"><g class="rays" stroke="#ffe3b0" stroke-width="3" stroke-linecap="round"><path d="M60 2v6" transform="rotate(22 60 52)"/><path d="M60 2v6" transform="rotate(67 60 52)"/><path d="M60 2v6" transform="rotate(112 60 52)"/><path d="M60 2v6" transform="rotate(157 60 52)"/><path d="M60 2v6" transform="rotate(202 60 52)"/><path d="M60 2v6" transform="rotate(247 60 52)"/><path d="M60 2v6" transform="rotate(292 60 52)"/><path d="M60 2v6" transform="rotate(337 60 52)"/></g>
+  <g><path d="M60 56V111" stroke="#b98a4e" stroke-width="5" stroke-linecap="round"/><path d="M58.6 62V108" stroke="#d9a050" stroke-width="1.4" stroke-linecap="round"/><g class="okk"><circle cx="60" cy="52" r="42" fill="none"/><use href="#pinwheel-bl"/></g><circle cx="60" cy="52" r="7" fill="#4fa56b"/><circle cx="58" cy="50" r="3" fill="#e4ffee"/></g>
+  <circle class="halo" cx="60" cy="52" r="26" fill="none" stroke="#e4ffee" stroke-width="2.5"/>
+  <g transform="translate(18 86) scale(1)"><path class="tw2" d="M0-5l1.6 3.4L5 0 1.6 1.6 0 5-1.6 1.6-5 0l3.4-1.6z" fill="#7C6CF0"/></g>
+  <path d="M82 90l5 5 10-12" stroke="#82d69c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+ <g class="s s-err"><g class="tilt"><path d="M60 56V111" stroke="#b98a4e" stroke-width="5" stroke-linecap="round"/><path d="M58.6 62V108" stroke="#d9a050" stroke-width="1.4" stroke-linecap="round"/><g class="try"><circle cx="60" cy="52" r="42" fill="none"/><use href="#pinwheel-bl"/><use class="pr" href="#pinwheel-bl" style="--b1:#e5484d;--b2:#e5484d"/></g><circle cx="60" cy="52" r="7" fill="#c4455f"/><circle cx="58" cy="50" r="3" fill="#ffb3c6"/></g>
+  <path class="arc" d="M14 30l9-4-5 9 9-3M96 80l-8 4 5-8-9 3" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="arc2" d="M100 24l-8 5 9 2-6 8M18 76l8-5-9-2 6-8" stroke="#e5484d" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle class="puff" cx="62" cy="30" r="5" fill="#8a90ad"/></g>
+</svg>

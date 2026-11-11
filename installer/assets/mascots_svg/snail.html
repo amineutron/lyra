@@ -1,0 +1,53 @@
+<style>
+.m-snail *{transform-box:fill-box;transform-origin:center;stroke-linecap:round;stroke-linejoin:round}
+.m-snail .br{animation:snail-br 4s ease-in-out infinite;transform-origin:50% 100%}
+.m-snail .bd{animation:snail-bd 3.6s ease-in-out infinite;transform-origin:20% 100%}
+.m-snail .bw{animation-duration:1.5s}
+.m-snail .bq{animation-duration:.8s}
+.m-snail .st{animation:snail-st 3.2s ease-in-out infinite;transform-origin:50% 100%}
+.m-snail .sb{animation-delay:-1.4s;animation-duration:3.8s}
+.m-snail .sf{animation-duration:.9s}
+.m-snail .sd{animation-duration:2s}
+.m-snail .ey{animation:snail-bl 4.4s infinite}
+.m-snail .tr{stroke-dasharray:2 11;animation:snail-tr 2.4s linear infinite}
+.m-snail .tf{animation-duration:.7s}
+.m-snail .sp{animation:snail-sp 3s linear infinite}
+.m-snail .sh{animation:snail-sh 1.5s ease-in-out infinite}
+.m-snail .gl{animation:snail-gl 1.5s ease-in-out infinite;opacity:0}
+.m-snail .mo{animation:snail-mo .42s ease-in-out infinite;transform-origin:50% 0}
+.m-snail .wv{animation:snail-wv .42s ease-in-out infinite alternate}
+.m-snail .jp{animation:snail-jp 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.m-snail .tw{animation:snail-tw 1.5s ease-in-out infinite}
+.m-snail .t2{animation-delay:-.5s}.m-snail .t3{animation-delay:-1s}
+.m-snail .up{animation:snail-up 3.4s ease-in infinite;opacity:0}
+.m-snail .u2{animation-delay:-1.7s}
+.m-snail .sk{animation:snail-sk 2.2s ease-in-out infinite;transform-origin:50% 100%}
+.m-snail .rd{animation:snail-rd 2.2s ease-in-out infinite;opacity:.55}
+.m-snail .dr{animation:snail-dr 2.2s ease-in infinite;opacity:0}
+@keyframes snail-br{50%{transform:scale(1.02,1.05)}}
+@keyframes snail-bd{50%{transform:scaleX(1.04)}}
+@keyframes snail-st{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(8deg)}}
+@keyframes snail-bl{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes snail-tr{to{stroke-dashoffset:-26}}
+@keyframes snail-sp{to{transform:rotate(360deg)}}
+@keyframes snail-sh{0%,100%{transform:translateX(0)}50%{transform:translateX(-3px) rotate(-3deg)}}
+@keyframes snail-gl{0%,20%{opacity:0}50%{opacity:.9}80%,100%{opacity:0}}
+@keyframes snail-mo{0%,100%{transform:scaleY(.2)}50%{transform:scaleY(1)}}
+@keyframes snail-wv{to{transform:translateX(2px)}}
+@keyframes snail-jp{0%,10%{transform:none}22%{transform:scale(1.06,.9)}42%{transform:translateY(-12px) scale(.96,1.05)}62%{transform:scale(1.06,.92)}75%,100%{transform:translateY(-1px)}}
+@keyframes snail-tw{0%,100%{opacity:.2;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@keyframes snail-up{0%{transform:translate(0,6px) scale(.6);opacity:0}25%{opacity:1}100%{transform:translate(8px,-16px);opacity:0}}
+@keyframes snail-sk{0%,100%{transform:rotate(0)}8%{transform:rotate(-5deg)}16%{transform:rotate(5deg)}24%{transform:rotate(-3deg)}32%{transform:rotate(2deg)}42%{transform:rotate(0)}}
+@keyframes snail-rd{0%,45%,100%{opacity:.5}10%,30%{opacity:.8}}
+@keyframes snail-dr{0%,30%{opacity:0;transform:translateY(0)}45%{opacity:1}90%{opacity:0;transform:translateY(14px)}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.m-snail *{animation-duration:8s!important}}
+</style>
+<svg class="mx m-snail" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<defs><g id="snail-b"><path d="M18 100C14 92 18 74 32 70C42 68 46 76 48 84L100 86C110 90 114 98 112 100Z" fill="#82d69c"/><ellipse cx="30" cy="92" rx="12" ry="5" fill="#b8efc9" opacity=".3"/></g><g id="snail-s"><path d="M48 62a28 28 0 1 1 56 0a28 28 0 1 1-56 0z" fill="#4e9e6b"/><path d="M52 62a24 24 0 0 1 48 0" stroke="#6fbf8a" stroke-width="3" fill="none"/><ellipse cx="64" cy="48" rx="8" ry="4" transform="rotate(-35 64 48)" fill="#b8efc9" opacity=".4"/></g><path id="snail-l" d="M26 76C22 66 22 60 20 54" stroke="#82d69c" stroke-width="4.5" fill="none"/><path id="snail-r" d="M36 74C40 64 40 60 40 54" stroke="#82d69c" stroke-width="4.5" fill="none"/><path id="snail-p" d="M76 62a3 3 0 0 1 6 0a6 6 0 0 1-12 0a9.5 9.5 0 0 1 19 0a13 13 0 0 1-26 0a16.5 16.5 0 0 1 33 0" stroke="#3a7a52" stroke-width="3" fill="none"/><path id="snail-z" d="M0 0h7l-7 8h7" stroke="#b8efc9" stroke-width="2.4" fill="none"/></defs>
+<g class="s s-sleep"><g class="br"><g style="transform:rotate(18deg)translateY(8px);transform-origin:50%% 100%%"><use href="#snail-l"/><circle cx="20" cy="58" r="5.5" fill="#eef7e6"/><path d="M17.5 58q2.5 3 5 0" stroke="#12301f" stroke-width="2.2" fill="none"/></g><g style="transform:rotate(-12deg);transform-origin:50%% 100%%"><use href="#snail-r"/><circle cx="40" cy="56" r="5.5" fill="#eef7e6"/><path d="M37.5 56q2.5 3 5 0" stroke="#12301f" stroke-width="2.2" fill="none"/></g><use href="#snail-b"/><path d="M25 80h6" stroke="#12301f" stroke-width="2.2" fill="none"/><use href="#snail-s"/><use href="#snail-p"/></g><use class="up " href="#snail-z" x="44" y="40"/><use class="up u2" href="#snail-z" x="52" y="30"/></g>
+<g class="s s-idle"><g class="bd"><use href="#snail-b"/></g><g class="st"><use href="#snail-l"/><g class="ey"><circle cx="20" cy="50" r="5.5" fill="#eef7e6"/><circle cx="19.0" cy="51.0" r="2.7" fill="#12301f"/></g></g><g class="st sb"><use href="#snail-r"/><g class="ey"><circle cx="40" cy="48" r="5.5" fill="#eef7e6"/><circle cx="39.0" cy="49.0" r="2.7" fill="#12301f"/></g></g><ellipse cx="30" cy="84" rx="4" ry="2.5" fill="#eb6f92" opacity=".5"/><path d="M23 80q4 4 8 0" stroke="#12301f" stroke-width="2.2" fill="none"/><use href="#snail-s"/><use href="#snail-p"/><path class="tr " d="M14 104H112" stroke="#b8efc9" stroke-width="2.5" opacity=".55"/></g>
+<g class="s s-work"><g class="bd bw"><use href="#snail-b"/></g><g class="st sf"><use href="#snail-l"/><g class=""><circle cx="20" cy="50" r="5.5" fill="#eef7e6"/><circle cx="18.0" cy="47.5" r="2.7" fill="#12301f"/></g></g><g class="st sb sf"><use href="#snail-r"/><g class=""><circle cx="40" cy="48" r="5.5" fill="#eef7e6"/><circle cx="38.0" cy="45.5" r="2.7" fill="#12301f"/></g></g><path d="M24 81q3-2 6 0" stroke="#12301f" stroke-width="2.2" fill="none"/><g class="sh"><use href="#snail-s"/><g class="sp"><use href="#snail-p"/></g></g><path class="tr tf" d="M14 104H112" stroke="#b8efc9" stroke-width="2.5" opacity=".55"/></g>
+<g class="s s-busy"><g class="bd bq"><use href="#snail-b"/></g><g class="st sf"><use href="#snail-l"/><g class="ey"><circle cx="20" cy="50" r="5.5" fill="#eef7e6"/><circle cx="19.0" cy="51.0" r="2.7" fill="#12301f"/></g></g><g class="st sb sf"><use href="#snail-r"/><g class="ey"><circle cx="40" cy="48" r="5.5" fill="#eef7e6"/><circle cx="39.0" cy="49.0" r="2.7" fill="#12301f"/></g></g><ellipse cx="30" cy="84" rx="4" ry="2.5" fill="#eb6f92" opacity=".5"/><ellipse class="mo" cx="27" cy="82" rx="4.5" ry="4" fill="#3a2540"/><use href="#snail-s"/><use href="#snail-p"/><path class="tr tf" d="M14 104H112" stroke="#b8efc9" stroke-width="2.5" opacity=".55"/><g stroke="#7C6CF0" stroke-width="2.4" fill="none"><path class="wv" d="M12 74q-3 5 0 10"/><path class="wv" d="M7 70q-6 9 0 18"/></g></g>
+<g class="s s-ok"><g class="jp"><g class="bd"><use href="#snail-b"/></g><g class="st sd"><use href="#snail-l"/><circle cx="20" cy="50" r="5.5" fill="#eef7e6"/><path d="M17.5 51q2.5-4.5 5 0" stroke="#12301f" stroke-width="2.4" fill="none"/></g><g class="st sb sd"><use href="#snail-r"/><circle cx="40" cy="48" r="5.5" fill="#eef7e6"/><path d="M37.5 49q2.5-4.5 5 0" stroke="#12301f" stroke-width="2.4" fill="none"/></g><ellipse cx="30" cy="84" rx="4" ry="2.75" fill="#eb6f92" opacity=".75"/><path d="M23 79q4 6 8 0z" fill="#3a2540" stroke="#3a2540" stroke-width="1.5"/><use href="#snail-s"/><use href="#snail-p"/></g><path class="tr " d="M14 104H112" stroke="#b8efc9" stroke-width="2.5" opacity=".55"/><path class="tw" d="M10 37l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f6c177"/><path class="tw t2" d="M70 17l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#c4a7e7"/><path class="tw t3" d="M108 41l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f6c177"/></g>
+<g class="s s-err"><g class="sk"><g><use href="#snail-b"/><path class="rd" d="M18 100C14 92 18 74 32 70C42 68 46 76 48 84L100 86C110 90 114 98 112 100Z" fill="#e8455f"/></g><g style="transform:rotate(-20deg);transform-origin:50%% 100%%" class="st sf"><use href="#snail-l"/><g class=""><circle cx="20" cy="50" r="5.5" fill="#eef7e6"/><circle cx="22.5" cy="49.0" r="2.7" fill="#12301f"/></g></g><g style="transform:rotate(20deg);transform-origin:50%% 100%%" class="st sf"><use href="#snail-r"/><g class=""><circle cx="40" cy="48" r="5.5" fill="#eef7e6"/><circle cx="37.5" cy="47.0" r="2.7" fill="#12301f"/></g></g><path class="wv" d="M23 82q2-4 4 0t4 0" stroke="#12301f" stroke-width="2.2" fill="none"/><use href="#snail-s"/><use href="#snail-p"/><path class="rd" d="M48 62a28 28 0 1 1 56 0a28 28 0 1 1-56 0z" fill="#e8455f"/></g><path class="dr" d="M52 40q-5 8 0 10q5-2 0-10z" fill="#b8efc9"/></g>
+</svg>

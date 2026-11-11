@@ -1,0 +1,57 @@
+<style>
+.m-turtle *{transform-box:fill-box;transform-origin:center}
+.m-turtle .br{animation:turtle-br 3.8s ease-in-out infinite;transform-origin:50% 100%}
+.m-turtle .ey{animation:turtle-bl 4s infinite}
+.m-turtle .hn{animation:turtle-hn 3.2s ease-in-out infinite;transform-origin:90% 60%}
+.m-turtle .hs{animation:turtle-hs 3.8s ease-in-out infinite;transform-origin:90% 60%}
+.m-turtle .lg{animation:turtle-lg 1s ease-in-out infinite;transform-origin:50% 0}
+.m-turtle .lg2{animation-delay:-.5s}
+.m-turtle .hd{animation:turtle-hd 3.6s ease-in-out infinite}
+.m-turtle .lr{animation:turtle-lr 3.6s ease-in-out infinite}
+.m-turtle .pk{animation:turtle-pk 3.6s ease-in-out infinite;opacity:0}
+.m-turtle .pk2{animation-delay:.35s}.m-turtle .pk3{animation-delay:.7s}
+.m-turtle .cv{animation:turtle-cv 3.6s ease-in-out infinite;opacity:0}
+.m-turtle .gl{animation:turtle-gl 3.6s ease-in-out infinite;opacity:0}
+.m-turtle .rk{animation:turtle-rk 1.8s ease-in-out infinite;transform-origin:50% 100%}
+.m-turtle .mo{animation:turtle-mo .45s ease-in-out infinite;transform-origin:100% 50%}
+.m-turtle .wv{animation:turtle-wv .45s ease-in-out infinite alternate}
+.m-turtle .nd{animation:turtle-nd .9s ease-in-out infinite;transform-origin:90% 60%}
+.m-turtle .jp{animation:turtle-jp 2.4s ease-in-out infinite;transform-origin:50% 100%}
+.m-turtle .tw{animation:turtle-tw 1.4s ease-in-out infinite}
+.m-turtle .t2{animation-delay:-.5s}.m-turtle .t3{animation-delay:-.9s}
+.m-turtle .up{animation:turtle-up 3.4s ease-in infinite;opacity:0}
+.m-turtle .up2{animation-delay:-1.7s}
+.m-turtle .sk{animation:turtle-sk 2.2s ease-in-out infinite;transform-origin:50% 100%}
+.m-turtle .rd{animation:turtle-rd 2.2s ease-in-out infinite;opacity:.55}
+.m-turtle .dr{animation:turtle-dr 2.2s ease-in infinite;opacity:0}
+@keyframes turtle-br{50%{transform:scale(1.03,1.05)}}
+@keyframes turtle-bl{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.1)}}
+@keyframes turtle-hn{50%{transform:rotate(-7deg) translateX(-1px)}}
+@keyframes turtle-hs{50%{transform:translateX(1px) rotate(4deg)}}
+@keyframes turtle-lg{50%{transform:rotate(14deg) translateY(-2px)}}
+@keyframes turtle-hd{0%,6%{transform:none}14%,44%{transform:translateX(30px) scale(.55)}56%,64%{transform:translateX(15px) scale(.8)}74%,88%{transform:translateX(30px) scale(.55)}100%{transform:none}}
+@keyframes turtle-lr{0%,6%{transform:none}14%,88%{transform:scale(.2) translateY(-8px)}100%{transform:none}}
+@keyframes turtle-pk{0%,10%{opacity:0}25%,55%{opacity:.6}70%,100%{opacity:0}}
+@keyframes turtle-cv{0%,8%{opacity:0}16%,84%{opacity:1}96%,100%{opacity:0}}
+@keyframes turtle-gl{0%,12%{opacity:0}18%,40%{opacity:1}50%{opacity:0}56%,64%{opacity:1}72%,100%{opacity:0}}
+@keyframes turtle-rk{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes turtle-mo{0%,100%{transform:scaleY(.2)}50%{transform:scaleY(1)}}
+@keyframes turtle-wv{to{transform:translateX(2px)}}
+@keyframes turtle-nd{50%{transform:rotate(8deg) translateY(2px)}}
+@keyframes turtle-jp{0%,10%{transform:none}20%{transform:scale(1.08,.88)}40%{transform:translateY(-16px) scale(.95,1.06)}60%{transform:scale(1.08,.9)}72%,100%{transform:translateY(-2px)}}
+@keyframes turtle-tw{0%,100%{opacity:.2;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@keyframes turtle-up{0%{transform:translate(0,6px) scale(.6);opacity:0}25%{opacity:1}100%{transform:translate(8px,-16px);opacity:0}}
+@keyframes turtle-sk{0%,100%{transform:rotate(0)}8%{transform:rotate(-6deg)}16%{transform:rotate(6deg)}24%{transform:rotate(-4deg)}32%{transform:rotate(3deg)}42%{transform:rotate(0)}}
+@keyframes turtle-rd{0%,45%,100%{opacity:.55}10%,30%{opacity:.8}}
+@keyframes turtle-dr{0%,30%{opacity:0;transform:translateY(0)}45%{opacity:1}90%{opacity:0;transform:translateY(14px)}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.m-turtle *{animation-duration:8s!important}}
+</style>
+<svg class="mx m-turtle" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<defs><g id="turtle-h" fill="#82d69c"><path d="M32 56h20v32H32z"/><ellipse cx="27" cy="66" rx="15" ry="13"/><ellipse cx="30" cy="73" rx="4" ry="2.5" fill="#eb6f92" opacity=".5"/><ellipse cx="22" cy="60" rx="7" ry="3" fill="#b8efc9" opacity=".5"/></g><g id="turtle-s"><path d="M104 88l8 6-8 3z" fill="#82d69c"/><path d="M30 92C30 58 50 42 68 42S106 60 106 92Z" fill="#4e9e6b"/><path d="M61 57L54 47M71 57L78 46M56 66L40 70M76 66L96 70M61 75L56 90M71 75L78 90M56 66l5-9h10l5 9-5 9H61z" stroke="#3a7a52" stroke-width="2" fill="none" stroke-linejoin="round"/><ellipse cx="54" cy="52" rx="9" ry="4" transform="rotate(-25 54 52)" fill="#b8efc9" opacity=".35"/><rect x="28" y="88" width="80" height="9" rx="4.5" fill="#c9e4a5"/></g><g id="turtle-z"><path d="M0 0h7l-7 8h7" stroke="#b8efc9" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></defs><ellipse cx="60" cy="108" rx="44" ry="3" fill="#82d69c" opacity=".14"/>
+<g class="s s-sleep"><g class="br"><g style="transform:translateX(13px) scale(.8);transform-origin:90% 60%"><use href="#turtle-h"/><path d="M17 62q4 3 8 0" stroke="#12301f" stroke-width="2.4" fill="none" stroke-linecap="round"/></g><g fill="#82d69c"><ellipse class="" cx="44" cy="99" rx="6.5" ry="7"/><ellipse class="" cx="92" cy="99" rx="6.5" ry="7"/></g><use href="#turtle-s"/></g><use class="up " href="#turtle-z" x="46" y="40"/><use class="up up2" href="#turtle-z" x="54" y="30"/></g>
+<g class="s s-idle"><g class="hn"><use href="#turtle-h"/><g class="ey"><circle cx="21" cy="62" r="3.4" fill="#12301f"/><circle cx="22.2" cy="60.8" r="1.2" fill="#fff"/></g><path d="M12 71q6 4 12 0" stroke="#12301f" stroke-width="2.2" fill="none" stroke-linecap="round"/></g><g fill="#82d69c"><ellipse class="lg" cx="44" cy="99" rx="6.5" ry="7"/><ellipse class="lg lg2" cx="92" cy="99" rx="6.5" ry="7"/></g><use href="#turtle-s"/></g>
+<g class="s s-work"><g class="rk"><g class="hd"><use href="#turtle-h"/><g class=""><circle cx="21" cy="62" r="3.4" fill="#12301f"/><circle cx="22.2" cy="60.8" r="1.2" fill="#fff"/></g><path d="M12 71q6 4 12 0" stroke="#12301f" stroke-width="2.2" fill="none" stroke-linecap="round"/></g><g class="lr"><g fill="#82d69c"><ellipse class="" cx="44" cy="99" rx="6.5" ry="7"/><ellipse class="" cx="92" cy="99" rx="6.5" ry="7"/></g></g><use href="#turtle-s"/><path class="pk" d="M56 66l5-9h10l5 9-5 9H61z" fill="#7C6CF0"/><g class="pk pk2" stroke="#7C6CF0" stroke-width="3" stroke-linecap="round"><path d="M61 57L54 47M56 66L40 70M61 75L56 90"/></g><g class="pk pk3" stroke="#7C6CF0" stroke-width="3" stroke-linecap="round"><path d="M71 57L78 46M76 66L96 70M71 75L78 90"/></g><ellipse class="cv" cx="36" cy="82" rx="6" ry="9" fill="#1d4630"/><g class="gl" fill="#f6f6ff"><circle cx="33" cy="82" r="2"/><circle cx="39" cy="82" r="2"/></g></g></g>
+<g class="s s-busy"><g class="nd"><use href="#turtle-h"/><g class="ey"><circle cx="21" cy="62" r="3.4" fill="#12301f"/><circle cx="22.2" cy="60.8" r="1.2" fill="#fff"/></g><ellipse class="mo" cx="18" cy="72" rx="6" ry="5" fill="#3a2540"/></g><g fill="#82d69c"><ellipse class="lg" cx="44" cy="99" rx="6.5" ry="7"/><ellipse class="lg lg2" cx="92" cy="99" rx="6.5" ry="7"/></g><use href="#turtle-s"/><g stroke="#7C6CF0" stroke-width="2.4" fill="none" stroke-linecap="round"><path class="wv" d="M9 56q-3 5 0 10"/><path class="wv" d="M4 52q-6 9 0 18"/></g></g>
+<g class="s s-ok"><g class="jp"><g class="hs"><use href="#turtle-h"/><path d="M16 62q4-6 8 0" stroke="#12301f" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M12 70q6 8 12 0z" fill="#3a2540" stroke="#3a2540" stroke-width="1.5" stroke-linejoin="round"/></g><g fill="#82d69c"><ellipse class="lg" cx="44" cy="99" rx="6.5" ry="7"/><ellipse class="lg lg2" cx="92" cy="99" rx="6.5" ry="7"/></g><use href="#turtle-s"/></g><path class="tw" d="M20 29l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f6c177"/><path class="tw t2" d="M104 31l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#c4a7e7"/><path class="tw t3" d="M112 63l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f6c177"/></g>
+<g class="s s-err"><g class="sk"><g style="transform:rotate(14deg) translateY(4px);transform-origin:90% 60%"><use href="#turtle-h"/><ellipse class="rd" cx="27" cy="66" rx="15" ry="13" fill="#e8455f"/><path d="M17 59l7 7M24 59l-7 7" stroke="#12301f" stroke-width="2.6" stroke-linecap="round"/><path class="wv" d="M11 74q2-4 4 0t4 0t4 0" stroke="#12301f" stroke-width="2.2" fill="none" stroke-linecap="round"/></g><g fill="#82d69c"><ellipse class="" cx="44" cy="99" rx="6.5" ry="7"/><ellipse class="" cx="92" cy="99" rx="6.5" ry="7"/></g><use href="#turtle-s"/><path class="rd" d="M30 92C30 58 50 42 68 42S106 60 106 92Z" fill="#e8455f"/></g><path class="dr" d="M34 46q-5 8 0 10q5-2 0-10z" fill="#b8efc9"/></g>
+</svg>

@@ -1,0 +1,78 @@
+<style>
+.m-firefly *{transform-box:fill-box}
+.m-firefly g{transform-origin:50% 50%}
+.m-firefly .wg{transform-origin:50% 90%}
+.m-firefly .ha{transform-origin:50% 50%}
+.m-firefly .dt{fill:#d7f7a5;transform-origin:50% 50%}
+.m-firefly .st{fill:#7C6CF0;transform-origin:50% 50%}
+.m-firefly .sp{fill:#d7f7a5;transform-origin:50% 50%}
+.m-firefly .zz{fill:none;stroke:#b8ecc8;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0;animation:firefly-z 3.6s ease-in-out infinite}
+.m-firefly .a1{animation:firefly-drift 4s ease-in-out infinite}
+.m-firefly .a2{animation:firefly-flap .16s ease-in-out infinite alternate}
+.m-firefly .a3{animation:firefly-halo 2s ease-in-out infinite}
+.m-firefly .a4{animation:firefly-sway 4s ease-in-out infinite}
+.m-firefly .a5{animation:firefly-dim 4s ease-in-out infinite}
+.m-firefly .w1{animation:firefly-wander 3.6s ease-in-out infinite}
+.m-firefly .w2{animation:firefly-flick 3.6s steps(1) infinite}
+.m-firefly .w3{animation:firefly-trail 1.8s ease-out infinite}
+.m-firefly .b1{animation:firefly-hop .5s ease-in-out infinite}
+.m-firefly .b2{animation:firefly-beat .5s ease-out infinite}
+.m-firefly .b3{animation:firefly-ray .5s ease-out infinite}
+.m-firefly .c1{animation:firefly-loop 2.8s ease-in-out infinite}
+.m-firefly .c2{animation:firefly-twk 1.2s ease-in-out infinite}
+.m-firefly .c3{animation:firefly-big 1.6s ease-in-out infinite}
+.m-firefly .e1{animation:firefly-fall 3s ease-in-out infinite}
+.m-firefly .e2{animation:firefly-sput 3s steps(1) infinite}
+.m-firefly .e3{animation:firefly-droop .5s ease-in-out infinite alternate}
+.m-firefly .e4{animation:firefly-red 1.5s ease-in-out infinite}
+@keyframes firefly-drift{0%,100%{transform:translate(-5px,2px)}25%{transform:translate(2px,-4px)}50%{transform:translate(5px,3px)}75%{transform:translate(-2px,-3px)}}
+@keyframes firefly-flap{0%{transform:scaleY(1)}100%{transform:scaleY(.45)}}
+@keyframes firefly-halo{0%,100%{opacity:.18;transform:scale(.9)}50%{opacity:.6;transform:scale(1.15)}}
+@keyframes firefly-sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes firefly-dim{0%,100%{opacity:.1}50%{opacity:.3}}
+@keyframes firefly-wander{0%,100%{transform:translate(-22px,6px) rotate(-12deg)}25%{transform:translate(0,-12px) rotate(4deg)}50%{transform:translate(22px,4px) rotate(12deg)}75%{transform:translate(4px,12px) rotate(-6deg)}}
+@keyframes firefly-flick{0%{opacity:.15}12%{opacity:1}20%{opacity:.15}28%{opacity:1}36%{opacity:.15}60%{opacity:.15}70%{opacity:1}100%{opacity:1}}
+@keyframes firefly-trail{0%{transform:scale(1);opacity:.8}100%{transform:scale(.2);opacity:0}}
+@keyframes firefly-hop{0%,100%{transform:translateY(2px)}50%{transform:translateY(-5px)}}
+@keyframes firefly-beat{0%{opacity:.9;transform:scale(.8)}100%{opacity:0;transform:scale(1.9)}}
+@keyframes firefly-ray{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(.3);opacity:0}}
+@keyframes firefly-loop{0%{transform:rotate(0)}30%{transform:rotate(360deg)}30.1%,100%{transform:rotate(0)}}
+@keyframes firefly-twk{0%,100%{transform:scale(.4);opacity:.3}50%{transform:scale(1);opacity:1}}
+@keyframes firefly-big{0%,100%{opacity:.45;transform:scale(1.05)}50%{opacity:.8;transform:scale(1.3)}}
+@keyframes firefly-fall{0%,100%{transform:translateY(-6px) rotate(-4deg)}35%{transform:translateY(12px) rotate(-18deg)}50%{transform:translateY(12px) rotate(14deg)}70%{transform:translateY(-2px) rotate(-8deg)}}
+@keyframes firefly-sput{0%{opacity:.7}10%{opacity:.05}20%{opacity:.5}30%{opacity:0}45%{opacity:.25}55%,100%{opacity:0}}
+@keyframes firefly-droop{0%{transform:rotate(18deg) scaleY(.8)}100%{transform:rotate(-6deg) scaleY(.5)}}
+@keyframes firefly-red{0%{opacity:.1}30%,100%{opacity:.9}}
+@keyframes firefly-z{0%{opacity:0;transform:translate(0,6px)}30%,60%{opacity:.9}100%{opacity:0;transform:translate(6px,-8px)}}
+@media (prefers-reduced-motion:reduce){.m-firefly *{animation-duration:8s!important}}
+</style>
+<svg class="mx m-firefly" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <ellipse id="firefly-a" cx="60" cy="80" rx="11" ry="14"/>
+  <g id="firefly-w"><ellipse cx="44" cy="54" rx="18" ry="8" transform="rotate(-38 44 54)" fill="#cfe9f5" fill-opacity=".5" stroke="#e6f2fc" stroke-opacity=".7"/><ellipse cx="76" cy="54" rx="18" ry="8" transform="rotate(38 76 54)" fill="#cfe9f5" fill-opacity=".5" stroke="#e6f2fc" stroke-opacity=".7"/></g>
+  <g id="firefly-b"><path d="M55 33Q51 24 46 22M65 33Q69 24 74 22" fill="none" stroke="#4f9a6b" stroke-width="2.4" stroke-linecap="round"/><circle cx="46" cy="22" r="2.2" fill="#d7f7a5"/><circle cx="74" cy="22" r="2.2" fill="#d7f7a5"/><use href="#firefly-a" fill="#d7f7a5"/><path d="M50 77Q60 81 70 77M50 83Q60 87 70 83" fill="none" stroke="#a8d96b" stroke-width="2" stroke-linecap="round"/><ellipse cx="60" cy="56" rx="9" ry="10" fill="#3f7a58"/><circle cx="60" cy="41" r="10" fill="#5fae78"/><ellipse cx="56" cy="37" rx="2.6" ry="3.6" fill="#b8ecc8" opacity=".7"/></g>
+ </defs>
+ <g class="s s-sleep">
+  <g class="a4"><circle class="ha a5" cx="60" cy="82" r="25" fill="#a8e8bb"/><use href="#firefly-w" style="transform:scaleX(.3);transform-origin:50% 90%;transform-box:fill-box"/><use href="#firefly-b"/><use href="#firefly-a" fill="#2f6a4a" opacity=".55"/></g>
+  <path class="zz" d="M88 26h9l-9 10h9"/><path class="zz" style="animation-delay:1.2s" d="M98 12h6l-6 7h6"/>
+ </g>
+ <g class="s s-idle">
+  <g class="a1"><circle class="ha a3" cx="60" cy="82" r="25" fill="#a8e8bb"/><use class="wg a2" href="#firefly-w"/><use href="#firefly-b"/></g>
+  <path class="st c2" d="M100 34l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>
+ </g>
+ <g class="s s-work">
+  <circle class="dt w3" cx="18" cy="76" r="3"/><circle class="dt w3" style="animation-delay:.5s" cx="30" cy="68" r="2.4"/><circle class="dt w3" style="animation-delay:1s" cx="98" cy="64" r="2.8"/><circle class="dt w3" style="animation-delay:1.4s" cx="90" cy="92" r="2"/>
+  <g class="w1"><circle class="ha w2" cx="60" cy="82" r="27" fill="#a8e8bb"/><use class="wg a2" href="#firefly-w"/><use href="#firefly-b"/><use class="w2" href="#firefly-a" fill="#fff6c9"/></g>
+ </g>
+ <g class="s s-busy">
+  <g class="b1"><circle class="ha b2" cx="60" cy="82" r="22" fill="#a8e8bb"/><use class="wg a2" href="#firefly-w"/><use href="#firefly-b"/><use class="b2" href="#firefly-a" fill="#fff6c9"/></g>
+  <circle class="sp b3" style="--x:-34px;--y:12px" cx="60" cy="84" r="2.6"/><circle class="sp b3" style="--x:34px;--y:12px;animation-delay:.12s" cx="60" cy="84" r="2.6"/><circle class="sp b3" style="--x:-24px;--y:-30px;animation-delay:.25s" cx="60" cy="84" r="2.2"/><circle class="sp b3" style="--x:26px;--y:-30px;animation-delay:.37s" cx="60" cy="84" r="2.2"/>
+ </g>
+ <g class="s s-ok">
+  <g class="c1"><circle class="ha c3" cx="60" cy="82" r="25" fill="#a8e8bb"/><use class="wg a2" href="#firefly-w"/><use href="#firefly-b"/><use href="#firefly-a" fill="#fff6c9" opacity=".7"/></g>
+  <path class="st c2" d="M98 26l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path class="sp c2" style="animation-delay:.4s" d="M20 32l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path class="sp c2" style="animation-delay:.8s" d="M100 72l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path class="st c2" style="animation-delay:.6s" d="M16 80l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/>
+ </g>
+ <g class="s s-err">
+  <g class="e1"><circle class="ha e2" cx="60" cy="82" r="22" fill="#f58fa8"/><use class="wg e3" href="#firefly-w"/><use href="#firefly-b"/><use class="e4" href="#firefly-a" fill="#e5484d"/></g>
+ </g>
+</svg>

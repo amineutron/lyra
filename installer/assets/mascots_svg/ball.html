@@ -1,0 +1,88 @@
+<style>
+.m-ball *{transform-box:fill-box}
+.m-ball .bd{transform-origin:50% 100%}
+.m-ball .sh{fill:#2c3855;transform-origin:50% 50%}
+.m-ball .bl{transform-origin:50% 50%}
+.m-ball .sp{fill:#fbe0a8;transform-origin:50% 50%}
+.m-ball .st{fill:#7C6CF0;transform-origin:50% 50%}
+.m-ball .ds{fill:none;stroke:#fbe0a8;stroke-width:2.6;stroke-linecap:round;opacity:0}
+.m-ball .pf{fill:#e8edf8;transform-origin:50% 50%;opacity:0}
+.m-ball .zz{fill:none;stroke:#fbe0a8;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0;animation:ball-z 3.6s ease-in-out infinite}
+.m-ball .a1{animation:ball-br 4s ease-in-out infinite}
+.m-ball .a2{animation:ball-hop 1.8s ease-in-out infinite}
+.m-ball .a3{animation:ball-shs 1.8s ease-in-out infinite}
+.m-ball .a4{animation:ball-sway 3.6s ease-in-out infinite}
+.m-ball .w1{animation:ball-x 3s ease-in-out infinite}
+.m-ball .w2{animation:ball-arc .75s ease-in-out infinite}
+.m-ball .w3{animation:ball-shw .75s ease-in-out infinite}
+.m-ball .w4{animation:ball-spin .75s linear infinite}
+.m-ball .b1{animation:ball-big .7s linear infinite}
+.m-ball .b2{animation:ball-shb .7s linear infinite}
+.m-ball .b3{animation:ball-dust .7s ease-out infinite}
+.m-ball .b4{animation:ball-spin .5s linear infinite}
+.m-ball .b5{animation:ball-flash .7s linear infinite}
+.m-ball .c1{animation:ball-damp 3.2s linear infinite}
+.m-ball .c2{animation:ball-shd 3.2s linear infinite}
+.m-ball .c3{animation:ball-twk 1.2s ease-in-out infinite}
+.m-ball .e1{animation:ball-err 2.4s ease-in-out infinite}
+.m-ball .e2{animation:ball-pf 1.2s ease-out infinite}
+.m-ball .e3{animation:ball-red 1.5s ease-in-out infinite}
+@keyframes ball-br{0%,100%{transform:scale(1.07,.92)}50%{transform:scale(1.03,.97)}}
+@keyframes ball-hop{0%,48%,100%{transform:translateY(0) scale(1,1)}54%{transform:translateY(0) scale(1.12,.88)}66%{transform:translateY(-14px) scale(.94,1.08)}80%{transform:translateY(0) scale(1.14,.86)}90%{transform:translateY(0) scale(.98,1.03)}}
+@keyframes ball-shs{0%,48%,100%{transform:scale(1);opacity:1}66%{transform:scale(.7);opacity:.6}80%{transform:scale(1.1)}}
+@keyframes ball-sway{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+@keyframes ball-x{0%,100%{transform:translateX(-28px)}50%{transform:translateX(28px)}}
+@keyframes ball-arc{0%,100%{transform:translateY(0) scale(1.15,.85)}50%{transform:translateY(-22px) scale(.94,1.08)}}
+@keyframes ball-shw{0%,100%{transform:scale(1.1);opacity:1}50%{transform:scale(.6);opacity:.5}}
+@keyframes ball-spin{to{transform:rotate(360deg)}}
+@keyframes ball-big{0%,100%{transform:translateY(0) scale(1.24,.76)}12%{transform:translateY(-8px) scale(.95,1.07)}50%{transform:translateY(-32px) scale(.98,1.02)}88%{transform:translateY(-8px) scale(.96,1.05)}}
+@keyframes ball-shb{0%,100%{transform:scale(1.15);opacity:1}50%{transform:scale(.5);opacity:.4}}
+@keyframes ball-dust{0%,100%{opacity:.9;transform:translateX(0) scale(.6)}25%{opacity:.9;transform:translateX(var(--x)) scale(1)}60%{opacity:0;transform:translateX(var(--x)) scale(1)}}
+@keyframes ball-flash{0%,100%{opacity:.5}12%{opacity:0}}
+@keyframes ball-damp{0%,24%,44%,60%{transform:translateY(0) scale(1.2,.8)}12%{transform:translateY(-42px) scale(.95,1.06)}34%{transform:translateY(-20px) scale(.94,1.06)}52%{transform:translateY(-8px)}24.1%,44.1%,60.1%{transform:translateY(0) scale(1.2,.8)}70%,100%{transform:translateY(0) scale(1.03,.98)}}
+@keyframes ball-shd{0%,24%,44%,60%,70%,100%{transform:scale(1.1);opacity:1}12%{transform:scale(.5);opacity:.35}34%{transform:scale(.8);opacity:.7}52%{transform:scale(.95)}}
+@keyframes ball-twk{0%,100%{transform:scale(.4);opacity:.3}50%{transform:scale(1);opacity:1}}
+@keyframes ball-err{0%,100%{transform:scale(1.4,.58) rotate(-2deg)}15%{transform:translateY(-10px) scale(1.05,.9) rotate(4deg)}30%{transform:scale(1.5,.52)}40%{transform:scale(1.4,.58) rotate(-5deg)}50%{transform:scale(1.4,.58) rotate(5deg)}60%{transform:scale(1.4,.58) rotate(-3deg)}}
+@keyframes ball-pf{0%{transform:translate(0,0) scale(.4);opacity:0}20%{opacity:.8}100%{transform:translate(8px,-20px) scale(1.4);opacity:0}}
+@keyframes ball-red{0%{opacity:.15}30%,100%{opacity:.75}}
+@keyframes ball-z{0%{opacity:0;transform:translate(0,6px)}30%,60%{opacity:.9}100%{opacity:0;transform:translate(6px,-8px)}}
+@media (prefers-reduced-motion:reduce){.m-ball *{animation-duration:8s!important}}
+</style>
+<svg class="mx m-ball" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <circle id="ball-c" cx="60" cy="80" r="20"/>
+  <path id="ball-s" d="M41 73Q60 84 79 73L79 80Q60 91 41 80Z" fill="#eb6f92"/>
+  <g id="ball-g"><use href="#ball-c" fill="#f6c177"/><ellipse cx="67" cy="90" rx="13" ry="7" fill="#d9a05a" opacity=".5"/><ellipse cx="51" cy="71" rx="3.8" ry="6.5" fill="#fff1c9" opacity=".85" transform="rotate(25 51 71)"/></g>
+  <path id="ball-gr" d="M14 101.5H106" fill="none" stroke="#3a4560" stroke-width="3" stroke-linecap="round"/>
+ </defs>
+ <g class="s s-sleep">
+  <use href="#ball-gr"/><ellipse class="sh" cx="60" cy="101" rx="25" ry="3.5"/>
+  <g class="bd a1"><use href="#ball-g"/><use class="bl" href="#ball-s"/><use href="#ball-c" fill="#6b5a8a" opacity=".3"/></g>
+  <path class="zz" d="M86 44h9l-9 10h9"/><path class="zz" style="animation-delay:1.2s" d="M96 30h6l-6 7h6"/>
+ </g>
+ <g class="s s-idle">
+  <use href="#ball-gr"/>
+  <g class="a4"><ellipse class="sh a3" cx="60" cy="101" rx="22" ry="3.5"/><g class="bd a2"><use href="#ball-g"/><use class="bl" href="#ball-s"/></g></g>
+  <path class="st c3" d="M96 50l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>
+ </g>
+ <g class="s s-work">
+  <use href="#ball-gr"/>
+  <g class="w1"><ellipse class="sh w3" cx="60" cy="101" rx="22" ry="3.5"/><g class="bd w2"><use href="#ball-g"/><use class="bl w4" href="#ball-s"/></g></g>
+  <path class="sp c3" d="M20 46l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path class="sp c3" style="animation-delay:.6s" d="M100 40l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/>
+ </g>
+ <g class="s s-busy">
+  <use href="#ball-gr"/><ellipse class="sh b2" cx="60" cy="101" rx="22" ry="3.5"/>
+  <g class="bd b1"><use href="#ball-g"/><use class="bl b4" href="#ball-s"/><use class="b5" href="#ball-c" fill="#fff"/></g>
+  <path class="ds b3" style="--x:-8px" d="M30 100h10"/><path class="ds b3" style="--x:8px" d="M80 100h10"/><path class="ds b3" style="--x:-14px;animation-delay:.05s" d="M24 94h6"/><path class="ds b3" style="--x:14px;animation-delay:.05s" d="M90 94h6"/>
+ </g>
+ <g class="s s-ok">
+  <use href="#ball-gr"/><ellipse class="sh c2" cx="60" cy="101" rx="22" ry="3.5"/>
+  <g class="bd c1"><use href="#ball-g"/><use class="bl" href="#ball-s"/><use href="#ball-c" fill="#fff" opacity=".18"/></g>
+  <path class="st c3" d="M94 40l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path class="sp c3" style="animation-delay:.4s" d="M22 38l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path class="sp c3" style="animation-delay:.8s" d="M100 76l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path class="st c3" style="animation-delay:.6s" d="M16 74l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/>
+ </g>
+ <g class="s s-err">
+  <use href="#ball-gr"/><ellipse class="sh" cx="60" cy="101" rx="26" ry="3"/>
+  <g class="bd e1"><use href="#ball-g"/><use class="bl" href="#ball-s"/><use class="e3" href="#ball-c" fill="#e5484d"/></g>
+  <circle class="pf e2" cx="82" cy="94" r="3"/><circle class="pf e2" style="animation-delay:.4s" cx="86" cy="96" r="2.4"/><circle class="pf e2" style="animation-delay:.8s" cx="84" cy="92" r="2"/>
+ </g>
+</svg>
