@@ -1,0 +1,12 @@
+[Unit]
+Description=Sentinel CI : detecteur d'echecs CI GitHub et d'alertes Dependabot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Adapter le chemin au clone local du depot (specifier %h/... ou un chemin absolu).
+ExecStart=/usr/bin/python3 %h/dev/lyra/scripts/sentinel-ci/sentinel_ci.py
+# Depots surveilles (defaut : amineutron/lyra). Surcharge locale possible :
+# systemctl --user edit sentinel-ci.service -> [Service] Environment=SENTINEL_CI_REPOS=a/b,c/d
+TimeoutStartSec=300
