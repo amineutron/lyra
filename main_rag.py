@@ -32,6 +32,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import yaml
 
+# Import du module UI existant pour la compatibilite
+from lyra.client.capsule_sounds import make_player, play_cue
 from lyra.core.config import RAGConfig
 from lyra.core.constants import (  # noqa: F401
     DANGEROUS_TOOLS,
@@ -58,10 +60,14 @@ from lyra.utils.error_log import (
 from lyra.utils.error_log import (
     write_error_log,
 )
-
-# Import du module UI existant pour la compatibilite
 from modules import ui
 from modules.n8n import send_discord_notification
+
+
+def _cue(vocal: bool, voice, event_id: str) -> None:
+    """Son de la capsule en mode vocal ; sans effet autrement, jamais d'exception."""
+    if vocal and voice:
+        play_cue(getattr(voice, "sounds", None), event_id)
 
 
 def _lyra_error_message(log_path: Path) -> str:
@@ -78,7 +84,7 @@ def _handle_error_log(tool_name: str, arguments: dict, exec_result, vocal: bool 
     err_msg = _lyra_error_message(log_path)
     print(f"\n{ui.Colors.RED}{err_msg}{ui.Colors.RESET}")
     if vocal and voice:
-        voice.speak("ca a pas marche, j'ai logué l'erreur.")
+        voice.speak("ca a pas marche, j'ai logué l'erreur.", cue="error")
 
 
 # Helper pour accéder au pipeline réel (V2 ou Enhanced)
@@ -571,7 +577,11 @@ def handle_action(
         has_error = _is_execution_error(exec_result)
         if has_error:
             _handle_error_log(tool_name, arguments, exec_result, vocal, voice)
-        ui.print_quick_result(tool_name, success=not has_error, use_beep=True)
+        sounds_on = bool(vocal and voice and getattr(voice, "sounds", None))
+        if not has_error:
+            _cue(vocal, voice, "success")
+        ui.print_quick_result(tool_name, success=not has_error,
+                              use_beep=not sounds_on)
         _send_discord_if_async(tool_name, arguments, exec_result)
         return exec_result.response
 
@@ -591,7 +601,7 @@ def handle_action(
             prompt_msg = f"je vais {short_tool}. C'est bon ?"
         ui.print_lyra_tag(prompt_msg)
         if vocal and voice:
-            voice.speak(prompt_msg)
+            voice.speak(prompt_msg, cue="warn" if dangerous else "confirm")
 
     elif confidence_level == "medium":
         # MEDIUM (50-80%): verif etat MCP + confirmation du bon serveur
@@ -622,7 +632,7 @@ def handle_action(
             prompt_msg = f"je pense {short_tool} via {server_prefix}. C'est bien ca ?"
         ui.print_lyra_tag(prompt_msg)
         if vocal and voice:
-            voice.speak(prompt_msg)
+            voice.speak(prompt_msg, cue="warn" if dangerous else "confirm")
 
     else:
         # LOW (0-50%): LYRA exprime son incertitude
@@ -644,7 +654,7 @@ def handle_action(
             )
         ui.print_lyra_tag(prompt_msg)
         if vocal and voice:
-            voice.speak(prompt_msg)
+            voice.speak(prompt_msg, cue="warn" if dangerous else "confirm")
 
     # Demander confirmation standard
     confirmed = ui.confirm_action(
@@ -660,6 +670,7 @@ def handle_action(
 
         if correction is None:
             ui.print_warning("Action annulee.")
+            _cue(vocal, voice, "cancel")
             return "Action annulee."
 
         new_tool_name, new_arguments = correction
@@ -676,11 +687,13 @@ def handle_action(
         )
         if not confirmed or confirmed == "modify":
             ui.print_warning("Action annulee.")
+            _cue(vocal, voice, "cancel")
             return "Action annulee."
 
     # Cas: Utilisateur annule
     if not confirmed:
         ui.print_warning("Action annulee.")
+        _cue(vocal, voice, "cancel")
         return "Action annulee."
 
     # Verifier si operation async (longue)
@@ -716,6 +729,7 @@ def handle_action(
 
                 if choice != "1":
                     ui.print_warning("Operation annulee.")
+                    _cue(vocal, voice, "cancel")
                     return "Operation annulee (VM en cours d'utilisation)."
 
                 # Utilisateur prend le risque
@@ -746,6 +760,7 @@ def handle_action(
 
         msg = f"Operation lancee en arriere-plan (task: {task_id[-6:]})"
         ui.print_success(msg)
+        _cue(vocal, voice, "success")
 
         return msg
 
@@ -764,6 +779,8 @@ def handle_action(
 
     if has_error:
         _handle_error_log(tool_name, arguments, exec_result, vocal, voice)
+    else:
+        _cue(vocal, voice, "success")
 
     # Envoyer notification Discord si operation async
     _send_discord_if_async(tool_name, arguments, exec_result)
@@ -1128,7 +1145,8 @@ def main():
                 device=stt_cfg.get("device", "cuda"),
                 audio_config=audio_config,
                 tts_speaker_id=int(tts_cfg.get("speaker_id", 0)),
-                tts_length_scale=float(tts_cfg.get("length_scale", 1.0))
+                tts_length_scale=float(tts_cfg.get("length_scale", 1.0)),
+                sounds=make_player(cfg)
             )
             ui.print_success("Interface vocale prete")
         except Exception as e:
@@ -1575,7 +1593,7 @@ Exemples:
             elif result.pending_args:
                 ui.print_lyra(result.response)
                 if vocal and voice:
-                    voice.speak(result.response)
+                    voice.speak(result.response, cue="ask")
 
             # Cas 3: Action prete -> confirmation et execution
             elif result.tool_call:
