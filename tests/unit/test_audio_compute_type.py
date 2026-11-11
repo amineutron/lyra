@@ -7,7 +7,10 @@ basculait en standalone.
 
 import pytest
 
-import modules.audio as audio
+try:
+    import modules.audio as audio
+except OSError:  # PortAudio absent (CI runners): nothing to test here
+    pytest.skip("PortAudio library not available", allow_module_level=True)
 
 
 class _FakeSTT:

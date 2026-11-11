@@ -3,7 +3,10 @@
 import numpy as np
 import pytest
 
-from modules.audio import resample_audio, with_lead_silence
+try:
+    from modules.audio import resample_audio, with_lead_silence
+except OSError:  # PortAudio absent (CI runners): nothing to test here
+    pytest.skip("PortAudio library not available", allow_module_level=True)
 
 
 def _tone(freq, sr, seconds=0.5):
