@@ -25,6 +25,7 @@ from . import state as daemon_state
 from .actions import run_request
 from .protocol import SOCKET_PATH, ChannelClosed, LineChannel
 from .remote_ui import RemoteUI, RequestCancelled
+from .subscribe import MAX_SUBSCRIBERS, StateHub
 
 logger = logging.getLogger("lyra.daemon")
 
@@ -49,6 +50,14 @@ class LyraDaemon:
         self._busy_with: str = ""  # requete en cours (pour le message busy)
         self._stop = threading.Event()
         self.purge_on_stop = False  # privacy.purge_on_stop (roadmap #54), desactive par defaut
+
+    @property
+    def hub(self) -> StateHub:
+        """Abonnes passifs (capsule) ; cree a la demande, cout nul sans abonne."""
+        hub = self.__dict__.get("_hub")
+        if hub is None:
+            hub = self.__dict__.setdefault("_hub", StateHub())
+        return hub
 
     # -- Purge des donnees en clair (roadmap #54) --------------------------
 
@@ -306,7 +315,7 @@ class LyraDaemon:
 
         from .actions import _outil_dangereux
         from .display_state import make_state_provider
-        rui = RemoteUI(channel)
+        rui = RemoteUI(channel, hub=self.hub, session_id=session_id)
         name = str(message.get("name", "")).strip()
         arguments = message.get("arguments") or {}
         options = message.get("options")
@@ -339,6 +348,7 @@ class LyraDaemon:
                     rui.warning("Action annulee.")
                     channel.send({"type": "result", "exit_code": 2, "executed": False})
                     return
+            rui.state("thinking", label=name)
             with self._busy:
                 self._busy_with = f"outil {name}"
                 try:
@@ -369,7 +379,7 @@ class LyraDaemon:
     def handle_request(self, channel: LineChannel, message: dict,
                        session_id: str, client: object = None) -> None:
         recorder = history.Recorder()
-        rui = RemoteUI(channel, recorder)
+        rui = RemoteUI(channel, recorder, hub=self.hub, session_id=session_id)
         exit_code = 1   # un client parti ou une exception comptent comme un echec
 
         if not self._init_done.is_set():
@@ -390,6 +400,7 @@ class LyraDaemon:
 
         options = message.get("options", {})
         self._busy_with = str(message.get("text", ""))[:60]
+        rui.state("thinking")
         try:
             code = run_request(
                 self.pipeline,
@@ -468,6 +479,11 @@ def _forget_feedback_in_memory() -> None:
     loop._enrichments = {}
 
 
+# Types acceptes d'une connexion abonnee (restreinte, definitivement) : aucune
+# action, aucune requete ; "answer" ne vaut que pour une confirmation diffusee.
+_SUBSCRIBER_TYPES = frozenset({"ping", "unsubscribe", "answer"})
+
+
 class _ConnectionHandler(socketserver.StreamRequestHandler):
     """Une connexion client : boucle de messages jusqu'a deconnexion."""
 
@@ -476,11 +492,29 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
         channel = LineChannel(self.connection)
         session_id = "default"
         client = None
+        restricted = False   # True des le premier subscribe, jusqu'a la fin de la connexion
         try:
             while not daemon._stop.is_set():
                 message = channel.recv(timeout=None)
                 mtype = message.get("type")
-                if mtype == "hello":
+                if restricted and mtype not in _SUBSCRIBER_TYPES:
+                    daemon._send_safe(channel, {"type": "error", "code": "forbidden",
+                                                "text": f"connexion abonnee : {mtype} interdit"})
+                    continue
+                if mtype == "subscribe":
+                    restricted = True
+                    ack = {"type": "subscribed", "max_subscribers": MAX_SUBSCRIBERS}
+                    if not daemon.hub.subscribe(channel, ack):
+                        channel.send({"type": "error", "code": "limit",
+                                      "text": "trop d'abonnes"})
+                elif mtype == "unsubscribe":
+                    daemon.hub.unsubscribe(channel)
+                elif restricted and mtype == "answer":
+                    code = daemon.hub.answer_from(channel, message)
+                    if code is not None:
+                        channel.send({"type": "error", "code": code,
+                                      "text": "reponse refusee"})
+                elif mtype == "hello":
                     session_id = str(message.get("session") or "default")
                     client = message.get("client")
                     channel.send({"type": "ready", "status": daemon.status,
@@ -493,8 +527,10 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
                     channel.send({"type": "tasks", **daemon.tasks_snapshot()})
                 elif mtype == "request":
                     daemon.handle_request(channel, message, session_id, client)
+                    daemon.hub.publish_state(session_id, "idle")
                 elif mtype == "tool":
                     daemon.handle_tool(channel, message, session_id)
+                    daemon.hub.publish_state(session_id, "idle")
                 elif mtype in ("memory_list", "memory_update", "memory_delete", "memory_add"):
                     daemon.handle_memory(channel, message)
                 elif mtype == "analyze":
@@ -515,6 +551,7 @@ class _ConnectionHandler(socketserver.StreamRequestHandler):
         except (ChannelClosed, ValueError, TimeoutError):
             pass
         finally:
+            daemon.hub.unsubscribe(channel)
             channel.close()
 
 
