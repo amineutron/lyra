@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Demo de la capsule vocale sans demon : ouvre une fenetre avec des payloads factices.
+#   ./demo                      scenario 0, mascotte aleatoire
+#   DEMO_SCENARIO=1 DEMO_MASCOT=owl ./demo      (ascii, ascii:owl, random, <nom>)
+# Prerequis : quickshell, et les feuilles de sprites :
+#   python3 scripts/render_mascots.py --out "$LYRA_MASCOTS_DIR"
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export LYRA_MASCOTS_DIR="${LYRA_MASCOTS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/lyra/mascots}"
+
+command -v quickshell >/dev/null || { echo "quickshell introuvable dans le PATH" >&2; exit 1; }
+if [ ! -f "$LYRA_MASCOTS_DIR/manifest.json" ]; then
+    echo "pas de feuilles de sprites dans $LYRA_MASCOTS_DIR" >&2
+    echo "  python3 scripts/render_mascots.py --out \"$LYRA_MASCOTS_DIR\"   (ou --only owl,cat pour un echantillon)" >&2
+    echo "  (le mode DEMO_MASCOT=ascii marche sans feuilles)" >&2
+fi
+exec quickshell -p "$here/demo.qml" "$@"
