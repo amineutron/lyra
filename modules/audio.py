@@ -17,6 +17,8 @@ import numpy as np
 # Note: Les "Exception ignored" de sounddevice sont geres via suppress_stderr()
 import sounddevice as sd
 
+from lyra.client.capsule_sounds import play_cue, settle_after_listen_start
+
 
 @contextmanager
 def suppress_stderr():
@@ -380,7 +382,8 @@ class VoiceInterface:
         device: str = "cuda",
         audio_config: Optional[AudioConfig] = None,
         tts_speaker_id: int = 0,
-        tts_length_scale: float = 1.0
+        tts_length_scale: float = 1.0,
+        sounds=None
     ):
         """
         Initialise l'interface vocale.
@@ -393,7 +396,9 @@ class VoiceInterface:
             audio_config: Configuration audio
             tts_speaker_id: Speaker du modele Piper (multi-speaker)
             tts_length_scale: Vitesse de parole (1.0 = normal, >1 = plus lent)
+            sounds: SoundPlayer des sons de la capsule (None = bip historique)
         """
+        self.sounds = sounds
         self.stt = STT(model=stt_model, language=language, device=device)
         self.tts = TTS(
             model_path=tts_model,
@@ -434,20 +439,30 @@ class VoiceInterface:
             Texte transcrit
         """
         if with_beep:
-            self.beep()
+            if self.sounds is not None:
+                settle_after_listen_start(self.cue("listen_start"))
+            else:
+                self.beep()
         audio = self.recorder.record_until_silence()
+        self.cue("listen_end")
         if len(audio) == 0:
             return ""
         return self.stt.transcribe(audio, self.config.sample_rate)
 
-    def speak(self, text: str, blocking: bool = True):
+    def cue(self, event_id: str) -> bool:
+        """Joue un son de la capsule (no-op sans SoundPlayer, jamais d'exception)."""
+        return play_cue(self.sounds, event_id)
+
+    def speak(self, text: str, blocking: bool = True, cue: Optional[str] = None):
         """
         Synthetise et prononce le texte.
 
         Args:
             text: Texte a prononcer
             blocking: Attendre la fin
+            cue: Son joue avant la synthese (defaut : speak_start)
         """
+        self.cue(cue or "speak_start")
         self.tts.speak(text, output_device=self.config.output_device, blocking=blocking)
 
     def listen_and_respond(self, process_func: Callable[[str], str]):

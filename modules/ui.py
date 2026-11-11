@@ -287,9 +287,10 @@ def _vocal_confirm(voice, is_dangerous: bool = False) -> bool:
         True si l'utilisateur confirme vocalement, False sinon.
     """
     if is_dangerous:
-        voice.speak("Cette action est potentiellement destructive. Dis 'oui je confirme' pour continuer, ou 'non' pour annuler.")
+        voice.speak("Cette action est potentiellement destructive. Dis 'oui je confirme' pour continuer, ou 'non' pour annuler.",
+                    cue="warn")
     else:
-        voice.speak("Dis 'oui' pour confirmer ou 'non' pour annuler.")
+        voice.speak("Dis 'oui' pour confirmer ou 'non' pour annuler.", cue="ask")
 
     print(colored("  [En attente de confirmation vocale...]", Colors.DIM))
 
