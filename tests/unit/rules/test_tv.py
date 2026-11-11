@@ -321,3 +321,32 @@ class TestJeu6:
 class TestCasseDesUrl:
     def test_id_youtube_garde_sa_casse(self):
         assert args("mets cette video sur la tele https://www.youtube.com/watch?v=jNQXAC9IVRw") == {"video": "https://www.youtube.com/watch?v=jNQXAC9IVRw"}
+
+
+class TestQuestionVolume:
+    """Regression : "quel est le volume de la tele" routait vers volume_up
+    (le LLM local choisissait au hasard) et MODIFIAIT le volume au lieu de le lire."""
+
+    @pytest.mark.parametrize("q", [
+        "quel est le volume de la tele ?",
+        "Quel est le volume de la télé",
+        "quel est le volume actuel de la tv",
+        "c'est quoi le volume de la tele",
+        "a combien est le volume de la tele",
+        "combien de volume sur la tv",
+        "quel niveau de son sur la tele",
+        "volume actuel de la television",
+    ])
+    def test_question_de_volume_lit_l_etat(self, q):
+        assert tool(q) == "tv.get_state", q
+
+    @pytest.mark.parametrize("q,expected", [
+        ("monte le volume de la tele", "tv.volume_up"),
+        ("baisse le volume de la tv", "tv.volume_down"),
+        ("mets le volume de la tele a 30", "tv.volume_set"),
+        ("volume tele 45", "tv.volume_set"),
+        ("augmente le son de la tele", "tv.volume_up"),
+        ("quel est le volume ? monte le de la tele", "tv.volume_up"),
+    ])
+    def test_les_ordres_de_volume_ne_changent_pas(self, q, expected):
+        assert tool(q) == expected, q

@@ -92,6 +92,17 @@ def detect(query: str):
                 not re.search(r'^(?:allume|eteins|mets|coupe|remets|peux-tu|tu peux)\b', q):
             return make("tv.get_state", {}, "rule: tv get_state (question)", 0.92)
 
+        # tv.get_state : "quel est le volume de la tele" LIT le volume. Sans cette
+        # regle le LLM local routait la question vers volume_up, qui le modifiait
+        # (recette vocale 2026-11-10). Un ordre ou un chiffre garde son outil.
+        if re.search(r'\b(?:volume|son)\b', q) and \
+                re.search(r"\b(?:quel(?:le)?s?|combien|actuel(?:le)?|niveau|c'?est quoi)\b", q) and \
+                not re.search(r'\d', q) and \
+                not re.search(r'\b(?:monte[rz]?|augmente[rz]?|hausse[rz]?|eleve[rz]?|baisse[rz]?|'
+                              r'diminue[rz]?|descend[sz]?|reduit|reduis|mets?|regle[rz]?|passe[rz]?|'
+                              r'plus|moins)\b', q):
+            return make("tv.get_state", {}, "rule: tv get_state (question de volume)", 0.92)
+
         # tv.power_off: "eteins/veille la tv" - excl. volume/ambilight/denon/ecran
         if re.search(r'\b(?:etein[ts]?|eteignez|eteindre|arrete[rz]?|ferme[rz]?|veille|standby)\b', q) and \
                 not re.search(r'\b(?:volume|son|ambilight|leds?|denon|ecran|affichage)\b', q):
