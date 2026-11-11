@@ -36,12 +36,12 @@
 | mypy               | 2.4.1       | MIT                                                     | https://www.mypy-lang.org/                                            |
 | mypy_extensions    | 1.1.0       | MIT                                                     | https://github.com/python/mypy_extensions                             |
 | ollama             | 0.6.3       | MIT                                                     | https://ollama.com                                                    |
-| pydantic           | 2.14.2      | MIT                                                     | https://github.com/pydantic/pydantic                                  |
+| pydantic           | 2.14.3      | MIT                                                     | https://github.com/pydantic/pydantic                                  |
 | pydantic-settings  | 2.16.2      | MIT                                                     | https://github.com/pydantic/pydantic-settings                         |
-| pydantic_core      | 2.50.2      | MIT                                                     | https://github.com/pydantic                                           |
+| pydantic_core      | 2.50.4      | MIT                                                     | https://github.com/pydantic                                           |
 | pytest             | 9.2.0       | MIT                                                     | https://docs.pytest.org/en/latest/                                    |
 | pytest-cov         | 7.1.0       | MIT                                                     | https://pytest-cov.readthedocs.io/en/latest/changelog.html            |
-| ruff               | 0.17.3      | MIT                                                     | https://docs.astral.sh/ruff                                           |
+| ruff               | 0.17.4      | MIT                                                     | https://docs.astral.sh/ruff                                           |
 | sounddevice        | 0.5.6       | MIT                                                     | https://github.com/spatialaudio/python-sounddevice/                   |
 | typing-inspection  | 0.4.4       | MIT                                                     | https://github.com/pydantic/typing-inspection                         |
 | urllib3            | 2.8.0       | MIT                                                     | https://github.com/urllib3/urllib3/blob/main/CHANGES.rst              |
