@@ -5,10 +5,12 @@ Fonctions de validation d'existence et d'etat des VMs KVM
 avant execution d'outils MCP.
 """
 
+import difflib
 import re
 from typing import TYPE_CHECKING, Optional
 
 from ..rag.session_memory import CHOICE_VM_START_CONFIRM
+from .constants import DESTRUCTIVE_TOOLS
 from .types import PipelineResult, QueryType
 
 if TYPE_CHECKING:
@@ -122,6 +124,40 @@ def get_vm_state(hestia: "HestiaExecutor", vm_name: str) -> dict:
     return {"running": False, "ip": None}
 
 
+def _vm_key(name: object) -> str:
+    """Forme comparable d'un nom de VM : minuscules, espaces/underscores -> tirets."""
+    return re.sub(r"[\s_]+", "-", str(name or "").strip().lower()).strip("-")
+
+
+def resolve_vm_name(name: str, existing: list[str], exact_only: bool = False) -> Optional[str]:
+    """Nom reel de la VM pour un nom saisi ou dit a voix haute, ou None.
+
+    "test vm" -> "test-vm", "preprod 09" -> "preprod-09". Sans `exact_only`,
+    accepte aussi une sous-chaine ou un nom quasi identique, mais seulement
+    s'il n'y a qu'un candidat (jamais de choix au hasard entre deux VM).
+    `exact_only` : egalite apres normalisation uniquement (actions destructives).
+    """
+    key = _vm_key(name)
+    if not key:
+        return None
+    keyed = [(_vm_key(vm), vm) for vm in existing]
+    exact = [vm for k, vm in keyed if k == key]
+    if len(exact) == 1:
+        return exact[0]
+    if exact_only or exact:
+        return None
+    contained = [vm for k, vm in keyed
+                 if len(key) >= 3 and (key in k or (len(k) >= 3 and k in key))]
+    if len(contained) == 1:
+        return contained[0]
+    if contained:
+        return None  # plusieurs candidats : l'utilisateur doit preciser
+    close = difflib.get_close_matches(key, [k for k, _ in keyed], n=2, cutoff=0.85)
+    if len(close) == 1:
+        return next(vm for k, vm in keyed if k == close[0])
+    return None
+
+
 def validate_vm_existence(
     hestia: "HestiaExecutor",
     session: "SessionMemory",
@@ -169,6 +205,14 @@ def validate_vm_existence(
         )
 
     existing = get_existing_vm_names(hestia)
+    if existing and vm_name not in existing:
+        # "test vm" dit a voix haute -> "test-vm" (jamais d'approximation pour
+        # une action destructive : egalite apres normalisation uniquement)
+        resolved = resolve_vm_name(vm_name, existing,
+                                   exact_only=tool_short in DESTRUCTIVE_TOOLS)
+        if resolved:
+            analysis.arguments = {**analysis.arguments, "vm_name": resolved}
+            vm_name = resolved
     if not existing or vm_name in existing:
         # VM trouvee : verifier si l'outil requiert qu'elle soit allumee
         if tool_short in VM_TOOLS_REQUIRE_RUNNING:
