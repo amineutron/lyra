@@ -53,6 +53,21 @@ class PendingChoice:
     created_at: datetime = field(default_factory=datetime.now)
 
 
+@dataclass(frozen=True)
+class Suggestion:
+    """Derniere action proposee par Lyra, non executee (intention implicite).
+
+    Immuable : une nouvelle proposition remplace l'ancienne, rien n'est modifie
+    sur place. `request_no` est le numero de requete de la session a la creation.
+    """
+    tool: str
+    arguments: tuple          # ((cle, valeur), ...) : hashable et fige
+    missing_args: tuple
+    request_no: int
+    created_at: float
+    source: str = ""          # extrait de la reponse de Lyra qui la proposait
+
+
 class SessionMemory:
     """Memoire de session multi-tour.
 
@@ -72,6 +87,22 @@ class SessionMemory:
         self._history: deque[Turn] = deque(maxlen=max_turns)
         self._pending_action: Optional[PendingAction] = None
         self._pending_choice: Optional[PendingChoice] = None
+        self._suggestion: Optional[Suggestion] = None
+        self._request_count = 0
+
+    def note_request(self) -> int:
+        """Compte une requete utilisateur ; renvoie son numero (1, 2, ...)."""
+        self._request_count += 1
+        return self._request_count
+
+    def set_suggestion(self, suggestion: Suggestion) -> None:
+        self._suggestion = suggestion
+
+    def get_suggestion(self) -> Optional[Suggestion]:
+        return self._suggestion
+
+    def clear_suggestion(self) -> None:
+        self._suggestion = None
 
     def add_turn(
         self,
@@ -259,6 +290,7 @@ class SessionMemory:
         self._history.clear()
         self._pending_action = None
         self._pending_choice = None
+        self._suggestion = None
 
     def __len__(self) -> int:
         """Retourne le nombre de tours."""
